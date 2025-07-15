@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Clock, Flame, Dumbbell, Play } from "lucide-react";
+import { ArrowLeft, Clock, Flame, Dumbbell, Play, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "./VideoPlayer";
 
@@ -31,6 +31,7 @@ interface WorkoutDetailProps {
 
 export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelect }: WorkoutDetailProps) => {
   const [selectedExercisePreview, setSelectedExercisePreview] = useState<number | null>(null);
+  const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
   return (
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
@@ -92,7 +93,11 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
             >
               <div 
                 className="flex items-center justify-between cursor-pointer"
-                onClick={() => onExerciseSelect?.(exercise)}
+                onClick={() => {
+                  setExpandedExercise(
+                    expandedExercise === exercise.id ? null : exercise.id
+                  );
+                }}
               >
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground mb-1">{exercise.name}</h3>
@@ -106,20 +111,52 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                         selectedExercisePreview === exercise.id ? null : exercise.id
                       );
                     }}
-                    className="w-8 h-8 rounded-full bg-surface/50 border border-border/30 flex items-center justify-center hover:bg-surface/70 transition-colors"
+                    className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
                   >
-                    <Play className="w-4 h-4 text-muted-foreground" />
+                    <Play className="w-5 h-5 text-accent ml-0.5" />
                   </button>
-                  <button className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                    <Play className="w-4 h-4 text-white ml-0.5" />
-                  </button>
+                  <ChevronDown 
+                    className={`w-5 h-5 text-muted-foreground transition-transform ${
+                      expandedExercise === exercise.id ? 'rotate-180' : ''
+                    }`} 
+                  />
                 </div>
               </div>
               
-              {/* Video preview expandible */}
-              {selectedExercisePreview === exercise.id && (
-                <div className="mt-4 pt-4 border-t border-border/20">
-                  <VideoPlayer exerciseName={exercise.name} />
+              {/* Exercise details expandible */}
+              {expandedExercise === exercise.id && (
+                <div className="mt-4 pt-4 border-t border-border/20 space-y-3">
+                  {exercise.sets && exercise.reps && (
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-4 h-4 text-accent" />
+                      <span className="text-sm font-medium text-foreground">{exercise.sets} séries x {exercise.reps} reps</span>
+                    </div>
+                  )}
+                  {exercise.duration && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-accent" />
+                      <span className="text-sm font-medium text-foreground">{exercise.duration}</span>
+                    </div>
+                  )}
+                  {exercise.rest && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-accent" />
+                      <span className="text-sm text-foreground">Descanso: {exercise.rest}</span>
+                    </div>
+                  )}
+                  {exercise.description && (
+                    <div className="flex items-start gap-2">
+                      <Dumbbell className="w-4 h-4 text-accent mt-0.5" />
+                      <p className="text-sm text-muted-foreground">{exercise.description}</p>
+                    </div>
+                  )}
+                  
+                  {/* Video preview inside expanded section */}
+                  {selectedExercisePreview === exercise.id && (
+                    <div className="mt-4 pt-4 border-t border-border/20">
+                      <VideoPlayer exerciseName={exercise.name} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
