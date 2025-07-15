@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Trophy, Star, Gift, Lock, ArrowLeft, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,7 +73,7 @@ const categories = ["Todos", "Acessórios", "Roupas", "Serviços", "Suplementos"
 
 export const Rewards = () => {
   const [userPoints, setUserPoints] = useState(2340);
-  const [showStore, setShowStore] = useState(true); // Sempre mostrar a loja diretamente
+  const [showStore, setShowStore] = useState(false); // Iniciar com o card de acesso
 
   const handleRedeem = (reward: typeof rewards[0]) => {
     if (userPoints >= reward.points) {

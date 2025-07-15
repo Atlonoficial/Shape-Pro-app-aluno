@@ -1,3 +1,4 @@
+
 import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,11 @@ const menuItems = [
 
 export const Profile = () => {
   const navigate = useNavigate();
+  
+  const handleRewardsClick = () => {
+    navigate('/?tab=rewards');
+  };
+
   return (
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
@@ -66,7 +72,10 @@ export const Profile = () => {
           <Trophy className="w-8 h-8 text-primary mx-auto mb-2" />
           <h3 className="font-semibold text-foreground mb-1">Loja de Recompensas</h3>
           <p className="text-sm text-muted-foreground mb-3">Troque seus pontos por prêmios</p>
-          <button className="btn-primary">
+          <button 
+            className="btn-primary"
+            onClick={handleRewardsClick}
+          >
             Acessar Loja
           </button>
         </CardContent>
