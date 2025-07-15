@@ -1,6 +1,9 @@
-import { Trophy, Star, Gift, Lock } from "lucide-react";
+import { useState } from "react";
+import { Trophy, Star, Gift, Lock, ArrowLeft, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 const rewards = [
   {
@@ -68,20 +71,83 @@ const rewards = [
 const categories = ["Todos", "Acessórios", "Roupas", "Serviços", "Suplementos", "Eletrônicos"];
 
 export const Rewards = () => {
+  const [userPoints, setUserPoints] = useState(2340);
+  const [showStore, setShowStore] = useState(false);
+
+  const handleRedeem = (reward: typeof rewards[0]) => {
+    if (userPoints >= reward.points) {
+      setUserPoints(prev => prev - reward.points);
+      toast({
+        title: "🎉 Resgate realizado!",
+        description: `Você resgatou: ${reward.title}. Pontos restantes: ${userPoints - reward.points}`,
+      });
+    } else {
+      toast({
+        title: "❌ Pontos insuficientes",
+        description: `Você precisa de ${reward.points - userPoints} pontos a mais.`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (!showStore) {
+    return (
+      <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-[60vh]">
+        {/* Store Access Card */}
+        <Card className="w-full max-w-md bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 border-primary/30 shadow-xl">
+          <CardContent className="p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-8 h-8 text-primary" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Loja de Recompensas</h1>
+              <p className="text-muted-foreground">Troque seus pontos por prêmios</p>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <span className="text-2xl font-bold text-primary">{userPoints}</span>
+                <span className="text-muted-foreground">pontos</span>
+              </div>
+            </div>
+
+            <Button 
+              onClick={() => setShowStore(true)}
+              className="w-full bg-primary hover:bg-primary/90 text-background font-medium py-3 text-lg"
+            >
+              Acessar Loja
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Recompensas</h1>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setShowStore(false)}
+            className="text-foreground"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-foreground">Loja de Recompensas</h1>
+        </div>
         <p className="text-muted-foreground">Troque seus pontos por prêmios incríveis</p>
       </div>
 
       {/* Points Display */}
-      <Card className="mb-6 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+      <Card className="mb-6 bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/30">
         <CardContent className="p-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
             <Trophy className="w-8 h-8 text-primary" />
-            <span className="text-3xl font-bold text-primary">2.340</span>
+            <span className="text-3xl font-bold text-primary">{userPoints}</span>
           </div>
           <p className="text-muted-foreground">pontos disponíveis</p>
         </CardContent>
@@ -107,63 +173,69 @@ export const Rewards = () => {
 
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 gap-4">
-        {rewards.map((reward) => (
-          <Card 
-            key={reward.id} 
-            className={`overflow-hidden card-gradient transition-all duration-300 ${
-              reward.unlocked 
-                ? "hover:scale-105" 
-                : "opacity-60"
-            }`}
-          >
-            <CardContent className="p-0">
-              <div className="flex">
-                <div className="relative w-24 h-24 flex-shrink-0">
-                  <img 
-                    src={reward.image} 
-                    alt={reward.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {!reward.unlocked && (
-                    <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
-                      <Lock className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{reward.title}</h3>
-                      <p className="text-sm text-muted-foreground">{reward.description}</p>
-                    </div>
-                    <Badge variant="secondary" className="bg-primary/20 text-primary border-0">
-                      {reward.category}
-                    </Badge>
+        {rewards.map((reward) => {
+          const canAfford = userPoints >= reward.points;
+          return (
+            <Card 
+              key={reward.id} 
+              className={`overflow-hidden bg-card/50 border-border/50 transition-all duration-300 ${
+                canAfford 
+                  ? "hover:bg-card/70 hover:border-primary/50" 
+                  : "opacity-60"
+              }`}
+            >
+              <CardContent className="p-0">
+                <div className="flex">
+                  <div className="relative w-24 h-24 flex-shrink-0">
+                    <img 
+                      src={reward.image} 
+                      alt={reward.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {!canAfford && (
+                      <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
+                        <Lock className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium text-primary">{reward.points} pontos</span>
+                  <div className="flex-1 p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-foreground">{reward.title}</h3>
+                        <p className="text-sm text-muted-foreground">{reward.description}</p>
+                      </div>
+                      <Badge variant="secondary" className="bg-primary/20 text-primary border-0">
+                        {reward.category}
+                      </Badge>
                     </div>
                     
-                    <button 
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        reward.unlocked 
-                          ? "bg-primary/20 hover:bg-primary/30 text-primary" 
-                          : "bg-muted/20 text-muted-foreground cursor-not-allowed"
-                      }`}
-                      disabled={!reward.unlocked}
-                    >
-                      {reward.unlocked ? "Resgatar" : "Bloqueado"}
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">{reward.points} pontos</span>
+                      </div>
+                      
+                      <Button
+                        size="sm"
+                        onClick={() => handleRedeem(reward)}
+                        disabled={!canAfford}
+                        className={`${
+                          canAfford 
+                            ? "bg-primary/20 hover:bg-primary/30 text-primary" 
+                            : "bg-muted/20 text-muted-foreground cursor-not-allowed"
+                        }`}
+                        variant="ghost"
+                      >
+                        {canAfford ? "Resgatar" : "Pontos insuficientes"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
