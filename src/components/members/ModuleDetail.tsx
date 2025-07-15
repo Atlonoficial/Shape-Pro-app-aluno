@@ -124,6 +124,98 @@ const moduleContent = {
         videoUrl: "video5.mp4"
       }
     ]
+  },
+  3: {
+    title: "Metabolismo Energético",
+    description: "Potencialize seu metabolismo e queime gordura de forma eficiente",
+    instructor: "Dra. Ana Carolina",
+    totalLessons: 4,
+    totalDuration: "1h 45min",
+    currentVideo: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?auto=format&fit=crop&q=80&w=800",
+    lessons: [
+      {
+        id: 1,
+        title: "Como Acelerar o Metabolismo",
+        duration: "20:15",
+        completed: false,
+        thumbnail: "/lovable-uploads/65cd0e38-8355-4d41-8be9-a292750e3daa.png",
+        videoUrl: "video1.mp4"
+      },
+      {
+        id: 2,
+        title: "Exercícios Metabólicos",
+        duration: "30:30",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video2.mp4"
+      },
+      {
+        id: 3,
+        title: "Termogênese e Queima de Gordura",
+        duration: "25:45",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video3.mp4"
+      },
+      {
+        id: 4,
+        title: "Estratégias Avançadas",
+        duration: "28:30",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1583311624887-932baf98b64b?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video4.mp4"
+      }
+    ]
+  },
+  4: {
+    title: "Dieta Detox",
+    description: "Desintoxique seu corpo e potencialize os resultados",
+    instructor: "Dra. Ana Carolina",
+    totalLessons: 5,
+    totalDuration: "2h 10min",
+    currentVideo: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&q=80&w=800",
+    lessons: [
+      {
+        id: 1,
+        title: "Princípios da Detoxificação",
+        duration: "22:00",
+        completed: false,
+        thumbnail: "/lovable-uploads/65cd0e38-8355-4d41-8be9-a292750e3daa.png",
+        videoUrl: "video1.mp4"
+      },
+      {
+        id: 2,
+        title: "Alimentos Detox",
+        duration: "25:15",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video2.mp4"
+      },
+      {
+        id: 3,
+        title: "Planejamento Detox",
+        duration: "28:45",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video3.mp4"
+      },
+      {
+        id: 4,
+        title: "Receitas Detox",
+        duration: "26:30",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video4.mp4"
+      },
+      {
+        id: 5,
+        title: "Mantendo os Resultados",
+        duration: "27:30",
+        completed: false,
+        thumbnail: "https://images.unsplash.com/photo-1583311624887-932baf98b64b?auto=format&fit=crop&q=80&w=400",
+        videoUrl: "video5.mp4"
+      }
+    ]
   }
 };
 
