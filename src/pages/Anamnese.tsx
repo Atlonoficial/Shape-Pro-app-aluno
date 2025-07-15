@@ -102,7 +102,7 @@ export const Anamnese = () => {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/")}
             className="text-foreground"
           >
             <ArrowLeft className="w-5 h-5" />
