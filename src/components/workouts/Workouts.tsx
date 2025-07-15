@@ -115,7 +115,6 @@ export const Workouts = () => {
     return (
       <WorkoutSession
         workout={selectedWorkout}
-        currentExercise={selectedExercise}
         onFinish={handleFinishWorkout}
         onExit={handleBackToList}
       />
