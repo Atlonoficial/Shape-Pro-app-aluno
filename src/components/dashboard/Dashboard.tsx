@@ -3,7 +3,7 @@ import { WeightChart } from "./WeightChart";
 import { CoachAICard } from "./CoachAICard";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
-import { ShapeProLogo } from "@/components/ui/ShapeProLogo";
+import shapeProLogo from "@/assets/shape-pro-logo.png";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -21,8 +21,12 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
   return (
     <div className="pb-24 px-4 pt-4">
       {/* Logo */}
-      <div className="flex justify-center mb-6">
-        <ShapeProLogo />
+      <div className="flex justify-center mb-4">
+        <img 
+          src={shapeProLogo} 
+          alt="Shape Pro - Consultoria On-line" 
+          className="h-10 w-auto object-contain"
+        />
       </div>
 
       {/* Header */}
