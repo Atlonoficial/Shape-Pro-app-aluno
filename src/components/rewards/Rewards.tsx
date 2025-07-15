@@ -95,8 +95,8 @@ export const Rewards = () => {
               key={category}
               className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 category === "Todos" 
-                  ? "bg-primary text-background" 
-                  : "bg-card/50 text-muted-foreground hover:bg-card/70"
+                  ? "btn-primary" 
+                  : "btn-secondary"
               }`}
             >
               {category}
@@ -110,10 +110,10 @@ export const Rewards = () => {
         {rewards.map((reward) => (
           <Card 
             key={reward.id} 
-            className={`overflow-hidden transition-all duration-300 ${
+            className={`overflow-hidden card-gradient transition-all duration-300 ${
               reward.unlocked 
-                ? "bg-card/50 border-border/50 hover:bg-card/70" 
-                : "bg-card/20 border-border/30 opacity-60"
+                ? "hover:scale-105" 
+                : "opacity-60"
             }`}
           >
             <CardContent className="p-0">

@@ -89,7 +89,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           {workout.exercises.map((exercise) => (
             <div 
               key={exercise.id}
-              className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 transition-colors"
+              className="card-gradient p-4 transition-all duration-300"
             >
               <div 
                 className="flex items-center justify-between cursor-pointer"
@@ -166,13 +166,13 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
 
       {/* Start workout button */}
       <div className="fixed bottom-20 left-4 right-4">
-        <Button 
+        <button 
           onClick={onStartWorkout}
-          className="w-full h-14 bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-background font-semibold text-lg rounded-2xl shadow-lg"
+          className="btn-accent w-full h-14 text-lg"
         >
           <Play className="w-5 h-5 mr-2" />
           Iniciar Treino
-        </Button>
+        </button>
       </div>
     </div>
   );

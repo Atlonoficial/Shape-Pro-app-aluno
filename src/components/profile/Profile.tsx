@@ -47,7 +47,7 @@ export const Profile = () => {
         {profileStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="bg-card/50 border-border/50">
+            <Card key={index} className="card-gradient">
               <CardContent className="p-3 text-center">
                 <Icon className="w-5 h-5 text-primary mx-auto mb-2" />
                 <p className="text-lg font-bold text-foreground">{stat.value}</p>
@@ -64,7 +64,7 @@ export const Profile = () => {
           <Trophy className="w-8 h-8 text-primary mx-auto mb-2" />
           <h3 className="font-semibold text-foreground mb-1">Loja de Recompensas</h3>
           <p className="text-sm text-muted-foreground mb-3">Troque seus pontos por prêmios</p>
-          <button className="bg-primary hover:bg-primary/90 text-background px-6 py-2 rounded-lg font-medium transition-colors">
+          <button className="btn-primary">
             Acessar Loja
           </button>
         </CardContent>
@@ -77,7 +77,7 @@ export const Profile = () => {
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           return (
-            <Card key={index} className="bg-card/50 border-border/50 hover:bg-card/70 transition-colors cursor-pointer">
+            <Card key={index} className="card-gradient hover:scale-105 transition-all duration-300 cursor-pointer">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -101,9 +101,9 @@ export const Profile = () => {
       </div>
 
       {/* Logout */}
-      <Card className="mt-6 bg-red-500/10 border-red-500/20">
+      <Card className="mt-6 bg-destructive/10 border-destructive/20">
         <CardContent className="p-4 text-center">
-          <button className="text-red-400 font-medium">Sair da Conta</button>
+          <button className="text-destructive font-medium">Sair da Conta</button>
         </CardContent>
       </Card>
     </div>

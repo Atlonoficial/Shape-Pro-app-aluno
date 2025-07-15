@@ -70,7 +70,7 @@ export const Members = () => {
         <h1 className="text-2xl font-bold text-foreground mb-2">Bem-vindo,</h1>
         <h2 className="text-xl text-foreground mb-4">Área de membros!</h2>
         
-        <Button className="w-32 h-12 bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-background font-semibold rounded-xl mb-6">
+        <Button className="btn-accent w-32 h-12 mb-6">
           <Play className="w-4 h-4 mr-2" />
           Assistir
         </Button>
@@ -81,10 +81,10 @@ export const Members = () => {
         <Button
           variant={activeTab === 'courses' ? 'default' : 'secondary'}
           onClick={() => setActiveTab('courses')}
-          className={`flex-1 h-12 rounded-xl font-medium ${
+          className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
             activeTab === 'courses' 
-              ? 'bg-gradient-to-r from-accent to-accent/80 text-background' 
-              : 'bg-card/50 text-muted-foreground hover:bg-card/70'
+              ? 'btn-accent' 
+              : 'btn-secondary'
           }`}
         >
           <Package className="w-4 h-4 mr-2" />
@@ -94,10 +94,10 @@ export const Members = () => {
         <Button
           variant={activeTab === 'products' ? 'default' : 'secondary'}
           onClick={() => setActiveTab('products')}
-          className={`flex-1 h-12 rounded-xl font-medium ${
+          className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
             activeTab === 'products' 
-              ? 'bg-gradient-to-r from-accent to-accent/80 text-background' 
-              : 'bg-card/50 text-muted-foreground hover:bg-card/70'
+              ? 'btn-accent' 
+              : 'btn-secondary'
           }`}
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
@@ -114,7 +114,7 @@ export const Members = () => {
             {membershipData.modules.map((module) => (
               <div 
                 key={module.id}
-                className="relative bg-card/50 rounded-xl overflow-hidden border border-border/30 hover:border-border/50 transition-colors cursor-pointer"
+                className="relative card-gradient overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer"
               >
                 <div 
                   className="aspect-square bg-cover bg-center relative"
@@ -140,7 +140,7 @@ export const Members = () => {
             {products.map((product) => (
               <div 
                 key={product.id}
-                className="bg-card/50 border border-border/30 rounded-xl p-4 hover:border-border/50 transition-colors"
+                className="card-gradient p-4 hover:scale-105 transition-all duration-300"
               >
                 <div className="flex gap-4">
                   <div 
@@ -154,7 +154,7 @@ export const Members = () => {
                   </div>
                   <Button 
                     size="sm"
-                    className="self-end bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-background font-medium rounded-lg h-9 px-4"
+                    className="self-end btn-accent h-9 px-4"
                   >
                     <ShoppingCart className="w-4 h-4 mr-1" />
                     Comprar
