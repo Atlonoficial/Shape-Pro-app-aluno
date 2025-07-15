@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Apple, User, Users, MessageCircle } from "lucide-react";
+import { Home, Dumbbell, Apple, User, Users } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
@@ -6,7 +6,6 @@ const navItems = [
   { id: 'workouts', icon: Dumbbell, label: 'Treinos' },
   { id: 'nutrition', icon: Apple, label: 'Dieta' },
   { id: 'members', icon: Users, label: 'Membros' },
-  { id: 'assistant', icon: MessageCircle, label: 'Coach IA' },
   { id: 'profile', icon: User, label: 'Perfil' },
 ];
 
