@@ -2,6 +2,10 @@ import { useState } from "react";
 import { MobileContainer } from "@/components/layout/MobileContainer";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import { Workouts } from "@/components/workouts/Workouts";
+import { Nutrition } from "@/components/nutrition/Nutrition";
+import { Profile } from "@/components/profile/Profile";
+import { Rewards } from "@/components/rewards/Rewards";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -11,33 +15,13 @@ const Index = () => {
       case 'home':
         return <Dashboard />;
       case 'workouts':
-        return (
-          <div className="p-4 pt-8 pb-24">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Treinos</h2>
-            <p className="text-muted-foreground">Área de treinos em desenvolvimento...</p>
-          </div>
-        );
+        return <Workouts />;
       case 'nutrition':
-        return (
-          <div className="p-4 pt-8 pb-24">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Nutrição</h2>
-            <p className="text-muted-foreground">Plano nutricional em desenvolvimento...</p>
-          </div>
-        );
+        return <Nutrition />;
       case 'rewards':
-        return (
-          <div className="p-4 pt-8 pb-24">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Recompensas</h2>
-            <p className="text-muted-foreground">Loja de recompensas em desenvolvimento...</p>
-          </div>
-        );
+        return <Rewards />;
       case 'profile':
-        return (
-          <div className="p-4 pt-8 pb-24">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Perfil</h2>
-            <p className="text-muted-foreground">Perfil do usuário em desenvolvimento...</p>
-          </div>
-        );
+        return <Profile />;
       default:
         return <Dashboard />;
     }

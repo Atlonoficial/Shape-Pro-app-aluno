@@ -8,6 +8,8 @@ interface MetricCardProps {
   trend?: "up" | "down" | "neutral";
   className?: string;
   onClick?: () => void;
+  progress?: number;
+  color?: string;
 }
 
 export const MetricCard = ({ 
@@ -17,7 +19,9 @@ export const MetricCard = ({
   icon, 
   trend, 
   className = "",
-  onClick 
+  onClick,
+  progress,
+  color = "primary"
 }: MetricCardProps) => {
   const trendColors = {
     up: "text-success",
@@ -43,6 +47,23 @@ export const MetricCard = ({
           </span>
         )}
       </div>
+      
+      {progress !== undefined && (
+        <div className="mt-3">
+          <div className="w-full bg-muted/20 rounded-full h-1.5">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                color === 'primary' ? 'bg-primary' :
+                color === 'blue' ? 'bg-blue-500' :
+                color === 'green' ? 'bg-green-500' :
+                color === 'orange' ? 'bg-orange-500' :
+                'bg-primary'
+              }`}
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

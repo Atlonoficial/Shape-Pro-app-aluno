@@ -21,9 +21,7 @@ export const Dashboard = () => {
           <h1 className="text-2xl font-bold text-foreground">
             {getGreeting()}, <span className="text-gradient-primary">Alex!</span>
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Pronto para mais um dia de evolução?
-          </p>
+          <p className="text-muted-foreground text-sm">Shape Pro</p>
         </div>
         
         <div className="flex items-center gap-3">
