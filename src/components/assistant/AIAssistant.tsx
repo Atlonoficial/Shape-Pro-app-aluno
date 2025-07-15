@@ -13,7 +13,7 @@ interface Message {
 const initialMessages: Message[] = [
   {
     id: '1',
-    text: 'Olá! Sou seu assistente pessoal de fitness. Como posso te ajudar hoje?',
+    text: 'Olá! Sou o assistente do time ShapePro!',
     sender: 'ai',
     timestamp: new Date()
   }

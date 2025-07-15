@@ -19,6 +19,13 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
 
   return (
     <div className="pb-24 px-4 pt-4">
+      {/* Welcome Message */}
+      <div className="mb-6">
+        <p className="text-lg text-foreground text-center">
+          Olá <span className="text-gradient-primary font-semibold">Alex</span>, estou aqui para te guiar, vamos começar?
+        </p>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
