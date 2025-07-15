@@ -5,7 +5,7 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Workouts } from "@/components/workouts/Workouts";
 import { Nutrition } from "@/components/nutrition/Nutrition";
 import { Profile } from "@/components/profile/Profile";
-import { Rewards } from "@/components/rewards/Rewards";
+import { Members } from "@/components/members/Members";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -18,8 +18,8 @@ const Index = () => {
         return <Workouts />;
       case 'nutrition':
         return <Nutrition />;
-      case 'rewards':
-        return <Rewards />;
+      case 'members':
+        return <Members />;
       case 'profile':
         return <Profile />;
       default:
