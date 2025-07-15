@@ -4,61 +4,66 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Atlon Tech Fitness App Design System */
+/* Shape Pro Design System - Consultoria Online */
 
 @layer base {
   :root {
-    /* Atlon Tech Brand Colors */
-    --background: 0 0% 6%;
+    /* Shape Pro Brand Colors - Inspired by logo palette */
+    --background: 0 0% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 46 85% 48%;
+    /* Primary: Golden/Orange from SHAPE PRO logo */
+    --primary: 43 96% 56%;
     --primary-foreground: 0 0% 8%;
 
-    --secondary: 0 0% 78%;
-    --secondary-foreground: 0 0% 8%;
+    /* Secondary: Sophisticated gray from logo */
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 96%;
 
-    --accent: 120 100% 50%;
-    --accent-foreground: 0 0% 8%;
+    /* Accent: Complementary blue for highlights */
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 68%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 46 85% 48%;
+    --border: 0 0% 16%;
+    --input: 0 0% 12%;
+    --ring: 43 96% 56%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    /* Fitness App Specific Colors */
+    /* Shape Pro Specific Colors */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
     
-    --warning: 38 92% 50%;
+    --warning: 43 96% 56%;
     --warning-foreground: 0 0% 8%;
     
     --info: 217 91% 60%;
     --info-foreground: 0 0% 98%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(46 85% 38%));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(142 76% 36%));
-    --gradient-dark: linear-gradient(135deg, hsl(0 0% 6%), hsl(0 0% 12%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 15%));
+    /* Shape Pro Brand Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 46%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 20%), hsl(0 0% 12%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 4%), hsl(0 0% 8%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
+    --gradient-accent: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 50%));
 
-    /* Shadows */
-    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
-    --shadow-button: 0 4px 14px hsl(var(--primary) / 0.4);
+    /* Shape Pro Shadows */
+    --shadow-glow: 0 0 24px hsl(43 96% 56% / 0.3);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
+    --shadow-button: 0 4px 16px hsl(43 96% 56% / 0.4);
+    --shadow-subtle: 0 2px 8px hsl(0 0% 0% / 0.3);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -132,52 +137,99 @@
 }
 
 @layer components {
-  /* Fitness App Component Styles */
+  /* Shape Pro Component Styles */
+  
+  /* Buttons with Shape Pro branding */
   .btn-primary {
-    @apply bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-[0_4px_14px_hsl(var(--primary)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--primary)/0.6)] hover:scale-105 active:scale-95;
+    @apply bg-gradient-primary text-primary-foreground font-bold py-3 px-6 rounded-2xl transition-all duration-300 shadow-button hover:shadow-glow hover:scale-105 active:scale-95 tracking-wide;
   }
 
   .btn-secondary {
-    @apply bg-card border border-border text-card-foreground font-medium py-3 px-6 rounded-xl transition-all duration-300 hover:bg-muted hover:scale-105 active:scale-95;
+    @apply bg-gradient-secondary border border-border text-card-foreground font-semibold py-3 px-6 rounded-2xl transition-all duration-300 hover:bg-muted hover:scale-105 active:scale-95 tracking-wide;
   }
 
   .btn-accent {
-    @apply bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-[0_4px_14px_hsl(var(--accent)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--accent)/0.6)] hover:scale-105 active:scale-95;
+    @apply bg-gradient-accent text-accent-foreground font-bold py-3 px-6 rounded-2xl transition-all duration-300 shadow-[0_4px_16px_hsl(217_91%_60%/0.4)] hover:shadow-[0_6px_24px_hsl(217_91%_60%/0.6)] hover:scale-105 active:scale-95 tracking-wide;
   }
 
+  /* Shape Pro Cards */
   .card-gradient {
-    @apply bg-gradient-to-br from-card to-muted border border-border shadow-[0_8px_32px_hsl(0_0%_0%/0.4)] rounded-2xl;
+    @apply bg-gradient-card border border-border shadow-card rounded-2xl backdrop-blur-sm;
   }
 
+  .card-premium {
+    @apply bg-gradient-to-br from-card via-muted to-card border border-primary/20 shadow-glow rounded-2xl;
+  }
+
+  /* Text Gradients */
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+    @apply bg-gradient-primary bg-clip-text text-transparent font-bold tracking-wider;
   }
 
   .text-gradient-accent {
-    @apply bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent;
+    @apply bg-gradient-accent bg-clip-text text-transparent font-bold tracking-wider;
   }
 
+  .text-shape-pro {
+    @apply text-primary font-black tracking-widest text-shadow-lg;
+  }
+
+  /* Layout Components */
   .mobile-container {
-    @apply max-w-sm mx-auto min-h-screen bg-background;
+    @apply max-w-sm mx-auto min-h-screen bg-gradient-dark relative;
   }
 
   .glass-effect {
-    @apply bg-card/20 backdrop-blur-lg border border-border/50;
+    @apply bg-card/30 backdrop-blur-xl border border-border/60 shadow-subtle;
   }
 
+  /* Metric Cards with Shape Pro styling */
   .metric-card {
-    @apply card-gradient p-4 hover:scale-105 transition-all duration-300;
+    @apply card-gradient p-6 hover:scale-105 hover:shadow-glow transition-all duration-300 relative overflow-hidden;
   }
 
+  .metric-card::before {
+    @apply content-[''] absolute top-0 left-0 w-full h-1 bg-gradient-primary;
+  }
+
+  /* Progress Components */
   .progress-ring {
     @apply relative inline-flex items-center justify-center;
   }
 
+  /* Navigation with Shape Pro styling */
   .nav-item {
-    @apply flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-300 hover:bg-muted active:scale-95;
+    @apply flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 hover:bg-muted/60 active:scale-95;
   }
 
   .nav-item.active {
-    @apply bg-primary/10 text-primary;
+    @apply bg-primary/15 text-primary shadow-[0_0_16px_hsl(43_96%_56%/0.3)];
+  }
+
+  /* Shape Pro Badges */
+  .badge-premium {
+    @apply bg-gradient-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-bold tracking-wider shadow-button;
+  }
+
+  .badge-member {
+    @apply bg-gradient-secondary text-card-foreground px-3 py-1 rounded-full text-xs font-semibold tracking-wide border border-border;
+  }
+
+  /* Animation Classes */
+  .animate-glow {
+    @apply animate-pulse shadow-glow;
+  }
+
+  .hover-lift {
+    @apply hover:scale-105 hover:shadow-glow transition-all duration-300;
+  }
+
+  /* Shape Pro specific styling */
+  .consultoria-online {
+    @apply text-warning font-bold tracking-[0.2em] text-sm;
+  }
+
+  .shape-pro-title {
+    @apply font-black tracking-[0.15em] text-4xl;
   }
 }
