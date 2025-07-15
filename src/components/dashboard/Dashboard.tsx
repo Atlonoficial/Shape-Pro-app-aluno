@@ -3,6 +3,7 @@ import { WeightChart } from "./WeightChart";
 import { CoachAICard } from "./CoachAICard";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
+import { ShapeProLogo } from "@/components/ui/ShapeProLogo";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -19,13 +20,18 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
 
   return (
     <div className="pb-24 px-4 pt-4">
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
+        <ShapeProLogo />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             {getGreeting()}, <span className="text-gradient-primary">Alex!</span>
           </h1>
-          <p className="text-muted-foreground text-sm">Shape Pro</p>
+          <p className="text-muted-foreground text-sm">Consultoria On-line</p>
         </div>
         
         <div className="flex items-center gap-3">
