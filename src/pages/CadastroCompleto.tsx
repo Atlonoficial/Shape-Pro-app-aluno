@@ -49,9 +49,9 @@ export const CadastroCompleto = () => {
         {/* Progress Bar */}
         <div className="flex items-center gap-3">
           <div className="flex-1 bg-muted rounded-full h-2">
-            <div className="bg-accent h-2 rounded-full" style={{ width: '90%' }}></div>
+            <div className="bg-warning h-2 rounded-full" style={{ width: '90%' }}></div>
           </div>
-          <span className="text-accent font-medium text-sm">90%</span>
+          <span className="text-warning font-medium text-sm">90%</span>
         </div>
       </div>
 
@@ -210,7 +210,7 @@ export const CadastroCompleto = () => {
       <div className="fixed bottom-4 left-4 right-4">
         <Button 
           onClick={handleSubmit}
-          className="w-full h-12 rounded-full btn-accent text-background font-medium"
+          className="w-full h-12 rounded-full bg-warning hover:bg-warning/90 text-background font-medium"
         >
           Salvar e continuar
         </Button>
