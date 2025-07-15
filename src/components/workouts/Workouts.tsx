@@ -136,6 +136,7 @@ export const Workouts = () => {
         workout={selectedWorkout}
         onBack={handleBackToList}
         onStartWorkout={handleStartWorkout}
+        onExerciseSelect={handleExerciseSelect}
       />
     );
   }

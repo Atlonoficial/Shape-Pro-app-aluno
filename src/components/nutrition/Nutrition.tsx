@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { NutritionCard } from "./NutritionCard";
 import { MetricCard } from "@/components/ui/MetricCard";
@@ -16,7 +17,7 @@ const consumed = {
   fat: 58
 };
 
-const meals = [
+const initialMeals = [
   {
     id: 1,
     title: "Café da Manhã",
@@ -55,10 +56,22 @@ const meals = [
 ];
 
 export const Nutrition = () => {
+  const [meals, setMeals] = useState(initialMeals);
+  
   const calorieProgress = (consumed.calories / dailyGoals.calories) * 100;
   const proteinProgress = (consumed.protein / dailyGoals.protein) * 100;
   const carbsProgress = (consumed.carbs / dailyGoals.carbs) * 100;
   const fatProgress = (consumed.fat / dailyGoals.fat) * 100;
+
+  const handleMealToggle = (mealId: number) => {
+    setMeals(prevMeals => 
+      prevMeals.map(meal => 
+        meal.id === mealId 
+          ? { ...meal, isCompleted: !meal.isCompleted }
+          : meal
+      )
+    );
+  };
 
   return (
     <div className="p-4 pt-8 pb-24">
@@ -119,7 +132,9 @@ export const Nutrition = () => {
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Refeições de Hoje</h3>
         {meals.map((meal) => (
-          <NutritionCard key={meal.id} {...meal} />
+          <div key={meal.id} onClick={() => handleMealToggle(meal.id)}>
+            <NutritionCard {...meal} />
+          </div>
         ))}
       </div>
     </div>

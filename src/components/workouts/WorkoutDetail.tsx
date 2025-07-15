@@ -25,9 +25,10 @@ interface WorkoutDetailProps {
   };
   onBack: () => void;
   onStartWorkout: () => void;
+  onExerciseSelect?: (exercise: Exercise) => void;
 }
 
-export const WorkoutDetail = ({ workout, onBack, onStartWorkout }: WorkoutDetailProps) => {
+export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelect }: WorkoutDetailProps) => {
   return (
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
@@ -86,7 +87,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout }: WorkoutDetail
             <div 
               key={exercise.id}
               className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 cursor-pointer hover:bg-surface/70 transition-colors"
-              onClick={() => console.log('Exercise selected:', exercise)}
+              onClick={() => onExerciseSelect?.(exercise)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">

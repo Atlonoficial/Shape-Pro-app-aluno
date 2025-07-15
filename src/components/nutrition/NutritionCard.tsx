@@ -20,7 +20,7 @@ export const NutritionCard = ({
   isCompleted = false 
 }: NutritionCardProps) => {
   return (
-    <div className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 mb-4">
+    <div className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 mb-4 cursor-pointer hover:bg-surface/70 transition-colors">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
