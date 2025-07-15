@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, Bot, User } from "lucide-react";
+import { Send, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -22,7 +22,6 @@ const initialMessages: Message[] = [
 export const AIAssistant = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -145,14 +144,14 @@ export const AIAssistant = () => {
       </div>
 
       {/* Input Area */}
-      <div className="flex items-end gap-2 bg-card/30 rounded-xl p-2">
-        <div className="flex-1 bg-background/50 rounded-lg">
+      <div className="flex items-center gap-2 bg-card/50 rounded-xl p-3 mx-4 mb-4">
+        <div className="flex-1 bg-background/70 rounded-lg border border-border/30">
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Digite sua mensagem..."
-            className="w-full p-3 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="w-full px-4 py-3 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
             rows={1}
             style={{ minHeight: '44px', maxHeight: '120px' }}
           />
@@ -160,17 +159,9 @@ export const AIAssistant = () => {
         
         <Button
           size="icon"
-          onClick={() => setIsRecording(!isRecording)}
-          className={`${isRecording ? 'btn-destructive' : 'btn-secondary'} w-11 h-11`}
-        >
-          {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-        </Button>
-        
-        <Button
-          size="icon"
           onClick={handleSendMessage}
           disabled={!inputText.trim()}
-          className="btn-accent w-11 h-11"
+          className="btn-accent w-12 h-12 shrink-0"
         >
           <Send className="w-5 h-5" />
         </Button>
