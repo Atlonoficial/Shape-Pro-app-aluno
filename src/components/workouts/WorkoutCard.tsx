@@ -2,23 +2,25 @@ import { Clock, Flame } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface WorkoutCardProps {
-  title: string;
+  name: string;
   duration: number;
   calories: number;
-  difficulty: 'Iniciante' | 'Intermediário' | 'Avançado';
+  difficulty: string;
   muscleGroup: string;
   image: string;
   isCompleted?: boolean;
+  onClick?: () => void;
 }
 
 export const WorkoutCard = ({ 
-  title, 
+  name, 
   duration, 
   calories, 
   difficulty, 
   muscleGroup, 
   image, 
-  isCompleted = false 
+  isCompleted = false,
+  onClick 
 }: WorkoutCardProps) => {
   const getDifficultyColor = (level: string) => {
     switch (level) {
@@ -30,12 +32,15 @@ export const WorkoutCard = ({
   };
 
   return (
-    <Card className="bg-card/50 border-border/50 overflow-hidden hover:bg-card/70 transition-all duration-300">
+    <Card 
+      className="bg-card/50 border-border/50 overflow-hidden hover:bg-card/70 transition-all duration-300 cursor-pointer"
+      onClick={onClick}
+    >
       <CardContent className="p-0">
         <div className="relative">
           <img 
             src={image} 
-            alt={title}
+            alt={name}
             className="w-full h-32 object-cover"
           />
           {isCompleted && (
@@ -49,7 +54,7 @@ export const WorkoutCard = ({
         </div>
         
         <div className="p-4">
-          <h3 className="font-semibold text-foreground mb-2">{title}</h3>
+          <h3 className="font-semibold text-foreground mb-2">{name}</h3>
           
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -68,7 +73,13 @@ export const WorkoutCard = ({
               {difficulty}
             </span>
             
-            <button className="bg-primary/20 hover:bg-primary/30 text-primary px-3 py-1 rounded-lg text-sm font-medium transition-colors">
+            <button 
+              className="bg-primary/20 hover:bg-primary/30 text-primary px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick?.();
+              }}
+            >
               Iniciar
             </button>
           </div>

@@ -1,62 +1,145 @@
+import { useState } from "react";
 import { Search, Filter } from "lucide-react";
 import { WorkoutCard } from "./WorkoutCard";
+import { WorkoutDetail } from "./WorkoutDetail";
+import { ExerciseDetail } from "./ExerciseDetail";
+import { WorkoutSession } from "./WorkoutSession";
 
 const workouts = [
   {
     id: 1,
-    title: "Treino de Peito e Tríceps",
-    duration: 45,
+    name: "Seca Barriga Woman",
+    type: "Cardio",
+    duration: 40,
+    difficulty: "Moderado",
+    image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&q=80&w=400",
+    exercises: [
+      { 
+        id: 1, 
+        name: "Burpee", 
+        type: "Cardio",
+        sets: "3",
+        reps: "8-12",
+        rest: "60s",
+        description: "Exercício completo para queima de calorias"
+      },
+      { 
+        id: 2, 
+        name: "Corrida Esteira", 
+        type: "Cardio",
+        duration: "20 min",
+        rest: "2 min",
+        description: "Cardio de alta intensidade"
+      }
+    ],
     calories: 320,
-    difficulty: 'Intermediário' as const,
-    muscleGroup: "Peitoral",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
+    muscleGroup: "Cardio",
     isCompleted: false
   },
   {
     id: 2,
-    title: "Cardio HIIT Intenso",
-    duration: 30,
+    name: "Força Total",
+    type: "Musculação",
+    duration: 45,
+    difficulty: "Avançado",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
+    exercises: [
+      { id: 1, name: "Agachamento", type: "Pernas" },
+      { id: 2, name: "Supino", type: "Peito" },
+      { id: 3, name: "Remada", type: "Costas" }
+    ],
     calories: 280,
-    difficulty: 'Avançado' as const,
-    muscleGroup: "Cardio",
-    image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&q=80&w=400",
+    muscleGroup: "Peitoral",
     isCompleted: true
   },
   {
     id: 3,
-    title: "Costas e Bíceps",
-    duration: 50,
-    calories: 340,
-    difficulty: 'Intermediário' as const,
-    muscleGroup: "Costas",
+    name: "Yoga Relaxante",
+    type: "Flexibilidade",
+    duration: 25,
+    difficulty: "Iniciante",
     image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=400",
-    isCompleted: false
-  },
-  {
-    id: 4,
-    title: "Pernas Completo",
-    duration: 60,
-    calories: 420,
-    difficulty: 'Avançado' as const,
-    muscleGroup: "Pernas",
-    image: "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?auto=format&fit=crop&q=80&w=400",
-    isCompleted: false
-  },
-  {
-    id: 5,
-    title: "Ombros e Abdômen",
-    duration: 35,
-    calories: 250,
-    difficulty: 'Iniciante' as const,
-    muscleGroup: "Ombros",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
+    exercises: [
+      { id: 1, name: "Posição do Gato", type: "Flexibilidade" },
+      { id: 2, name: "Warrior Pose", type: "Equilíbrio" }
+    ],
+    calories: 150,
+    muscleGroup: "Flexibilidade",
     isCompleted: false
   }
 ];
 
 const muscleGroups = ["Todos", "Peitoral", "Costas", "Pernas", "Ombros", "Cardio"];
 
+type ViewState = 'list' | 'detail' | 'exercise' | 'session';
+
 export const Workouts = () => {
+  const [currentView, setCurrentView] = useState<ViewState>('list');
+  const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
+  const [selectedExercise, setSelectedExercise] = useState<any>(null);
+
+  const handleWorkoutSelect = (workout: any) => {
+    setSelectedWorkout(workout);
+    setCurrentView('detail');
+  };
+
+  const handleExerciseSelect = (exercise: any) => {
+    setSelectedExercise(exercise);
+    setCurrentView('exercise');
+  };
+
+  const handleStartWorkout = () => {
+    setCurrentView('session');
+  };
+
+  const handleFinishWorkout = () => {
+    // Reset to list view and show success
+    setCurrentView('list');
+    setSelectedWorkout(null);
+    setSelectedExercise(null);
+  };
+
+  const handleBackToList = () => {
+    setCurrentView('list');
+    setSelectedWorkout(null);
+    setSelectedExercise(null);
+  };
+
+  const handleBackToDetail = () => {
+    setCurrentView('detail');
+    setSelectedExercise(null);
+  };
+
+  if (currentView === 'session' && selectedWorkout) {
+    return (
+      <WorkoutSession
+        workout={selectedWorkout}
+        onFinish={handleFinishWorkout}
+        onExit={handleBackToList}
+      />
+    );
+  }
+
+  if (currentView === 'exercise' && selectedExercise) {
+    return (
+      <ExerciseDetail
+        exercise={selectedExercise}
+        onBack={handleBackToDetail}
+        onStartExercise={handleStartWorkout}
+      />
+    );
+  }
+
+  if (currentView === 'detail' && selectedWorkout) {
+    return (
+      <WorkoutDetail
+        workout={selectedWorkout}
+        onBack={handleBackToList}
+        onStartWorkout={handleStartWorkout}
+      />
+    );
+  }
+
   return (
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
@@ -95,7 +178,11 @@ export const Workouts = () => {
       {/* Workout Grid */}
       <div className="grid grid-cols-1 gap-4">
         {workouts.map((workout) => (
-          <WorkoutCard key={workout.id} {...workout} />
+          <WorkoutCard 
+            key={workout.id} 
+            {...workout} 
+            onClick={() => handleWorkoutSelect(workout)}
+          />
         ))}
       </div>
     </div>

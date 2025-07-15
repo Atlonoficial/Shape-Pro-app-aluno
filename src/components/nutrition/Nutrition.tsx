@@ -20,54 +20,36 @@ const meals = [
   {
     id: 1,
     title: "Café da Manhã",
-    time: "07:30",
-    calories: 420,
-    targetCalories: 500,
+    calories: 375,
     foods: [
-      { name: "Aveia com banana", calories: 280, quantity: "1 porção" },
-      { name: "Café com leite", calories: 90, quantity: "1 xícara" },
-      { name: "Mel", calories: 50, quantity: "1 colher" }
+      { name: "Aveia", calories: 190, quantity: "50g" },
+      { name: "Banana", calories: 105, quantity: "1 unidade" },
+      { name: "Leite desnatado", calories: 80, quantity: "200ml" }
     ],
+    description: "Rica em fibras e carboidratos",
     isCompleted: true
   },
   {
     id: 2,
-    title: "Almoço",
-    time: "12:00",
-    calories: 650,
-    targetCalories: 700,
+    title: "Jantar",
+    calories: 520,
     foods: [
       { name: "Frango grelhado", calories: 350, quantity: "150g" },
-      { name: "Arroz integral", calories: 180, quantity: "1 xícara" },
-      { name: "Brócolis", calories: 40, quantity: "1 porção" },
-      { name: "Azeite", calories: 80, quantity: "1 colher" }
+      { name: "Arroz integral", calories: 120, quantity: "80g" },
+      { name: "Brócolis", calories: 50, quantity: "100g" }
     ],
-    isCompleted: true
-  },
-  {
-    id: 3,
-    title: "Lanche",
-    time: "15:30",
-    calories: 180,
-    targetCalories: 300,
-    foods: [
-      { name: "Iogurte grego", calories: 120, quantity: "1 pote" },
-      { name: "Granola", calories: 60, quantity: "1 colher" }
-    ],
+    description: "Alto teor de proteínas",
     isCompleted: false
   },
   {
-    id: 4,
-    title: "Jantar",
-    time: "19:00",
-    calories: 0,
-    targetCalories: 600,
+    id: 3,
+    title: "Lanche da Tarde",
+    calories: 180,
     foods: [
-      { name: "Salmão grelhado", calories: 300, quantity: "150g" },
-      { name: "Batata doce", calories: 160, quantity: "1 média" },
-      { name: "Salada verde", calories: 40, quantity: "1 porção" },
-      { name: "Azeite", calories: 100, quantity: "1 colher" }
+      { name: "Iogurte natural", calories: 120, quantity: "150g" },
+      { name: "Granola", calories: 60, quantity: "20g" }
     ],
+    description: "Fonte de probióticos",
     isCompleted: false
   }
 ];
