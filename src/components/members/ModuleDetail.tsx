@@ -251,16 +251,17 @@ export const ModuleDetail = ({ moduleId, onBack }: ModuleDetailProps) => {
       </div>
 
       {/* Video Player Area */}
-      <div className="relative aspect-video bg-background mx-4 rounded-lg overflow-hidden mb-6">
-        <img 
-          src={currentLesson?.thumbnail || module.currentVideo}
-          alt={currentLesson?.title || module.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <Button size="lg" className="btn-accent w-16 h-16 rounded-full p-0">
-            <Play className="w-6 h-6 ml-1" />
-          </Button>
+      <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-accent/20 mx-4 rounded-lg overflow-hidden mb-6 border border-border/30">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <Button size="lg" className="btn-accent w-16 h-16 rounded-full p-0 mb-4 shadow-lg">
+              <Play className="w-6 h-6 ml-1" />
+            </Button>
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2">
+              <p className="text-white/90 text-sm font-medium">Clique para assistir</p>
+            </div>
+          </div>
         </div>
         
         {/* Video Info Overlay */}
