@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Play, ShoppingCart, Package, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModuleDetail } from "./ModuleDetail";
 
 const membershipData = {
   title: "Seca Barriga - Woman",
@@ -62,6 +63,16 @@ const products = [
 
 export const Members = () => {
   const [activeTab, setActiveTab] = useState<'courses' | 'products'>('courses');
+  const [selectedModule, setSelectedModule] = useState<number | null>(null);
+
+  if (selectedModule) {
+    return (
+      <ModuleDetail 
+        moduleId={selectedModule} 
+        onBack={() => setSelectedModule(null)} 
+      />
+    );
+  }
 
   return (
     <div className="p-4 pt-8 pb-24">
@@ -112,6 +123,7 @@ export const Members = () => {
             {membershipData.modules.map((module) => (
               <div 
                 key={module.id}
+                onClick={() => setSelectedModule(module.id)}
                 className="relative card-gradient overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer"
               >
                 <div 
