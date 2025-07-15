@@ -113,7 +113,10 @@ export const Rewards = () => {
             </div>
 
             <Button 
-              onClick={() => setShowStore(true)}
+              onClick={() => {
+                console.log("Acessando loja...");
+                setShowStore(true);
+              }}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 text-lg"
             >
               Acessar Loja
