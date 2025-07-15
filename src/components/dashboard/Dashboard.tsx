@@ -3,7 +3,7 @@ import { WeightChart } from "./WeightChart";
 import { CoachAICard } from "./CoachAICard";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
-import shapeProLogo from "@/assets/shape-pro-logo.png";
+import shapeProLogo from "@/assets/shape-pro-logo-original.png";
 
 interface DashboardProps {
   onCoachClick?: () => void;
