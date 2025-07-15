@@ -79,7 +79,6 @@ export const Members = () => {
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
         <Button
-          variant={activeTab === 'courses' ? 'default' : 'secondary'}
           onClick={() => setActiveTab('courses')}
           className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
             activeTab === 'courses' 
@@ -92,7 +91,6 @@ export const Members = () => {
         </Button>
         
         <Button
-          variant={activeTab === 'products' ? 'default' : 'secondary'}
           onClick={() => setActiveTab('products')}
           className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
             activeTab === 'products' 

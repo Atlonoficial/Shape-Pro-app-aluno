@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Settings as SettingsIcon, Bell, Moon, Shield, HelpCircle, Info, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { HelpCenter } from "./HelpCenter";
+import { AboutApp } from "./AboutApp";
+import { TermsOfService } from "./TermsOfService";
 
 const settingsCategories = [
   {
@@ -36,7 +39,8 @@ const settingsCategories = [
   }
 ];
 
-export const AppSettings = () => {
+export const Settings = () => {
+  const [currentView, setCurrentView] = useState<'main' | 'help' | 'about' | 'terms'>('main');
   const [toggleStates, setToggleStates] = useState<Record<string, boolean>>({
     workouts: true,
     meals: true,
@@ -53,6 +57,22 @@ export const AppSettings = () => {
       [id]: !prev[id]
     }));
   };
+
+  const handleNavigation = (view: 'help' | 'about' | 'terms') => {
+    setCurrentView(view);
+  };
+
+  if (currentView === 'help') {
+    return <HelpCenter onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'about') {
+    return <AboutApp onBack={() => setCurrentView('main')} />;
+  }
+
+  if (currentView === 'terms') {
+    return <TermsOfService onBack={() => setCurrentView('main')} />;
+  }
 
   return (
     <div className="p-4 pt-8 pb-24">
@@ -95,7 +115,15 @@ export const AppSettings = () => {
                         )}
                         
                         {item.type === 'navigation' && (
-                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                          <button
+                            onClick={() => {
+                              if (item.id === 'help') handleNavigation('help');
+                              if (item.id === 'about') handleNavigation('about');
+                              if (item.id === 'terms') handleNavigation('terms');
+                            }}
+                          >
+                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                          </button>
                         )}
                       </div>
                     </div>

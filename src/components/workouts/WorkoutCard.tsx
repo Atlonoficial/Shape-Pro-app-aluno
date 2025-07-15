@@ -74,13 +74,13 @@ export const WorkoutCard = ({
             </span>
             
             <button 
-              className="bg-primary/20 hover:bg-primary/30 text-primary px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+              className="btn-accent px-3 py-1 rounded-lg text-sm font-medium"
               onClick={(e) => {
                 e.stopPropagation();
                 onClick?.();
               }}
             >
-              Iniciar
+              Ver
             </button>
           </div>
         </div>

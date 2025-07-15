@@ -6,6 +6,7 @@ import { Workouts } from "@/components/workouts/Workouts";
 import { Nutrition } from "@/components/nutrition/Nutrition";
 import { Profile } from "@/components/profile/Profile";
 import { Members } from "@/components/members/Members";
+import { AIAssistant } from "@/components/assistant/AIAssistant";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -20,6 +21,8 @@ const Index = () => {
         return <Nutrition />;
       case 'members':
         return <Members />;
+      case 'assistant':
+        return <AIAssistant />;
       case 'profile':
         return <Profile />;
       default:
