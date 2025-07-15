@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Search, Filter } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
 import { ExerciseDetail } from "./ExerciseDetail";
@@ -94,6 +95,30 @@ export const Workouts = () => {
   }, []);
 
   const handleFinishWorkout = useCallback(() => {
+    // Gamificação ao finalizar treino
+    const points = Math.floor(Math.random() * 50) + 50; // 50-100 pontos
+    const achievements = [
+      "🔥 Queimador de Calorias!",
+      "💪 Força Total!",
+      "⚡ Super Atleta!",
+      "🏆 Campeão do Dia!",
+      "🎯 Meta Atingida!"
+    ];
+    const randomAchievement = achievements[Math.floor(Math.random() * achievements.length)];
+    
+    toast({
+      title: `${randomAchievement}`,
+      description: `Parabéns! Você ganhou ${points} pontos e completou mais um treino! 🎉`,
+    });
+
+    // Segundo toast com motivação
+    setTimeout(() => {
+      toast({
+        title: "🚀 Continue assim!",
+        description: "Você está cada vez mais forte! Próximo treino em 24h.",
+      });
+    }, 3000);
+
     setCurrentView('list');
     setSelectedWorkout(null);
     setSelectedExercise(null);

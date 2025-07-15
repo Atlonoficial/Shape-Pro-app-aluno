@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, ChevronRight, Bell, User, Moon, Globe, Shield, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, ChevronRight, Bell, User, Moon, Globe, Shield, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +13,18 @@ export const Configuracoes = () => {
   const [tema, setTema] = useState("escuro");
   const [idioma, setIdioma] = useState("pt");
 
+  useEffect(() => {
+    // Demonstração de notificação ao carregar as configurações
+    const timer = setTimeout(() => {
+      toast({
+        title: "🔔 Hora do treino!",
+        description: "Você tem um treino agendado para hoje às 18:00",
+      });
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSair = () => {
     toast({
       title: "Saindo...",
@@ -21,17 +33,39 @@ export const Configuracoes = () => {
     });
   };
 
+  const handlePlanosClick = () => {
+    toast({
+      title: "Planos e Assinaturas",
+      description: "Gerencie seu plano atual e explore novas opções",
+    });
+  };
+
   const configItems = [
     {
       icon: Bell,
       title: "Notificações",
-      description: "Receber alertas e lembretes",
+      description: "Receber alertas e lembretes (clique para exemplo!)",
       action: (
         <Switch 
           checked={notificacoes}
-          onCheckedChange={setNotificacoes}
+          onCheckedChange={(checked) => {
+            setNotificacoes(checked);
+            if (checked) {
+              toast({
+                title: "🔥 Notificações ativadas!",
+                description: "Você receberá lembretes de treinos e dicas personalizadas",
+              });
+            }
+          }}
         />
       )
+    },
+    {
+      icon: Crown,
+      title: "Planos e Assinaturas",
+      description: "Gerencie seu plano atual",
+      action: <ChevronRight className="w-4 h-4 text-muted-foreground" />,
+      onClick: handlePlanosClick
     },
     {
       icon: User,
