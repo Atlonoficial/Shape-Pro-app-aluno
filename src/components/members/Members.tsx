@@ -81,7 +81,7 @@ export const Members = () => {
         <h1 className="text-2xl font-bold text-foreground mb-2">Bem-vindo,</h1>
         <h2 className="text-xl text-foreground mb-4">Área de membros!</h2>
         
-        <Button className="btn-accent w-32 h-12 mb-6">
+        <Button className="btn-primary w-32 h-12 mb-6">
           <Play className="w-4 h-4 mr-2" />
           Assistir
         </Button>
@@ -93,7 +93,7 @@ export const Members = () => {
           onClick={() => setActiveTab('courses')}
           className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
             activeTab === 'courses' 
-              ? 'btn-accent' 
+              ? 'btn-primary' 
               : 'btn-secondary'
           }`}
         >
@@ -105,7 +105,7 @@ export const Members = () => {
           onClick={() => setActiveTab('products')}
           className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
             activeTab === 'products' 
-              ? 'btn-accent' 
+              ? 'bg-gradient-to-r from-warning to-warning/80 text-warning-foreground font-semibold shadow-[0_4px_14px_hsl(var(--warning)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--warning)/0.6)] hover:scale-105 active:scale-95' 
               : 'btn-secondary'
           }`}
         >
@@ -160,11 +160,11 @@ export const Members = () => {
                   <div className="flex-1">
                     <h4 className="font-semibold text-foreground mb-1">{product.name}</h4>
                     <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
-                    <p className="text-lg font-bold text-accent">R$ {product.price.toFixed(2).replace('.', ',')}</p>
+                    <p className="text-lg font-bold text-warning">R$ {product.price.toFixed(2).replace('.', ',')}</p>
                   </div>
                   <Button 
                     size="sm"
-                    className="self-end btn-accent h-9 px-4"
+                    className="self-end bg-gradient-to-r from-warning to-warning/80 text-warning-foreground font-semibold shadow-[0_4px_14px_hsl(var(--warning)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--warning)/0.6)] hover:scale-105 active:scale-95 h-9 px-4"
                   >
                     <ShoppingCart className="w-4 h-4 mr-1" />
                     Comprar
