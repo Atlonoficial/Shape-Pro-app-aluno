@@ -11,10 +11,14 @@ import { AIAssistant } from "@/components/assistant/AIAssistant";
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
 
+  const handleCoachClick = () => {
+    setActiveTab('assistant');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard />;
+        return <Dashboard onCoachClick={handleCoachClick} />;
       case 'workouts':
         return <Workouts />;
       case 'nutrition':
@@ -26,7 +30,7 @@ const Index = () => {
       case 'profile':
         return <Profile />;
       default:
-        return <Dashboard />;
+        return <Dashboard onCoachClick={handleCoachClick} />;
     }
   };
 

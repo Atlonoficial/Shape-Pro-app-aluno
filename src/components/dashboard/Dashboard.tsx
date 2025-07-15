@@ -4,7 +4,11 @@ import { CoachAICard } from "./CoachAICard";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
 
-export const Dashboard = () => {
+interface DashboardProps {
+  onCoachClick?: () => void;
+}
+
+export const Dashboard = ({ onCoachClick }: DashboardProps) => {
   const currentHour = new Date().getHours();
   
   const getGreeting = () => {
@@ -38,7 +42,7 @@ export const Dashboard = () => {
       <WeightChart />
 
       {/* Coach AI Card */}
-      <CoachAICard />
+      <CoachAICard onCoachClick={onCoachClick} />
 
       {/* Quick Actions */}
       <QuickActions />

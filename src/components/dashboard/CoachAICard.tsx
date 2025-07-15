@@ -1,6 +1,10 @@
 import { MessageCircle, Zap } from "lucide-react";
 
-export const CoachAICard = () => {
+interface CoachAICardProps {
+  onCoachClick?: () => void;
+}
+
+export const CoachAICard = ({ onCoachClick }: CoachAICardProps) => {
   return (
     <div className="card-gradient p-6 mb-6 border border-accent/20">
       <div className="flex items-start gap-4">
@@ -21,7 +25,10 @@ export const CoachAICard = () => {
             Seu assistente pessoal para treinos, dieta e dicas de performance.
           </p>
           
-          <button className="btn-accent flex items-center gap-2 w-full justify-center">
+          <button 
+            onClick={onCoachClick}
+            className="btn-accent flex items-center gap-2 w-full justify-center"
+          >
             <MessageCircle size={18} />
             <span>Conversar Agora</span>
           </button>
