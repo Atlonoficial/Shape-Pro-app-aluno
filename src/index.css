@@ -1,42 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Atlon Tech Fitness App Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Atlon Tech Brand Colors */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 46 85% 48%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 78%;
+    --secondary-foreground: 0 0% 8%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 120 100% 50%;
+    --accent-foreground: 0 0% 8%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 46 85% 48%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
+
+    /* Fitness App Specific Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 8%;
+    
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 98%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(46 85% 38%));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(142 76% 36%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 6%), hsl(0 0% 12%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 15%));
+
+    /* Shadows */
+    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --shadow-button: 0 4px 14px hsl(var(--primary) / 0.4);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +126,58 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-poppins;
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+@layer components {
+  /* Fitness App Component Styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-[0_4px_14px_hsl(var(--primary)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--primary)/0.6)] hover:scale-105 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-card border border-border text-card-foreground font-medium py-3 px-6 rounded-xl transition-all duration-300 hover:bg-muted hover:scale-105 active:scale-95;
+  }
+
+  .btn-accent {
+    @apply bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-[0_4px_14px_hsl(var(--accent)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--accent)/0.6)] hover:scale-105 active:scale-95;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-card to-muted border border-border shadow-[0_8px_32px_hsl(0_0%_0%/0.4)] rounded-2xl;
+  }
+
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-accent {
+    @apply bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent;
+  }
+
+  .mobile-container {
+    @apply max-w-sm mx-auto min-h-screen bg-background;
+  }
+
+  .glass-effect {
+    @apply bg-card/20 backdrop-blur-lg border border-border/50;
+  }
+
+  .metric-card {
+    @apply card-gradient p-4 hover:scale-105 transition-all duration-300;
+  }
+
+  .progress-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .nav-item {
+    @apply flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-300 hover:bg-muted active:scale-95;
+  }
+
+  .nav-item.active {
+    @apply bg-primary/10 text-primary;
   }
 }
