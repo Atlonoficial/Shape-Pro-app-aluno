@@ -1,6 +1,7 @@
 import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const profileStats = [
   { label: "Treinos Concluídos", value: "47", icon: Activity },
@@ -9,15 +10,16 @@ const profileStats = [
 ];
 
 const menuItems = [
-  { icon: FileText, title: "Cadastro Completo", subtitle: "Informações pessoais", badge: "90%" },
-  { icon: Activity, title: "Exames Médicos", subtitle: "Últimos resultados", badge: "2" },
-  { icon: Camera, title: "Fotos de Progresso", subtitle: "Evolução visual", badge: "8" },
-  { icon: FileText, title: "Avaliações Físicas", subtitle: "Medidas e composição", badge: "3" },
-  { icon: User, title: "Anamnese", subtitle: "Histórico de saúde", badge: null },
-  { icon: Settings, title: "Configurações", subtitle: "Preferências do app", badge: null },
+  { icon: FileText, title: "Cadastro Completo", subtitle: "Informações pessoais", badge: "90%", path: "/cadastro-completo" },
+  { icon: Activity, title: "Exames Médicos", subtitle: "Últimos resultados", badge: "2", path: "/exames-medicos" },
+  { icon: Camera, title: "Fotos de Progresso", subtitle: "Evolução visual", badge: "8", path: "/fotos-progresso" },
+  { icon: FileText, title: "Avaliações Físicas", subtitle: "Medidas e composição", badge: "3", path: "/avaliacoes-fisicas" },
+  { icon: User, title: "Anamnese", subtitle: "Histórico de saúde", badge: null, path: "/anamnese" },
+  { icon: Settings, title: "Configurações", subtitle: "Preferências do app", badge: null, path: "/configuracoes" },
 ];
 
 export const Profile = () => {
+  const navigate = useNavigate();
   return (
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
@@ -77,7 +79,11 @@ export const Profile = () => {
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           return (
-            <Card key={index} className="card-gradient hover:scale-105 transition-all duration-300 cursor-pointer">
+            <Card 
+              key={index} 
+              className="card-gradient hover:scale-105 transition-all duration-300 cursor-pointer"
+              onClick={() => navigate(item.path)}
+            >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
