@@ -8,6 +8,7 @@ import { Nutrition } from "@/components/nutrition/Nutrition";
 import { Profile } from "@/components/profile/Profile";
 import { Members } from "@/components/members/Members";
 import { AIAssistant } from "@/components/assistant/AIAssistant";
+import { Rewards } from "@/components/rewards/Rewards";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -36,6 +37,8 @@ const Index = () => {
         return <Members />;
       case 'assistant':
         return <AIAssistant />;
+      case 'rewards':
+        return <Rewards />;
       case 'profile':
         return <Profile />;
       default:
