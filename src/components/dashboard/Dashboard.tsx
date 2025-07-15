@@ -43,11 +43,11 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
             Olá, <span className="text-gradient-primary">Alex!</span>
           </h1>
           <div className="flex items-center gap-2">
-            <span className="bg-warning/10 text-warning px-2 py-1 rounded-full text-xs font-medium">
-              👑 Gold Fit
-            </span>
             <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
-              ⭐ Pro
+              🔥 Ritmo Shape
+            </span>
+            <span className="bg-warning/10 text-warning px-2 py-1 rounded-full text-xs font-medium">
+              💪 Consistência Pro
             </span>
           </div>
         </div>
