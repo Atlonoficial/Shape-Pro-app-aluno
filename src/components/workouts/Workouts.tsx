@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Search, Filter } from "lucide-react";
 import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
@@ -44,9 +44,9 @@ const workouts = [
     difficulty: "Avançado",
     image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
     exercises: [
-      { id: 1, name: "Agachamento", type: "Pernas" },
-      { id: 2, name: "Supino", type: "Peito" },
-      { id: 3, name: "Remada", type: "Costas" }
+      { id: 1, name: "Agachamento", type: "Pernas", sets: "4", reps: "12-15", rest: "90s", description: "Exercício para fortalecimento das pernas" },
+      { id: 2, name: "Supino", type: "Peito", sets: "3", reps: "8-10", rest: "120s", description: "Desenvolvimento do peitoral" },
+      { id: 3, name: "Remada", type: "Costas", sets: "3", reps: "10-12", rest: "90s", description: "Fortalecimento das costas" }
     ],
     calories: 280,
     muscleGroup: "Peitoral",
@@ -60,8 +60,8 @@ const workouts = [
     difficulty: "Iniciante",
     image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=400",
     exercises: [
-      { id: 1, name: "Posição do Gato", type: "Flexibilidade" },
-      { id: 2, name: "Warrior Pose", type: "Equilíbrio" }
+      { id: 1, name: "Posição do Gato", type: "Flexibilidade", duration: "5 min", rest: "30s", description: "Alongamento da coluna" },
+      { id: 2, name: "Warrior Pose", type: "Equilíbrio", duration: "3 min", rest: "30s", description: "Postura de equilíbrio e força" }
     ],
     calories: 150,
     muscleGroup: "Flexibilidade",
@@ -78,52 +78,55 @@ export const Workouts = () => {
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
 
-  const handleWorkoutSelect = (workout: any) => {
+  const handleWorkoutSelect = useCallback((workout: any) => {
     setSelectedWorkout(workout);
+    setSelectedExercise(null);
     setCurrentView('detail');
-  };
+  }, []);
 
-  const handleExerciseSelect = (exercise: any) => {
+  const handleExerciseSelect = useCallback((exercise: any) => {
     setSelectedExercise(exercise);
     setCurrentView('exercise');
-  };
+  }, []);
 
-  const handleStartWorkout = () => {
+  const handleStartWorkout = useCallback(() => {
     setCurrentView('session');
-  };
+  }, []);
 
-  const handleFinishWorkout = () => {
-    // Reset to list view and show success
+  const handleFinishWorkout = useCallback(() => {
     setCurrentView('list');
     setSelectedWorkout(null);
     setSelectedExercise(null);
-  };
+  }, []);
 
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     setCurrentView('list');
     setSelectedWorkout(null);
     setSelectedExercise(null);
-  };
+  }, []);
 
-  const handleBackToDetail = () => {
+  const handleBackToDetail = useCallback(() => {
     setCurrentView('detail');
     setSelectedExercise(null);
-  };
+  }, []);
 
+  // Renderização condicional baseada no estado atual
   if (currentView === 'session' && selectedWorkout) {
     return (
       <WorkoutSession
         workout={selectedWorkout}
+        currentExercise={selectedExercise}
         onFinish={handleFinishWorkout}
         onExit={handleBackToList}
       />
     );
   }
 
-  if (currentView === 'exercise' && selectedExercise) {
+  if (currentView === 'exercise' && selectedExercise && selectedWorkout) {
     return (
       <ExerciseDetail
         exercise={selectedExercise}
+        workout={selectedWorkout}
         onBack={handleBackToDetail}
         onStartExercise={handleStartWorkout}
       />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Clock, Flame, Dumbbell, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VideoPlayer } from "./VideoPlayer";
 
 interface Exercise {
   id: number;
@@ -29,6 +30,7 @@ interface WorkoutDetailProps {
 }
 
 export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelect }: WorkoutDetailProps) => {
+  const [selectedExercisePreview, setSelectedExercisePreview] = useState<number | null>(null);
   return (
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
@@ -86,18 +88,40 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           {workout.exercises.map((exercise) => (
             <div 
               key={exercise.id}
-              className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 cursor-pointer hover:bg-surface/70 transition-colors"
-              onClick={() => onExerciseSelect?.(exercise)}
+              className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 transition-colors"
             >
-              <div className="flex items-center justify-between">
+              <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => onExerciseSelect?.(exercise)}
+              >
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground mb-1">{exercise.name}</h3>
                   <p className="text-muted-foreground text-sm">{exercise.type}</p>
                 </div>
-                <button className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <Play className="w-4 h-4 text-white ml-0.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedExercisePreview(
+                        selectedExercisePreview === exercise.id ? null : exercise.id
+                      );
+                    }}
+                    className="w-8 h-8 rounded-full bg-surface/50 border border-border/30 flex items-center justify-center hover:bg-surface/70 transition-colors"
+                  >
+                    <Play className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                  <button className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <Play className="w-4 h-4 text-white ml-0.5" />
+                  </button>
+                </div>
               </div>
+              
+              {/* Video preview expandible */}
+              {selectedExercisePreview === exercise.id && (
+                <div className="mt-4 pt-4 border-t border-border/20">
+                  <VideoPlayer exerciseName={exercise.name} />
+                </div>
+              )}
             </div>
           ))}
         </div>

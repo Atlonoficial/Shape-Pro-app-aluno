@@ -1,5 +1,6 @@
 import { ArrowLeft, Play, ChevronDown, Dumbbell, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VideoPlayer } from "./VideoPlayer";
 
 interface ExerciseDetailProps {
   exercise: {
@@ -12,11 +13,18 @@ interface ExerciseDetailProps {
     rest?: string;
     description?: string;
   };
+  workout?: {
+    id: number;
+    name: string;
+    type: string;
+    duration: number;
+    difficulty: string;
+  };
   onBack: () => void;
   onStartExercise: () => void;
 }
 
-export const ExerciseDetail = ({ exercise, onBack, onStartExercise }: ExerciseDetailProps) => {
+export const ExerciseDetail = ({ exercise, workout, onBack, onStartExercise }: ExerciseDetailProps) => {
   return (
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
@@ -33,20 +41,20 @@ export const ExerciseDetail = ({ exercise, onBack, onStartExercise }: ExerciseDe
 
         {/* Exercise info */}
         <div className="relative z-10 mt-auto p-6 text-white">
-          <h1 className="text-2xl font-bold mb-2">{exercise.name}</h1>
-          <p className="text-white/80 mb-4">{exercise.type}</p>
+          <h1 className="text-2xl font-bold mb-2">{workout?.name || "Treino"}</h1>
+          <p className="text-white/80 mb-4">{workout?.type || exercise.type}</p>
           
           {/* Stats */}
           <div className="flex gap-4">
             <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
               <Clock className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium">{exercise.duration || "40 min"}</span>
+              <span className="text-sm font-medium">{workout?.duration || "40"} min</span>
               <span className="text-xs text-white/60">Duração</span>
             </div>
             
             <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
               <Dumbbell className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium">Moderado</span>
+              <span className="text-sm font-medium">{workout?.difficulty || "Moderado"}</span>
               <span className="text-xs text-white/60">Dificuldade</span>
             </div>
             
@@ -81,7 +89,7 @@ export const ExerciseDetail = ({ exercise, onBack, onStartExercise }: ExerciseDe
           </div>
 
           {/* Exercise specs */}
-          <div className="space-y-3">
+          <div className="space-y-3 mb-4">
             <div className="flex items-center gap-3">
               <Dumbbell className="w-5 h-5 text-accent" />
               <span className="text-foreground font-medium">
@@ -103,6 +111,9 @@ export const ExerciseDetail = ({ exercise, onBack, onStartExercise }: ExerciseDe
               </span>
             </div>
           </div>
+
+          {/* Video Player */}
+          <VideoPlayer exerciseName={exercise.name} className="mb-4" />
         </div>
       </div>
 

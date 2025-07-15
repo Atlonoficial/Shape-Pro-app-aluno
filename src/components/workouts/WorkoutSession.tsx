@@ -10,11 +10,12 @@ interface WorkoutSessionProps {
     duration: number;
     exercises: any[];
   };
+  currentExercise?: any;
   onFinish: () => void;
   onExit: () => void;
 }
 
-export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProps) => {
+export const WorkoutSession = ({ workout, currentExercise, onFinish, onExit }: WorkoutSessionProps) => {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
