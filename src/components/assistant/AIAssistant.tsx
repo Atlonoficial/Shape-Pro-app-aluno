@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot } from "lucide-react";
+import { Send, Bot, Calendar, Award, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ShapeProLogo } from "@/components/ui/ShapeProLogo";
 
 interface Message {
   id: string;
@@ -13,7 +14,7 @@ interface Message {
 const initialMessages: Message[] = [
   {
     id: '1',
-    text: 'Olá! Sou o assistente do time ShapePro!',
+    text: 'Olá, Alex! 👋 Sou seu Coach IA da Shape Pro. Estou aqui para te guiar, vamos começar?',
     sender: 'ai',
     timestamp: new Date()
   }
@@ -90,16 +91,44 @@ export const AIAssistant = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen relative">
-      {/* Header */}
-      <div className="p-4 pt-8 text-center bg-background/95 border-b border-border/30">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-            <Bot className="w-6 h-6 text-primary" />
-          </div>
-          <h1 className="text-xl font-bold text-foreground">Coach IA</h1>
+    <div className="flex flex-col h-screen relative bg-gradient-dark">
+      {/* Header com Logo Shape Pro */}
+      <div className="p-6 pt-8 text-center bg-gradient-to-b from-card/90 to-transparent border-b border-border/20">
+        {/* Data */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Calendar className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString('pt-BR', { 
+              day: 'numeric', 
+              month: 'long', 
+              year: 'numeric' 
+            })}
+          </span>
         </div>
-        <p className="text-sm text-muted-foreground">Seu assistente pessoal de fitness</p>
+
+        {/* Shape Pro Logo */}
+        <div className="mb-6">
+          <ShapeProLogo className="h-12 w-auto" />
+        </div>
+
+        {/* Saudação personalizada */}
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">
+            Olá, <span className="text-gradient-primary">Alex!</span>
+          </h1>
+          
+          {/* Badges de conquistas */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="badge-premium flex items-center gap-1">
+              <Target className="w-3 h-3" />
+              Ritmo Shape
+            </div>
+            <div className="badge-member flex items-center gap-1">
+              <Award className="w-3 h-3" />
+              Consistência Pro
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Messages Container */}
@@ -111,11 +140,11 @@ export const AIAssistant = () => {
           >
             <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
               {message.sender === 'ai' && (
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
+                    <Bot className="w-5 h-5 text-primary-foreground" />
                   </div>
-                  <span className="text-xs text-muted-foreground">Coach IA</span>
+                  <span className="text-sm font-semibold text-primary">Coach Shape Pro</span>
                 </div>
               )}
               
@@ -144,14 +173,14 @@ export const AIAssistant = () => {
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border/30">
-        <div className="flex items-center gap-2 bg-card/80 rounded-xl p-3 max-w-md mx-auto">
-          <div className="flex-1 bg-background/90 rounded-lg border border-border/30">
+      <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
+        <div className="flex items-center gap-3 card-gradient p-4 max-w-md mx-auto">
+          <div className="flex-1 bg-background/90 rounded-xl border border-border/30">
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Digite sua mensagem..."
+              placeholder="Digite sua mensagem para o Coach Shape Pro..."
               className="w-full px-4 py-3 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
               rows={1}
               style={{ minHeight: '44px', maxHeight: '120px' }}
@@ -162,7 +191,7 @@ export const AIAssistant = () => {
             size="icon"
             onClick={handleSendMessage}
             disabled={!inputText.trim()}
-            className="btn-accent w-12 h-12 shrink-0"
+            className="btn-primary w-12 h-12 shrink-0"
           >
             <Send className="w-5 h-5" />
           </Button>
