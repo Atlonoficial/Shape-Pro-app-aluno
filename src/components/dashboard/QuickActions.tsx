@@ -1,4 +1,5 @@
 import { Play, Apple, Calendar, Target } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const quickActions = [
   {
@@ -6,32 +7,42 @@ const quickActions = [
     title: 'Iniciar Treino',
     subtitle: 'Treino do dia',
     icon: Play,
-    color: 'primary'
+    color: 'primary',
+    route: '/iniciar-treino'
   },
   {
     id: 'log-meal',
     title: 'Registrar Refeição',
     subtitle: 'Controle nutricional',
     icon: Apple,
-    color: 'accent'
+    color: 'accent',
+    route: '/registrar-refeicao'
   },
   {
     id: 'schedule',
     title: 'Agenda',
     subtitle: 'Próximos treinos',
     icon: Calendar,
-    color: 'secondary'
+    color: 'secondary',
+    route: '/agenda'
   },
   {
     id: 'goals',
     title: 'Metas',
     subtitle: 'Acompanhar progresso',
     icon: Target,
-    color: 'primary'
+    color: 'primary',
+    route: '/metas'
   }
 ];
 
 export const QuickActions = () => {
+  const navigate = useNavigate();
+
+  const handleActionClick = (route: string) => {
+    navigate(route);
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       {quickActions.map((action) => {
@@ -40,6 +51,7 @@ export const QuickActions = () => {
         return (
           <button
             key={action.id}
+            onClick={() => handleActionClick(action.route)}
             className="card-gradient p-4 text-left hover:scale-105 transition-all duration-300 group"
           >
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${

@@ -11,6 +11,10 @@ import { FotosProgresso } from "./pages/FotosProgresso";
 import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 import { Anamnese } from "./pages/Anamnese";
 import { Configuracoes } from "./pages/Configuracoes";
+import { IniciarTreino } from "./pages/IniciarTreino";
+import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
+import { Agenda } from "./pages/Agenda";
+import { Metas } from "./pages/Metas";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +32,10 @@ const App = () => (
           <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
           <Route path="/anamnese" element={<Anamnese />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route path="/iniciar-treino" element={<IniciarTreino />} />
+          <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
+          <Route path="/agenda" element={<Agenda />} />
+          <Route path="/metas" element={<Metas />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
