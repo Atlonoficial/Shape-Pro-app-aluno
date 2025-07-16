@@ -16,7 +16,7 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
   });
 
   return (
-    <div className="pb-24 px-4 pt-4">
+    <div className="p-4 pt-8 pb-24">
       {/* Header with Date and Profile */}
       <div className="flex items-start justify-between mb-6">
         <div className="text-sm text-muted-foreground">
