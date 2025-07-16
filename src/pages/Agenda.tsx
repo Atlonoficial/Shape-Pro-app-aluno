@@ -1,9 +1,12 @@
-import { Calendar, Clock, User, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, User, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 export const Agenda = () => {
+  const navigate = useNavigate();
+
   const horariosDisponiveis = [
     { horario: "08:00", disponivel: true },
     { horario: "09:00", disponivel: false },
@@ -68,10 +71,20 @@ export const Agenda = () => {
 
   return (
     <div className="p-4 pt-8 pb-24">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Agenda</h1>
-        <p className="text-sm text-muted-foreground">Gerencie seus treinos e consultas</p>
+      {/* Header com botão de volta */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="p-2"
+        >
+          <ArrowLeft size={20} />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+          <p className="text-sm text-muted-foreground">Gerencie seus treinos e consultas</p>
+        </div>
       </div>
 
       {/* Próximo Agendamento */}

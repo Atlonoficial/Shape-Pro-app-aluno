@@ -1,8 +1,11 @@
-import { Plus, Apple, Clock, Target } from "lucide-react";
+import { Plus, Apple, Clock, Target, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export const RegistrarRefeicao = () => {
+  const navigate = useNavigate();
+
   const refeicoesDoDia = [
     { 
       nome: "Café da Manhã", 
@@ -48,10 +51,20 @@ export const RegistrarRefeicao = () => {
 
   return (
     <div className="p-4 pt-8 pb-24">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Controle Nutricional</h1>
-        <p className="text-sm text-muted-foreground">Registre suas refeições de hoje</p>
+      {/* Header com botão de volta */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="p-2"
+        >
+          <ArrowLeft size={20} />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Controle Nutricional</h1>
+          <p className="text-sm text-muted-foreground">Registre suas refeições de hoje</p>
+        </div>
       </div>
 
       {/* Resumo Calórico */}

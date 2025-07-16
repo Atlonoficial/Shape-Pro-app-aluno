@@ -1,8 +1,11 @@
-import { Play, Clock, Target, CheckCircle } from "lucide-react";
+import { Play, Clock, Target, CheckCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export const IniciarTreino = () => {
+  const navigate = useNavigate();
+
   const exercicios = [
     { nome: "Supino Reto", series: "4x12", peso: "80kg", concluido: false },
     { nome: "Supino Inclinado", series: "3x10", peso: "70kg", concluido: false },
@@ -13,17 +16,27 @@ export const IniciarTreino = () => {
 
   return (
     <div className="p-4 pt-8 pb-24">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Treino de Hoje</h1>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Target size={16} className="text-primary" />
-            <span>PEITO & TRÍCEPS</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock size={16} className="text-warning" />
-            <span>45 min</span>
+      {/* Header com botão de volta */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="p-2"
+        >
+          <ArrowLeft size={20} />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Treino de Hoje</h1>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Target size={16} className="text-primary" />
+              <span>PEITO & TRÍCEPS</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock size={16} className="text-warning" />
+              <span>45 min</span>
+            </div>
           </div>
         </div>
       </div>

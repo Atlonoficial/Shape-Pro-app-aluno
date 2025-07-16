@@ -1,9 +1,12 @@
-import { Target, TrendingUp, Award, Plus } from "lucide-react";
+import { Target, TrendingUp, Award, Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
 export const Metas = () => {
+  const navigate = useNavigate();
+
   const metasAtivas = [
     {
       titulo: "Perder 5kg",
@@ -72,10 +75,20 @@ export const Metas = () => {
 
   return (
     <div className="p-4 pt-8 pb-24">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Metas e Progresso</h1>
-        <p className="text-sm text-muted-foreground">Acompanhe seu desenvolvimento</p>
+      {/* Header com botão de volta */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="p-2"
+        >
+          <ArrowLeft size={20} />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Metas e Progresso</h1>
+          <p className="text-sm text-muted-foreground">Acompanhe seu desenvolvimento</p>
+        </div>
       </div>
 
       {/* Estatísticas */}
