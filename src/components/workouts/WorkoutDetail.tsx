@@ -54,7 +54,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
         </button>
 
         {/* Workout info */}
-        <div className="relative z-10 mt-auto p-6 text-white">
+        <div className="relative z-10 mt-auto p-4 sm:p-6 text-white">
           <h1 className="text-2xl font-bold mb-2">{workout.name}</h1>
           <p className="text-white/80 mb-4">{workout.type}</p>
           
