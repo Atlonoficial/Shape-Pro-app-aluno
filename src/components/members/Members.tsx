@@ -168,9 +168,9 @@ export const Members = () => {
                     style={{ backgroundImage: `url(${product.image})` }}
                   />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-1">{product.name}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
-                    <p className="text-lg font-bold text-warning">R$ {product.price.toFixed(2).replace('.', ',')}</p>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground mb-1">{product.name}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">{product.description}</p>
+                    <p className="text-sm sm:text-base font-bold text-warning">R$ {product.price.toFixed(2).replace('.', ',')}</p>
                   </div>
                   <Button 
                     size="sm"
