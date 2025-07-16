@@ -1,5 +1,5 @@
 
-import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield } from "lucide-react";
+import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield, CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ const profileStats = [
 ];
 
 const menuItems = [
+  { icon: CreditCard, title: "Assinaturas & Planos", subtitle: "Gerencie sua assinatura", badge: "Premium", path: "/assinaturas-planos" },
   { icon: FileText, title: "Cadastro Completo", subtitle: "Informações pessoais", badge: "90%", path: "/cadastro-completo" },
   { icon: Activity, title: "Exames Médicos", subtitle: "Últimos resultados", badge: "2", path: "/exames-medicos" },
   { icon: Camera, title: "Fotos de Progresso", subtitle: "Evolução visual", badge: "8", path: "/fotos-progresso" },
