@@ -33,7 +33,7 @@ export const WorkoutCard = ({
 
   return (
     <Card 
-      className="bg-card/50 border-border/50 overflow-hidden hover:bg-card/70 transition-all duration-300 cursor-pointer"
+      className="bg-card/50 border-border/50 overflow-hidden hover:bg-card/70 transition-all duration-300 cursor-pointer rounded-2xl"
       onClick={onClick}
     >
       <CardContent className="p-0">
@@ -41,15 +41,15 @@ export const WorkoutCard = ({
           <img 
             src={image} 
             alt={name}
-            className="w-full h-32 object-cover"
+            className="w-full h-40 object-cover rounded-t-2xl"
           />
           {isCompleted && (
-            <div className="absolute top-2 right-2 bg-primary/20 backdrop-blur-sm rounded-full p-2">
-              <div className="w-3 h-3 bg-primary rounded-full"></div>
+            <div className="absolute top-3 right-3 bg-accent/90 backdrop-blur-sm rounded-xl p-2">
+              <div className="w-3 h-3 bg-background rounded-full"></div>
             </div>
           )}
-          <div className="absolute top-2 left-2 bg-background/20 backdrop-blur-sm rounded-lg px-2 py-1">
-            <span className="text-xs text-white font-medium">{muscleGroup}</span>
+          <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm rounded-xl px-3 py-1">
+            <span className="text-xs text-foreground font-medium">{muscleGroup}</span>
           </div>
         </div>
         
@@ -74,7 +74,7 @@ export const WorkoutCard = ({
             </span>
             
             <button 
-              className="btn-accent px-3 py-1 rounded-lg text-sm font-medium"
+              className="bg-accent text-background px-4 py-2 rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onClick?.();

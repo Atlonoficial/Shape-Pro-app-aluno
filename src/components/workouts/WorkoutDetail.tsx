@@ -89,7 +89,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           {workout.exercises.map((exercise) => (
             <div 
               key={exercise.id}
-              className="card-gradient p-4 transition-all duration-300"
+              className="bg-card/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 transition-all duration-300"
             >
               <div 
                 className="flex items-center justify-between cursor-pointer"
@@ -111,9 +111,9 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                         selectedExercisePreview === exercise.id ? null : exercise.id
                       );
                     }}
-                    className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
+                    className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center hover:bg-accent/90 transition-colors"
                   >
-                    <Play className="w-5 h-5 text-accent ml-0.5" />
+                    <Play className="w-5 h-5 text-background ml-0.5" />
                   </button>
                   <ChevronDown 
                     className={`w-5 h-5 text-muted-foreground transition-transform ${
@@ -168,9 +168,9 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       <div className="fixed bottom-20 left-4 right-4">
         <button 
           onClick={onStartWorkout}
-          className="btn-accent w-full h-14 text-lg"
+          className="bg-gradient-accent text-background w-full h-16 text-lg font-semibold rounded-2xl hover:bg-accent/90 transition-all duration-300 shadow-lg flex items-center justify-center"
         >
-          <Play className="w-5 h-5 mr-2" />
+          <Play className="w-6 h-6 mr-2" />
           Iniciar Treino
         </button>
       </div>
