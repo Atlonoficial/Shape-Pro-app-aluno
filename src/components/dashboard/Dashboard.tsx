@@ -1,4 +1,4 @@
-import { Bell, Settings } from "lucide-react";
+import { Bell, Settings, Calendar } from "lucide-react";
 import { WeightChart } from "./WeightChart";
 import { CoachAICard } from "./CoachAICard";
 import { QuickActions } from "./QuickActions";
@@ -28,8 +28,9 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
 
       {/* Header with Date and Profile */}
       <div className="flex items-start justify-between mb-6">
-        <div className="text-sm text-muted-foreground">
-          📅 {currentDate}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar size={16} className="text-warning" />
+          {currentDate}
         </div>
         
         <div className="relative">
