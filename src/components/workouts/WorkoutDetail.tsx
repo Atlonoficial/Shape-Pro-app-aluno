@@ -36,7 +36,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
       <div 
-        className="relative h-64 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col"
+        className="relative h-48 sm:h-64 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col"
         style={{
           backgroundImage: workout.image ? `url(${workout.image})` : undefined,
           backgroundSize: 'cover',
@@ -59,23 +59,29 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           <p className="text-white/80 mb-4">{workout.type}</p>
           
           {/* Stats */}
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-background/20 backdrop-blur-sm px-2 sm:px-3 py-2 rounded-xl">
               <Clock className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium">{workout.duration} min</span>
-              <span className="text-xs text-white/60">Duração</span>
+              <div className="text-center sm:text-left">
+                <span className="text-sm font-medium block sm:inline">{workout.duration} min</span>
+                <span className="text-xs text-white/60 block sm:inline sm:ml-1">Duração</span>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-background/20 backdrop-blur-sm px-2 sm:px-3 py-2 rounded-xl">
               <Flame className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium">{workout.difficulty}</span>
-              <span className="text-xs text-white/60">Dificuldade</span>
+              <div className="text-center sm:text-left">
+                <span className="text-sm font-medium block sm:inline">{workout.difficulty}</span>
+                <span className="text-xs text-white/60 block sm:inline sm:ml-1">Dificuldade</span>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-background/20 backdrop-blur-sm px-2 sm:px-3 py-2 rounded-xl">
               <Dumbbell className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium">{workout.exercises.length}</span>
-              <span className="text-xs text-white/60">Exercícios</span>
+              <div className="text-center sm:text-left">
+                <span className="text-sm font-medium block sm:inline">{workout.exercises.length}</span>
+                <span className="text-xs text-white/60 block sm:inline sm:ml-1">Exercícios</span>
+              </div>
             </div>
           </div>
         </div>
