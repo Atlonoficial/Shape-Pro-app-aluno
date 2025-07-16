@@ -1,6 +1,7 @@
 import { Bell, Settings, Calendar } from "lucide-react";
 import { WeightChart } from "./WeightChart";
 import { CoachAICard } from "./CoachAICard";
+import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
 
@@ -75,6 +76,9 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
 
       {/* Coach AI Card */}
       <CoachAICard onCoachClick={onCoachClick} />
+
+      {/* Announcement Banner */}
+      <AnnouncementBanner />
 
       {/* Quick Actions */}
       <QuickActions />
