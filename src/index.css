@@ -26,9 +26,9 @@
     --secondary: 0 0% 20%;
     --secondary-foreground: 0 0% 96%;
 
-    /* Accent: Complementary blue for highlights */
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 98%;
+    /* Accent: Golden yellow for highlights */
+    --accent: 43 96% 52%;
+    --accent-foreground: 0 0% 8%;
 
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 68%;
@@ -57,7 +57,7 @@
     --gradient-secondary: linear-gradient(135deg, hsl(0 0% 20%), hsl(0 0% 12%));
     --gradient-dark: linear-gradient(135deg, hsl(0 0% 4%), hsl(0 0% 8%));
     --gradient-card: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
-    --gradient-accent: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(43 96% 52%), hsl(43 96% 42%));
 
     /* Shape Pro Shadows */
     --shadow-glow: 0 0 24px hsl(43 96% 56% / 0.3);
