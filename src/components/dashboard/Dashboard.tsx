@@ -17,6 +17,15 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
 
   return (
     <div className="p-4 pt-8 pb-24">
+      {/* Logo Header */}
+      <div className="mb-4 text-center">
+        <img 
+          src="/lovable-uploads/2133926f-121d-45ce-8cff-80c84a1a0856.png" 
+          alt="Shape Pro Logo" 
+          className="w-20 h-auto mx-auto opacity-60"
+        />
+      </div>
+
       {/* Header with Date and Profile */}
       <div className="flex items-start justify-between mb-6">
         <div className="text-sm text-muted-foreground">
