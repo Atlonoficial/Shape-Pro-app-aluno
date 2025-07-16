@@ -77,14 +77,20 @@ export const Members = () => {
   return (
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Bem-vindo,</h1>
-        <h2 className="text-xl text-foreground mb-4">Área de membros!</h2>
-        
-        <Button className="btn-primary w-32 h-12 mb-6">
-          <Play className="w-4 h-4 mr-2" />
-          Assistir
-        </Button>
+      <div 
+        className="mb-6 text-center relative bg-cover bg-center bg-no-repeat min-h-[200px] flex flex-col justify-center items-center"
+        style={{ backgroundImage: `url(/lovable-uploads/2133926f-121d-45ce-8cff-80c84a1a0856.png)` }}
+      >
+        <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
+        <div className="relative z-10">
+          <h1 className="text-2xl font-bold text-foreground mb-2 drop-shadow-sm">Bem-vindo,</h1>
+          <h2 className="text-xl text-foreground mb-4 drop-shadow-sm">Área de membros!</h2>
+          
+          <Button className="btn-primary w-32 h-12 mb-6">
+            <Play className="w-4 h-4 mr-2" />
+            Assistir
+          </Button>
+        </div>
       </div>
 
       {/* Tab Navigation */}
