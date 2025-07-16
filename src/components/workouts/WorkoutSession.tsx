@@ -84,129 +84,157 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
   const currentExercise = workout.exercises[currentExerciseIndex];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Header com timer */}
-      <div className="sticky top-0 z-10 bg-gradient-secondary p-4 text-center">
-        <div className="flex items-center justify-between mb-2">
+      <div className="flex-shrink-0 bg-gradient-to-br from-secondary to-secondary/80 p-4 text-center">
+        <div className="flex items-center justify-between mb-4">
           <button 
             onClick={onExit}
-            className="w-12 h-12 rounded-2xl bg-background/20 backdrop-blur-sm flex items-center justify-center"
+            className="w-10 h-10 rounded-2xl bg-background/20 backdrop-blur-sm flex items-center justify-center hover:bg-background/30 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           
-          <h1 className="text-lg font-bold text-white">{workout.name}</h1>
+          <h1 className="text-lg font-semibold text-white truncate mx-4">{workout.name}</h1>
           
           <button
             onClick={handleFinish}
-            className="px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-2xl text-white text-sm font-medium"
+            className="px-3 py-2 bg-destructive/80 backdrop-blur-sm rounded-2xl text-white text-sm font-medium hover:bg-destructive transition-colors"
           >
             Finalizar
           </button>
         </div>
         
         {/* Timer principal */}
-        <div className="text-4xl font-bold text-white mb-1">
+        <div className="text-5xl font-bold text-white mb-2">
           {isResting ? formatTime(restTime) : formatTime(time)}
         </div>
-        <div className="text-sm text-white/80">
+        <div className="text-sm text-white/90 font-medium">
           {isResting ? 'Tempo de Descanso' : 'Tempo de Treino'}
         </div>
       </div>
 
-      {/* Exercício atual em destaque */}
-      <div className="p-4">
-        <div className="bg-gradient-accent rounded-2xl p-6 mb-6 text-center">
-          <h2 className="text-xl font-bold text-background mb-2">Exercício Atual</h2>
-          <h3 className="text-2xl font-bold text-background mb-1">{currentExercise.name}</h3>
-          <p className="text-background/80 mb-4">{currentExercise.description}</p>
-          
-          {currentExercise.sets && currentExercise.reps && (
-            <div className="bg-background/20 rounded-2xl p-4 mb-4">
-              <div className="text-background font-medium">
-                {currentExercise.sets} séries × {currentExercise.reps} repetições
-              </div>
-            </div>
-          )}
-          
-          {currentExercise.duration && (
-            <div className="bg-background/20 rounded-2xl p-4 mb-4">
-              <div className="text-background font-medium">
-                Duração: {currentExercise.duration}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Lista de exercícios */}
-        <h2 className="text-lg font-bold text-foreground mb-4">Próximos Exercícios</h2>
-        
-        <div className="grid grid-cols-1 gap-3">
-          {workout.exercises.map((exercise, index) => (
-            <Card 
-              key={exercise.id} 
-              className={`${
-                index === currentExerciseIndex 
-                  ? 'bg-gradient-accent text-background border-accent' 
-                  : index < currentExerciseIndex 
-                    ? 'bg-muted text-muted-foreground' 
-                    : 'bg-card'
-              } rounded-2xl transition-all duration-300`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">{exercise.name}</h3>
-                    <p className="text-sm opacity-80">{exercise.type}</p>
-                    {exercise.sets && exercise.reps && (
-                      <p className="text-xs opacity-70 mt-1">
-                        {exercise.sets} × {exercise.reps}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="w-12 h-12 rounded-2xl bg-background/20 flex items-center justify-center">
-                    <span className="font-bold">
-                      {index < currentExerciseIndex ? '✓' : index + 1}
-                    </span>
+      {/* Conteúdo scrollável */}
+      <div className="flex-1 overflow-y-auto pb-32">
+        {/* Exercício atual em destaque */}
+        <div className="p-6">
+          <div className="bg-gradient-accent rounded-3xl p-6 mb-6 text-center shadow-lg">
+            <h2 className="text-lg font-semibold text-background mb-2 opacity-90">Exercício Atual</h2>
+            <h3 className="text-2xl font-bold text-background mb-3">{currentExercise.name}</h3>
+            <p className="text-background/80 mb-4 text-sm leading-relaxed">{currentExercise.description}</p>
+            
+            <div className="space-y-3">
+              {currentExercise.sets && currentExercise.reps && (
+                <div className="bg-background/20 rounded-2xl p-3">
+                  <div className="text-background font-semibold text-sm">
+                    Duração: {currentExercise.sets} séries × {currentExercise.reps} repetições
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              )}
+              
+              {currentExercise.duration && (
+                <div className="bg-background/20 rounded-2xl p-3">
+                  <div className="text-background font-semibold text-sm">
+                    Duração: {currentExercise.duration}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Lista de exercícios */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-foreground mb-4">Próximos Exercícios</h2>
+            
+            <div className="space-y-3">
+              {workout.exercises.map((exercise, index) => (
+                <Card 
+                  key={exercise.id} 
+                  className={`${
+                    index === currentExerciseIndex 
+                      ? 'bg-gradient-accent text-background border-accent shadow-lg' 
+                      : index < currentExerciseIndex 
+                        ? 'bg-muted/50 text-muted-foreground border-muted' 
+                        : 'bg-card/50 border-border hover:bg-card/80'
+                  } rounded-2xl transition-all duration-300 backdrop-blur-sm`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold mb-1 truncate">{exercise.name}</h3>
+                        <p className="text-sm opacity-80 mb-1">{exercise.type}</p>
+                        {exercise.sets && exercise.reps && (
+                          <p className="text-xs opacity-70">
+                            {exercise.sets} × {exercise.reps}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="w-12 h-12 rounded-2xl bg-background/20 flex items-center justify-center ml-3 flex-shrink-0">
+                        <span className="font-bold text-lg">
+                          {index < currentExerciseIndex ? '✓' : index + 1}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Controles fixos */}
-      <div className="fixed bottom-24 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border/50">
-        <div className="flex items-center justify-center gap-6 mb-3">
-          <button
-            onClick={handlePause}
-            className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg"
-          >
-            {isPaused ? <Play className="w-8 h-8 text-primary-foreground" /> : <Pause className="w-8 h-8 text-primary-foreground" />}
-          </button>
+      <div className="fixed bottom-20 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border/30">
+        <div className="p-4">
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <button
+              onClick={handlePause}
+              className="w-14 h-14 rounded-2xl bg-accent shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
+              title={isPaused ? "Continuar" : "Pausar"}
+            >
+              {isPaused ? <Play className="w-6 h-6 text-background" /> : <Pause className="w-6 h-6 text-background" />}
+            </button>
+            
+            <button
+              onClick={handleRest}
+              className="w-14 h-14 rounded-2xl bg-accent shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
+              disabled={isResting}
+              title="Descansar"
+            >
+              <Timer className="w-6 h-6 text-background" />
+            </button>
+            
+            <button
+              onClick={handleNextExercise}
+              className="w-14 h-14 rounded-2xl bg-muted shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
+              title="Próximo exercício"
+            >
+              <SkipForward className="w-6 h-6 text-background" />
+            </button>
+          </div>
           
-          <button
-            onClick={handleRest}
-            className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center shadow-lg"
-            disabled={isResting}
-          >
-            <Timer className="w-8 h-8 text-background" />
-          </button>
+          {/* Barra de progresso */}
+          <div className="mb-3">
+            <div className="w-full bg-muted/30 rounded-full h-2 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-accent transition-all duration-500 ease-out"
+                style={{ 
+                  width: `${((currentExerciseIndex + 1) / workout.exercises.length) * 100}%` 
+                }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Exercício {currentExerciseIndex + 1}</span>
+              <span>{workout.exercises.length} total</span>
+            </div>
+          </div>
           
-          <button
-            onClick={handleNextExercise}
-            className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center shadow-lg"
-          >
-            <SkipForward className="w-8 h-8 text-background" />
-          </button>
-        </div>
-        
-        <div className="text-center">
-          <span className="text-sm text-muted-foreground">
-            {isPaused ? 'Treino Pausado' : isResting ? 'Descansando...' : 'Treinando'}
-          </span>
+          <div className="text-center">
+            <span className="text-sm font-medium text-muted-foreground">
+              {isPaused ? 'Treino Pausado' : isResting ? 'Descansando...' : 'Treinando'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
