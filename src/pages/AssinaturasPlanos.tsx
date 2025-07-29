@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
-export const AssinaturasPlanos = () => {
+const AssinaturasPlanos = () => {
   const navigate = useNavigate();
   
   // Simulando o plano atual do usuário
@@ -175,3 +175,5 @@ export const AssinaturasPlanos = () => {
     </div>
   );
 };
+
+export default AssinaturasPlanos;

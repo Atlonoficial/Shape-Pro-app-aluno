@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
-export const Configuracoes = () => {
+const Configuracoes = () => {
   const navigate = useNavigate();
   const [notificacoes, setNotificacoes] = useState(true);
 
@@ -150,3 +150,5 @@ export const Configuracoes = () => {
     </div>
   );
 };
+
+export default Configuracoes;

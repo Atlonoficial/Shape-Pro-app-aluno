@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
-export const ContaSeguranca = () => {
+const ContaSeguranca = () => {
   const navigate = useNavigate();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -204,3 +204,5 @@ export const ContaSeguranca = () => {
     </div>
   );
 };
+
+export default ContaSeguranca;

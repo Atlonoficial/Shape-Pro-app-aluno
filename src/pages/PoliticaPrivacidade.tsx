@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
-export const PoliticaPrivacidade = () => {
+const PoliticaPrivacidade = () => {
   const navigate = useNavigate();
 
   const sections = [
@@ -147,3 +147,5 @@ export const PoliticaPrivacidade = () => {
     </div>
   );
 };
+
+export default PoliticaPrivacidade;
