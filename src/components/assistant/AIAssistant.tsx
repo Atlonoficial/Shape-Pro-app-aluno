@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, Calendar, Award, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -173,27 +174,27 @@ export const AIAssistant = () => {
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
-        <div className="flex items-center gap-3 card-gradient p-4 max-w-md mx-auto">
-          <div className="flex-1 bg-background/90 rounded-xl border border-border/30">
+      <div className="fixed bottom-20 left-0 right-0 p-3 bg-gradient-to-t from-background via-background/95 to-transparent">
+        <div className="flex items-center gap-2 bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-2 w-full max-w-lg mx-auto shadow-lg">
+          <div className="flex-1 min-w-0">
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem para o Coach Shape Pro..."
-              className="w-full px-4 py-3 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
+              className="w-full px-3 py-2.5 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm leading-5"
               rows={1}
-              style={{ minHeight: '44px', maxHeight: '120px' }}
+              style={{ minHeight: '40px', maxHeight: '120px' }}
             />
           </div>
           
           <Button
-            size="icon"
+            size="sm"
             onClick={handleSendMessage}
             disabled={!inputText.trim()}
-            className="btn-primary w-12 h-12 shrink-0"
+            className="btn-primary h-10 w-10 shrink-0 rounded-xl"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </Button>
         </div>
       </div>
