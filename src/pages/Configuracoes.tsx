@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ChevronRight, Bell, User, Moon, Globe, Shield, LogOut, Crown } from "lucide-react";
+import { ArrowLeft, ChevronRight, Bell, User, Shield, LogOut, Crown, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
 export const Configuracoes = () => {
   const navigate = useNavigate();
   const [notificacoes, setNotificacoes] = useState(true);
-  const [tema, setTema] = useState("escuro");
-  const [idioma, setIdioma] = useState("pt");
 
   useEffect(() => {
     // Demonstração de notificação ao carregar as configurações
@@ -34,17 +31,14 @@ export const Configuracoes = () => {
   };
 
   const handlePlanosClick = () => {
-    toast({
-      title: "Planos e Assinaturas",
-      description: "Gerencie seu plano atual e explore novas opções",
-    });
+    navigate("/assinaturas-planos");
   };
 
   const configItems = [
     {
       icon: Bell,
       title: "Notificações",
-      description: "Receber alertas e lembretes (clique para exemplo!)",
+      description: "Receber alertas e lembretes",
       action: (
         <Switch 
           checked={notificacoes}
@@ -68,51 +62,18 @@ export const Configuracoes = () => {
       onClick: handlePlanosClick
     },
     {
-      icon: User,
-      title: "Conta",
-      description: "E-mail e alteração de senha",
+      icon: Lock,
+      title: "Conta e Segurança",
+      description: "Email, senha e configurações de segurança",
       action: <ChevronRight className="w-4 h-4 text-muted-foreground" />,
-      onClick: () => toast({ title: "Configurações de conta", description: "Em desenvolvimento" })
-    },
-    {
-      icon: Moon,
-      title: "Tema",
-      description: "Aparência do aplicativo",
-      action: (
-        <Select value={tema} onValueChange={setTema}>
-          <SelectTrigger className="w-24 h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="claro">Claro</SelectItem>
-            <SelectItem value="escuro">Escuro</SelectItem>
-          </SelectContent>
-        </Select>
-      )
-    },
-    {
-      icon: Globe,
-      title: "Idioma",
-      description: "Idioma do aplicativo",
-      action: (
-        <Select value={idioma} onValueChange={setIdioma}>
-          <SelectTrigger className="w-24 h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pt">PT-BR</SelectItem>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="es">Español</SelectItem>
-          </SelectContent>
-        </Select>
-      )
+      onClick: () => navigate("/conta-seguranca")
     },
     {
       icon: Shield,
       title: "Política de Privacidade",
-      description: "Termos e condições",
+      description: "Termos e condições de uso",
       action: <ChevronRight className="w-4 h-4 text-muted-foreground" />,
-      onClick: () => toast({ title: "Política de privacidade", description: "Abrindo documento..." })
+      onClick: () => navigate("/politica-privacidade")
     }
   ];
 

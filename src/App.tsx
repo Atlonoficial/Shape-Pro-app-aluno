@@ -11,11 +11,13 @@ import { FotosProgresso } from "./pages/FotosProgresso";
 import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 import { Anamnese } from "./pages/Anamnese";
 import { Configuracoes } from "./pages/Configuracoes";
+import { ContaSeguranca } from "./pages/ContaSeguranca";
+import { AssinaturasPlanos } from "./pages/AssinaturasPlanos";
+import { PoliticaPrivacidade } from "./pages/PoliticaPrivacidade";
 import { IniciarTreino } from "./pages/IniciarTreino";
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
 import { Agenda } from "./pages/Agenda";
 import { Metas } from "./pages/Metas";
-import { AssinaturasPlanos } from "./pages/AssinaturasPlanos";
 
 const queryClient = new QueryClient();
 
@@ -33,11 +35,13 @@ const App = () => (
           <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
           <Route path="/anamnese" element={<Anamnese />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route path="/conta-seguranca" element={<ContaSeguranca />} />
+          <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
+          <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
           <Route path="/iniciar-treino" element={<IniciarTreino />} />
           <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/metas" element={<Metas />} />
-          <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

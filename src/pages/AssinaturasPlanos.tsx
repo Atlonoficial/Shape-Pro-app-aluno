@@ -1,325 +1,177 @@
-import { CreditCard, Check, Crown, Star, Calendar, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Crown, Check, Star, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 export const AssinaturasPlanos = () => {
   const navigate = useNavigate();
+  
+  // Simulando o plano atual do usuário
+  const [planoAtual] = useState({
+    nome: "Shape Pro Premium",
+    preco: "R$ 79,90",
+    periodo: "mensal",
+    dataRenovacao: "15/02/2024",
+    status: "ativo"
+  });
 
-  const planos = [
-    {
-      id: "basico",
-      nome: "Básico",
-      preco: 29.90,
-      periodo: "mês",
-      descricao: "Ideal para iniciantes",
-      recursos: [
-        "Treinos básicos",
-        "Acompanhamento nutricional",
-        "Chat com IA limitado",
-        "Relatórios mensais"
-      ],
-      cor: "secondary",
-      popular: false
-    },
-    {
-      id: "premium",
-      nome: "Premium",
-      preco: 59.90,
-      periodo: "mês", 
-      descricao: "Mais completo e personalizado",
-      recursos: [
-        "Treinos personalizados",
-        "Acompanhamento nutricional completo",
-        "Chat com IA ilimitado",
-        "Relatórios semanais",
-        "Agendamento com personal",
-        "Acesso a lives exclusivas"
-      ],
-      cor: "primary",
-      popular: true
-    },
-    {
-      id: "enterprise",
-      nome: "Enterprise", 
-      preco: 99.90,
-      periodo: "mês",
-      descricao: "Para atletas e profissionais",
-      recursos: [
-        "Todos os recursos Premium",
-        "Personal trainer dedicado",
-        "Análises biométricas avançadas",
-        "Suporte prioritário 24/7",
-        "Acesso a eventos exclusivos",
-        "Consultoria nutricional especializada"
-      ],
-      cor: "warning",
-      popular: false
-    }
+  const beneficiosAtivos = [
+    "Acesso ilimitado a todos os treinos",
+    "Planos nutricionais personalizados",
+    "Coach IA 24/7",
+    "Relatórios de progresso detalhados",
+    "Suporte prioritário",
+    "Novos treinos semanais",
+    "Acompanhamento profissional"
   ];
 
-  const assinatura = {
-    planoAtual: "Premium",
-    status: "ativa",
-    proximaCobranca: "15/01/2025",
-    valor: 59.90,
-    cartao: "**** **** **** 4532",
-    bandeira: "Visa"
+  const handleCancelarAssinatura = () => {
+    toast({
+      title: "Cancelamento solicitado",
+      description: "Você receberá um email com as instruções para cancelamento.",
+      variant: "destructive"
+    });
   };
 
-  const historico = [
-    {
-      data: "15/12/2024",
-      plano: "Premium",
-      valor: 59.90,
-      status: "pago",
-      metodo: "Cartão *4532"
-    },
-    {
-      data: "15/11/2024", 
-      plano: "Premium",
-      valor: 59.90,
-      status: "pago",
-      metodo: "Cartão *4532"
-    },
-    {
-      data: "15/10/2024",
-      plano: "Básico",
-      valor: 29.90,
-      status: "pago", 
-      metodo: "Cartão *4532"
-    },
-    {
-      data: "15/09/2024",
-      plano: "Básico",
-      valor: 29.90,
-      status: "pago",
-      metodo: "Cartão *4532"
-    }
-  ];
+  const handleAlterarPlano = () => {
+    toast({
+      title: "Alterar plano",
+      description: "Entre em contato com nosso suporte para alterar seu plano.",
+    });
+  };
+
+  const handleRenovarAssinatura = () => {
+    toast({
+      title: "Renovação confirmada",
+      description: "Sua assinatura foi renovada automaticamente.",
+    });
+  };
 
   return (
-    <div className="p-4 pt-8 pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="p-2"
-        >
-          <ArrowLeft size={20} />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Assinaturas & Planos</h1>
-          <p className="text-sm text-muted-foreground">Gerencie sua assinatura e pagamentos</p>
+      <div className="p-4 pt-8 border-b border-border/30">
+        <div className="flex items-center gap-3 mb-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate("/configuracoes")}
+            className="text-foreground"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-xl font-bold text-foreground">Planos e Assinaturas</h1>
         </div>
       </div>
 
-      <Tabs defaultValue="assinatura" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="assinatura">Minha Assinatura</TabsTrigger>
-          <TabsTrigger value="planos">Planos</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-        </TabsList>
-
-        {/* Minha Assinatura */}
-        <TabsContent value="assinatura" className="space-y-6">
-          {/* Status da Assinatura */}
-          <Card className="card-gradient p-6 border border-primary/20">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Crown size={24} className="text-primary" />
-                  <h3 className="text-lg font-semibold text-foreground">Plano {assinatura.planoAtual}</h3>
-                  <Badge className="bg-success/10 text-success">Ativo</Badge>
-                </div>
-                <p className="text-muted-foreground">Sua assinatura está ativa e funcionando perfeitamente</p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-primary">R$ {assinatura.valor}</div>
-                <div className="text-sm text-muted-foreground">por mês</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="text-sm text-muted-foreground">Próxima cobrança</label>
-                <div className="flex items-center gap-1 mt-1">
-                  <Calendar size={16} className="text-primary" />
-                  <span className="font-medium text-foreground">{assinatura.proximaCobranca}</span>
-                </div>
+      <div className="p-4 space-y-6">
+        {/* Plano Atual */}
+        <Card className="p-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                <Crown className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground">Método de pagamento</label>
-                <div className="flex items-center gap-1 mt-1">
-                  <CreditCard size={16} className="text-primary" />
-                  <span className="font-medium text-foreground">{assinatura.cartao}</span>
+                <h2 className="text-lg font-bold text-foreground">{planoAtual.nome}</h2>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-success/20 text-success">
+                    {planoAtual.status.toUpperCase()}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground">
+                    Renovação: {planoAtual.dataRenovacao}
+                  </span>
                 </div>
               </div>
             </div>
-
-            <div className="flex gap-3">
-              <Button className="btn-primary flex-1">
-                Alterar Plano
-              </Button>
-              <Button variant="outline" className="flex-1">
-                Gerenciar Cartão
-              </Button>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-primary">{planoAtual.preco}</p>
+              <p className="text-sm text-muted-foreground">/{planoAtual.periodo}</p>
             </div>
-          </Card>
-
-          {/* Método de Pagamento */}
-          <Card className="card-gradient p-6 border border-border/50">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Método de Pagamento</h3>
-            
-            <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border/50 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-6 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">VISA</span>
-                </div>
-                <div>
-                  <div className="font-medium text-foreground">{assinatura.cartao}</div>
-                  <div className="text-sm text-muted-foreground">Expira em 12/27</div>
-                </div>
-              </div>
-              <Badge variant="outline" className="text-success border-success">Principal</Badge>
-            </div>
-
-            <Button variant="outline" className="w-full">
-              <CreditCard size={16} className="mr-2" />
-              Adicionar Novo Cartão
-            </Button>
-          </Card>
-
-          {/* Ações Rápidas */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="p-4 h-auto">
-              <div className="text-center">
-                <Star size={20} className="mx-auto mb-2 text-warning" />
-                <div className="font-medium">Upgrade</div>
-                <div className="text-xs text-muted-foreground">Melhorar plano</div>
-              </div>
-            </Button>
-            <Button variant="outline" className="p-4 h-auto">
-              <div className="text-center">
-                <Calendar size={20} className="mx-auto mb-2 text-primary" />
-                <div className="font-medium">Pausar</div>
-                <div className="text-xs text-muted-foreground">Suspender temporariamente</div>
-              </div>
-            </Button>
-          </div>
-        </TabsContent>
-
-        {/* Planos Disponíveis */}
-        <TabsContent value="planos" className="space-y-4">
-          <div className="text-center mb-6">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Escolha o melhor plano para você</h3>
-            <p className="text-sm text-muted-foreground">Você pode alterar seu plano a qualquer momento</p>
           </div>
 
-          {planos.map((plano) => (
-            <Card 
-              key={plano.id} 
-              className={`card-gradient p-6 border transition-all relative ${
-                plano.popular ? 'border-primary/50 shadow-lg' : 'border-border/50'
-              } ${assinatura.planoAtual === plano.nome ? 'bg-primary/5' : ''}`}
-            >
-              {plano.popular && (
-                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white">
-                  Mais Popular
-                </Badge>
-              )}
-              
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h4 className="text-xl font-bold text-foreground flex items-center gap-2">
-                    {plano.nome}
-                    {assinatura.planoAtual === plano.nome && (
-                      <Badge variant="outline" className="text-success border-success">Atual</Badge>
-                    )}
-                  </h4>
-                  <p className="text-muted-foreground">{plano.descricao}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-foreground">
-                    R$ {plano.preco}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-foreground mb-3">Benefícios inclusos:</h3>
+            <div className="grid gap-2">
+              {beneficiosAtivos.map((beneficio, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-success" />
                   </div>
-                  <div className="text-sm text-muted-foreground">por {plano.periodo}</div>
+                  <span className="text-sm text-foreground">{beneficio}</span>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
+        </Card>
 
-              <div className="space-y-2 mb-6">
-                {plano.recursos.map((recurso, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Check size={16} className="text-success" />
-                    <span className="text-sm text-foreground">{recurso}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Button 
-                className={`w-full ${
-                  assinatura.planoAtual === plano.nome 
-                    ? 'btn-secondary' 
-                    : plano.popular 
-                    ? 'btn-primary' 
-                    : 'btn-outline'
-                }`}
-                disabled={assinatura.planoAtual === plano.nome}
-              >
-                {assinatura.planoAtual === plano.nome ? 'Plano Atual' : 'Selecionar Plano'}
-              </Button>
-            </Card>
-          ))}
-        </TabsContent>
-
-        {/* Histórico de Pagamentos */}
-        <TabsContent value="historico" className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">Histórico de Pagamentos</h3>
+        {/* Informações de Cobrança */}
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Informações de Cobrança</h2>
+          </div>
           
-          {historico.map((item, index) => (
-            <Card key={index} className="card-gradient p-4 border border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-foreground">Plano {item.plano}</h4>
-                    <Badge 
-                      className={`${
-                        item.status === 'pago' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {item.status === 'pago' ? 'Pago' : 'Pendente'}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>{item.data}</span>
-                    <span>{item.metodo}</span>
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className="font-bold text-foreground">R$ {item.valor}</div>
-                  <Button variant="ghost" size="sm" className="text-xs p-1 h-auto">
-                    Ver detalhes
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-
-          <div className="text-center py-4">
-            <Button variant="outline">
-              Carregar mais histórico
-            </Button>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-muted-foreground">Método de pagamento</span>
+              <span className="text-foreground">•••• •••• •••• 1234</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-muted-foreground">Próxima cobrança</span>
+              <span className="text-foreground">{planoAtual.dataRenovacao}</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-muted-foreground">Valor</span>
+              <span className="text-foreground font-semibold">{planoAtual.preco}</span>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </Card>
+
+        {/* Ações */}
+        <div className="space-y-3">
+          <Button 
+            onClick={handleRenovarAssinatura}
+            className="w-full"
+          >
+            <Star className="w-4 h-4 mr-2" />
+            Renovar Automaticamente
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleAlterarPlano}
+            className="w-full"
+          >
+            Alterar Plano
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleCancelarAssinatura}
+            className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+          >
+            Cancelar Assinatura
+          </Button>
+        </div>
+
+        {/* Suporte */}
+        <Card className="p-4 bg-primary/10 border-primary/20">
+          <h3 className="font-medium text-primary mb-2">Precisa de ajuda?</h3>
+          <p className="text-sm text-primary/80 mb-3">
+            Nossa equipe de suporte está sempre disponível para ajudar com questões sobre sua assinatura.
+          </p>
+          <Button variant="outline" size="sm" className="text-primary border-primary/30">
+            Contatar Suporte
+          </Button>
+        </Card>
+      </div>
     </div>
   );
 };
