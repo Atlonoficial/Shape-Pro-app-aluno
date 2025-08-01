@@ -7,9 +7,10 @@ import { DashboardStats } from "./DashboardStats";
 
 interface DashboardProps {
   onCoachClick?: () => void;
+  onWorkoutClick?: () => void;
 }
 
-export const Dashboard = ({ onCoachClick }: DashboardProps) => {
+export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -110,7 +111,7 @@ export const Dashboard = ({ onCoachClick }: DashboardProps) => {
           </div>
         </div>
         
-        <button className="btn-primary w-full mt-4">
+        <button onClick={onWorkoutClick} className="btn-primary w-full mt-4">
           Iniciar Treino
         </button>
       </div>
