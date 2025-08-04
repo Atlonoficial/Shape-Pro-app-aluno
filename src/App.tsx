@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { PushNotifications } from "@/components/notifications/PushNotifications";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { CadastroCompleto } from "./pages/CadastroCompleto";
@@ -26,26 +28,29 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/cadastro-completo" element={<CadastroCompleto />} />
-          <Route path="/exames-medicos" element={<ExamesMedicos />} />
-          <Route path="/fotos-progresso" element={<FotosProgresso />} />
-          <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
-          <Route path="/anamnese" element={<Anamnese />} />
-          <Route path="/configuracoes" element={<Configuracoes />} />
-          <Route path="/conta-seguranca" element={<ContaSeguranca />} />
-          <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
-          <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-          <Route path="/iniciar-treino" element={<IniciarTreino />} />
-          <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
-          <Route path="/agenda" element={<Agenda />} />
-          <Route path="/metas" element={<Metas />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <PushNotifications />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/cadastro-completo" element={<CadastroCompleto />} />
+            <Route path="/exames-medicos" element={<ExamesMedicos />} />
+            <Route path="/fotos-progresso" element={<FotosProgresso />} />
+            <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
+            <Route path="/anamnese" element={<Anamnese />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
+            <Route path="/conta-seguranca" element={<ContaSeguranca />} />
+            <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
+            <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/iniciar-treino" element={<IniciarTreino />} />
+            <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/metas" element={<Metas />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
