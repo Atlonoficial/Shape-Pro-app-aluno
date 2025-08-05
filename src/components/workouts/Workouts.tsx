@@ -1,83 +1,24 @@
 import { useState, useCallback } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useMyWorkouts } from "@/hooks/useMyWorkouts";
+import { useAuth } from "@/hooks/useAuth";
 import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
 import { ExerciseDetail } from "./ExerciseDetail";
 import { WorkoutSession } from "./WorkoutSession";
 
-const workouts = [
-  {
-    id: 1,
-    name: "Seca Barriga Woman",
-    type: "Cardio",
-    duration: 40,
-    difficulty: "Moderado",
-    image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&q=80&w=400",
-    exercises: [
-      { 
-        id: 1, 
-        name: "Burpee", 
-        type: "Cardio",
-        sets: "3",
-        reps: "8-12",
-        rest: "60s",
-        description: "Exercício completo para queima de calorias"
-      },
-      { 
-        id: 2, 
-        name: "Corrida Esteira", 
-        type: "Cardio",
-        duration: "20 min",
-        rest: "2 min",
-        description: "Cardio de alta intensidade"
-      }
-    ],
-    calories: 320,
-    muscleGroup: "Cardio",
-    isCompleted: false
-  },
-  {
-    id: 2,
-    name: "Força Total",
-    type: "Musculação",
-    duration: 45,
-    difficulty: "Avançado",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
-    exercises: [
-      { id: 1, name: "Agachamento", type: "Pernas", sets: "4", reps: "12-15", rest: "90s", description: "Exercício para fortalecimento das pernas" },
-      { id: 2, name: "Supino", type: "Peito", sets: "3", reps: "8-10", rest: "120s", description: "Desenvolvimento do peitoral" },
-      { id: 3, name: "Remada", type: "Costas", sets: "3", reps: "10-12", rest: "90s", description: "Fortalecimento das costas" }
-    ],
-    calories: 280,
-    muscleGroup: "Peitoral",
-    isCompleted: true
-  },
-  {
-    id: 3,
-    name: "Yoga Relaxante",
-    type: "Flexibilidade",
-    duration: 25,
-    difficulty: "Iniciante",
-    image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=400",
-    exercises: [
-      { id: 1, name: "Posição do Gato", type: "Flexibilidade", duration: "5 min", rest: "30s", description: "Alongamento da coluna" },
-      { id: 2, name: "Warrior Pose", type: "Equilíbrio", duration: "3 min", rest: "30s", description: "Postura de equilíbrio e força" }
-    ],
-    calories: 150,
-    muscleGroup: "Flexibilidade",
-    isCompleted: false
-  }
-];
-
-const muscleGroups = ["Todos", "Peitoral", "Costas", "Pernas", "Ombros", "Cardio"];
-
 type ViewState = 'list' | 'detail' | 'exercise' | 'session';
 
 export const Workouts = () => {
+  const { user } = useAuth();
+  const { workouts, loading } = useMyWorkouts();
   const [currentView, setCurrentView] = useState<ViewState>('list');
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
+
+  // Muscle groups derived from real workout data
+  const muscleGroups = ["Todos", ...Array.from(new Set(workouts.flatMap(w => w.muscleGroups || [])))];
 
   const handleWorkoutSelect = useCallback((workout: any) => {
     setSelectedWorkout(workout);
@@ -95,8 +36,7 @@ export const Workouts = () => {
   }, []);
 
   const handleFinishWorkout = useCallback(() => {
-    // Gamificação ao finalizar treino
-    const points = Math.floor(Math.random() * 50) + 50; // 50-100 pontos
+    const points = Math.floor(Math.random() * 50) + 50;
     const achievements = [
       "🔥 Queimador de Calorias!",
       "💪 Força Total!",
@@ -111,7 +51,6 @@ export const Workouts = () => {
       description: `Parabéns! Você ganhou ${points} pontos e completou mais um treino! 🎉`,
     });
 
-    // Segundo toast com motivação
     setTimeout(() => {
       toast({
         title: "🚀 Continue assim!",
@@ -134,6 +73,17 @@ export const Workouts = () => {
     setCurrentView('detail');
     setSelectedExercise(null);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">Carregando seus treinos...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Renderização condicional baseada no estado atual
   if (currentView === 'session' && selectedWorkout) {
@@ -204,15 +154,28 @@ export const Workouts = () => {
       </div>
 
       {/* Workout Grid */}
-      <div className="grid grid-cols-1 gap-4">
-        {workouts.map((workout) => (
-          <WorkoutCard 
-            key={workout.id} 
-            {...workout} 
-            onClick={() => handleWorkoutSelect(workout)}
-          />
-        ))}
-      </div>
+      {workouts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Nenhum treino disponível ainda.</p>
+          <p className="text-sm text-muted-foreground mt-2">Aguarde seu professor atribuir treinos para você!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {workouts.map((workout) => (
+            <WorkoutCard 
+              key={workout.id} 
+              name={workout.name}
+              duration={workout.estimatedDuration}
+              difficulty={workout.difficulty === 'beginner' ? 'Iniciante' : workout.difficulty === 'intermediate' ? 'Intermediário' : 'Avançado'}
+              image="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400"
+              calories={workout.estimatedCalories}
+              muscleGroup={workout.muscleGroups?.join(', ') || 'Geral'}
+              isCompleted={workout.sessions ? workout.sessions > 0 : false}
+              onClick={() => handleWorkoutSelect(workout)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
