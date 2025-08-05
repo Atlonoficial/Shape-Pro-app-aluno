@@ -63,8 +63,11 @@ export const AuthScreen = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <ShapeProLogo className="h-20 w-auto" />
-          <h1 className="text-2xl font-bold text-foreground mt-4">Shape Pro</h1>
+          <img 
+            src="/src/assets/shape-pro-logo.png" 
+            alt="Shape Pro Logo" 
+            className="h-20 w-auto mx-auto mb-4"
+          />
           <p className="text-muted-foreground">Sua jornada fitness começa aqui</p>
         </div>
 
