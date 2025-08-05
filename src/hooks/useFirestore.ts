@@ -4,10 +4,18 @@ import {
   getNutritionPlansByUser,
   getProgressByUser,
   getNotificationsByUser,
+  getCoursesByUser,
+  getAppointmentsByUser,
+  getPaymentsByUser,
+  getChatMessages,
   Workout,
   NutritionPlan,
   ProgressEntry,
-  Notification
+  Notification,
+  Course,
+  Appointment,
+  Payment,
+  ChatMessage
 } from '@/lib/firestore';
 
 export const useWorkouts = (userId: string) => {
@@ -80,4 +88,76 @@ export const useNotifications = (userId: string) => {
   }, [userId]);
 
   return { notifications, loading };
+};
+
+export const useCourses = (userId: string) => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = getCoursesByUser(userId, (courseData) => {
+      setCourses(courseData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  return { courses, loading };
+};
+
+export const useAppointments = (userId: string) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = getAppointmentsByUser(userId, (appointmentData) => {
+      setAppointments(appointmentData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  return { appointments, loading };
+};
+
+export const usePayments = (userId: string) => {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = getPaymentsByUser(userId, (paymentData) => {
+      setPayments(paymentData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  return { payments, loading };
+};
+
+export const useChat = (conversationId: string) => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const unsubscribe = getChatMessages(conversationId, (messageData) => {
+      setMessages(messageData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [conversationId]);
+
+  return { messages, loading };
 };

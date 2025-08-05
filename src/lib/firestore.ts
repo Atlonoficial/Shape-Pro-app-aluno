@@ -14,6 +14,31 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Student profile interfaces
+export interface Student {
+  id: string;
+  userId: string; // Reference to auth.users
+  teacherId: string; // Professor atribuído
+  activePlan?: string; // Plano ativo
+  goals: string[];
+  measurements: {
+    weight: number;
+    height: number;
+    bodyFat?: number;
+    muscleMass?: number;
+    lastUpdated: Timestamp;
+  };
+  preferences: {
+    notifications: boolean;
+    language: string;
+    timezone: string;
+  };
+  membershipStatus: 'active' | 'suspended' | 'expired';
+  membershipExpiry?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 // Workout interfaces
 export interface Exercise {
   id: string;
@@ -25,6 +50,34 @@ export interface Exercise {
   restTime: number;
   instructions: string;
   videoUrl?: string;
+  muscleGroup: string;
+  equipment?: string[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+}
+
+export interface WorkoutSession {
+  id: string;
+  workoutId: string;
+  userId: string;
+  startTime: Timestamp;
+  endTime?: Timestamp;
+  exercises: {
+    exerciseId: string;
+    sets: {
+      reps: number;
+      weight?: number;
+      duration?: number;
+      completed: boolean;
+      restTime?: number;
+    }[];
+    completed: boolean;
+    notes?: string;
+  }[];
+  totalDuration?: number;
+  caloriesBurned?: number;
+  rating?: number; // 1-5
+  notes?: string;
+  createdAt: Timestamp;
 }
 
 export interface Workout {
@@ -32,12 +85,17 @@ export interface Workout {
   name: string;
   description: string;
   exercises: Exercise[];
-  duration: number;
-  calories: number;
+  estimatedDuration: number;
+  estimatedCalories: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  muscleGroup: string;
+  muscleGroups: string[];
+  tags: string[];
   assignedTo: string[]; // user IDs
   createdBy: string; // teacher ID
+  isTemplate: boolean;
+  templateCategory?: string;
+  sessions?: number; // Número de sessões completadas
+  lastCompleted?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -46,11 +104,41 @@ export interface Workout {
 export interface Meal {
   id: string;
   name: string;
+  description?: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  time: string;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
+  time: string; // "08:00"
+  category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  ingredients?: string[];
+  instructions?: string;
+  imageUrl?: string;
+  portion?: {
+    amount: number;
+    unit: string;
+  };
+}
+
+export interface MealLog {
+  id: string;
+  userId: string;
+  mealId: string;
+  nutritionPlanId: string;
+  date: Timestamp;
+  consumed: boolean;
+  actualTime?: string;
+  rating?: number; // 1-5
+  notes?: string;
+  photoUrl?: string;
+  customPortions?: {
+    amount: number;
+    unit: string;
+  };
+  createdAt: Timestamp;
 }
 
 export interface NutritionPlan {
@@ -58,9 +146,25 @@ export interface NutritionPlan {
   name: string;
   description: string;
   meals: Meal[];
-  totalCalories: number;
+  dailyTargets: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+    water?: number; // ml
+  };
+  weeklySchedule?: {
+    [key: string]: string[]; // day: mealIds
+  };
   assignedTo: string[]; // user IDs
   createdBy: string; // teacher ID
+  isTemplate: boolean;
+  tags: string[];
+  duration?: number; // days
+  startDate?: Timestamp;
+  endDate?: Timestamp;
+  adherenceRate?: number; // percentage
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -78,16 +182,161 @@ export interface ProgressEntry {
   date: Timestamp;
 }
 
-// Notifications
+// Course interfaces
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  category: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  duration: number; // total minutes
+  price: number;
+  modules: CourseModule[];
+  instructor: string; // teacher ID
+  tags: string[];
+  publishedAt?: Timestamp;
+  isPublished: boolean;
+  enrolledUsers: string[]; // user IDs
+  rating?: number;
+  reviews?: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface CourseModule {
+  id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  duration: number; // minutes
+  order: number;
+  isPreview: boolean;
+  resources?: {
+    title: string;
+    url: string;
+    type: 'pdf' | 'link' | 'download';
+  }[];
+}
+
+export interface CourseProgress {
+  id: string;
+  userId: string;
+  courseId: string;
+  moduleProgress: {
+    moduleId: string;
+    completed: boolean;
+    watchTime: number; // seconds
+    completedAt?: Timestamp;
+  }[];
+  overallProgress: number; // percentage
+  enrolledAt: Timestamp;
+  lastAccessed: Timestamp;
+  certificateIssued?: boolean;
+  certificateUrl?: string;
+}
+
+// Appointment interfaces
+export interface Appointment {
+  id: string;
+  studentId: string;
+  teacherId: string;
+  title: string;
+  description: string;
+  type: 'consultation' | 'assessment' | 'follow-up' | 'nutrition' | 'training';
+  scheduledTime: Timestamp;
+  duration: number; // minutes
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled';
+  location?: string; // física ou "online"
+  meetingLink?: string;
+  notes?: string;
+  attachments?: string[]; // URLs
+  price?: number;
+  paymentStatus?: 'pending' | 'paid' | 'refunded';
+  reminderSent: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Chat interfaces
+export interface ChatMessage {
+  id: string;
+  conversationId: string; // studentId-teacherId
+  senderId: string;
+  senderType: 'student' | 'teacher';
+  message: string;
+  messageType: 'text' | 'image' | 'file' | 'audio';
+  attachments?: {
+    url: string;
+    type: string;
+    name: string;
+    size?: number;
+  }[];
+  replyTo?: string; // message ID
+  isRead: boolean;
+  readAt?: Timestamp;
+  editedAt?: Timestamp;
+  deletedAt?: Timestamp;
+  createdAt: Timestamp;
+}
+
+export interface Conversation {
+  id: string; // studentId-teacherId
+  studentId: string;
+  teacherId: string;
+  lastMessage?: string;
+  lastMessageAt: Timestamp;
+  unreadCount: {
+    student: number;
+    teacher: number;
+  };
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Payment interfaces
+export interface Payment {
+  id: string;
+  userId: string;
+  type: 'subscription' | 'course' | 'consultation' | 'plan';
+  description: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
+  dueDate: Timestamp;
+  paidAt?: Timestamp;
+  paymentMethod?: string;
+  transactionId?: string;
+  invoice?: {
+    number: string;
+    url: string;
+  };
+  relatedItemId?: string; // courseId, planId, etc
+  notes?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Enhanced Notifications
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'workout' | 'meal' | 'reminder' | 'achievement' | 'general';
+  type: 'workout' | 'meal' | 'reminder' | 'achievement' | 'general' | 'payment' | 'appointment' | 'message' | 'course';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
   targetUsers: string[];
   isRead: boolean;
+  deepLink?: string; // Para navegação específica
+  actionRequired?: boolean;
+  actionUrl?: string;
+  actionText?: string;
+  imageUrl?: string;
+  data?: Record<string, any>; // Dados extras para contexto
+  expiresAt?: Timestamp;
   createdAt: Timestamp;
   scheduledFor?: Timestamp;
+  readAt?: Timestamp;
 }
 
 // Workout CRUD operations
@@ -214,10 +463,244 @@ export const getNotificationsByUser = (userId: string, callback: (notifications:
 export const markNotificationAsRead = async (notificationId: string) => {
   try {
     await updateDoc(doc(db, 'notifications', notificationId), {
-      isRead: true
+      isRead: true,
+      readAt: Timestamp.now()
     });
   } catch (error) {
     console.error('Error marking notification as read:', error);
     throw error;
   }
+};
+
+// Student CRUD operations
+export const createStudent = async (student: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>) => {
+  try {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collection(db, 'students'), {
+      ...student,
+      createdAt: now,
+      updatedAt: now
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating student:', error);
+    throw error;
+  }
+};
+
+export const getStudentByUserId = (userId: string, callback: (student: Student | null) => void) => {
+  const q = query(
+    collection(db, 'students'),
+    where('userId', '==', userId)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const students = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Student));
+    callback(students.length > 0 ? students[0] : null);
+  });
+};
+
+export const updateStudentProfile = async (studentId: string, updates: Partial<Student>) => {
+  try {
+    await updateDoc(doc(db, 'students', studentId), {
+      ...updates,
+      updatedAt: Timestamp.now()
+    });
+  } catch (error) {
+    console.error('Error updating student profile:', error);
+    throw error;
+  }
+};
+
+// Workout Session operations
+export const createWorkoutSession = async (session: Omit<WorkoutSession, 'id' | 'createdAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'workout_sessions'), {
+      ...session,
+      createdAt: Timestamp.now()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating workout session:', error);
+    throw error;
+  }
+};
+
+export const getWorkoutSessionsByUser = (userId: string, callback: (sessions: WorkoutSession[]) => void) => {
+  const q = query(
+    collection(db, 'workout_sessions'),
+    where('userId', '==', userId),
+    orderBy('startTime', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const sessions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as WorkoutSession));
+    callback(sessions);
+  });
+};
+
+export const updateWorkoutSession = async (sessionId: string, updates: Partial<WorkoutSession>) => {
+  try {
+    await updateDoc(doc(db, 'workout_sessions', sessionId), updates);
+  } catch (error) {
+    console.error('Error updating workout session:', error);
+    throw error;
+  }
+};
+
+// Meal Log operations
+export const createMealLog = async (log: Omit<MealLog, 'id' | 'createdAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'meal_logs'), {
+      ...log,
+      createdAt: Timestamp.now()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating meal log:', error);
+    throw error;
+  }
+};
+
+export const getMealLogsByUser = (userId: string, callback: (logs: MealLog[]) => void) => {
+  const q = query(
+    collection(db, 'meal_logs'),
+    where('userId', '==', userId),
+    orderBy('date', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const logs = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as MealLog));
+    callback(logs);
+  });
+};
+
+// Course operations
+export const getCoursesByUser = (userId: string, callback: (courses: Course[]) => void) => {
+  const q = query(
+    collection(db, 'courses'),
+    where('enrolledUsers', 'array-contains', userId),
+    orderBy('createdAt', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const courses = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Course));
+    callback(courses);
+  });
+};
+
+export const getCourseProgress = (userId: string, courseId: string, callback: (progress: CourseProgress | null) => void) => {
+  const q = query(
+    collection(db, 'course_progress'),
+    where('userId', '==', userId),
+    where('courseId', '==', courseId)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const progress = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CourseProgress));
+    callback(progress.length > 0 ? progress[0] : null);
+  });
+};
+
+export const updateCourseProgress = async (progressId: string, updates: Partial<CourseProgress>) => {
+  try {
+    await updateDoc(doc(db, 'course_progress', progressId), {
+      ...updates,
+      lastAccessed: Timestamp.now()
+    });
+  } catch (error) {
+    console.error('Error updating course progress:', error);
+    throw error;
+  }
+};
+
+// Appointment operations
+export const getAppointmentsByUser = (userId: string, callback: (appointments: Appointment[]) => void) => {
+  const q = query(
+    collection(db, 'appointments'),
+    where('studentId', '==', userId),
+    orderBy('scheduledTime', 'asc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const appointments = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Appointment));
+    callback(appointments);
+  });
+};
+
+// Chat operations
+export const getChatMessages = (conversationId: string, callback: (messages: ChatMessage[]) => void) => {
+  const q = query(
+    collection(db, 'chat_messages'),
+    where('conversationId', '==', conversationId),
+    orderBy('createdAt', 'asc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const messages = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ChatMessage));
+    callback(messages);
+  });
+};
+
+export const sendChatMessage = async (message: Omit<ChatMessage, 'id' | 'createdAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'chat_messages'), {
+      ...message,
+      createdAt: Timestamp.now()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error sending chat message:', error);
+    throw error;
+  }
+};
+
+export const markMessageAsRead = async (messageId: string) => {
+  try {
+    await updateDoc(doc(db, 'chat_messages', messageId), {
+      isRead: true,
+      readAt: Timestamp.now()
+    });
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+    throw error;
+  }
+};
+
+// Payment operations
+export const getPaymentsByUser = (userId: string, callback: (payments: Payment[]) => void) => {
+  const q = query(
+    collection(db, 'payments'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const payments = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Payment));
+    callback(payments);
+  });
 };
