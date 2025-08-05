@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield, CreditCard, Edit2, Loader2, Upload } from "lucide-react";
+import { useState, useRef } from "react";
+import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield, CreditCard, Edit2, Loader2, Upload, ImageIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useMyWorkouts } from "@/hooks/useMyWorkouts";
 import { useMyNutrition } from "@/hooks/useMyNutrition";
-import { signOutUser } from "@/lib/auth";
+import { signOutUser, updateUserProfile } from "@/lib/auth";
+import { uploadUserAvatar } from "@/lib/firebase-storage";
 import { toast } from "@/hooks/use-toast";
 
 const menuItems = [
@@ -32,6 +33,8 @@ export const Profile = () => {
   const { getWeeklyAdherence } = useMyNutrition();
   
   const [isEditing, setIsEditing] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editData, setEditData] = useState({
     weight: student?.measurements?.weight || 0,
     height: student?.measurements?.height || 0,
@@ -89,6 +92,64 @@ export const Profile = () => {
     }
   };
 
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.uid) return;
+
+    // Validate file type and size
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Por favor, selecione uma imagem (JPG, PNG, etc.)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast({
+        title: "Arquivo muito grande",
+        description: "O tamanho máximo é 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    
+    try {
+      // Upload to Firebase Storage
+      const uploadResult = await uploadUserAvatar(user.uid, file);
+      
+      // Update user profile with new photo URL
+      await updateUserProfile(user.uid, {
+        photoURL: uploadResult.url
+      });
+      
+      toast({
+        title: "Foto atualizada!",
+        description: "Sua foto de perfil foi alterada com sucesso!"
+      });
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível atualizar sua foto de perfil.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
   if (studentLoading) {
     return (
       <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
@@ -134,14 +195,44 @@ export const Profile = () => {
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
       <div className="mb-6 text-center">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoUpload}
+          className="hidden"
+        />
+        
         <div className="relative inline-block mb-4">
-          <img
-            src={user?.photoURL || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"}
-            alt="Perfil"
-            className="w-24 h-24 rounded-full border-4 border-primary/20"
-          />
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer">
-            <Upload className="w-4 h-4 text-background" />
+          {/* Profile Photo or User Icon */}
+          <div 
+            className="w-24 h-24 rounded-full border-4 border-primary/20 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handlePhotoClick}
+          >
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt="Foto de perfil"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                <User className="w-12 h-12 text-primary" />
+              </div>
+            )}
+          </div>
+          
+          {/* Upload Button */}
+          <div 
+            className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/80 transition-colors"
+            onClick={handlePhotoClick}
+          >
+            {uploadingPhoto ? (
+              <Loader2 className="w-4 h-4 text-background animate-spin" />
+            ) : (
+              <Camera className="w-4 h-4 text-background" />
+            )}
           </div>
         </div>
         

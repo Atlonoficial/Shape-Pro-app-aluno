@@ -3,9 +3,10 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
   User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { initializeUserData } from './firebase-setup';
 
@@ -92,6 +93,26 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     return null;
   } catch (error) {
     console.error('Error getting user profile:', error);
+    throw error;
+  }
+};
+
+// Update user profile photo
+export const updateUserProfile = async (uid: string, updates: { photoURL?: string; displayName?: string }) => {
+  try {
+    const user = auth.currentUser;
+    if (user && user.uid === uid) {
+      await updateProfile(user, updates);
+    }
+    
+    // Also update in Firestore
+    const docRef = doc(db, 'users', uid);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now()
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
     throw error;
   }
 };
