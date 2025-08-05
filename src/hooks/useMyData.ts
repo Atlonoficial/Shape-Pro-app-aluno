@@ -16,14 +16,14 @@ import { Student, Workout } from '@/lib/firestore';
 
 interface UseMyDataReturn {
   student: Student | null;
-  trainings: Workout[];
+  trainings: any[];
   loading: boolean;
   error: string | null;
 }
 
 export const useMyData = (studentId: string | undefined): UseMyDataReturn => {
   const [student, setStudent] = useState<Student | null>(null);
-  const [trainings, setTrainings] = useState<Workout[]>([]);
+  const [trainings, setTrainings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +56,7 @@ export const useMyData = (studentId: string | undefined): UseMyDataReturn => {
 
       // 2. Listener para treinos atribuídos ao estudante
       const trainingsQuery = query(
-        collection(db, 'workouts'),
+        collection(db, 'training_plans'),
         where('assignedTo', 'array-contains', studentId)
       );
       
@@ -66,7 +66,7 @@ export const useMyData = (studentId: string | undefined): UseMyDataReturn => {
           const trainingsData = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          })) as Workout[];
+          })) as any[];
           setTrainings(trainingsData);
           setLoading(false);
         },

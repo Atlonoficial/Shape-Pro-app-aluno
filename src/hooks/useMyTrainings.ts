@@ -16,14 +16,14 @@ import { Workout } from '@/lib/firestore';
  */
 
 interface UseMyTrainingsReturn {
-  trainings: Workout[];
+  trainings: any[];
   loading: boolean;
   error: string | null;
   refetch: () => void;
 }
 
 export const useMyTrainings = (currentUserId: string | undefined): UseMyTrainingsReturn => {
-  const [trainings, setTrainings] = useState<Workout[]>([]);
+  const [trainings, setTrainings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,9 +43,9 @@ export const useMyTrainings = (currentUserId: string | undefined): UseMyTraining
       // Query para buscar treinos atribuídos ao usuário atual
       // Ordenados por data de criação (mais recentes primeiro)
       const trainingsQuery = query(
-        collection(db, 'workouts'),
+        collection(db, 'training_plans'),
         where('assignedTo', 'array-contains', currentUserId),
-        orderBy('createdAt', 'desc')
+        orderBy('created_at', 'desc')
       );
 
       const unsubscribe = onSnapshot(
@@ -57,10 +57,10 @@ export const useMyTrainings = (currentUserId: string | undefined): UseMyTraining
               id: doc.id,
               ...data,
               // Converter timestamps do Firestore para Date se necessário
-              createdAt: data.createdAt?.toDate?.() || data.createdAt,
-              updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
+              created_at: data.created_at?.toDate?.() || data.created_at,
+              updated_at: data.updated_at?.toDate?.() || data.updated_at
             };
-          }) as Workout[];
+          }) as any[];
 
           setTrainings(trainingsData);
           setLoading(false);

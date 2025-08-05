@@ -6,7 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
 import Index from "./pages/Index";
+import Login from "./pages/login";
 import NotFound from "./pages/NotFound";
+import AlunoDashboard from "./pages/aluno/dashboard";
+import AlunoChat from "./pages/aluno/chat/[id]";
 import { CadastroCompleto } from "./pages/CadastroCompleto";
 import { ExamesMedicos } from "./pages/ExamesMedicos";
 import { FotosProgresso } from "./pages/FotosProgresso";
@@ -33,6 +36,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/aluno/dashboard" element={<AlunoDashboard />} />
+            <Route path="/aluno/chat/:id" element={<AlunoChat />} />
             <Route path="/cadastro-completo" element={<CadastroCompleto />} />
             <Route path="/exames-medicos" element={<ExamesMedicos />} />
             <Route path="/fotos-progresso" element={<FotosProgresso />} />

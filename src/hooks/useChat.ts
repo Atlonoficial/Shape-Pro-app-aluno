@@ -18,14 +18,14 @@ import { useAuth } from '@/hooks/useAuth';
  */
 
 interface UseChatReturn {
-  messages: ChatMessage[];
+  messages: any[];
   loading: boolean;
   error: string | null;
   sendMessage: (content: string, type?: 'text' | 'image' | 'file') => Promise<void>;
 }
 
 export const useChat = (conversationId: string | undefined): UseChatReturn => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -42,8 +42,8 @@ export const useChat = (conversationId: string | undefined): UseChatReturn => {
       // Ordenadas por timestamp (mais antigas primeiro para exibir cronologicamente)
       const messagesQuery = query(
         collection(db, 'messages'),
-        where('conversationId', '==', conversationId),
-        orderBy('createdAt', 'asc')
+        where('conversation_id', '==', conversationId),
+        orderBy('created_at', 'asc')
       );
 
       const unsubscribe = onSnapshot(
@@ -55,9 +55,9 @@ export const useChat = (conversationId: string | undefined): UseChatReturn => {
               id: doc.id,
               ...data,
               // Converter timestamp do Firestore para Date
-              createdAt: data.createdAt?.toDate?.() || data.createdAt
+              created_at: data.created_at?.toDate?.() || data.created_at
             };
-          }) as ChatMessage[];
+          }) as any[];
 
           setMessages(messagesData);
           setLoading(false);
@@ -87,13 +87,13 @@ export const useChat = (conversationId: string | undefined): UseChatReturn => {
     try {
       // Criar nova mensagem no Firestore
       const newMessage = {
-        conversationId,
+        conversation_id: conversationId,
         senderId: user.uid,
         senderType: 'student' as const,
-        message: content.trim(),
+        content: content.trim(),
         messageType: type as 'text' | 'image' | 'file',
         isRead: false,
-        createdAt: serverTimestamp()
+        created_at: serverTimestamp()
       };
 
       await addDoc(collection(db, 'messages'), newMessage);

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
+import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
+import AuthGuard from '@/components/AuthGuard';
 import { useChat } from '@/hooks/useChat';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,15 +49,6 @@ export default function AlunoChat() {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Redirecionar se não autenticado
-  if (authLoading) {
-    return <ChatSkeleton />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
 
   if (!conversationId) {
     return <Navigate to="/aluno/dashboard" replace />;
@@ -117,7 +110,8 @@ export default function AlunoChat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <AuthGuard>
+      <div className="flex flex-col h-screen bg-background">
       {/* Header do Chat */}
       <Card className="rounded-none border-b">
         <CardHeader className="p-4">
@@ -199,14 +193,14 @@ export default function AlunoChat() {
                           : 'bg-muted'
                       }`}
                     >
-                      <p className="text-sm">{message.message}</p>
+                      <p className="text-sm">{(message as any).content || (message as any).message || ''}</p>
                       <div className={`flex items-center gap-1 mt-1 ${
                         isMyMessage ? 'justify-end' : 'justify-start'
                       }`}>
                         <span className={`text-xs ${
                           isMyMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
                         }`}>
-                          {formatMessageTime(message.createdAt instanceof Date ? message.createdAt : new Date())}
+                          {formatMessageTime((message as any).created_at || message.createdAt || new Date())}
                         </span>
                         {isMyMessage && (
                           <div className="text-primary-foreground/70">
@@ -256,6 +250,7 @@ export default function AlunoChat() {
         </CardContent>
       </Card>
     </div>
+    </AuthGuard>
   );
 }
 

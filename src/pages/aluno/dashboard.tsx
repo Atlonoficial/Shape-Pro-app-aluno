@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
+import AuthGuard from '@/components/AuthGuard';
 import { useMyData } from '@/hooks/useMyData';
 import { useMyTrainings } from '@/hooks/useMyTrainings';
 import { useFCMTokens } from '@/hooks/useFCMTokens';
@@ -19,7 +22,6 @@ import {
   Target
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Navigate } from 'react-router-dom';
 
 /**
  * Dashboard Principal do Aluno
@@ -42,15 +44,6 @@ export default function AlunoDashboard() {
   const { trainings: myTrainings, loading: trainingsLoading, error: trainingsError } = useMyTrainings(user?.uid);
   const { requestPermission, permission, error: fcmError } = useFCMTokens();
   const { toast } = useToast();
-
-  // Redirecionar se não autenticado
-  if (authLoading) {
-    return <DashboardSkeleton />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
 
   // Registrar token FCM ao carregar dashboard
   useEffect(() => {
@@ -80,30 +73,31 @@ export default function AlunoDashboard() {
   const loading = dataLoading || trainingsLoading;
 
   return (
-    <div className="min-h-screen bg-background p-4 space-y-6">
-      {/* Header com perfil */}
-      <Card>
-        <CardHeader className="flex flex-row items-center space-y-0 space-x-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={user?.photoURL || ''} />
-            <AvatarFallback>
-              <User className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <CardTitle className="text-xl">
-              Olá, {user?.displayName || user?.email || 'Aluno'}! 👋
-            </CardTitle>
-            <CardDescription>
-              Pronto para treinar hoje? Você tem {myTrainings.length} treinos disponíveis.
-            </CardDescription>
-          </div>
-          <Badge variant={permission === 'granted' ? 'default' : 'secondary'}>
-            <Bell className="h-3 w-3 mr-1" />
-            {permission === 'granted' ? 'Notificações ON' : 'Notificações OFF'}
-          </Badge>
-        </CardHeader>
-      </Card>
+    <AuthGuard>
+      <div className="min-h-screen bg-background p-4 space-y-6">
+        {/* Header com perfil */}
+        <Card>
+          <CardHeader className="flex flex-row items-center space-y-0 space-x-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={user?.photoURL || ''} />
+              <AvatarFallback>
+                <User className="h-8 w-8" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <CardTitle className="text-xl">
+                Olá, {user?.displayName || user?.email || 'Aluno'}! 👋
+              </CardTitle>
+              <CardDescription>
+                Pronto para treinar hoje? Você tem {myTrainings.length} treinos disponíveis.
+              </CardDescription>
+            </div>
+            <Badge variant={permission === 'granted' ? 'default' : 'secondary'}>
+              <Bell className="h-3 w-3 mr-1" />
+              {permission === 'granted' ? 'Notificações ON' : 'Notificações OFF'}
+            </Badge>
+          </CardHeader>
+        </Card>
 
       {/* Métricas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -174,13 +168,13 @@ export default function AlunoDashboard() {
                   </div>
                   <Button size="sm">
                     <PlayCircle className="h-4 w-4 mr-1" />
-                    Iniciar
+                    Começar Treino
                   </Button>
                 </div>
               ))}
               
               {myTrainings.length > 3 && (
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/aluno/treinos'}>
                   Ver todos os treinos ({myTrainings.length})
                 </Button>
               )}
@@ -208,7 +202,8 @@ export default function AlunoDashboard() {
           <span className="text-xs">Chat</span>
         </Button>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
 
