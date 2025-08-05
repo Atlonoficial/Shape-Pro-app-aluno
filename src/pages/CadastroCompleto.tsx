@@ -8,9 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useStudents } from "@/hooks/useStudents";
 
 export const CadastroCompleto = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createStudent, mapGoalToStandard, loading } = useStudents();
+  
   const [formData, setFormData] = useState({
     nomeCompleto: "",
     dataNascimento: "",
@@ -19,15 +24,83 @@ export const CadastroCompleto = () => {
     pesoInicial: "",
     objetivo: "",
     metaNumerica: "",
-    email: "",
+    email: user?.email || "",
     telefone: ""
   });
 
-  const handleSubmit = () => {
-    toast({
-      title: "Cadastro salvo!",
-      description: "Suas informações foram enviadas ao seu professor.",
-    });
+  /**
+   * Submete cadastro completo para Firebase - SINCRONIZADO COM DASHBOARD DO PROFESSOR
+   * 
+   * CRITICAL: Campo teacher_id deve ser preenchido para aparecer no Dashboard
+   * Por ora usando professor padrão - implementar seleção depois
+   */
+  const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado. Faça login primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validações básicas
+    if (!formData.nomeCompleto || !formData.objetivo) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha nome completo e objetivo.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Debug logs para verificar dados sendo enviados
+      console.log('📝 [App] Iniciando cadastro completo:', {
+        user: user.uid,
+        formData
+      });
+
+      // Preparar dados no formato esperado pelo Dashboard do Professor
+      const studentData = {
+        name: formData.nomeCompleto,
+        email: formData.email || user.email || '',
+        phone: formData.telefone,
+        plan: "Plano Básico", // Padrão - pode ser alterado pelo professor
+        mode: "Online", // Padrão - pode ser alterado pelo professor  
+        goal: mapGoalToStandard(formData.objetivo),
+        teacher_id: "default-teacher-id", // CRÍTICO: Deve ser UID real do professor
+        // Dados adicionais do cadastro completo
+        birthDate: formData.dataNascimento,
+        gender: formData.sexo,
+        height: formData.altura ? parseFloat(formData.altura) : undefined,
+        initialWeight: formData.pesoInicial ? parseFloat(formData.pesoInicial) : undefined,
+        numericGoal: formData.metaNumerica
+      };
+
+      console.log('📝 [App] Dados formatados para Firestore:', studentData);
+
+      // Salvar no Firestore - aparecerá no Dashboard instantaneamente
+      const studentId = await createStudent(studentData);
+      
+      console.log('✅ [App] Cadastro completo salvo:', studentId);
+
+      toast({
+        title: "Cadastro salvo!",
+        description: "Suas informações foram enviadas ao seu professor e aparecerão no Dashboard em tempo real.",
+      });
+
+      // Navegar de volta para o perfil
+      navigate("/?tab=profile");
+      
+    } catch (error: any) {
+      console.error('❌ [App] Erro no cadastro completo:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o cadastro. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -210,9 +283,10 @@ export const CadastroCompleto = () => {
       <div className="fixed bottom-4 left-4 right-4">
         <Button 
           onClick={handleSubmit}
+          disabled={loading}
           className="w-full h-12 rounded-full bg-warning hover:bg-warning/90 text-background font-medium"
         >
-          Salvar e continuar
+          {loading ? "Salvando..." : "Salvar e continuar"}
         </Button>
       </div>
     </div>
