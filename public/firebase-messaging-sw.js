@@ -18,15 +18,3 @@ messaging.onBackgroundMessage(payload => {
   const { title, body, icon } = payload.notification || {};
   self.registration.showNotification(title, { body, icon, data: payload.data });
 });
-
-// Handle notification click
-self.addEventListener('notificationclick', (event) => {
-  console.log('Notification click received:', event);
-  
-  event.notification.close();
-  
-  // Open app when notification is clicked
-  event.waitUntil(
-    clients.openWindow('/')
-  );
-});
