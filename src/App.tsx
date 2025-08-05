@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { PushNotifications } from "@/components/notifications/PushNotifications";
+import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { CadastroCompleto } from "./pages/CadastroCompleto";
@@ -29,7 +29,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <PushNotifications />
+        <PushNotificationsWrapper />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
