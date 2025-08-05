@@ -1,93 +1,60 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { NutritionCard } from "./NutritionCard";
 import { MetricCard } from "@/components/ui/MetricCard";
-
-const dailyGoals = {
-  calories: 2200,
-  protein: 150,
-  carbs: 275,
-  fat: 73
-};
-
-const initialMeals = [
-  {
-    id: 1,
-    title: "Café da Manhã",
-    calories: 375,
-    protein: 25,
-    carbs: 45,
-    fat: 12,
-    foods: [
-      { name: "Aveia", calories: 190, protein: 8, carbs: 30, fat: 4, quantity: "50g" },
-      { name: "Banana", calories: 105, protein: 2, carbs: 15, fat: 0, quantity: "1 unidade" },
-      { name: "Leite desnatado", calories: 80, protein: 15, carbs: 0, fat: 8, quantity: "200ml" }
-    ],
-    description: "Rica em fibras e carboidratos",
-    isCompleted: false
-  },
-  {
-    id: 2,
-    title: "Jantar",
-    calories: 520,
-    protein: 45,
-    carbs: 35,
-    fat: 18,
-    foods: [
-      { name: "Frango grelhado", calories: 350, protein: 35, carbs: 0, fat: 12, quantity: "150g" },
-      { name: "Arroz integral", calories: 120, protein: 5, carbs: 25, fat: 2, quantity: "80g" },
-      { name: "Brócolis", calories: 50, protein: 5, carbs: 10, fat: 4, quantity: "100g" }
-    ],
-    description: "Alto teor de proteínas",
-    isCompleted: false
-  },
-  {
-    id: 3,
-    title: "Lanche da Tarde",
-    calories: 180,
-    protein: 15,
-    carbs: 20,
-    fat: 8,
-    foods: [
-      { name: "Iogurte natural", calories: 120, protein: 10, carbs: 15, fat: 5, quantity: "150g" },
-      { name: "Granola", calories: 60, protein: 5, carbs: 5, fat: 3, quantity: "20g" }
-    ],
-    description: "Fonte de probióticos",
-    isCompleted: false
-  }
-];
+import { useMyNutrition } from "@/hooks/useMyNutrition";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Nutrition = () => {
-  const [meals, setMeals] = useState(initialMeals);
+  const { user } = useAuth();
+  const { 
+    activePlan, 
+    loading, 
+    todaysMeals, 
+    dailyStats, 
+    logMeal 
+  } = useMyNutrition();
   
-  // Calcular nutrientes consumidos dinamicamente
-  const consumed = meals.reduce(
-    (acc, meal) => {
-      if (meal.isCompleted) {
-        acc.calories += meal.calories;
-        acc.protein += meal.protein;
-        acc.carbs += meal.carbs;
-        acc.fat += meal.fat;
-      }
-      return acc;
-    },
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
-  );
-  
-  const calorieProgress = (consumed.calories / dailyGoals.calories) * 100;
-  const proteinProgress = (consumed.protein / dailyGoals.protein) * 100;
-  const carbsProgress = (consumed.carbs / dailyGoals.carbs) * 100;
-  const fatProgress = (consumed.fat / dailyGoals.fat) * 100;
-
-  const handleMealToggle = (mealId: number) => {
-    setMeals(prevMeals => 
-      prevMeals.map(meal => 
-        meal.id === mealId 
-          ? { ...meal, isCompleted: !meal.isCompleted }
-          : meal
-      )
-    );
+  const handleMealToggle = async (mealId: string, nutritionPlanId: string) => {
+    if (!user?.uid || !activePlan) return;
+    
+    try {
+      const isAlreadyLogged = todaysMeals.some(log => log.mealId === mealId && log.consumed);
+      await logMeal(mealId, nutritionPlanId, !isAlreadyLogged);
+    } catch (error) {
+      console.error('Error logging meal:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">Carregando seu plano nutricional...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activePlan) {
+    return (
+      <div className="p-4 pt-8 pb-24">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Nutrição</h1>
+          <p className="text-muted-foreground">Acompanhe sua alimentação hoje</p>
+        </div>
+        
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Nenhum plano nutricional disponível ainda.</p>
+          <p className="text-sm text-muted-foreground mt-2">Aguarde seu nutricionista criar um plano para você!</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { consumed, target, percentage } = dailyStats;
 
   return (
     <div className="p-4 pt-8 pb-24">
@@ -105,7 +72,7 @@ export const Nutrition = () => {
             <p className="text-sm text-muted-foreground">Progresso de hoje</p>
           </div>
           <ProgressRing 
-            progress={calorieProgress} 
+            progress={percentage.calories} 
             size={60} 
             strokeWidth={6}
             className="text-primary"
@@ -115,30 +82,30 @@ export const Nutrition = () => {
         <div className="grid grid-cols-2 gap-4">
           <MetricCard
             title="Calorias"
-            value={`${consumed.calories}`}
-            subtitle={`de ${dailyGoals.calories}`}
-            progress={calorieProgress}
+            value={`${Math.round(consumed.calories)}`}
+            subtitle={`de ${target.calories}`}
+            progress={percentage.calories}
             color="primary"
           />
           <MetricCard
             title="Proteína"
-            value={`${consumed.protein}g`}
-            subtitle={`de ${dailyGoals.protein}g`}
-            progress={proteinProgress}
+            value={`${Math.round(consumed.protein)}g`}
+            subtitle={`de ${target.protein}g`}
+            progress={percentage.protein}
             color="blue"
           />
           <MetricCard
             title="Carboidratos"
-            value={`${consumed.carbs}g`}
-            subtitle={`de ${dailyGoals.carbs}g`}
-            progress={carbsProgress}
+            value={`${Math.round(consumed.carbs)}g`}
+            subtitle={`de ${target.carbs}g`}
+            progress={percentage.carbs}
             color="green"
           />
           <MetricCard
             title="Gordura"
-            value={`${consumed.fat}g`}
-            subtitle={`de ${dailyGoals.fat}g`}
-            progress={fatProgress}
+            value={`${Math.round(consumed.fat)}g`}
+            subtitle={`de ${target.fat}g`}
+            progress={percentage.fat}
             color="orange"
           />
         </div>
@@ -147,11 +114,36 @@ export const Nutrition = () => {
       {/* Meals */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Refeições de Hoje</h3>
-        {meals.map((meal) => (
-          <div key={meal.id} onClick={() => handleMealToggle(meal.id)}>
-            <NutritionCard {...meal} />
+        {activePlan.meals.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Nenhuma refeição programada para hoje.</p>
           </div>
-        ))}
+        ) : (
+          activePlan.meals.map((meal) => {
+            const mealLog = todaysMeals.find(log => log.mealId === meal.id);
+            const isCompleted = mealLog?.consumed || false;
+            
+            return (
+              <div key={meal.id} onClick={() => handleMealToggle(meal.id, activePlan.id)}>
+                <NutritionCard 
+                  title={meal.name}
+                  calories={meal.calories}
+                  foods={meal.ingredients?.map(ingredient => ({
+                    name: ingredient,
+                    calories: Math.round(meal.calories / (meal.ingredients?.length || 1)),
+                    quantity: meal.portion ? `${meal.portion.amount}${meal.portion.unit}` : "1 porção"
+                  })) || [{
+                    name: meal.name,
+                    calories: meal.calories,
+                    quantity: "1 porção"
+                  }]}
+                  description={meal.description || "Refeição nutritiva"}
+                  isCompleted={isCompleted}
+                />
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
