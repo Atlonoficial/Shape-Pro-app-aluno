@@ -1,14 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
 
-// Firebase configuration (same as in your main app)
+// Firebase configuration (mesmo que no app principal)
 const firebaseConfig = {
-  apiKey: "your-api-key-here",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q", // Substitua pelo seu API Key
+  authDomain: "shape-pro-app.firebaseapp.com", // Substitua pelo seu Auth Domain
+  projectId: "shape-pro-app", // Substitua pelo seu Project ID
+  storageBucket: "shape-pro-app.appspot.com", // Substitua pelo seu Storage Bucket
+  messagingSenderId: "123456789012", // Substitua pelo seu Sender ID
+  appId: "1:123456789012:web:abcdef123456789012345678" // Substitua pelo seu App ID
 };
 
 // Initialize Firebase

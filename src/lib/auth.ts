@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { initializeUserData } from './firebase-setup';
 
 export interface UserProfile {
   uid: string;
@@ -36,6 +37,15 @@ export const signUpUser = async (email: string, password: string, name: string, 
     };
 
     await setDoc(doc(db, 'users', user.uid), userProfile);
+    
+    // Inicializar dados completos do usuário
+    await initializeUserData({
+      uid: user.uid,
+      email: user.email || '',
+      name,
+      userType
+    });
+    
     return user;
   } catch (error) {
     console.error('Error signing up user:', error);

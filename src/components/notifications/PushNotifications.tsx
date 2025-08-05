@@ -18,7 +18,7 @@ export const PushNotifications = () => {
         
         if (permission === 'granted') {
           const token = await getToken(messaging, {
-            vapidKey: 'your-vapid-key-here' // Add your VAPID key
+            vapidKey: 'BAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrS' // Substitua pela sua VAPID key
           });
           
           console.log('FCM Token:', token);

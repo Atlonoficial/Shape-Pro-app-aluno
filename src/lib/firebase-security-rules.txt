@@ -1,0 +1,105 @@
+// Regras de Segurança do Firestore
+// Copie estas regras para o Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras para a coleção de usuários
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+    }
+    
+    // Regras para workouts
+    match /workouts/{workoutId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid in resource.data.assignedTo || 
+         request.auth.uid == resource.data.createdBy ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher');
+      
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        request.auth.uid == request.resource.data.createdBy;
+    }
+    
+    // Regras para planos nutricionais
+    match /nutrition/{nutritionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid in resource.data.assignedTo || 
+         request.auth.uid == resource.data.createdBy ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher');
+      
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher' &&
+        request.auth.uid == request.resource.data.createdBy;
+    }
+    
+    // Regras para progresso
+    match /progress/{progressId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Regras para metas
+    match /goals/{goalId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Regras para notificações
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && 
+        request.auth.uid in resource.data.targetUsers;
+      
+      allow write: if request.auth != null && 
+        request.auth.uid in resource.data.targetUsers;
+      
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+    }
+    
+    // Regras para sessões de treino
+    match /workout_sessions/{sessionId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Regras para registros de refeições
+    match /meal_logs/{logId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'teacher';
+      
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+  }
+}

@@ -4,14 +4,15 @@ import { getFirestore } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration
+// Firebase configuration - ATENÇÃO: Substitua pelos valores reais do seu projeto Firebase
 const firebaseConfig = {
-  apiKey: "your-api-key-here",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q", // Substitua pelo seu API Key
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "shape-pro-app.firebaseapp.com", // Substitua pelo seu Auth Domain
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "shape-pro-app", // Substitua pelo seu Project ID
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || "shape-pro-app.appspot.com", // Substitua pelo seu Storage Bucket
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789012", // Substitua pelo seu Sender ID
+  appId: process.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:abcdef123456789012345678", // Substitua pelo seu App ID
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ABCDEFGHIJ" // Opcional - Google Analytics
 };
 
 // Initialize Firebase
