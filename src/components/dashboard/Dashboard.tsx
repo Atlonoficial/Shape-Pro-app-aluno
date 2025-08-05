@@ -6,6 +6,7 @@ import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useAuthContext } from "@/components/auth/AuthProvider";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -13,6 +14,8 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
+  const { userProfile } = useAuthContext();
+  const firstName = userProfile?.name?.split(' ')[0] || 'Usuário';
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -100,7 +103,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            Olá, <span className="text-gradient-primary">Alex!</span>
+            Olá, <span className="text-gradient-primary">{firstName}!</span>
           </h1>
           <div className="flex items-center gap-2">
             <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
