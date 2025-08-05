@@ -3,12 +3,12 @@ import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
 
 // Firebase configuration (mesmo que no app principal)
 const firebaseConfig = {
-  apiKey: "AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q", // Substitua pelo seu API Key
-  authDomain: "shape-pro-app.firebaseapp.com", // Substitua pelo seu Auth Domain
-  projectId: "shape-pro-app", // Substitua pelo seu Project ID
-  storageBucket: "shape-pro-app.appspot.com", // Substitua pelo seu Storage Bucket
-  messagingSenderId: "123456789012", // Substitua pelo seu Sender ID
-  appId: "1:123456789012:web:abcdef123456789012345678" // Substitua pelo seu App ID
+  apiKey: "AIzaSyDM0AOhHD7AZRCjMn-SW1yvY860i8s5RJ8",
+  authDomain: "shapepro-aluno.firebaseapp.com",
+  projectId: "shapepro-aluno",
+  storageBucket: "shapepro-aluno.firebasestorage.app",
+  messagingSenderId: "200634869105",
+  appId: "1:200634869105:web:7f0096b8457a5dd2f702d0"
 };
 
 // Initialize Firebase

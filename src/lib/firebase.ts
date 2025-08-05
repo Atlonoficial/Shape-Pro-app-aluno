@@ -4,15 +4,15 @@ import { getFirestore } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration - ATENÇÃO: Substitua pelos valores reais do seu projeto Firebase
+// Firebase configuration - Configuração real do projeto Shape Pro
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q", // Substitua pelo seu API Key
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "shape-pro-app.firebaseapp.com", // Substitua pelo seu Auth Domain
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "shape-pro-app", // Substitua pelo seu Project ID
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "shape-pro-app.appspot.com", // Substitua pelo seu Storage Bucket
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789012", // Substitua pelo seu Sender ID
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:abcdef123456789012345678", // Substitua pelo seu App ID
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ABCDEFGHIJ" // Opcional - Google Analytics
+  apiKey: "AIzaSyDM0AOhHD7AZRCjMn-SW1yvY860i8s5RJ8",
+  authDomain: "shapepro-aluno.firebaseapp.com",
+  projectId: "shapepro-aluno",
+  storageBucket: "shapepro-aluno.firebasestorage.app",
+  messagingSenderId: "200634869105",
+  appId: "1:200634869105:web:7f0096b8457a5dd2f702d0",
+  measurementId: "G-PRPKV2TGG4"
 };
 
 // Initialize Firebase
