@@ -1,30 +1,133 @@
 
-import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield, CreditCard } from "lucide-react";
+import { useState } from "react";
+import { User, Trophy, Settings, FileText, Camera, Activity, Calendar, Shield, CreditCard, Edit2, Loader2, Upload } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-
-const profileStats = [
-  { label: "Treinos Concluídos", value: "47", icon: Activity },
-  { label: "Pontos Totais", value: "2.340", icon: Trophy },
-  { label: "Dias Ativos", value: "23", icon: Calendar },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useMyWorkouts } from "@/hooks/useMyWorkouts";
+import { useMyNutrition } from "@/hooks/useMyNutrition";
+import { signOutUser } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 const menuItems = [
-  { icon: CreditCard, title: "Assinaturas & Planos", subtitle: "Gerencie sua assinatura", badge: "Premium", path: "/assinaturas-planos" },
-  { icon: FileText, title: "Cadastro Completo", subtitle: "Informações pessoais", badge: "90%", path: "/cadastro-completo" },
-  { icon: Activity, title: "Exames Médicos", subtitle: "Últimos resultados", badge: "2", path: "/exames-medicos" },
-  { icon: Camera, title: "Fotos de Progresso", subtitle: "Evolução visual", badge: "8", path: "/fotos-progresso" },
-  { icon: FileText, title: "Avaliações Físicas", subtitle: "Medidas e composição", badge: "3", path: "/avaliacoes-fisicas" },
-  { icon: User, title: "Anamnese", subtitle: "Histórico de saúde", badge: null, path: "/anamnese" },
-  { icon: Settings, title: "Configurações", subtitle: "Preferências do app", badge: null, path: "/configuracoes" },
+  { icon: CreditCard, title: "Assinaturas & Planos", subtitle: "Gerencie sua assinatura", path: "/assinaturas-planos" },
+  { icon: FileText, title: "Cadastro Completo", subtitle: "Informações pessoais", path: "/cadastro-completo" },
+  { icon: Activity, title: "Exames Médicos", subtitle: "Últimos resultados", path: "/exames-medicos" },
+  { icon: Camera, title: "Fotos de Progresso", subtitle: "Evolução visual", path: "/fotos-progresso" },
+  { icon: FileText, title: "Avaliações Físicas", subtitle: "Medidas e composição", path: "/avaliacoes-fisicas" },
+  { icon: User, title: "Anamnese", subtitle: "Histórico de saúde", path: "/anamnese" },
+  { icon: Settings, title: "Configurações", subtitle: "Preferências do app", path: "/configuracoes" },
 ];
 
 export const Profile = () => {
   const navigate = useNavigate();
+  const { user, userProfile } = useAuth();
+  const { student, loading: studentLoading, updateProfile } = useStudentProfile();
+  const { getWorkoutStats } = useMyWorkouts();
+  const { getWeeklyAdherence } = useMyNutrition();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    weight: student?.measurements?.weight || 0,
+    height: student?.measurements?.height || 0,
+    goals: student?.goals?.join(', ') || ''
+  });
+
+  const workoutStats = getWorkoutStats();
+  const nutritionAdherence = getWeeklyAdherence();
   
   const handleRewardsClick = () => {
     navigate('/?tab=rewards');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOutUser();
+      toast({
+        title: "Logout realizado",
+        description: "Você saiu da sua conta com sucesso!"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um erro ao tentar sair da conta.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!student) return;
+    
+    try {
+      await updateProfile({
+        measurements: {
+          ...student.measurements,
+          weight: editData.weight,
+          height: editData.height,
+          lastUpdated: student.measurements.lastUpdated
+        },
+        goals: editData.goals.split(',').map(g => g.trim()).filter(g => g)
+      });
+      
+      setIsEditing(false);
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso!"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (studentLoading) {
+    return (
+      <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">Carregando seu perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate real profile stats from Firebase data
+  const profileStats = [
+    { 
+      label: "Treinos Concluídos", 
+      value: workoutStats.totalWorkouts.toString(), 
+      icon: Activity 
+    },
+    { 
+      label: "Tempo Total", 
+      value: `${Math.round(workoutStats.totalTime)}min`, 
+      icon: Calendar 
+    },
+    { 
+      label: "Aderência Dieta", 
+      value: `${Math.round(nutritionAdherence)}%`, 
+      icon: Trophy 
+    },
+  ];
+
+  const getMembershipTime = () => {
+    if (!student?.createdAt) return "Novo membro";
+    const created = student.createdAt.toDate();
+    const now = new Date();
+    const months = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    
+    if (months === 0) return "Novo membro";
+    if (months === 1) return "Membro há 1 mês";
+    return `Membro há ${months} meses`;
   };
 
   return (
@@ -33,22 +136,94 @@ export const Profile = () => {
       <div className="mb-6 text-center">
         <div className="relative inline-block mb-4">
           <img
-            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
+            src={user?.photoURL || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"}
             alt="Perfil"
             className="w-24 h-24 rounded-full border-4 border-primary/20"
           />
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <Camera className="w-4 h-4 text-background" />
+          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer">
+            <Upload className="w-4 h-4 text-background" />
           </div>
         </div>
         
-        <h1 className="text-xl font-bold text-foreground">Carlos Silva</h1>
-        <p className="text-muted-foreground">Membro desde Janeiro 2024</p>
-        
-        <div className="flex items-center justify-center gap-2 mt-3">
-          <Trophy className="w-5 h-5 text-primary" />
-          <span className="text-lg font-semibold text-primary">2.340 pontos</span>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <h1 className="text-xl font-bold text-foreground">
+            {userProfile?.name || user?.displayName || user?.email?.split('@')[0] || "Usuário"}
+          </h1>
+          {!isEditing && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="h-6 w-6 p-0"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
+        
+        <p className="text-muted-foreground">{getMembershipTime()}</p>
+        
+        {/* Profile Edit Form */}
+        {isEditing && (
+          <Card className="mt-4 p-4 text-left">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="weight">Peso (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    value={editData.weight}
+                    onChange={(e) => setEditData({...editData, weight: Number(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="height">Altura (cm)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={editData.height}
+                    onChange={(e) => setEditData({...editData, height: Number(e.target.value)})}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="goals">Objetivos (separados por vírgula)</Label>
+                <Input
+                  id="goals"
+                  value={editData.goals}
+                  onChange={(e) => setEditData({...editData, goals: e.target.value})}
+                  placeholder="Ex: Perder peso, Ganhar massa muscular, Melhorar condicionamento"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button onClick={handleSaveProfile} size="sm">
+                  Salvar
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)} size="sm">
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Current measurements display */}
+        {!isEditing && student?.measurements && (
+          <div className="flex items-center justify-center gap-4 mt-3 text-sm text-muted-foreground">
+            {student.measurements.weight > 0 && (
+              <span>{student.measurements.weight}kg</span>
+            )}
+            {student.measurements.height > 0 && (
+              <span>{student.measurements.height}cm</span>
+            )}
+            {student.measurements.weight > 0 && student.measurements.height > 0 && (
+              <span>IMC: {((student.measurements.weight / ((student.measurements.height/100) ** 2))).toFixed(1)}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -66,6 +241,22 @@ export const Profile = () => {
           );
         })}
       </div>
+
+      {/* Goals Display */}
+      {student?.goals && student.goals.length > 0 && (
+        <Card className="mb-6 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-foreground mb-2">Seus Objetivos</h3>
+            <div className="flex flex-wrap gap-2">
+              {student.goals.map((goal, index) => (
+                <Badge key={index} variant="secondary" className="bg-primary/20 text-primary">
+                  {goal}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Rewards Button */}
       <Card className="mb-6 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
@@ -104,22 +295,36 @@ export const Profile = () => {
                     <p className="text-sm text-muted-foreground">{item.subtitle}</p>
                   </div>
                 </div>
-                
-                {item.badge && (
-                  <Badge variant="secondary" className="bg-primary/20 text-primary border-0">
-                    {item.badge}
-                  </Badge>
-                )}
               </CardContent>
             </Card>
           );
         })}
       </div>
 
+      {/* Teacher Info */}
+      {student?.teacherId && (
+        <Card className="mt-6 bg-secondary/10 border-secondary/20">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-foreground mb-2">Seu Professor</h3>
+            <p className="text-sm text-muted-foreground">
+              Conectado ao professor ID: {student.teacherId}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Status: {student.membershipStatus === 'active' ? 'Ativo' : 'Inativo'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Logout */}
       <Card className="mt-6 bg-destructive/10 border-destructive/20">
         <CardContent className="p-4 text-center">
-          <button className="text-destructive font-medium">Sair da Conta</button>
+          <button 
+            className="text-destructive font-medium"
+            onClick={handleLogout}
+          >
+            Sair da Conta
+          </button>
         </CardContent>
       </Card>
     </div>
