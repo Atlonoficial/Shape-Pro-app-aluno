@@ -48,9 +48,14 @@ export const useMyTrainings = (currentUserId: string | undefined): UseMyTraining
         orderBy('created_at', 'desc')
       );
 
+      // Debug Firestore query
+      console.log('📋 [App] Query training_plans:', trainingsQuery);
+      console.log('📋 [App] Query training_plans (toString):', trainingsQuery.toString());
+
       const unsubscribe = onSnapshot(
         trainingsQuery,
         (snapshot) => {
+          console.log('🔔 [App] onSnapshot training_plans docs IDs:', snapshot.docs.map(d => d.id));
           const trainingsData = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
