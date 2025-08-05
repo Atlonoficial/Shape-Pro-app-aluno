@@ -1,41 +1,10 @@
-import { useState } from "react";
-import { Play, ShoppingCart, Package, User, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Play, ShoppingCart, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
-
-const membershipData = {
-  title: "Seca Barriga - Woman",
-  modules: [
-    {
-      id: 1,
-      title: "Dieta Inteligente",
-      subtitle: "Módulo 2",
-      image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400",
-      type: "course"
-    },
-    {
-      id: 2,
-      title: "Metabolismo Feminino", 
-      subtitle: "Módulo 1",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400",
-      type: "course"
-    },
-    {
-      id: 3,
-      title: "Metabolismo Energético",
-      subtitle: "Módulo 3",
-      image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?auto=format&fit=crop&q=80&w=400",
-      type: "course"
-    },
-    {
-      id: 4,
-      title: "Dieta Detox",
-      subtitle: "Módulo 4", 
-      image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&q=80&w=400",
-      type: "course"
-    }
-  ]
-};
+import { useAuth } from "@/hooks/useAuth";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { getCoursesByUser, Course } from "@/lib/firestore";
 
 const products = [
   {
@@ -62,8 +31,34 @@ const products = [
 ];
 
 export const Members = () => {
+  const { user } = useAuth();
+  const { student } = useStudentProfile();
   const [activeTab, setActiveTab] = useState<'courses' | 'products'>('courses');
-  const [selectedModule, setSelectedModule] = useState<number | null>(null);
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      if (!student?.teacherId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const unsubscribe = getCoursesByUser(student.teacherId, (coursesData) => {
+          setCourses(coursesData);
+          setLoading(false);
+        });
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error loading courses:', error);
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, [student?.teacherId]);
 
   if (selectedModule) {
     return (
@@ -71,6 +66,17 @@ export const Members = () => {
         moduleId={selectedModule} 
         onBack={() => setSelectedModule(null)} 
       />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">Carregando cursos...</p>
+        </div>
+      </div>
     );
   }
 
@@ -127,28 +133,37 @@ export const Members = () => {
       {/* Content */}
       {activeTab === 'courses' && (
         <div>
-          <h3 className="text-lg font-semibold text-foreground mb-4">{membershipData.title}</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Cursos Disponíveis</h3>
           
-          <div className="grid grid-cols-2 gap-4">
-            {membershipData.modules.map((module) => (
-              <div 
-                key={module.id}
-                onClick={() => setSelectedModule(module.id)}
-                className="relative card-gradient overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer"
-              >
+          {courses.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum curso disponível no momento</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {courses.map((course) => (
                 <div 
-                  className="aspect-square bg-cover bg-center relative"
-                  style={{ backgroundImage: `url(${module.image})` }}
+                  key={course.id}
+                  onClick={() => setSelectedModule(course.id)}
+                  className="relative card-gradient overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <h4 className="text-sm font-semibold text-white mb-1">{module.title}</h4>
-                    <p className="text-xs text-white/70">{module.subtitle}</p>
+                  <div 
+                    className="aspect-square bg-cover bg-center relative"
+                    style={{ 
+                      backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h4 className="text-sm font-semibold text-white mb-1">{course.title}</h4>
+                      <p className="text-xs text-white/70">{course.description}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
