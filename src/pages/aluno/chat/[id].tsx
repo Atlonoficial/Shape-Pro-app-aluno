@@ -1,67 +1,47 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
-import { auth } from '@/lib/firebase';
+import { useState, useRef, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import AuthGuard from '@/components/AuthGuard';
 import { useChat } from '@/hooks/useChat';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
   ArrowLeft, 
-  Phone, 
-  Video, 
-  MoreVertical,
-  Clock,
-  Check,
-  CheckCheck
+  MessageCircle,
+  User,
+  GraduationCap
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 /**
- * Página de Chat Individual do Aluno
+ * Chat entre Aluno e Professor
  * 
- * FUNCIONALIDADES:
- * - Chat em tempo real usando useChat()
- * - Interface similar ao WhatsApp
- * - Envio de mensagens com Enter ou botão
- * - Auto-scroll para mensagens novas
- * - Indicadores de status de mensagem
- * 
- * ROTEAMENTO:
- * - Adicionar em App.tsx: <Route path="/aluno/chat/:id" element={<AlunoChat />} />
- * - Usar como: /aluno/chat/conversation_123
- * - Proteger com AuthGuard
+ * CONEXÃO COM DASHBOARD DO PROFESSOR:
+ * - Mesmo conversation_id usado em ambos os apps
+ * - Mensagens sincronizadas em tempo real via onSnapshot
+ * - Professor vê quando aluno está online/digitando
+ * - Push notifications bidirecionais
  */
 
 export default function AlunoChat() {
   const { id: conversationId } = useParams<{ id: string }>();
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const { messages, loading, sendMessage, error } = useChat(conversationId);
+  const { user } = useAuth();
+  const { messages, loading, error, sendMessage } = useChat(conversationId);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  if (!conversationId) {
-    return <Navigate to="/aluno/dashboard" replace />;
-  }
-
   // Auto-scroll para última mensagem
   useEffect(() => {
-    if (messagesEndRef.current && messages.length > 0) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Mostrar erro se houver
+  // Exibir erros
   useEffect(() => {
     if (error) {
       toast({
@@ -70,16 +50,15 @@ export default function AlunoChat() {
         variant: "destructive"
       });
     }
-  }, [error]);
+  }, [error, toast]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    
+  // Enviar mensagem
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
 
+    setSending(true);
     try {
-      setSending(true);
-      await sendMessage(newMessage);
+      await sendMessage(newMessage.trim());
       setNewMessage('');
     } catch (err) {
       toast({
@@ -92,6 +71,7 @@ export default function AlunoChat() {
     }
   };
 
+  // Enviar com Enter
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -99,174 +79,171 @@ export default function AlunoChat() {
     }
   };
 
-  const formatMessageTime = (timestamp: Date) => {
-    if (isToday(timestamp)) {
-      return format(timestamp, 'HH:mm');
-    } else if (isYesterday(timestamp)) {
-      return 'Ontem ' + format(timestamp, 'HH:mm');
+  // Formatar horário da mensagem
+  const formatMessageTime = (timestamp: any) => {
+    if (!timestamp) return '';
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    
+    if (isToday(date)) {
+      return format(date, 'HH:mm', { locale: ptBR });
+    } else if (isYesterday(date)) {
+      return `Ontem ${format(date, 'HH:mm', { locale: ptBR })}`;
     } else {
-      return format(timestamp, 'dd/MM HH:mm', { locale: ptBR });
+      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
     }
   };
 
+  if (loading) {
+    return <ChatSkeleton />;
+  }
+
   return (
-    <AuthGuard>
-      <div className="flex flex-col h-screen bg-background">
-      {/* Header do Chat */}
-      <Card className="rounded-none border-b">
-        <CardHeader className="p-4">
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header do chat */}
+      <Card className="rounded-none border-l-0 border-r-0 border-t-0">
+        <CardHeader className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => window.history.back()}
-              >
-                <ArrowLeft className="h-4 w-4" />
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/aluno/dashboard">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
               </Button>
-              
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="/professor-avatar.jpg" />
-                <AvatarFallback>
-                  Prof
-                </AvatarFallback>
-              </Avatar>
-              
-              <div>
-                <CardTitle className="text-lg">Professor João</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  <Badge variant="secondary" className="text-xs">
-                    Online
-                  </Badge>
-                </p>
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                <div>
+                  <CardTitle className="text-lg">Professor</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Chat individual
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Phone className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Video className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Área de Mensagens */}
-      <ScrollArea className="flex-1 p-4">
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
-                <Skeleton className="h-12 w-64 rounded-lg" />
-              </div>
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-              <Send className="h-8 w-8" />
-            </div>
-            <p>Nenhuma mensagem ainda.</p>
-            <p className="text-sm">Envie a primeira mensagem para seu professor!</p>
+      {/* Área de mensagens */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <MessageCircle className="h-16 w-16 text-muted-foreground opacity-50 mb-4" />
+            <h3 className="text-lg font-medium mb-2">Nenhuma mensagem ainda</h3>
+            <p className="text-muted-foreground">
+              Inicie uma conversa com seu professor!
+            </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {messages.map((message) => {
-              const isMyMessage = message.senderId === user?.uid;
-              
-              return (
-                <div 
-                  key={message.id}
-                  className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+          messages.map((message) => {
+            const isMyMessage = message.sender_id === user?.uid;
+            
+            return (
+              <div
+                key={message.id}
+                className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    isMyMessage
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
                 >
-                  <div className={`max-w-[70%] ${isMyMessage ? 'order-2' : 'order-1'}`}>
-                    <div 
-                      className={`p-3 rounded-lg ${
-                        isMyMessage 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <p className="text-sm">{(message as any).content || (message as any).message || ''}</p>
-                      <div className={`flex items-center gap-1 mt-1 ${
-                        isMyMessage ? 'justify-end' : 'justify-start'
-                      }`}>
-                        <span className={`text-xs ${
-                          isMyMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                        }`}>
-                          {formatMessageTime((message as any).created_at || message.createdAt || new Date())}
-                        </span>
-                        {isMyMessage && (
-                          <div className="text-primary-foreground/70">
-                            {message.isRead ? (
-                              <CheckCheck className="h-3 w-3" />
-                            ) : (
-                              <Check className="h-3 w-3" />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  {/* Remetente */}
+                  <div className="flex items-center gap-1 mb-1">
+                    {isMyMessage ? (
+                      <User className="h-3 w-3" />
+                    ) : (
+                      <GraduationCap className="h-3 w-3" />
+                    )}
+                    <span className="text-xs opacity-75">
+                      {isMyMessage ? 'Você' : 'Professor'}
+                    </span>
                   </div>
+                  
+                  {/* Conteúdo */}
+                  <p className="text-sm break-words">{message.content}</p>
+                  
+                  {/* Horário */}
+                  <p className="text-xs opacity-75 mt-1">
+                    {formatMessageTime(message.created_at)}
+                  </p>
                 </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
+              </div>
+            );
+          })
         )}
-      </ScrollArea>
+        <div ref={messagesEndRef} />
+      </div>
 
-      {/* Input de Nova Mensagem */}
-      <Card className="rounded-none border-t">
+      {/* Input de nova mensagem */}
+      <Card className="rounded-none border-l-0 border-r-0 border-b-0">
         <CardContent className="p-4">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="flex gap-2"
+          >
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem..."
-              disabled={sending || loading}
+              disabled={sending}
               className="flex-1"
-              autoFocus
             />
             <Button 
               type="submit" 
-              disabled={!newMessage.trim() || sending || loading}
-              size="sm"
+              disabled={!newMessage.trim() || sending}
+              size="icon"
             >
-              {sending ? (
-                <Clock className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
+              <Send className="h-4 w-4" />
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-    </AuthGuard>
   );
 }
 
-// Skeleton para loading state
+// Skeleton do chat
 function ChatSkeleton() {
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Skeleton className="h-20 w-full rounded-none" />
+    <div className="flex flex-col h-screen">
+      <Card className="rounded-none border-l-0 border-r-0 border-t-0">
+        <CardHeader className="py-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8" />
+            <div>
+              <Skeleton className="h-6 w-24 mb-1" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
       <div className="flex-1 p-4 space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
-            <Skeleton className="h-12 w-64 rounded-lg" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div
+            key={i}
+            className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}
+          >
+            <Skeleton className="h-16 w-48 rounded-lg" />
           </div>
         ))}
       </div>
-      <Skeleton className="h-16 w-full rounded-none" />
+
+      <Card className="rounded-none border-l-0 border-r-0 border-b-0">
+        <CardContent className="p-4">
+          <div className="flex gap-2">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-10" />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

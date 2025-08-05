@@ -1,253 +1,236 @@
-import { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
-import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
-import AuthGuard from '@/components/AuthGuard';
 import { useMyData } from '@/hooks/useMyData';
 import { useMyTrainings } from '@/hooks/useMyTrainings';
 import { useFCMTokens } from '@/hooks/useFCMTokens';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   User, 
   Dumbbell, 
-  Calendar, 
-  Trophy, 
-  Bell,
-  PlayCircle,
-  Clock,
-  Target
+  TrendingUp, 
+  Calendar,
+  MessageCircle,
+  Target,
+  Clock
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 /**
- * Dashboard Principal do Aluno
+ * Dashboard do Aluno - Conectado ao Dashboard do Professor
  * 
- * FUNCIONALIDADES:
- * - Exibe perfil do aluno usando useMyData()
- * - Lista treinos atribuídos com useMyTrainings()
- * - Registra token FCM automaticamente com useFCMTokens()
- * - Cards com métricas de progresso
- * - Acesso rápido a treinos e funcionalidades
- * 
- * ROTEAMENTO:
- * - Adicionar em App.tsx: <Route path="/aluno/dashboard" element={<AlunoDashboard />} />
- * - Proteger com AuthGuard para usuários autenticados
+ * SINCRONIZAÇÃO EM TEMPO REAL:
+ * - Professor cadastra aluno → aparece aqui via useMyData
+ * - Professor cria treino → aluno vê via useMyTrainings  
+ * - FCM tokens registrados → professor pode enviar notificações
+ * - Chat disponível para comunicação bidirecional
  */
 
 export default function AlunoDashboard() {
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const { student, trainings: assignedTrainings, loading: dataLoading, error: dataError } = useMyData(user?.uid);
-  const { trainings: myTrainings, loading: trainingsLoading, error: trainingsError } = useMyTrainings(user?.uid);
-  const { requestPermission, permission, error: fcmError } = useFCMTokens();
+  const { user } = useAuth();
+  const { student, loading: studentLoading, error: studentError } = useMyData(user?.uid);
+  const { trainings, loading: trainingsLoading, error: trainingsError } = useMyTrainings(user?.uid);
+  const { requestPermission, token, loading: fcmLoading } = useFCMTokens();
   const { toast } = useToast();
 
-  // Registrar token FCM ao carregar dashboard
+  // Registrar FCM token automaticamente para receber notificações do professor
   useEffect(() => {
-    if (user && permission !== 'granted') {
-      requestPermission().then((success) => {
-        if (success) {
-          toast({
-            title: "Notificações ativadas",
-            description: "Você receberá notificações sobre novos treinos e mensagens.",
-          });
-        }
+    if (user && !token && !fcmLoading) {
+      requestPermission().catch(err => {
+        console.warn('Falha ao registrar token FCM:', err);
       });
     }
-  }, [user, permission, requestPermission]);
+  }, [user, token, fcmLoading, requestPermission]);
 
-  // Mostrar erros se houver
+  // Exibir erros via toast
   useEffect(() => {
-    if (dataError || trainingsError || fcmError) {
+    if (studentError) {
       toast({
-        title: "Erro ao carregar dados",
-        description: dataError || trainingsError || fcmError || "Erro desconhecido",
+        title: "Erro no perfil",
+        description: studentError,
         variant: "destructive"
       });
     }
-  }, [dataError, trainingsError, fcmError]);
+    if (trainingsError) {
+      toast({
+        title: "Erro nos treinos", 
+        description: trainingsError,
+        variant: "destructive"
+      });
+    }
+  }, [studentError, trainingsError, toast]);
 
-  const loading = dataLoading || trainingsLoading;
+  if (studentLoading || trainingsLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  // Estatísticas calculadas dos treinos
+  const activeTrainings = trainings.filter(t => t.status === 'active').length;
+  const completedTrainings = trainings.filter(t => t.status === 'completed').length;
+  const nextTraining = trainings.find(t => t.status === 'active' && !t.completed_at);
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-background p-4 space-y-6">
-        {/* Header com perfil */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user?.photoURL || ''} />
-              <AvatarFallback>
-                <User className="h-8 w-8" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <CardTitle className="text-xl">
-                Olá, {user?.displayName || user?.email || 'Aluno'}! 👋
-              </CardTitle>
-              <CardDescription>
-                Pronto para treinar hoje? Você tem {myTrainings.length} treinos disponíveis.
-              </CardDescription>
-            </div>
-            <Badge variant={permission === 'granted' ? 'default' : 'secondary'}>
-              <Bell className="h-3 w-3 mr-1" />
-              {permission === 'granted' ? 'Notificações ON' : 'Notificações OFF'}
-            </Badge>
-          </CardHeader>
-        </Card>
+    <div className="container mx-auto p-4 space-y-6">
+      {/* Header com informações do aluno */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Olá, {user?.displayName || user?.email?.split('@')[0] || 'Aluno'}!
+          </CardTitle>
+          <CardDescription>
+            {student?.teacherId && `Professor: ${student.teacherId}`}
+            {token && " • Notificações ativadas"}
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
       {/* Métricas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Treinos Ativos"
-          value={loading ? '...' : myTrainings.length.toString()}
+          value={activeTrainings}
           icon={<Dumbbell className="h-4 w-4" />}
           description="Treinos disponíveis"
         />
         <MetricCard
           title="Treinos Concluídos"
-          value={loading ? '...' : '12'} // Implementar contagem real
-          icon={<Trophy className="h-4 w-4" />}
-          description="Este mês"
+          value={completedTrainings}
+          icon={<TrendingUp className="h-4 w-4" />}
+          description="Total completado"
         />
         <MetricCard
           title="Próximo Treino"
-          value={loading ? '...' : 'Hoje'}
-          icon={<Calendar className="h-4 w-4" />}
-          description="Treino agendado"
+          value={nextTraining ? nextTraining.title : "Nenhum"}
+          icon={<Clock className="h-4 w-4" />}
+          description="Próxima sessão"
         />
       </div>
 
-      {/* Lista de Treinos */}
+      {/* Ações rápidas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Button asChild variant="outline" className="h-20 flex-col">
+          <Link to="/aluno/agenda">
+            <Calendar className="h-6 w-6 mb-2" />
+            Agenda
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-20 flex-col">
+          <Link to="/aluno/progresso">
+            <TrendingUp className="h-6 w-6 mb-2" />
+            Progresso
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-20 flex-col">
+          <Link to="/aluno/perfil">
+            <User className="h-6 w-6 mb-2" />
+            Perfil
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="h-20 flex-col">
+          <Link to={`/aluno/chat/${student?.teacherId || 'professor'}`}>
+            <MessageCircle className="h-6 w-6 mb-2" />
+            Chat
+          </Link>
+        </Button>
+      </div>
+
+      {/* Lista de treinos */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5" />
-            Meus Treinos
-          </CardTitle>
+          <CardTitle>Meus Treinos</CardTitle>
           <CardDescription>
             Treinos atribuídos pelo seu professor
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : myTrainings.length === 0 ? (
+          {trainings.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Dumbbell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhum treino atribuído ainda.</p>
-              <p className="text-sm">Entre em contato com seu professor.</p>
+              <p className="text-sm">Aguarde seu professor criar treinos para você.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {myTrainings.slice(0, 3).map((training) => (
-                <div 
+              {trainings.map((training) => (
+                <div
                   key={training.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between p-4 border rounded-lg"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Dumbbell className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">{training.name}</h4>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        45 min
-                        <Target className="h-3 w-3 ml-2" />
-                        {training.difficulty || 'Intermediário'}
-                      </p>
-                    </div>
+                  <div>
+                    <h3 className="font-medium">{training.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {training.exercises?.length || 0} exercícios
+                    </p>
                   </div>
-                  <Button size="sm">
-                    <PlayCircle className="h-4 w-4 mr-1" />
-                    Começar Treino
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        training.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {training.status === 'active' ? 'Ativo' : 'Concluído'}
+                    </span>
+                    <Button asChild size="sm">
+                      <Link to={`/aluno/treinos/${training.id}`}>
+                        Começar Treino
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ))}
-              
-              {myTrainings.length > 3 && (
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/aluno/treinos'}>
-                  Ver todos os treinos ({myTrainings.length})
-                </Button>
-              )}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Ações rápidas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Button variant="outline" className="h-20 flex-col gap-2">
-          <Calendar className="h-6 w-6" />
-          <span className="text-xs">Agenda</span>
-        </Button>
-        <Button variant="outline" className="h-20 flex-col gap-2">
-          <Trophy className="h-6 w-6" />
-          <span className="text-xs">Progresso</span>
-        </Button>
-        <Button variant="outline" className="h-20 flex-col gap-2">
-          <User className="h-6 w-6" />
-          <span className="text-xs">Perfil</span>
-        </Button>
-        <Button variant="outline" className="h-20 flex-col gap-2">
-          <Bell className="h-6 w-6" />
-          <span className="text-xs">Chat</span>
-        </Button>
-      </div>
-      </div>
-    </AuthGuard>
+    </div>
   );
 }
 
-// Componente auxiliar para métricas
-function MetricCard({ title, value, icon, description }: {
+// Componente para métricas
+interface MetricCardProps {
   title: string;
-  value: string;
+  value: string | number;
   icon: React.ReactNode;
   description: string;
-}) {
+}
+
+function MetricCard({ title, value, icon, description }: MetricCardProps) {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            <p className="text-xs text-muted-foreground">{description}</p>
-          </div>
-          <div className="p-2 bg-primary/10 rounded-lg">
-            {icon}
-          </div>
+        <div className="flex items-center justify-between space-y-0 pb-2">
+          <h3 className="text-sm font-medium">{title}</h3>
+          {icon}
         </div>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );
 }
 
-// Skeleton para loading state
+// Skeleton para carregamento
 function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-background p-4 space-y-6">
-      <Skeleton className="h-24 w-full" />
+    <div className="container mx-auto p-4 space-y-6">
+      <Skeleton className="h-32 w-full" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-20" />
-        ))}
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
       </div>
       <Skeleton className="h-64 w-full" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-20" />
-        ))}
-      </div>
     </div>
   );
 }

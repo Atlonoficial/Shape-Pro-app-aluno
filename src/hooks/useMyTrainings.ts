@@ -40,11 +40,16 @@ export const useMyTrainings = (currentUserId: string | undefined): UseMyTraining
     }
 
     try {
-      // Query para buscar treinos atribuídos ao usuário atual
-      // Ordenados por data de criação (mais recentes primeiro)
+      /**
+       * CONEXÃO COM DASHBOARD DO PROFESSOR:
+       * - Professor cria treino em training_plans
+       * - Define student_id = currentUserId  
+       * - Aluno recebe em tempo real via onSnapshot
+       * - Estrutura: { id, title, exercises[], student_id, teacher_id, created_at }
+       */
       const trainingsQuery = query(
         collection(db, 'training_plans'),
-        where('assignedTo', 'array-contains', currentUserId),
+        where('student_id', '==', currentUserId),
         orderBy('created_at', 'desc')
       );
 

@@ -1,0 +1,84 @@
+/**
+ * Índices Compostos Necessários - Firebase Firestore
+ * 
+ * COMO CONFIGURAR:
+ * 1. Acesse Firebase Console → Firestore → Indexes
+ * 2. Clique em "Add index" para cada índice abaixo
+ * 3. Configure os campos conforme especificado
+ * 
+ * CONEXÃO PROFESSOR-ALUNO:
+ * - Mesmos índices usados por ambos os apps
+ * - Queries otimizadas para busca em tempo real
+ */
+
+// 1. STUDENTS por TEACHER
+Collection: students
+Fields:
+  - teacher_id (Ascending)
+  - created_at (Descending)
+Query scope: Collection
+
+// 2. TRAINING_PLANS por STUDENT  
+Collection: training_plans
+Fields:
+  - student_id (Ascending)
+  - created_at (Descending)
+Query scope: Collection
+
+// 3. TRAINING_PLANS por TEACHER
+Collection: training_plans
+Fields:
+  - teacher_id (Ascending)
+  - created_at (Descending)
+Query scope: Collection
+
+// 4. MESSAGES por CONVERSATION
+Collection: messages
+Fields:
+  - conversation_id (Ascending)
+  - created_at (Ascending)
+Query scope: Collection
+
+// 5. WORKOUT_SESSIONS por STUDENT
+Collection: workout_sessions
+Fields:
+  - student_id (Ascending)
+  - created_at (Descending)
+Query scope: Collection
+
+// 6. PROGRESS por STUDENT
+Collection: progress
+Fields:
+  - student_id (Ascending)
+  - date (Descending)
+Query scope: Collection
+
+// 7. FCM_TOKENS por USER
+Collection: fcm_tokens
+Fields:
+  - userId (Ascending)
+  - created_at (Descending)
+Query scope: Collection
+
+/**
+ * COMANDOS CLI ALTERNATIVOS:
+ * 
+ * Se preferir usar Firebase CLI:
+ * 
+ * firebase firestore:indexes
+ * 
+ * Ou criar via firebase-indexes.json:
+ * {
+ *   "indexes": [
+ *     {
+ *       "collectionGroup": "students",
+ *       "queryScope": "COLLECTION",
+ *       "fields": [
+ *         { "fieldPath": "teacher_id", "order": "ASCENDING" },
+ *         { "fieldPath": "created_at", "order": "DESCENDING" }
+ *       ]
+ *     }
+ *     // ... outros índices
+ *   ]
+ * }
+ */

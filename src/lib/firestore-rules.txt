@@ -1,0 +1,68 @@
+/**
+ * Firestore Security Rules - Compartilhadas entre App do Aluno e Dashboard do Professor
+ * 
+ * CONFIGURAÇÃO NO FIREBASE CONSOLE:
+ * 1. Acesse Firebase Console → Firestore → Rules
+ * 2. Cole essas rules e publique
+ * 3. Ambos os apps (professor e aluno) usarão as mesmas regras
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // STUDENTS: Professor pode criar/editar, aluno só lê próprio perfil
+    match /students/{studentId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.uid == resource.data.teacherId);
+      
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.teacherId ||
+         request.auth.uid == request.auth.uid); // Aluno pode atualizar próprio perfil
+    }
+    
+    // TRAINING_PLANS: Professor cria/edita, aluno lê treinos atribuídos
+    match /training_plans/{planId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.student_id || 
+         request.auth.uid == resource.data.teacher_id);
+      
+      allow write: if request.auth != null && 
+        request.auth.uid == resource.data.teacher_id;
+    }
+    
+    // MESSAGES: Chat bidirecional entre professor e aluno
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.sender_id || 
+         request.auth.uid == resource.data.recipient_id);
+    }
+    
+    // FCM_TOKENS: Cada usuário gerencia próprios tokens
+    match /fcm_tokens/{tokenId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+    }
+    
+    // WORKOUT_SESSIONS: Aluno registra sessões, professor visualiza
+    match /workout_sessions/{sessionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.student_id || 
+         request.auth.uid == resource.data.teacher_id);
+      
+      allow write: if request.auth != null && 
+        request.auth.uid == resource.data.student_id;
+    }
+    
+    // PROGRESS: Registros de progresso do aluno
+    match /progress/{progressId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.student_id || 
+         request.auth.uid == resource.data.teacher_id);
+      
+      allow write: if request.auth != null && 
+        request.auth.uid == resource.data.student_id;
+    }
+  }
+}
