@@ -7,6 +7,7 @@ import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
+import { useWorkouts, useProgress, useNotifications } from "@/hooks/useFirestore";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -14,8 +15,13 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
-  const { userProfile } = useAuthContext();
+  const { userProfile, user } = useAuthContext();
   const firstName = userProfile?.name?.split(' ')[0] || 'Usuário';
+  
+  // Puxar dados reais do Firebase
+  const { workouts, loading: workoutsLoading } = useWorkouts(user?.uid || '');
+  const { progress, loading: progressLoading } = useProgress(user?.uid || '');
+  const { notifications, loading: notificationsLoading } = useNotifications(user?.uid || '');
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -124,7 +130,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       </div>
 
       {/* Weight Progress Chart */}
-      <WeightChart />
+      <WeightChart progress={progress} loading={progressLoading} />
 
       {/* Coach AI Card */}
       <CoachAICard onCoachClick={onCoachClick} />
@@ -136,7 +142,11 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       <QuickActions />
 
       {/* Stats Overview */}
-      <DashboardStats />
+      <DashboardStats 
+        workouts={workouts} 
+        progress={progress} 
+        loading={workoutsLoading || progressLoading} 
+      />
 
       {/* Today's Workout Preview */}
       <div className="card-gradient p-6">
