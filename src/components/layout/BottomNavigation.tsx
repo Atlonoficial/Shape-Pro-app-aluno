@@ -2,7 +2,7 @@
 import { Home, Dumbbell, Apple, User, Users } from "lucide-react";
 
 const navItems = [
-  { id: 'home', icon: Home, label: 'Home' },
+  { id: 'home', icon: Home, label: 'Início' },
   { id: 'workouts', icon: Dumbbell, label: 'Treinos' },
   { id: 'nutrition', icon: Apple, label: 'Dieta' },
   { id: 'members', icon: Users, label: 'Membros' },
