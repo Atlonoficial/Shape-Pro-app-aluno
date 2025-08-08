@@ -704,3 +704,100 @@ export const getPaymentsByUser = (userId: string, callback: (payments: Payment[]
     callback(payments);
   });
 };
+
+// Medical Exams
+export interface MedicalExam {
+  id: string;
+  userId: string;
+  type: string;
+  value: string;
+  unit: string;
+  date: Timestamp;
+  fileUrl?: string;
+  notes?: string;
+  createdAt: Timestamp;
+}
+
+export const addMedicalExam = async (exam: Omit<MedicalExam, 'id' | 'createdAt'>) => {
+  const docRef = await addDoc(collection(db, 'medical_exams'), {
+    ...exam,
+    createdAt: Timestamp.now()
+  });
+  return docRef.id;
+};
+
+export const getMedicalExamsByUser = (userId: string, callback: (exams: MedicalExam[]) => void) => {
+  const q = query(
+    collection(db, 'medical_exams'),
+    where('userId', '==', userId),
+    orderBy('date', 'desc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const exams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MedicalExam));
+    callback(exams);
+  });
+};
+
+// Progress Photos
+export interface ProgressPhoto {
+  id: string;
+  userId: string;
+  url: string;
+  label?: string;
+  date: Timestamp;
+  createdAt: Timestamp;
+}
+
+export const addProgressPhoto = async (photo: Omit<ProgressPhoto, 'id' | 'createdAt'>) => {
+  const docRef = await addDoc(collection(db, 'progress_photos'), {
+    ...photo,
+    createdAt: Timestamp.now()
+  });
+  return docRef.id;
+};
+
+export const getProgressPhotosByUser = (userId: string, callback: (photos: ProgressPhoto[]) => void) => {
+  const q = query(
+    collection(db, 'progress_photos'),
+    where('userId', '==', userId),
+    orderBy('date', 'desc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const photos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProgressPhoto));
+    callback(photos);
+  });
+};
+
+// Physical Assessments
+export interface PhysicalAssessment {
+  id: string;
+  userId: string;
+  date: Timestamp;
+  weight: number;
+  bodyFat?: number;
+  muscleMass?: number;
+  waist?: number;
+  hip?: number;
+  notes?: string;
+  createdAt: Timestamp;
+}
+
+export const addPhysicalAssessment = async (assessment: Omit<PhysicalAssessment, 'id' | 'createdAt'>) => {
+  const docRef = await addDoc(collection(db, 'physical_assessments'), {
+    ...assessment,
+    createdAt: Timestamp.now()
+  });
+  return docRef.id;
+};
+
+export const getPhysicalAssessmentsByUser = (userId: string, callback: (assessments: PhysicalAssessment[]) => void) => {
+  const q = query(
+    collection(db, 'physical_assessments'),
+    where('userId', '==', userId),
+    orderBy('date', 'desc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const assessments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PhysicalAssessment));
+    callback(assessments);
+  });
+};

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { getProgressPhotosByUser, addProgressPhoto, ProgressPhoto } from "@/lib/firestore";
+import { uploadProgressPhoto } from "@/lib/firebase-storage";
+import { Timestamp } from "firebase/firestore";
 
 interface Foto {
   id: number;
@@ -58,27 +62,52 @@ const fotosData: Foto[] = [
 
 export const FotosProgresso = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filtro, setFiltro] = useState("todos");
-  const [fotos] = useState<Foto[]>(fotosData);
+  const [fotos, setFotos] = useState<ProgressPhoto[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = getProgressPhotosByUser(user.uid, setFotos);
+    return () => unsub();
+  }, [user?.uid]);
 
   const handleAdicionarFoto = () => {
-    toast({
-      title: "Nova foto",
-      description: "Funcionalidade de adicionar foto em desenvolvimento.",
-    });
+    fileInputRef.current?.click();
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.uid) return;
+
+    try {
+      setUploading(true);
+      const upload = await uploadProgressPhoto(user.uid, file, 'progress');
+      await addProgressPhoto({
+        userId: user.uid,
+        url: upload.url,
+        label: 'Progresso',
+        date: Timestamp.now()
+      });
+      toast({ title: 'Foto enviada', description: 'Sua foto foi salva e enviada ao professor.' });
+    } catch (err: any) {
+      toast({ title: 'Erro ao enviar', description: err.message || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const filteredFotos = fotos.filter(foto => {
     if (filtro === "todos") return true;
-    
-    const dataFoto = new Date(foto.data.split('/').reverse().join('-'));
+    const dataFoto = foto.date.toDate();
     const hoje = new Date();
     const diffTime = hoje.getTime() - dataFoto.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     if (filtro === "7dias") return diffDays <= 7;
     if (filtro === "30dias") return diffDays <= 30;
-    
     return true;
   });
 
@@ -103,6 +132,7 @@ export const FotosProgresso = () => {
       </div>
 
       <div className="p-4 space-y-4">
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
         {/* Filter Dropdown */}
         <div className="flex justify-end">
           <Select value={filtro} onValueChange={setFiltro}>
@@ -131,11 +161,11 @@ export const FotosProgresso = () => {
               <div className="aspect-square relative">
                 <img 
                   src={foto.url}
-                  alt={`Progresso ${foto.data}`}
+                  alt={`Progresso ${foto.date.toDate().toLocaleDateString('pt-BR')}`}
                   className="w-full h-full object-cover rounded-lg"
                 />
                 <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                  {foto.data}
+                  {foto.date.toDate().toLocaleDateString('pt-BR')}
                 </div>
               </div>
             </Card>
@@ -155,6 +185,7 @@ export const FotosProgresso = () => {
         onClick={handleAdicionarFoto}
         className="fixed bottom-20 right-4 w-14 h-14 rounded-full btn-accent shadow-lg"
         size="icon"
+        disabled={uploading}
       >
         <Plus className="w-6 h-6" />
       </Button>

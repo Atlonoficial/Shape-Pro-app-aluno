@@ -1,51 +1,71 @@
-import { useState } from "react";
-import { ArrowLeft, Search, Plus, Calendar, FileText, Eye } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Search, Plus, Calendar, FileText, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-
-interface Exame {
-  id: number;
-  data: string;
-  tipo: string;
-  valor: string;
-  unidade: string;
-}
-
-const examesData: Exame[] = [
-  {
-    id: 1,
-    data: "15/01/2024",
-    tipo: "Colesterol Total",
-    valor: "180",
-    unidade: "mg/dL"
-  },
-  {
-    id: 2,
-    data: "10/01/2024",
-    tipo: "Glicemia",
-    valor: "85",
-    unidade: "mg/dL"
-  }
-];
+import { useAuth } from "@/hooks/useAuth";
+import { addMedicalExam, getMedicalExamsByUser, MedicalExam } from "@/lib/firestore";
+import { uploadDocument } from "@/lib/firebase-storage";
+import { Timestamp } from "firebase/firestore";
 
 export const ExamesMedicos = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [exames] = useState<Exame[]>(examesData);
+  const [exams, setExams] = useState<MedicalExam[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [tipo, setTipo] = useState("");
+  const [valor, setValor] = useState("");
+  const [unidade, setUnidade] = useState("");
+  const [data, setData] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const filteredExames = exames.filter(exame => 
-    exame.tipo.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubscribe = getMedicalExamsByUser(user.uid, (list) => setExams(list));
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  const filteredExams = exams.filter((exame) =>
+    exame.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleNovoExame = () => {
-    toast({
-      title: "Novo exame",
-      description: "Funcionalidade de adicionar exame em desenvolvimento.",
-    });
+  const handleNovoExame = () => setShowForm((s) => !s);
+
+  const handleSalvarExame = async () => {
+    if (!user?.uid) return;
+    if (!tipo || !valor || !unidade || !data) {
+      toast({ title: "Campos obrigatórios", description: "Preencha tipo, valor, unidade e data.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      let fileUrl: string | undefined = undefined;
+      if (file) {
+        const upload = await uploadDocument(user.uid, file, 'exam');
+        fileUrl = upload.url;
+      }
+      await addMedicalExam({
+        userId: user.uid,
+        type: tipo,
+        value: valor,
+        unit: unidade,
+        date: Timestamp.fromDate(new Date(data)),
+        fileUrl,
+      });
+      toast({ title: "Exame salvo", description: "Seu exame foi enviado e compartilhado com o professor." });
+      setShowForm(false);
+      setTipo(""); setValor(""); setUnidade(""); setData(""); setFile(null);
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar", description: e.message || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -63,7 +83,7 @@ export const ExamesMedicos = () => {
           </Button>
           <h1 className="text-xl font-bold text-foreground">Exames Médicos</h1>
           <Badge variant="secondary" className="bg-primary/10 text-primary">
-            {exames.length}
+            {exams.length}
           </Badge>
         </div>
       </div>
@@ -87,9 +107,30 @@ export const ExamesMedicos = () => {
           </p>
         </div>
 
-        {/* Exames List */}
+        {/* New Exam Form */}
+        {showForm && (
+          <Card className="p-4 bg-card/50 border-border/50">
+            <div className="grid grid-cols-2 gap-3">
+              <Input placeholder="Tipo (ex: Glicemia)" value={tipo} onChange={(e) => setTipo(e.target.value)} />
+              <div className="flex gap-2">
+                <Input placeholder="Valor" value={valor} onChange={(e) => setValor(e.target.value)} />
+                <Input placeholder="Unidade" value={unidade} onChange={(e) => setUnidade(e.target.value)} />
+              </div>
+              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+              <div className="flex items-center gap-2">
+                <Input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-3">
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button onClick={handleSalvarExame} disabled={saving}>{saving ? 'Salvando...' : 'Salvar exame'}</Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Exams List */}
         <div className="space-y-3">
-          {filteredExames.map((exame) => (
+          {filteredExams.map((exame) => (
             <Card key={exame.id} className="p-4 bg-card/50 border-border/50 hover:bg-card/70 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -97,29 +138,28 @@ export const ExamesMedicos = () => {
                     <FileText className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{exame.tipo}</h3>
+                    <h3 className="font-semibold text-foreground">{exame.type}</h3>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="w-3 h-3" />
-                      <span>{exame.data}</span>
+                      <span>{exame.date.toDate().toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
                 </div>
-                
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <p className="font-bold text-foreground">
-                      {exame.valor} <span className="text-muted-foreground text-sm">{exame.unidade}</span>
+                      {exame.value} <span className="text-muted-foreground text-sm">{exame.unit}</span>
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground">
-                    <Eye className="w-4 h-4" />
-                  </Button>
+                  {exame.fileUrl && (
+                    <a href={exame.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-sm">Ver</a>
+                  )}
                 </div>
               </div>
             </Card>
           ))}
 
-          {filteredExames.length === 0 && (
+          {filteredExams.length === 0 && (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">Nenhum exame encontrado</p>

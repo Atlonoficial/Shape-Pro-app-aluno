@@ -1,22 +1,26 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { ArrowLeft, Crown, Check, Star, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 
 const AssinaturasPlanos = () => {
   const navigate = useNavigate();
-  
-  // Simulando o plano atual do usuário
-  const [planoAtual] = useState({
-    nome: "Shape Pro Premium",
-    preco: "R$ 79,90",
-    periodo: "mensal",
-    dataRenovacao: "15/02/2024",
-    status: "ativo"
-  });
+  const { student } = useStudentProfile();
+
+  const planoAtual = useMemo(() => {
+    if (!student?.activePlan) return null;
+    return {
+      nome: student.activePlan,
+      preco: "-",
+      periodo: "-",
+      dataRenovacao: "-",
+      status: "ativo",
+    };
+  }, [student?.activePlan]);
 
   const beneficiosAtivos = [
     "Acesso ilimitado a todos os treinos",
@@ -30,23 +34,22 @@ const AssinaturasPlanos = () => {
 
   const handleCancelarAssinatura = () => {
     toast({
-      title: "Cancelamento solicitado",
-      description: "Você receberá um email com as instruções para cancelamento.",
-      variant: "destructive"
+      title: "Somente pelo professor",
+      description: "A assinatura é gerenciada pelo seu professor.",
     });
   };
 
   const handleAlterarPlano = () => {
     toast({
-      title: "Alterar plano",
-      description: "Entre em contato com nosso suporte para alterar seu plano.",
+      title: "Somente pelo professor",
+      description: "Seu professor define e altera o plano.",
     });
   };
 
   const handleRenovarAssinatura = () => {
     toast({
-      title: "Renovação confirmada",
-      description: "Sua assinatura foi renovada automaticamente.",
+      title: "Somente pelo professor",
+      description: "A renovação é controlada pelo professor.",
     });
   };
 
@@ -76,22 +79,20 @@ const AssinaturasPlanos = () => {
                 <Crown className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-foreground">{planoAtual.nome}</h2>
+                <h2 className="text-lg font-bold text-foreground">{planoAtual ? planoAtual.nome : 'Sem plano atribuído'}</h2>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-success/20 text-success">
-                    {planoAtual.status.toUpperCase()}
+                  <Badge variant="secondary" className={`bg-${planoAtual ? 'success/20 text-success' : 'muted/20 text-muted-foreground'}`}>
+                    {planoAtual ? 'ATIVO' : 'NENHUM' }
                   </Badge>
-                  <span className="text-sm text-muted-foreground">•</span>
-                  <span className="text-sm text-muted-foreground">
-                    Renovação: {planoAtual.dataRenovacao}
-                  </span>
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-primary">{planoAtual.preco}</p>
-              <p className="text-sm text-muted-foreground">/{planoAtual.periodo}</p>
-            </div>
+            {planoAtual && (
+              <div className="text-right">
+                <p className="text-2xl font-bold text-primary">{planoAtual.preco}</p>
+                <p className="text-sm text-muted-foreground">/{planoAtual.periodo}</p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -125,11 +126,11 @@ const AssinaturasPlanos = () => {
             </div>
             <div className="flex justify-between items-center py-2 border-b border-border/30">
               <span className="text-muted-foreground">Próxima cobrança</span>
-              <span className="text-foreground">{planoAtual.dataRenovacao}</span>
+              <span className="text-foreground">{planoAtual?.dataRenovacao || '-'}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-muted-foreground">Valor</span>
-              <span className="text-foreground font-semibold">{planoAtual.preco}</span>
+              <span className="text-foreground font-semibold">{planoAtual?.preco || '-'}</span>
             </div>
           </div>
         </Card>
