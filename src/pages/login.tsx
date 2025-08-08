@@ -102,7 +102,7 @@ export default function Login() {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <img 
-              src="/lovable-uploads/44934fca-7868-4c3b-ac23-e51f6e1619f0.png" 
+              src="/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png" 
               alt="Shape Pro - Consultoria Online" 
               className="h-16 w-auto"
             />

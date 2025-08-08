@@ -64,7 +64,7 @@ export const AuthScreen = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 
-            src="/lovable-uploads/44934fca-7868-4c3b-ac23-e51f6e1619f0.png" 
+            src="/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png" 
             alt="Shape Pro - Consultoria Online" 
             className="h-28 w-auto mx-auto mb-4"
           />
