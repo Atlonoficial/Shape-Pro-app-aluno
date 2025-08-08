@@ -50,7 +50,7 @@ export const useMyTrainings = (currentUserId: string | undefined): UseMyTraining
       const trainingsQuery = query(
         collection(db, 'training_plans'),
         where('student_id', '==', currentUserId),
-        orderBy('created_at', 'desc')
+        orderBy('updated_at', 'desc')
       );
 
       // Debug Firestore query

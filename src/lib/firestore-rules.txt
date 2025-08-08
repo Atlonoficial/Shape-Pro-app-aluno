@@ -1,68 +1,137 @@
 /**
- * Firestore Security Rules - Compartilhadas entre App do Aluno e Dashboard do Professor
+ * Firestore Security Rules - Professor & Aluno (alinhadas ao mapeamento)
  * 
- * CONFIGURAÇÃO NO FIREBASE CONSOLE:
- * 1. Acesse Firebase Console → Firestore → Rules
- * 2. Cole essas rules e publique
- * 3. Ambos os apps (professor e aluno) usarão as mesmas regras
+ * COMO PUBLICAR:
+ * - Firebase Console → Firestore → Rules → Publicar
+ * - Ou via CLI: firebase deploy --only firestore:rules
  */
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // STUDENTS: Professor pode criar/editar, aluno só lê próprio perfil
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: vinculação por teacher_id/student_id no recurso atual
+    function isTeacherOfResource() {
+      return isAuth() && resource.data.teacher_id == request.auth.uid;
+    }
+    function isStudentOfResource() {
+      return isAuth() && (
+        resource.data.student_id == request.auth.uid ||
+        resource.data.id == request.auth.uid // fallback quando espelha doc.id
+      );
+    }
+
+    // Helper: validação para criação/atualização (request.resource)
+    function isTeacherOfRequest() {
+      return isAuth() && request.resource.data.teacher_id == request.auth.uid;
+    }
+    function isStudentOfRequest() {
+      return isAuth() && (
+        request.resource.data.student_id == request.auth.uid ||
+        request.resource.data.id == request.auth.uid
+      );
+    }
+
+    // TEACHERS: acesso do próprio professor ao seu doc
+    match /teachers/{uid} {
+      allow read, write: if isAuth() && request.auth.uid == uid;
+    }
+
+    // STUDENTS: professor gerencia, aluno lê/atualiza o próprio
     match /students/{studentId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.userId || 
-         request.auth.uid == resource.data.teacherId);
-      
-      allow write: if request.auth != null && 
-        (request.auth.uid == resource.data.teacherId ||
-         request.auth.uid == request.auth.uid); // Aluno pode atualizar próprio perfil
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create: if isTeacherOfRequest();
+      allow update: if isTeacherOfResource() || isStudentOfResource();
+      allow delete: if isTeacherOfResource();
     }
-    
-    // TRAINING_PLANS: Professor cria/edita, aluno lê treinos atribuídos
+
+    // TRAINING_PLANS: professor cria/edita; aluno lê os seus
     match /training_plans/{planId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.student_id || 
-         request.auth.uid == resource.data.teacher_id);
-      
-      allow write: if request.auth != null && 
-        request.auth.uid == resource.data.teacher_id;
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create, update, delete: if isTeacherOfRequest() || isTeacherOfResource();
     }
-    
-    // MESSAGES: Chat bidirecional entre professor e aluno
+
+    // DIET_PLANS (dashboard) e NUTRITION (app atual)
+    match /diet_plans/{planId} {
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create, update, delete: if isTeacherOfRequest() || isTeacherOfResource();
+    }
+    match /nutrition/{planId} {
+      // Compat: permite leitura por assignedTo (app atual) ou por student_id/teacher_id (novo)
+      allow read: if isTeacherOfResource() || isStudentOfResource()
+               || (isAuth() && (request.auth.uid in resource.data.assignedTo));
+      // Escrita: teacher (novo) OU autor via createdBy (app atual)
+      allow create, update, delete: if isTeacherOfRequest() || isTeacherOfResource()
+                                 || (isAuth() && request.resource.data.createdBy == request.auth.uid);
+    }
+
+    // APPOINTMENTS
+    match /appointments/{appointmentId} {
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create, update, delete: if isTeacherOfRequest() || isTeacherOfResource();
+    }
+
+    // PAYMENTS
+    match /payments/{paymentId} {
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create, update, delete: if isTeacherOfRequest() || isTeacherOfResource();
+    }
+
+    // CONVERSATIONS (entre teacher e student)
+    match /conversations/{convId} {
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create: if isTeacherOfRequest() || isStudentOfRequest();
+      allow update, delete: if isTeacherOfResource() || isStudentOfResource();
+    }
+
+    // Helpers para Messages
+    function convDoc(convId) {
+      return get(/databases/$(database)/documents/conversations/$(convId));
+    }
+    function isParticipant(convId) {
+      let c = convDoc(convId);
+      return isAuth() && (c.data.teacher_id == request.auth.uid || c.data.student_id == request.auth.uid);
+    }
+    function isTeacherIn(convId) { return isAuth() && convDoc(convId).data.teacher_id == request.auth.uid; }
+    function isStudentIn(convId) { return isAuth() && convDoc(convId).data.student_id == request.auth.uid; }
+
+    // MESSAGES: somente participantes; escrita apenas pelo remetente
     match /messages/{messageId} {
-      allow read, write: if request.auth != null && 
-        (request.auth.uid == resource.data.sender_id || 
-         request.auth.uid == resource.data.recipient_id);
+      allow read: if isParticipant(resource.data.conversation_id);
+      allow create: if isParticipant(request.resource.data.conversation_id)
+        && ((request.resource.data.sender == 'teacher' && isTeacherIn(request.resource.data.conversation_id))
+          || (request.resource.data.sender == 'student' && isStudentIn(request.resource.data.conversation_id)));
+      allow update, delete: if false; // mensagens imutáveis
     }
-    
-    // FCM_TOKENS: Cada usuário gerencia próprios tokens
+
+    // NOTIFICATIONS: leitura por teacher_id OU student_id; escrita pelo professor
+    match /notifications/{notifId} {
+      allow read: if (resource.data.teacher_id != null && isTeacherOfResource())
+               || (resource.data.student_id != null && isStudentOfResource());
+      allow create, update, delete: if isTeacherOfRequest();
+    }
+
+    // Extras: compatibilidade com app atual
+    // WORKOUTS: leitura por assignedTo; escrita pelo criador (createdBy)
+    match /workouts/{workoutId} {
+      allow read: if isAuth() && ((request.auth.uid in resource.data.assignedTo) || resource.data.createdBy == request.auth.uid);
+      allow create, update, delete: if isAuth() && request.resource.data.createdBy == request.auth.uid;
+    }
     match /fcm_tokens/{tokenId} {
-      allow read, write: if request.auth != null && 
-        request.auth.uid == resource.data.userId;
+      allow read, write: if isAuth() && request.auth.uid == resource.data.userId;
     }
-    
-    // WORKOUT_SESSIONS: Aluno registra sessões, professor visualiza
     match /workout_sessions/{sessionId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.student_id || 
-         request.auth.uid == resource.data.teacher_id);
-      
-      allow write: if request.auth != null && 
-        request.auth.uid == resource.data.student_id;
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create, update: if isStudentOfRequest();
+      allow delete: if isTeacherOfResource();
     }
-    
-    // PROGRESS: Registros de progresso do aluno
     match /progress/{progressId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.student_id || 
-         request.auth.uid == resource.data.teacher_id);
-      
-      allow write: if request.auth != null && 
-        request.auth.uid == resource.data.student_id;
+      allow read: if isTeacherOfResource() || isStudentOfResource();
+      allow create, update, delete: if isStudentOfRequest();
     }
   }
 }

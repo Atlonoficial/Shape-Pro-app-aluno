@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { onSnapshot, doc, collection, query, where } from 'firebase/firestore';
+import { onSnapshot, doc, collection, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Student, Workout } from '@/lib/firestore';
 
@@ -57,7 +57,8 @@ export const useMyData = (studentId: string | undefined): UseMyDataReturn => {
       // 2. Listener para treinos atribuídos ao estudante
       const trainingsQuery = query(
         collection(db, 'training_plans'),
-        where('assignedTo', 'array-contains', studentId)
+        where('student_id', '==', studentId),
+        orderBy('updated_at', 'desc')
       );
       
       const unsubscribeTrainings = onSnapshot(
