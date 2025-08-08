@@ -4,6 +4,7 @@ import { Send, Bot, Calendar, Award, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShapeProLogo } from "@/components/ui/ShapeProLogo";
+import { useAuthContext } from "@/components/auth/AuthProvider";
 
 interface Message {
   id: string;
@@ -12,19 +13,24 @@ interface Message {
   timestamp: Date;
 }
 
-const initialMessages: Message[] = [
-  {
-    id: '1',
-    text: 'Olá, Alex! 👋 Sou seu Coach IA da Shape Pro. Estou aqui para te guiar, vamos começar?',
-    sender: 'ai',
-    timestamp: new Date()
-  }
-];
-
 export const AIAssistant = () => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const { user, userProfile } = useAuthContext();
+  const userName = userProfile?.name || user?.displayName || 'Usuário';
+  
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Inicializar mensagem com nome do usuário
+  useEffect(() => {
+    const initialMessage: Message = {
+      id: '1',
+      text: `Olá, ${userName}! 👋 Sou seu Coach IA da Shape Pro. Estou aqui para te guiar, vamos começar?`,
+      sender: 'ai',
+      timestamp: new Date()
+    };
+    setMessages([initialMessage]);
+  }, [userName]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -63,18 +69,18 @@ export const AIAssistant = () => {
     const lowerInput = input.toLowerCase();
     
     if (lowerInput.includes('treino') || lowerInput.includes('exercício')) {
-      return 'Ótimo! Vejo que você está interessado em treinos. Posso sugerir alguns exercícios baseados em seus objetivos. Qual é seu foco principal: força, cardio ou flexibilidade?';
+      return `Ótimo, ${userName}! Vejo que você está interessado em treinos. Posso sugerir alguns exercícios baseados em seus objetivos. Qual é seu foco principal: força, cardio ou flexibilidade?`;
     }
     
     if (lowerInput.includes('dieta') || lowerInput.includes('alimentação')) {
-      return 'Excelente pergunta sobre nutrição! Uma alimentação balanceada é fundamental. Posso ajudar você a planejar suas refeições. Qual é seu objetivo: ganho de massa, perda de peso ou manutenção?';
+      return `Excelente pergunta sobre nutrição, ${userName}! Uma alimentação balanceada é fundamental. Posso ajudar você a planejar suas refeições. Qual é seu objetivo: ganho de massa, perda de peso ou manutenção?`;
     }
     
     if (lowerInput.includes('peso') || lowerInput.includes('emagrecer')) {
-      return 'Para perda de peso eficaz, recomendo combinar exercícios cardiovasculares com musculação e uma dieta balanceada. Quer que eu crie um plano personalizado para você?';
+      return `Para perda de peso eficaz, ${userName}, recomendo combinar exercícios cardiovasculares com musculação e uma dieta balanceada. Quer que eu crie um plano personalizado para você?`;
     }
     
-    return 'Entendi! Estou aqui para ajudar com treinos, nutrição, e acompanhar seu progresso. Tem alguma meta específica em mente?';
+    return `Entendi, ${userName}! Estou aqui para ajudar com treinos, nutrição, e acompanhar seu progresso. Tem alguma meta específica em mente?`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -115,7 +121,7 @@ export const AIAssistant = () => {
         {/* Saudação personalizada */}
         <div className="space-y-4">
           <h1 className="text-2xl font-bold text-foreground">
-            Olá, <span className="text-gradient-primary">Alex!</span>
+            Olá, <span className="text-gradient-primary">{userName}!</span>
           </h1>
           
           {/* Badges de conquistas */}
