@@ -101,7 +101,8 @@ export const CadastroCompleto = () => {
       // Preparar dados no formato do Student
       const studentData = {
         userId: user.uid,
-        teacherId: "default-teacher-id", // Implementar seleção de professor depois
+        // teacherId definido pelo professor via dashboard posteriormente
+        teacherId: '',
         goals: [mapGoalToStandard(formData.objetivo)],
         measurements: {
           height: formData.altura ? parseFloat(formData.altura) : 0,

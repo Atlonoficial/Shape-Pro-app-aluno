@@ -1,34 +1,11 @@
 import { useState, useEffect } from "react";
-import { Play, ShoppingCart, Package, Loader2 } from "lucide-react";
+import { Play, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { getCoursesByUser, Course } from "@/lib/firestore";
 
-const products = [
-  {
-    id: 1,
-    name: "Pré-Treino Energy",
-    description: "Energia explosiva para seus treinos",
-    price: 69.9,
-    image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&q=80&w=400"
-  },
-  {
-    id: 2,
-    name: "BCAA 2:1:1",
-    description: "Aminoácidos essenciais para recuperação",
-    price: 39.9,
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400"
-  },
-  {
-    id: 3,
-    name: "Creatina Monohidratada",
-    description: "Aumento de força e performance",
-    price: 49.9,
-    image: "https://images.unsplash.com/photo-1583311624887-932baf98b64b?auto=format&fit=crop&q=80&w=400"
-  }
-];
 
 export const Members = () => {
   const { user } = useAuth();

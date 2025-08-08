@@ -167,7 +167,6 @@ export const Workouts = () => {
               name={workout.name}
               duration={workout.estimatedDuration}
               difficulty={workout.difficulty === 'beginner' ? 'Iniciante' : workout.difficulty === 'intermediate' ? 'Intermediário' : 'Avançado'}
-              image="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400"
               calories={workout.estimatedCalories}
               muscleGroup={workout.muscleGroups?.join(', ') || 'Geral'}
               isCompleted={workout.sessions ? workout.sessions > 0 : false}

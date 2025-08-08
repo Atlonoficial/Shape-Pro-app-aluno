@@ -7,7 +7,7 @@ interface WorkoutCardProps {
   calories: number;
   difficulty: string;
   muscleGroup: string;
-  image: string;
+  image?: string;
   isCompleted?: boolean;
   onClick?: () => void;
 }
@@ -38,11 +38,15 @@ export const WorkoutCard = ({
     >
       <CardContent className="p-0">
         <div className="relative">
-          <img 
-            src={image} 
-            alt={name}
-            className="w-full h-40 object-cover rounded-t-2xl"
-          />
+          {image ? (
+            <img 
+              src={image} 
+              alt={name}
+              className="w-full h-40 object-cover rounded-t-2xl"
+            />
+          ) : (
+            <div className="w-full h-40 rounded-t-2xl bg-gradient-to-r from-primary/30 to-secondary/30" />
+          )}
           {isCompleted && (
             <div className="absolute top-3 right-3 bg-accent/90 backdrop-blur-sm rounded-xl p-2">
               <div className="w-3 h-3 bg-background rounded-full"></div>
