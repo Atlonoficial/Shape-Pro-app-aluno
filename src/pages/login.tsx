@@ -101,7 +101,11 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <ShapeProLogo className="h-16 w-auto" />
+            <img 
+              src="/lovable-uploads/44934fca-7868-4c3b-ac23-e51f6e1619f0.png" 
+              alt="Shape Pro - Consultoria Online" 
+              className="h-16 w-auto"
+            />
           </div>
           <CardTitle className="text-2xl font-bold">
             Entrar no Shape Pro
