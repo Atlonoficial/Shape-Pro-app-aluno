@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, User, Target, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useStudents } from "@/hooks/useStudents";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { Timestamp } from "firebase/firestore";
 
 export const CadastroCompleto = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createStudent, mapGoalToStandard, loading } = useStudents();
+  const { student, loading: profileLoading, createStudentProfile, updateProfile } = useStudentProfile();
+  const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     nomeCompleto: "",
@@ -28,11 +30,44 @@ export const CadastroCompleto = () => {
     telefone: ""
   });
 
+  // Carregar dados existentes do perfil quando disponível
+  useEffect(() => {
+    if (student && !profileLoading) {
+      console.log('📝 [App] Carregando dados existentes do perfil:', student);
+      
+      // Preencher formulário com dados já salvos
+      setFormData(prev => ({
+        ...prev,
+        nomeCompleto: user?.displayName || "",
+        email: user?.email || "",
+        altura: student.measurements?.height ? student.measurements.height.toString() : "",
+        pesoInicial: student.measurements?.weight ? student.measurements.weight.toString() : "",
+        // Mapear outros campos conforme disponível no student profile
+      }));
+    } else if (user && !profileLoading && !student) {
+      // Preencher com dados básicos do usuário se não há perfil
+      setFormData(prev => ({
+        ...prev,
+        nomeCompleto: user.displayName || "",
+        email: user.email || "",
+      }));
+    }
+  }, [student, user, profileLoading]);
+
   /**
-   * Submete cadastro completo para Firebase - SINCRONIZADO COM DASHBOARD DO PROFESSOR
-   * 
-   * CRITICAL: Campo teacher_id deve ser preenchido para aparecer no Dashboard
-   * Por ora usando professor padrão - implementar seleção depois
+   * Mapear objetivos do formulário para formato padrão
+   */
+  const mapGoalToStandard = (objetivo: string): string => {
+    const goalMap: { [key: string]: string } = {
+      'emagrecer': 'Emagrecimento',
+      'hipertrofia': 'Hipertrofia', 
+      'manutencao': 'Manutenção'
+    };
+    return goalMap[objetivo] || objetivo;
+  };
+
+  /**
+   * Submete cadastro completo para Firebase
    */
   const handleSubmit = async () => {
     if (!user) {
@@ -54,40 +89,56 @@ export const CadastroCompleto = () => {
       return;
     }
 
+    setLoading(true);
+
     try {
-      // Debug logs para verificar dados sendo enviados
       console.log('📝 [App] Iniciando cadastro completo:', {
         user: user.uid,
-        formData
+        formData,
+        hasExistingProfile: !!student
       });
 
-      // Preparar dados no formato esperado pelo Dashboard do Professor
+      // Preparar dados no formato do Student
       const studentData = {
-        name: formData.nomeCompleto,
-        email: formData.email || user.email || '',
-        phone: formData.telefone,
-        plan: "Plano Básico", // Padrão - pode ser alterado pelo professor
-        mode: "Online", // Padrão - pode ser alterado pelo professor  
-        goal: mapGoalToStandard(formData.objetivo),
-        teacher_id: "default-teacher-id", // CRÍTICO: Deve ser UID real do professor
+        userId: user.uid,
+        teacherId: "default-teacher-id", // Implementar seleção de professor depois
+        goals: [mapGoalToStandard(formData.objetivo)],
+        measurements: {
+          height: formData.altura ? parseFloat(formData.altura) : 0,
+          weight: formData.pesoInicial ? parseFloat(formData.pesoInicial) : 0,
+          lastUpdated: Timestamp.now()
+        },
+        preferences: {
+          notifications: true,
+          language: 'pt-BR',
+          timezone: 'America/Sao_Paulo'
+        },
         // Dados adicionais do cadastro completo
-        birthDate: formData.dataNascimento,
-        gender: formData.sexo,
-        height: formData.altura ? parseFloat(formData.altura) : undefined,
-        initialWeight: formData.pesoInicial ? parseFloat(formData.pesoInicial) : undefined,
-        numericGoal: formData.metaNumerica
+        personalInfo: {
+          fullName: formData.nomeCompleto,
+          birthDate: formData.dataNascimento,
+          gender: formData.sexo,
+          email: formData.email,
+          phone: formData.telefone,
+          numericGoal: formData.metaNumerica
+        }
       };
 
       console.log('📝 [App] Dados formatados para Firestore:', studentData);
 
-      // Salvar no Firestore - aparecerá no Dashboard instantaneamente
-      const studentId = await createStudent(studentData);
-      
-      console.log('✅ [App] Cadastro completo salvo:', studentId);
+      if (student) {
+        // Atualizar perfil existente
+        await updateProfile(studentData);
+        console.log('✅ [App] Perfil atualizado:', student.id);
+      } else {
+        // Criar novo perfil
+        const studentId = await createStudentProfile(studentData);
+        console.log('✅ [App] Novo perfil criado:', studentId);
+      }
 
       toast({
         title: "Cadastro salvo!",
-        description: "Suas informações foram enviadas ao seu professor e aparecerão no Dashboard em tempo real.",
+        description: "Suas informações foram salvas com sucesso no Firebase.",
       });
 
       // Navegar de volta para o perfil
@@ -100,6 +151,8 @@ export const CadastroCompleto = () => {
         description: error.message || "Não foi possível salvar o cadastro. Tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
