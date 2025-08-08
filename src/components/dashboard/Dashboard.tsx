@@ -1,5 +1,6 @@
 import { Bell, Settings, Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { WeightChart } from "./WeightChart";
 import { CoachAICard } from "./CoachAICard";
 import { AnnouncementBanner } from "./AnnouncementBanner";
@@ -15,8 +16,19 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
-  const { userProfile, user } = useAuthContext();
+  const { userProfile, user, isAuthenticated } = useAuthContext();
+  const navigate = useNavigate();
   const firstName = userProfile?.name?.split(' ')[0] || 'Usuário';
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return null; // Enquanto redireciona
+  }
   
   // Puxar dados reais do Firebase
   const { workouts, loading: workoutsLoading } = useWorkouts(user?.uid || '');

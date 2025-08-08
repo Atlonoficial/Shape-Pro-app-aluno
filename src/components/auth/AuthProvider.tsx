@@ -35,10 +35,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return <LoadingScreen />;
   }
 
-  if (!auth.isAuthenticated) {
-    return <AuthScreen />;
-  }
-
   return (
     <AuthContext.Provider value={auth}>
       {children}
