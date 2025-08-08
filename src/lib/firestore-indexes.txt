@@ -118,6 +118,14 @@ Fields:
   - created_at (Descending)
 Query scope: Collection
 
+// 15) BANNERS por TEACHER (somente ativos, ordenados por atualização)
+Collection: banners
+Fields:
+  - teacher_id (Ascending)
+  - status (Ascending)
+  - updated_at (Descending)
+Query scope: Collection
+
 /**
  * CLI (Opcional):
  * firebase firestore:indexes

@@ -115,6 +115,14 @@ service cloud.firestore {
       allow create, update, delete: if isTeacherOfRequest();
     }
 
+    // BANNERS (Marketing): aluno lê banners ativos; professor gerencia os próprios
+    match /banners/{bannerId} {
+      // Leitura: qualquer usuário autenticado pode ler banners ativos
+      allow read: if isAuth() && resource.data.status == 'active';
+      // Escrita: apenas o professor dono do banner
+      allow create, update, delete: if isTeacherOfRequest() || isTeacherOfResource();
+    }
+
     // Extras: compatibilidade com app atual
     // WORKOUTS: leitura por assignedTo; escrita pelo criador (createdBy)
     match /workouts/{workoutId} {
