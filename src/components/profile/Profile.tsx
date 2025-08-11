@@ -16,8 +16,14 @@ export const Profile = () => {
   const [points, setPoints] = useState<number>(0);
   const [sessionsCount, setSessionsCount] = useState<number>(0);
   const [activeDays, setActiveDays] = useState<number>(0);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Sincroniza avatar local quando o perfil carregar/atualizar
+  useEffect(() => {
+    setAvatarUrl(userProfile?.avatar_url || null);
+  }, [userProfile?.avatar_url]);
 
   const memberSince = useMemo(() => {
     const created = userProfile?.created_at ? new Date(userProfile.created_at) : null;
@@ -95,8 +101,9 @@ export const Profile = () => {
         .getPublicUrl(path);
       const publicUrl = publicUrlData.publicUrl;
 
-      // Atualiza perfil
+      // Atualiza perfil e estado local para refletir imediatamente
       await updateUserProfile(user.id, { avatar_url: publicUrl });
+      setAvatarUrl(publicUrl);
       toast.success("Foto de perfil atualizada!");
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -114,7 +121,7 @@ export const Profile = () => {
   const triggerFileSelect = () => fileInputRef.current?.click();
 
   const goToRewards = () => {
-    navigate({ pathname: "/", search: "?tab=rewards" });
+    navigate({ pathname: "/rewards", search: "?tab=rewards" });
   };
 
   return (
@@ -123,7 +130,7 @@ export const Profile = () => {
       <div className="flex flex-col items-center text-center mb-6">
         <div className="relative mb-3">
           <Avatar className="w-24 h-24">
-            <AvatarImage src={userProfile?.avatar_url} alt="Avatar do usuário" />
+            <AvatarImage src={avatarUrl ?? undefined} alt="Avatar do usuário" />
             <AvatarFallback className="text-xl">
               {userProfile?.name?.charAt(0)?.toUpperCase() || "U"}
             </AvatarFallback>
@@ -214,8 +221,7 @@ export const Profile = () => {
       {/* Dados e Configurações */}
       <h2 className="text-lg font-semibold mb-3">Dados e Configurações</h2>
       <div className="space-y-3">
-        <Card role="button" onClick={() => navigate("/assinaturas-planos")}
-          className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => navigate("/assinaturas-planos")} className="hover:bg-muted/40 transition-colors">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <CreditCard className="w-5 h-5 text-primary" />
@@ -227,8 +233,7 @@ export const Profile = () => {
           </CardContent>
         </Card>
 
-        <Card role="button" onClick={() => navigate("/anamnese")}
-          className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => navigate("/anamnese")} className="hover:bg-muted/40 transition-colors">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <ClipboardList className="w-5 h-5 text-primary" />
@@ -240,9 +245,7 @@ export const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Itens adicionais podem ser habilitados quando as páginas existirem */}
-        <Card role="button" onClick={() => navigate("/configuracoes")}
-          className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => navigate("/configuracoes")} className="hover:bg-muted/40 transition-colors">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <Cog className="w-5 h-5 text-primary" />
