@@ -230,6 +230,7 @@ export const Profile = () => {
               <p className="font-medium">Assinaturas & Planos</p>
               <p className="text-sm text-muted-foreground">Gerencie sua assinatura</p>
             </div>
+            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">Premium</span>
           </CardContent>
         </Card>
 
@@ -242,6 +243,46 @@ export const Profile = () => {
               <p className="font-medium">Cadastro Completo</p>
               <p className="text-sm text-muted-foreground">Informações pessoais</p>
             </div>
+            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">90%</span>
+          </CardContent>
+        </Card>
+
+        <Card role="button" onClick={() => navigate("/exames-medicos")} className="hover:bg-muted/40 transition-colors">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+              <Stethoscope className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Exames Médicos</p>
+              <p className="text-sm text-muted-foreground">Últimos resultados</p>
+            </div>
+            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">2</span>
+          </CardContent>
+        </Card>
+
+        <Card role="button" onClick={() => navigate("/fotos-progresso")} className="hover:bg-muted/40 transition-colors">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+              <Images className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Fotos de Progresso</p>
+              <p className="text-sm text-muted-foreground">Evolução visual</p>
+            </div>
+            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">8</span>
+          </CardContent>
+        </Card>
+
+        <Card role="button" onClick={() => navigate("/avaliacoes-fisicas")} className="hover:bg-muted/40 transition-colors">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+              <Ruler className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Avaliações Físicas</p>
+              <p className="text-sm text-muted-foreground">Medidas e composição</p>
+            </div>
+            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">3</span>
           </CardContent>
         </Card>
 

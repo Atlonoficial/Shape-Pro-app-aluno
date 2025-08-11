@@ -25,6 +25,9 @@ import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
 import { Agenda } from "./pages/Agenda";
 import { Metas } from "./pages/Metas";
 import { ResetPassword } from "./pages/ResetPassword";
+import { ExamesMedicos } from "./pages/ExamesMedicos";
+import { FotosProgresso } from "./pages/FotosProgresso";
+import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,9 @@ const App = () => (
               {/* <Route path="/fotos-progresso" element={<FotosProgresso />} /> */}
               {/* <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} /> */}
               <Route path="/anamnese" element={<Anamnese />} />
+              <Route path="/exames-medicos" element={<ExamesMedicos />} />
+              <Route path="/fotos-progresso" element={<FotosProgresso />} />
+              <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="/conta-seguranca" element={<ContaSeguranca />} />
               <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
@@ -53,8 +59,8 @@ const App = () => (
               <Route path="/iniciar-treino" element={<IniciarTreino />} />
               <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
               <Route path="/agenda" element={<Agenda />} />
-            <Route path="/metas" element={<Metas />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/metas" element={<Metas />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
