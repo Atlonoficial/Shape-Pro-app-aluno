@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInUser, signUpUser } from '@/lib/supabase';
+import { signInUser, signUpUser, resetPasswordForEmail } from '@/lib/supabase';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,30 @@ export const AuthScreen = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Informe seu email",
+        description: "Digite seu email e tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await resetPasswordForEmail(email);
+      toast({
+        title: "Email de redefinição enviado",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message || "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -127,6 +151,11 @@ export const AuthScreen = () => {
                         )}
                       </Button>
                     </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="button" variant="link" size="sm" onClick={handleResetPassword}>
+                      Esqueceu a senha?
+                    </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Entrando..." : "Entrar"}
