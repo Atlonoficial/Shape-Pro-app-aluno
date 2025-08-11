@@ -10,7 +10,7 @@ import { getCoursesByUser, Course } from "@/lib/firestore";
 export const Members = () => {
   const { user } = useAuth();
   const { student } = useStudentProfile();
-  const [activeTab, setActiveTab] = useState<'courses' | 'products'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,17 +94,6 @@ export const Members = () => {
           Cursos
         </Button>
         
-        <Button
-          onClick={() => setActiveTab('products')}
-          className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
-            activeTab === 'products' 
-              ? 'bg-gradient-to-r from-warning to-warning/80 text-warning-foreground font-semibold shadow-[0_4px_14px_hsl(var(--warning)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--warning)/0.6)] hover:scale-105 active:scale-95' 
-              : 'btn-secondary'
-          }`}
-        >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          Produtos
-        </Button>
       </div>
 
       {/* Content */}
@@ -144,39 +133,6 @@ export const Members = () => {
         </div>
       )}
 
-      {activeTab === 'products' && (
-        <div>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Produtos Físicos</h3>
-          
-          <div className="space-y-4">
-            {products.map((product) => (
-              <div 
-                key={product.id}
-                className="card-gradient p-4 hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex gap-4">
-                  <div 
-                    className="w-16 h-16 bg-cover bg-center rounded-lg"
-                    style={{ backgroundImage: `url(${product.image})` }}
-                  />
-                  <div className="flex-1">
-                    <h4 className="text-sm sm:text-base font-semibold text-foreground mb-1">{product.name}</h4>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">{product.description}</p>
-                    <p className="text-sm sm:text-base font-bold text-warning">R$ {product.price.toFixed(2).replace('.', ',')}</p>
-                  </div>
-                  <Button 
-                    size="sm"
-                    className="self-end bg-gradient-to-r from-warning to-warning/80 text-warning-foreground font-semibold shadow-[0_4px_14px_hsl(var(--warning)/0.4)] hover:shadow-[0_6px_20px_hsl(var(--warning)/0.6)] hover:scale-105 active:scale-95 h-9 px-4"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-1" />
-                    Comprar
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
