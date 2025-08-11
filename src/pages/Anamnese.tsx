@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, ChevronDown, ChevronUp, Heart, Shield, Pill, Moon, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useAnamnese } from "@/hooks/useAnamnese";
 
 interface AnamneseData {
   doencas: string[];
@@ -24,6 +26,10 @@ interface AnamneseData {
 
 export const Anamnese = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { record, loading: loadingAnamnese, save } = useAnamnese(user?.id);
+  const [saving, setSaving] = useState(false);
+
   const [openSections, setOpenSections] = useState<string[]>(["doencas"]);
   const [formData, setFormData] = useState<AnamneseData>({
     doencas: [],
@@ -35,6 +41,21 @@ export const Anamnese = () => {
     qualidadeSono: "",
     lesoes: ""
   });
+
+  // Popular formulário quando houver registro existente
+  useEffect(() => {
+    if (!record) return;
+    setFormData({
+      doencas: record.doencas || [],
+      outrasDoencas: record.outras_doencas || "",
+      alergias: record.alergias || [],
+      outrasAlergias: record.outras_alergias || "",
+      medicacoes: record.medicacoes || [],
+      horasSono: record.horas_sono || "",
+      qualidadeSono: record.qualidade_sono || "",
+      lesoes: record.lesoes || ""
+    });
+  }, [record]);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => 
@@ -79,11 +100,45 @@ export const Anamnese = () => {
     }));
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Anamnese salva!",
-      description: "Todas as respostas foram compartilhadas com seu professor.",
-    });
+  const handleSave = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Você precisa estar autenticado",
+        description: "Faça login para salvar sua anamnese.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    console.log("[Anamnese] saving formData:", formData);
+
+    try {
+      await save({
+        doencas: formData.doencas,
+        outras_doencas: formData.outrasDoencas || null,
+        alergias: formData.alergias,
+        outras_alergias: formData.outrasAlergias || null,
+        medicacoes: formData.medicacoes,
+        horas_sono: formData.horasSono || null,
+        qualidade_sono: formData.qualidadeSono || null,
+        lesoes: formData.lesoes || null,
+      });
+
+      toast({
+        title: "Anamnese salva!",
+        description: "Todas as respostas foram compartilhadas com seu professor.",
+      });
+    } catch (err: any) {
+      console.error("[Anamnese] save error:", err);
+      toast({
+        title: "Erro ao salvar",
+        description: err?.message || "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const doencasOptions = [
@@ -305,6 +360,9 @@ export const Anamnese = () => {
           <p className="text-primary text-sm font-medium">
             Todas as respostas serão compartilhadas com seu professor.
           </p>
+          {loadingAnamnese && (
+            <p className="text-muted-foreground text-xs mt-2">Carregando suas respostas salvas...</p>
+          )}
         </div>
       </div>
 
@@ -312,9 +370,10 @@ export const Anamnese = () => {
       <div className="fixed bottom-4 left-4 right-4">
         <Button 
           onClick={handleSave}
+          disabled={saving || loadingAnamnese}
           className="w-full h-12 rounded-full btn-accent text-background font-medium"
         >
-          Salvar histórico
+          {saving ? "Salvando..." : "Salvar histórico"}
         </Button>
       </div>
     </div>

@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      anamneses: {
+        Row: {
+          alergias: string[]
+          created_at: string | null
+          doencas: string[]
+          horas_sono: string | null
+          id: string
+          lesoes: string | null
+          medicacoes: string[]
+          outras_alergias: string | null
+          outras_doencas: string | null
+          qualidade_sono: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alergias?: string[]
+          created_at?: string | null
+          doencas?: string[]
+          horas_sono?: string | null
+          id?: string
+          lesoes?: string | null
+          medicacoes?: string[]
+          outras_alergias?: string | null
+          outras_doencas?: string | null
+          qualidade_sono?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alergias?: string[]
+          created_at?: string | null
+          doencas?: string[]
+          horas_sono?: string | null
+          id?: string
+          lesoes?: string | null
+          medicacoes?: string[]
+          outras_alergias?: string | null
+          outras_doencas?: string | null
+          qualidade_sono?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           attachments: string[] | null
@@ -82,6 +127,7 @@ export type Database = {
           action_text: string | null
           action_url: string | null
           created_at: string | null
+          created_by: string | null
           deep_link: string | null
           end_date: string | null
           id: string
@@ -99,6 +145,7 @@ export type Database = {
           action_text?: string | null
           action_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           deep_link?: string | null
           end_date?: string | null
           id?: string
@@ -116,6 +163,7 @@ export type Database = {
           action_text?: string | null
           action_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           deep_link?: string | null
           end_date?: string | null
           id?: string
@@ -342,13 +390,16 @@ export type Database = {
       }
       exercises: {
         Row: {
+          category: string | null
           created_at: string | null
+          created_by: string | null
           difficulty: string
           duration: number | null
           equipment: string[] | null
           id: string
           instructions: string | null
           muscle_group: string
+          muscle_groups: string[] | null
           name: string
           reps: number
           rest_time: number
@@ -357,13 +408,16 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
+          created_by?: string | null
           difficulty: string
           duration?: number | null
           equipment?: string[] | null
           id?: string
           instructions?: string | null
           muscle_group: string
+          muscle_groups?: string[] | null
           name: string
           reps: number
           rest_time: number
@@ -372,13 +426,16 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
+          created_by?: string | null
           difficulty?: string
           duration?: number | null
           equipment?: string[] | null
           id?: string
           instructions?: string | null
           muscle_group?: string
+          muscle_groups?: string[] | null
           name?: string
           reps?: number
           rest_time?: number
@@ -457,6 +514,7 @@ export type Database = {
           carbs: number
           category: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           fat: number
           fiber: number | null
@@ -477,6 +535,7 @@ export type Database = {
           carbs: number
           category?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           fat: number
           fiber?: number | null
@@ -497,6 +556,7 @@ export type Database = {
           carbs?: number
           category?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           fat?: number
           fiber?: number | null
@@ -853,6 +913,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          email_notifications: boolean | null
+          marketing_notifications: boolean | null
+          push_notifications: boolean | null
+          sms_notifications: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_notifications?: boolean | null
+          marketing_notifications?: boolean | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_notifications?: boolean | null
+          marketing_notifications?: boolean | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       workout_sessions: {
         Row: {
           calories_burned: number | null
@@ -971,10 +1082,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_insert_notification: {
+        Args: { targets: string[] }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      is_teacher_of: {
+        Args: { _teacher_id: string; _student_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "professor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1101,6 +1226,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "professor"],
+    },
   },
 } as const
