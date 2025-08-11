@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { signOutUser } from "@/lib/supabase";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
@@ -22,12 +23,22 @@ const Configuracoes = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSair = () => {
-    toast({
-      title: "Saindo...",
-      description: "Você será desconectado do aplicativo.",
-      variant: "destructive"
-    });
+  const handleSair = async () => {
+    try {
+      await signOutUser();
+      toast({
+        title: "Desconectado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      // A navegação será automática pela AuthProvider
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao desconectar. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePlanosClick = () => {
