@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { getCoursesByUser, Course } from "@/lib/firestore";
+// Temporary placeholder - Firebase removed
+// import { getCoursesByUser, Course } from "@/lib/firestore";
 
 
 export const Members = () => {
@@ -12,29 +13,12 @@ export const Members = () => {
   const { student } = useStudentProfile();
   const [activeTab, setActiveTab] = useState<'courses'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadCourses = async () => {
-      if (!student?.teacherId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const unsubscribe = getCoursesByUser(student.teacherId, (coursesData) => {
-          setCourses(coursesData);
-          setLoading(false);
-        });
-        return unsubscribe;
-      } catch (error) {
-        console.error('Error loading courses:', error);
-        setLoading(false);
-      }
-    };
-
-    loadCourses();
+    // Simplified - no Firebase dependency
+    setLoading(false);
   }, [student?.teacherId]);
 
   if (selectedModule) {

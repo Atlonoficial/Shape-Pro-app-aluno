@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { useBanners } from "@/hooks/useSimpleAuth";
+import { useBanners } from "@/hooks/useFirebaseStubs";
 
 export const AnnouncementBanner = () => {
   const { user } = useAuthContext();

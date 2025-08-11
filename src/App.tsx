@@ -6,14 +6,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
 import Index from "./pages/Index";
-import Login from "./pages/login";
+// Removed Firebase-dependent pages
+// import Login from "./pages/login";
+// import AlunoDashboard from "./pages/aluno/dashboard";
+// import AlunoChat from "./pages/aluno/chat/[id]";
+// import { CadastroCompleto } from "./pages/CadastroCompleto";
+// import { ExamesMedicos } from "./pages/ExamesMedicos";
+// import { FotosProgresso } from "./pages/FotosProgresso";
+// import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 import NotFound from "./pages/NotFound";
-import AlunoDashboard from "./pages/aluno/dashboard";
-import AlunoChat from "./pages/aluno/chat/[id]";
-import { CadastroCompleto } from "./pages/CadastroCompleto";
-import { ExamesMedicos } from "./pages/ExamesMedicos";
-import { FotosProgresso } from "./pages/FotosProgresso";
-import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 import { Anamnese } from "./pages/Anamnese";
 import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
@@ -36,13 +37,13 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/aluno/dashboard" element={<AlunoDashboard />} />
-            <Route path="/aluno/chat/:id" element={<AlunoChat />} />
-            <Route path="/cadastro-completo" element={<CadastroCompleto />} />
-            <Route path="/exames-medicos" element={<ExamesMedicos />} />
-            <Route path="/fotos-progresso" element={<FotosProgresso />} />
-            <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
+            {/* <Route path="/login" element={<Login />} /> */}
+            {/* <Route path="/aluno/dashboard" element={<AlunoDashboard />} /> */}
+            {/* <Route path="/aluno/chat/:id" element={<AlunoChat />} /> */}
+            {/* <Route path="/cadastro-completo" element={<CadastroCompleto />} /> */}
+            {/* <Route path="/exames-medicos" element={<ExamesMedicos />} /> */}
+            {/* <Route path="/fotos-progresso" element={<FotosProgresso />} /> */}
+            {/* <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} /> */}
             <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/conta-seguranca" element={<ContaSeguranca />} />

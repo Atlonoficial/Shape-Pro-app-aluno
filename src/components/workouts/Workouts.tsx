@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Search, Filter, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useMyWorkouts } from "@/hooks/useMyWorkouts";
+import { useMyWorkouts } from "@/hooks/useFirebaseStubs";
 import { useAuth } from "@/hooks/useAuth";
 import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
