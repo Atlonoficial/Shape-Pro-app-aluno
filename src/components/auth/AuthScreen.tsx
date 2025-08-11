@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthScreen = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ export const AuthScreen = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,10 +46,12 @@ export const AuthScreen = () => {
 
     try {
       await signUpUser(email, password, name, 'student');
+      await signInUser(email, password);
       toast({
         title: "Conta criada com sucesso!",
         description: "Bem-vindo ao Shape Pro! Complete seu perfil para começar.",
       });
+      navigate('/', { replace: true });
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
