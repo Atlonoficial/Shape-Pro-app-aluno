@@ -28,14 +28,14 @@ export const FotosProgresso = () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from("progress_photos")
           .select("*")
           .eq("user_id", user.id)
           .order("date", { ascending: false });
 
         if (error) throw error;
-        setPhotos(data || []);
+        setPhotos((data || []) as ProgressPhoto[]);
       } catch (error) {
         console.error("Erro ao buscar fotos:", error);
         toast.error("Erro ao carregar fotos de progresso");

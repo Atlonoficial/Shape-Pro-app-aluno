@@ -574,6 +574,39 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_exams: {
+        Row: {
+          created_at: string
+          date: string
+          file_url: string | null
+          id: string
+          notes: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_required: boolean | null
@@ -852,6 +885,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      progress_photos: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          image_url: string
+          notes: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          image_url: string
+          notes?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          image_url?: string
+          notes?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       reward_redemptions: {
         Row: {

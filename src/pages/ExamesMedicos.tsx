@@ -27,14 +27,14 @@ export const ExamesMedicos = () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from("medical_exams")
           .select("*")
           .eq("user_id", user.id)
           .order("date", { ascending: false });
 
         if (error) throw error;
-        setExams(data || []);
+        setExams((data || []) as MedicalExam[]);
       } catch (error) {
         console.error("Erro ao buscar exames:", error);
         toast.error("Erro ao carregar exames médicos");

@@ -16,6 +16,9 @@ export const Profile = () => {
   const [points, setPoints] = useState<number>(0);
   const [sessionsCount, setSessionsCount] = useState<number>(0);
   const [activeDays, setActiveDays] = useState<number>(0);
+  const [examCount, setExamCount] = useState<number>(0);
+  const [photoCount, setPhotoCount] = useState<number>(0);
+  const [assessmentCount, setAssessmentCount] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -81,6 +84,49 @@ export const Profile = () => {
         );
         setActiveDays(days.size);
       });
+
+    // Contagem de Exames Médicos
+    (supabase as any)
+      .from("medical_exams")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .then(({ count, error }: any) => {
+        if (error) {
+          console.error("Erro ao contar exames:", error);
+          return;
+        }
+        setExamCount(count ?? 0);
+      });
+
+    // Contagem de Fotos de Progresso
+    (supabase as any)
+      .from("progress_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .then(({ count, error }: any) => {
+        if (error) {
+          console.error("Erro ao contar fotos:", error);
+          return;
+        }
+        setPhotoCount(count ?? 0);
+      });
+
+    // Contagem de avaliações físicas (datas únicas)
+    supabase
+      .from("progress")
+      .select("date, type")
+      .eq("user_id", user.id)
+      .eq("type", "physical_assessment")
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro ao buscar avaliações físicas:", error);
+          return;
+        }
+        const uniqueDates = new Set(
+          (data ?? []).map((r: any) => new Date(r.date).toISOString().slice(0, 10))
+        );
+        setAssessmentCount(uniqueDates.size);
+      });
   }, [user?.id]);
 
   const handleAvatarUpload = async (file: File) => {
@@ -121,7 +167,7 @@ export const Profile = () => {
   const triggerFileSelect = () => fileInputRef.current?.click();
 
   const goToRewards = () => {
-    navigate({ pathname: "/rewards", search: "?tab=rewards" });
+    navigate({ pathname: "/", search: "?tab=rewards" });
   };
 
   return (
@@ -155,7 +201,7 @@ export const Profile = () => {
         </div>
 
         <h1 className="text-2xl font-bold text-foreground">
-          {userProfile?.name || user?.email?.split("@")[0] || "Usuário"}
+          {userProfile?.name || "Usuário"}
         </h1>
         {memberSince && (
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
@@ -230,7 +276,6 @@ export const Profile = () => {
               <p className="font-medium">Assinaturas & Planos</p>
               <p className="text-sm text-muted-foreground">Gerencie sua assinatura</p>
             </div>
-            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">Premium</span>
           </CardContent>
         </Card>
 
