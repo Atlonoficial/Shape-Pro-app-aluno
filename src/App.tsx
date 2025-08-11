@@ -32,32 +32,32 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <PushNotificationsWrapper />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* <Route path="/login" element={<Login />} /> */}
-            {/* <Route path="/aluno/dashboard" element={<AlunoDashboard />} /> */}
-            {/* <Route path="/aluno/chat/:id" element={<AlunoChat />} /> */}
-            {/* <Route path="/cadastro-completo" element={<CadastroCompleto />} /> */}
-            {/* <Route path="/exames-medicos" element={<ExamesMedicos />} /> */}
-            {/* <Route path="/fotos-progresso" element={<FotosProgresso />} /> */}
-            {/* <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} /> */}
-            <Route path="/anamnese" element={<Anamnese />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
-            <Route path="/conta-seguranca" element={<ContaSeguranca />} />
-            <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
-            <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-            <Route path="/iniciar-treino" element={<IniciarTreino />} />
-            <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
-            <Route path="/agenda" element={<Agenda />} />
-            <Route path="/metas" element={<Metas />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <PushNotificationsWrapper />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              {/* <Route path="/login" element={<Login />} /> */}
+              {/* <Route path="/aluno/dashboard" element={<AlunoDashboard />} /> */}
+              {/* <Route path="/aluno/chat/:id" element={<AlunoChat />} /> */}
+              {/* <Route path="/cadastro-completo" element={<CadastroCompleto />} /> */}
+              {/* <Route path="/exames-medicos" element={<ExamesMedicos />} /> */}
+              {/* <Route path="/fotos-progresso" element={<FotosProgresso />} /> */}
+              {/* <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} /> */}
+              <Route path="/anamnese" element={<Anamnese />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/conta-seguranca" element={<ContaSeguranca />} />
+              <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
+              <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+              <Route path="/iniciar-treino" element={<IniciarTreino />} />
+              <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/metas" element={<Metas />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
-      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
