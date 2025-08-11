@@ -1,12 +1,13 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { User } from 'firebase/auth';
-import { UserProfile } from '@/lib/auth';
+import { User, Session } from '@supabase/supabase-js';
+import { UserProfile } from '@/lib/supabase';
 import { LoadingScreen } from './LoadingScreen';
 import { AuthScreen } from './AuthScreen';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   userProfile: UserProfile | null;
   loading: boolean;
   isAuthenticated: boolean;
@@ -33,6 +34,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   if (auth.loading) {
     return <LoadingScreen />;
+  }
+
+  if (!auth.isAuthenticated) {
+    return <AuthScreen />;
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInUser, signUpUser } from '@/lib/auth';
+import { signInUser, signUpUser } from '@/lib/supabase';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -94,7 +94,7 @@ export const Profile = () => {
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user?.uid) return;
+    if (!file || !user?.id) return;
 
     // Validate file type and size
     if (!file.type.startsWith('image/')) {

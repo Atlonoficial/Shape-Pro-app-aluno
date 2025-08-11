@@ -17,7 +17,7 @@ export const Nutrition = () => {
   } = useMyNutrition();
   
   const handleMealToggle = async (mealId: string, nutritionPlanId: string) => {
-    if (!user?.uid || !activePlan) return;
+    if (!user?.id || !activePlan) return;
     
     try {
       const isAlreadyLogged = todaysMeals.some(log => log.mealId === mealId && log.consumed);

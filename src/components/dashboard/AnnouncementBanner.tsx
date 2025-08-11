@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { useBanners } from "@/hooks/useBanners";
+import { useBanners } from "@/hooks/useSimpleAuth";
 
 export const AnnouncementBanner = () => {
   const { user } = useAuthContext();
-  const { banners, loading } = useBanners(user?.uid);
+  const { banners, loading } = useBanners(user?.id);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Rotaciona automaticamente
