@@ -18,7 +18,10 @@ interface DashboardProps {
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
-  const firstName = userProfile?.name?.split(' ')[0] || 'Usuário';
+  const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
+  const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
+    ? rawName.split(' ')[0] 
+    : 'Usuário';
   
   useEffect(() => {
     if (!isAuthenticated) {
