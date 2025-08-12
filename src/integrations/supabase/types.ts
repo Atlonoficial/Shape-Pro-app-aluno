@@ -335,6 +335,7 @@ export type Database = {
           enrolled_users: string[] | null
           id: string
           instructor: string | null
+          is_free: boolean
           is_published: boolean | null
           modules: Json | null
           price: number | null
@@ -355,6 +356,7 @@ export type Database = {
           enrolled_users?: string[] | null
           id?: string
           instructor?: string | null
+          is_free?: boolean
           is_published?: boolean | null
           modules?: Json | null
           price?: number | null
@@ -375,6 +377,7 @@ export type Database = {
           enrolled_users?: string[] | null
           id?: string
           instructor?: string | null
+          is_free?: boolean
           is_published?: boolean | null
           modules?: Json | null
           price?: number | null
@@ -993,6 +996,48 @@ export type Database = {
         }
         Relationships: []
       }
+      student_invitations: {
+        Row: {
+          accepted_at: string | null
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          metadata: Json
+          status: string
+          student_user_id: string | null
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          code: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          student_user_id?: string | null
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          student_user_id?: string | null
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           active_plan: string | null
@@ -1240,9 +1285,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: { code: string }
+        Returns: string
+      }
       can_insert_notification: {
         Args: { targets: string[] }
         Returns: boolean
+      }
+      ensure_student_record: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       has_role: {
         Args: {
@@ -1259,9 +1312,13 @@ export type Database = {
         Args: { _reward_id: string }
         Returns: string
       }
+      teacher_link_students: {
+        Args: { _emails: string[] }
+        Returns: Json
+      }
     }
     Enums: {
-      app_role: "student" | "professor"
+      app_role: "student" | "professor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1389,7 +1446,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["student", "professor"],
+      app_role: ["student", "professor", "admin"],
     },
   },
 } as const
