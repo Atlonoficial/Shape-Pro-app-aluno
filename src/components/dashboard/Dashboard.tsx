@@ -128,14 +128,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
           <h1 className="text-xl font-bold text-foreground">
             Olá, <span className="text-gradient-primary">{firstName}!</span>
           </h1>
-          <div className="flex items-center gap-2">
-            <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
-              🔥 Ritmo Shape
-            </span>
-            <span className="bg-warning/10 text-warning px-2 py-1 rounded-full text-xs font-medium">
-              💪 Consistência Pro
-            </span>
-          </div>
         </div>
       </div>
 
@@ -165,34 +157,41 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         loading={workoutsLoading || progressLoading} 
       />
 
-      {/* Today's Workout Preview */}
-      <div className="card-gradient p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Treino de Hoje</h3>
-          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-            PEITO & TRÍCEPS
-          </span>
+      {workouts && workouts.length > 0 && (
+        <div className="card-gradient p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Treino de Hoje</h3>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+              {workouts[0]?.name || 'Treino'}
+            </span>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Duração estimada</span>
+              <span className="text-sm font-medium text-foreground">
+                {workouts[0]?.estimated_duration ? `${workouts[0].estimated_duration} min` : '-'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Exercícios</span>
+              <span className="text-sm font-medium text-foreground">
+                {Array.isArray(workouts[0]?.exercises) ? `${workouts[0].exercises.length} exercícios` : '-'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Dificuldade</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {workouts[0]?.difficulty || '-'}
+              </span>
+            </div>
+          </div>
+          
+          <button onClick={onWorkoutClick} className="btn-primary w-full mt-4">
+            Iniciar Treino
+          </button>
         </div>
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Duração estimada</span>
-            <span className="text-sm font-medium text-foreground">45 min</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Exercícios</span>
-            <span className="text-sm font-medium text-foreground">8 exercícios</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Dificuldade</span>
-            <span className="text-sm font-medium text-warning">Intermediário</span>
-          </div>
-        </div>
-        
-        <button onClick={onWorkoutClick} className="btn-primary w-full mt-4">
-          Iniciar Treino
-        </button>
-      </div>
+      )}
     </div>
   );
 };
