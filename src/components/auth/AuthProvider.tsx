@@ -31,12 +31,14 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const auth = useAuth();
+  const PUBLIC_PATHS = ['/auth/verify', '/auth/verified', '/reset-password'];
+  const isPublicRoute = PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p));
 
   if (auth.loading) {
     return <LoadingScreen />;
   }
 
-  if (!auth.isAuthenticated) {
+  if (!auth.isAuthenticated && !isPublicRoute) {
     return <AuthScreen />;
   }
 

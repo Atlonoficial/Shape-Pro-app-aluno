@@ -28,6 +28,8 @@ import { ResetPassword } from "./pages/ResetPassword";
 import { ExamesMedicos } from "./pages/ExamesMedicos";
 import { FotosProgresso } from "./pages/FotosProgresso";
 import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
+import { AuthVerify } from "./pages/AuthVerify";
+import { AuthVerified } from "./pages/AuthVerified";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +63,8 @@ const App = () => (
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/metas" element={<Metas />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/verify" element={<AuthVerify />} />
+              <Route path="/auth/verified" element={<AuthVerified />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

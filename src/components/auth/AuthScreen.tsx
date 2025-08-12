@@ -45,13 +45,21 @@ export const AuthScreen = () => {
     setLoading(true);
 
     try {
-      await signUpUser(email, password, name, 'student');
-      await signInUser(email, password);
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Bem-vindo ao Shape Pro! Complete seu perfil para começar.",
-      });
-      navigate('/', { replace: true });
+      const result = await signUpUser(email, password, name, 'student');
+
+      if (result?.session) {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Bem-vindo ao Shape Pro!",
+        });
+        navigate('/', { replace: true });
+      } else {
+        toast({
+          title: "Confirme seu email",
+          description: "Enviamos um link de confirmação. Verifique sua caixa de entrada.",
+        });
+        navigate(`/auth/verify?email=${encodeURIComponent(email)}`, { replace: true });
+      }
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",

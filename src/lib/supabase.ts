@@ -120,7 +120,7 @@ export const signUpUser = async (email: string, password: string, name: string, 
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/`,
+      emailRedirectTo: `${window.location.origin}/auth/verified`,
       data: {
         name,
         user_type: userType
@@ -129,7 +129,7 @@ export const signUpUser = async (email: string, password: string, name: string, 
   });
 
   if (error) throw error;
-  return data.user;
+  return data; // contains { user, session }
 };
 
 export const signInUser = async (email: string, password: string) => {
