@@ -4,12 +4,10 @@ import {
   getNutritionPlansByUser,
   getNotificationsByUser,
   getChatMessages,
-  getStudentByUserId,
   Workout,
   NutritionPlan,
   Notification,
-  ChatMessage,
-  Student
+  ChatMessage
 } from '@/lib/supabase';
 
 export const useWorkouts = (userId: string) => {
@@ -94,23 +92,4 @@ export const useChat = (conversationId: string) => {
   }, [conversationId]);
 
   return { messages, loading };
-};
-
-export const useStudentProfile = () => {
-  const [student, setStudent] = useState<Student | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Implementation will be updated when user context is available
-    setLoading(false);
-  }, []);
-
-  return {
-    student,
-    loading,
-    error,
-    isActive: student?.membership_status === 'active',
-    hasTeacher: !!student?.teacher_id
-  };
 };

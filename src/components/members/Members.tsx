@@ -19,7 +19,7 @@ export const Members = () => {
   useEffect(() => {
     // Simplified - no Firebase dependency
     setLoading(false);
-  }, [student?.teacherId]);
+  }, [student?.teacher_id]);
 
   if (selectedModule) {
     return (

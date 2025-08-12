@@ -12,15 +12,15 @@ const AssinaturasPlanos = () => {
   const { student } = useStudentProfile();
 
   const planoAtual = useMemo(() => {
-    if (!student?.activePlan) return null;
+    if (!student?.active_plan) return null;
     return {
-      nome: student.activePlan,
+      nome: student.active_plan,
       preco: "-",
       periodo: "-",
       dataRenovacao: "-",
       status: "ativo",
     };
-  }, [student?.activePlan]);
+  }, [student?.active_plan]);
 
   const beneficiosAtivos = [
     "Acesso ilimitado a todos os treinos",
