@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useWorkouts } from "@/hooks/useSupabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,12 +7,15 @@ import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
 import { ExerciseDetail } from "./ExerciseDetail";
 import { WorkoutSession } from "./WorkoutSession";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 type ViewState = 'list' | 'detail' | 'exercise' | 'session';
 
 export const Workouts = () => {
   const { user } = useAuth();
   const { workouts, loading } = useWorkouts(user?.id || "");
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<ViewState>('list');
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
@@ -144,6 +147,12 @@ export const Workouts = () => {
   return (
     <div className="p-4 pt-8 pb-24">
       {/* Header */}
+      <div className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/")} aria-label="Voltar para a Home">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar para a Home
+        </Button>
+      </div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">Treinos</h1>
         <p className="text-muted-foreground">Escolha seu treino e vamos começar!</p>
