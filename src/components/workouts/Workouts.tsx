@@ -18,7 +18,7 @@ export const Workouts = () => {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
 
   // Muscle groups derived from real workout data
-  const muscleGroups = ["Todos", ...Array.from(new Set(workouts.flatMap(w => w.muscleGroups || [])))];
+  const muscleGroups = ["Todos", ...Array.from(new Set(workouts.flatMap(w => w.muscle_groups || [])))];
 
   const handleWorkoutSelect = useCallback((workout: any) => {
     const mapped = mapWorkout(workout);
