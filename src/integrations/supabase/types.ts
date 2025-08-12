@@ -1098,6 +1098,39 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_availability: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          slot_minutes: number
+          start_time: string
+          teacher_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          slot_minutes?: number
+          start_time: string
+          teacher_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          slot_minutes?: number
+          start_time?: string
+          teacher_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           total_points: number
@@ -1289,6 +1322,17 @@ export type Database = {
         Args: { code: string }
         Returns: string
       }
+      book_appointment: {
+        Args: {
+          p_teacher_id: string
+          p_scheduled_time: string
+          p_type?: string
+          p_duration?: number
+          p_title?: string
+          p_description?: string
+        }
+        Returns: string
+      }
       can_insert_notification: {
         Args: { targets: string[] }
         Returns: boolean
@@ -1307,6 +1351,13 @@ export type Database = {
       is_teacher_of: {
         Args: { _teacher_id: string; _student_user_id: string }
         Returns: boolean
+      }
+      list_available_slots: {
+        Args: { p_teacher_id: string; p_date: string; p_slot_minutes?: number }
+        Returns: {
+          slot_start: string
+          slot_end: string
+        }[]
       }
       redeem_reward: {
         Args: { _reward_id: string }
