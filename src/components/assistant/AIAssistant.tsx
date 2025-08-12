@@ -15,7 +15,7 @@ interface Message {
 
 export const AIAssistant = () => {
   const { user, userProfile } = useAuthContext();
-  const userName = userProfile?.name || 'Usuário';
+  const userName = (userProfile?.name || 'Usuário').trim().split(/\s+/)[0];
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
