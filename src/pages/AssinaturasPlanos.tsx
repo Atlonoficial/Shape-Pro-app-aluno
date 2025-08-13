@@ -95,15 +95,43 @@ const planoAtual = useMemo(() => {
   };
 }, [subInfo, student?.active_plan, student?.membership_status]);
 
-  const beneficiosAtivos = [
+  const beneficiosGratuitos = [
+    "Acesso a treinos básicos",
+    "Acompanhamento básico de progresso",
+    "Chat com o professor (limitado)"
+  ];
+
+  const beneficiosPagos = [
     "Acesso ilimitado a todos os treinos",
-    "Planos nutricionais personalizados",
+    "Planos nutricionais personalizados", 
     "Coach IA 24/7",
     "Relatórios de progresso detalhados",
     "Suporte prioritário",
     "Novos treinos semanais",
-    "Acompanhamento profissional"
+    "Acompanhamento profissional completo"
   ];
+
+  const [planosDisponiveis, setPlanosDisponiveis] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadPlanos = async () => {
+      if (!student?.teacher_id) return;
+      
+      try {
+        const { data: planos } = await (supabase as any)
+          .from('plan_catalog')
+          .select('*')
+          .eq('teacher_id', student.teacher_id)
+          .eq('is_active', true)
+          .order('price', { ascending: true });
+        
+        setPlanosDisponiveis(planos || []);
+      } catch (e) {
+        console.error('Error loading plans:', e);
+      }
+    };
+    loadPlanos();
+  }, [student?.teacher_id]);
 
   const handleCancelarAssinatura = () => {
     toast({
@@ -126,6 +154,34 @@ const planoAtual = useMemo(() => {
     });
   };
 
+  const handleContratarPlano = async (planoId: string) => {
+    if (!user?.id || !student?.teacher_id) return;
+    
+    try {
+      const { error } = await (supabase as any)
+        .from('plan_subscriptions')
+        .insert({
+          student_user_id: user.id,
+          teacher_id: student.teacher_id,
+          plan_id: planoId,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Solicitação enviada!",
+        description: "Seu professor será notificado para aprovar sua assinatura."
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a solicitação. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
@@ -145,15 +201,36 @@ const planoAtual = useMemo(() => {
 
       <div className="p-4 space-y-6">
         {!planoAtual ? (
-          <Card className="p-6 bg-muted/30 border-border/30 text-center">
-            <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3">
-              <Crown className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <h2 className="text-lg font-bold text-foreground">Sem plano atribuído</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Seu professor ainda não liberou um plano. Assim que for liberado, aparecerá aqui.
-            </p>
-          </Card>
+          <>
+            {/* Acesso Gratuito */}
+            <Card className="p-6 bg-muted/30 border-border/30">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                  <Crown className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Acesso Gratuito</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Conteúdos liberados pelo seu professor
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="font-semibold text-foreground mb-3">Benefícios disponíveis:</h3>
+                <div className="grid gap-2">
+                  {beneficiosGratuitos.map((beneficio, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-success" />
+                      </div>
+                      <span className="text-sm text-foreground">{beneficio}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </>
         ) : (
           <>
             {/* Plano Atual */}
@@ -184,7 +261,7 @@ const planoAtual = useMemo(() => {
               <div className="space-y-3">
                 <h3 className="font-semibold text-foreground mb-3">Benefícios inclusos:</h3>
                 <div className="grid gap-2">
-                  {beneficiosAtivos.map((beneficio, index) => (
+                  {beneficiosPagos.map((beneficio, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
                         <Check className="w-3 h-3 text-success" />
@@ -229,6 +306,68 @@ const planoAtual = useMemo(() => {
               </Button>
             </Card>
           </>
+        )}
+
+        {/* Planos Disponíveis para Contratação */}
+        {planosDisponiveis.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-foreground">Planos Disponíveis</h2>
+            <div className="grid gap-4">
+              {planosDisponiveis.map((plano) => (
+                <Card key={plano.id} className={`p-6 ${plano.highlighted ? 'border-primary/50 bg-primary/5' : 'border-border/30'}`}>
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-bold text-foreground">{plano.name}</h3>
+                        {plano.highlighted && (
+                          <Badge variant="secondary" className="bg-primary/20 text-primary">
+                            Recomendado
+                          </Badge>
+                        )}
+                      </div>
+                      {plano.description && (
+                        <p className="text-sm text-muted-foreground mb-3">{plano.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-foreground">
+                        {new Intl.NumberFormat('pt-BR', { 
+                          style: 'currency', 
+                          currency: plano.currency || 'BRL' 
+                        }).format(plano.price)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        /{plano.interval === 'monthly' ? 'mês' : plano.interval === 'yearly' ? 'ano' : plano.interval}
+                      </p>
+                    </div>
+                  </div>
+
+                  {plano.features && plano.features.length > 0 && (
+                    <div className="mb-4">
+                      <div className="grid gap-2">
+                        {plano.features.map((feature: string, index: number) => (
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
+                              <Check className="w-3 h-3 text-success" />
+                            </div>
+                            <span className="text-sm text-foreground">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={() => handleContratarPlano(plano.id)}
+                    className="w-full"
+                    variant={plano.highlighted ? "default" : "outline"}
+                  >
+                    Solicitar Plano
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
