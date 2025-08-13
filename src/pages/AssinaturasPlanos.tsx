@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+
+// AssinaturasPlanos Component - Updated to fix caching issue
 const AssinaturasPlanos = () => {
   const navigate = useNavigate();
   const { student } = useStudentProfile();
