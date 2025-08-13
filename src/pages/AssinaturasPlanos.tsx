@@ -88,17 +88,21 @@ const AssinaturasPlanos = () => {
     };
   }, [user?.id, student?.teacher_id]);
 
-  const beneficiosGratuitos = [
-    "Acesso a treinos básicos",
-    "Acompanhamento básico de progresso",
-    "Chat com o professor (limitado)"
-  ];
+  // Estrutura de benefícios para plano gratuito
+  const beneficiosEstruturados = {
+    liberados: ["Conteúdos liberados pelo professor"],
+    naoLiberados: [
+      "Acesso a treinos básicos",
+      "Acompanhamento básico de progresso", 
+      "Chat com o professor (limitado)"
+    ]
+  };
 
 const planoAtual = useMemo(() => {
   if (subInfo) return subInfo;
   if (!student?.active_plan) return null;
   return {
-    nome: student.active_plan,
+    nome: student.active_plan === 'free' ? 'Gratuito' : student.active_plan,
     preco: "-",
     periodo: "-",
     dataRenovacao: "-",
@@ -107,19 +111,15 @@ const planoAtual = useMemo(() => {
   };
 }, [subInfo, student?.active_plan, student?.membership_status]);
 
-  // Determinar benefícios ativos baseado no plano
-  const beneficiosAtivos = useMemo(() => {
-    if (!planoAtual || planoAtual.nome === 'free') {
-      return beneficiosGratuitos;
-    }
-    
-    // Se tem features específicas do plano, usar elas
-    if (planoAtual.features && planoAtual.features.length > 0) {
+  // Determinar se é plano gratuito
+  const isPlanoGratuito = !planoAtual || planoAtual.nome === 'Gratuito' || planoAtual.nome === 'free';
+
+  // Benefícios para planos pagos
+  const beneficiosPagos = useMemo(() => {
+    if (planoAtual?.features && planoAtual.features.length > 0) {
       return planoAtual.features;
     }
-    
-    // Fallback para benefícios gratuitos se não há features específicas
-    return beneficiosGratuitos;
+    return [];
   }, [planoAtual]);
 
 
@@ -231,12 +231,22 @@ const planoAtual = useMemo(() => {
               <div className="space-y-3">
                 <h3 className="font-semibold text-foreground mb-3">Benefícios disponíveis:</h3>
                 <div className="grid gap-2">
-                  {beneficiosGratuitos.map((beneficio, index) => (
-                    <div key={index} className="flex items-center gap-3">
+                  {/* Benefício liberado */}
+                  {beneficiosEstruturados.liberados.map((beneficio, index) => (
+                    <div key={`liberado-${index}`} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
                         <Check className="w-3 h-3 text-success" />
                       </div>
                       <span className="text-sm text-foreground">{beneficio}</span>
+                    </div>
+                  ))}
+                  {/* Benefícios não liberados */}
+                  {beneficiosEstruturados.naoLiberados.map((beneficio, index) => (
+                    <div key={`nao-liberado-${index}`} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-destructive/20 rounded-full flex items-center justify-center">
+                        <span className="w-3 h-3 text-destructive text-xs font-bold">×</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{beneficio}</span>
                     </div>
                   ))}
                 </div>
@@ -272,16 +282,40 @@ const planoAtual = useMemo(() => {
               {/* Benefícios visíveis com o plano */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-foreground mb-3">Benefícios inclusos:</h3>
-                <div className="grid gap-2">
-                  {beneficiosAtivos.map((beneficio, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
-                        <Check className="w-3 h-3 text-success" />
-                      </div>
-                      <span className="text-sm text-foreground">{beneficio}</span>
-                    </div>
-                  ))}
-                </div>
+                 <div className="grid gap-2">
+                   {isPlanoGratuito ? (
+                     <>
+                       {/* Benefícios liberados */}
+                       {beneficiosEstruturados.liberados.map((beneficio, index) => (
+                         <div key={`liberado-${index}`} className="flex items-center gap-3">
+                           <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
+                             <Check className="w-3 h-3 text-success" />
+                           </div>
+                           <span className="text-sm text-foreground">{beneficio}</span>
+                         </div>
+                       ))}
+                       {/* Benefícios não liberados */}
+                       {beneficiosEstruturados.naoLiberados.map((beneficio, index) => (
+                         <div key={`nao-liberado-${index}`} className="flex items-center gap-3">
+                           <div className="w-5 h-5 bg-destructive/20 rounded-full flex items-center justify-center">
+                             <span className="w-3 h-3 text-destructive text-xs font-bold">×</span>
+                           </div>
+                           <span className="text-sm text-muted-foreground">{beneficio}</span>
+                         </div>
+                       ))}
+                     </>
+                   ) : (
+                     /* Benefícios de planos pagos */
+                     beneficiosPagos.map((beneficio, index) => (
+                       <div key={index} className="flex items-center gap-3">
+                         <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
+                           <Check className="w-3 h-3 text-success" />
+                         </div>
+                         <span className="text-sm text-foreground">{beneficio}</span>
+                       </div>
+                     ))
+                   )}
+                 </div>
               </div>
             </Card>
 
