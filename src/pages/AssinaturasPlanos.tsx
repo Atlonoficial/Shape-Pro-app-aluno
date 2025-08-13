@@ -377,7 +377,7 @@ const planoAtual = useMemo(() => {
               <p className="text-muted-foreground">Escolha o plano ideal para acelerar seus resultados</p>
             </div>
             
-            <div className="grid gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
               {planosDisponiveis.map((plano) => {
                 const iconData = getPlanIcon(plano.icon);
                 const IconComponent = iconData.icon;
@@ -385,7 +385,7 @@ const planoAtual = useMemo(() => {
                 return (
                   <Card 
                     key={plano.id} 
-                    className={`group relative overflow-hidden transition-all duration-300 hover-lift ${
+                    className={`group relative overflow-hidden transition-all duration-300 hover-lift max-w-sm mx-auto w-full ${
                       plano.highlighted 
                         ? 'card-premium border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5' 
                         : 'card-gradient border-border/20 hover:border-primary/20'
@@ -393,26 +393,26 @@ const planoAtual = useMemo(() => {
                   >
                     {/* Plano Recomendado Badge */}
                     {plano.highlighted && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                        <Badge className="badge-premium shadow-glow">
+                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
+                        <Badge className="badge-premium shadow-glow text-xs px-2 py-1">
                           ⭐ Recomendado
                         </Badge>
                       </div>
                     )}
                     
-                    <div className="p-6 pt-8 space-y-6">
+                    <div className="p-4 pt-6 space-y-4">
                       {/* Header com Ícone */}
-                      <div className="text-center space-y-4">
-                        <div className={`w-16 h-16 mx-auto rounded-2xl ${iconData.bgColor} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
-                          <IconComponent className={`w-8 h-8 ${iconData.color}`} />
+                      <div className="text-center space-y-3">
+                        <div className={`w-12 h-12 mx-auto rounded-xl ${iconData.bgColor} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+                          <IconComponent className={`w-6 h-6 ${iconData.color}`} />
                         </div>
                         
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                        <div className="space-y-1">
+                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                             {plano.name}
                           </h3>
                           {plano.description && (
-                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                            <p className="text-xs text-muted-foreground line-clamp-2">
                               {plano.description}
                             </p>
                           )}
@@ -420,15 +420,15 @@ const planoAtual = useMemo(() => {
                       </div>
 
                       {/* Preço */}
-                      <div className="text-center space-y-1">
+                      <div className="text-center">
                         <div className="flex items-baseline justify-center gap-1">
-                          <span className={`text-3xl font-bold ${plano.highlighted ? 'text-gradient-primary' : 'text-foreground'}`}>
+                          <span className={`text-2xl font-bold ${plano.highlighted ? 'text-gradient-primary' : 'text-foreground'}`}>
                             {new Intl.NumberFormat('pt-BR', { 
                               style: 'currency', 
                               currency: plano.currency || 'BRL' 
                             }).format(plano.price)}
                           </span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             /{plano.interval === 'monthly' ? 'mês' : plano.interval === 'yearly' ? 'ano' : plano.interval}
                           </span>
                         </div>
@@ -436,21 +436,26 @@ const planoAtual = useMemo(() => {
 
                       {/* Features */}
                       {plano.features && plano.features.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-foreground text-center">
-                            O que está incluído:
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-foreground text-center">
+                            Incluído:
                           </h4>
-                          <div className="space-y-3">
-                            {plano.features.map((feature: string, index: number) => (
-                              <div key={index} className="flex items-start gap-3 group/feature">
-                                <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center mt-0.5 transition-transform duration-200 group-hover/feature:scale-110">
-                                  <Check className="w-3 h-3 text-success" />
+                          <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-thin">
+                            {plano.features.slice(0, 4).map((feature: string, index: number) => (
+                              <div key={index} className="flex items-start gap-2 group/feature">
+                                <div className="w-4 h-4 bg-success/20 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0 transition-transform duration-200 group-hover/feature:scale-110">
+                                  <Check className="w-2.5 h-2.5 text-success" />
                                 </div>
-                                <span className="text-sm text-foreground leading-relaxed flex-1">
+                                <span className="text-xs text-foreground leading-relaxed flex-1">
                                   {feature}
                                 </span>
                               </div>
                             ))}
+                            {plano.features.length > 4 && (
+                              <p className="text-xs text-muted-foreground text-center">
+                                +{plano.features.length - 4} benefícios adicionais
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -459,12 +464,12 @@ const planoAtual = useMemo(() => {
                       <div className="pt-2">
                         <Button 
                           onClick={() => handleContratarPlano(plano.id)}
-                          className={`w-full h-12 text-base font-semibold transition-all duration-300 ${
+                          className={`w-full h-10 text-sm font-semibold transition-all duration-300 ${
                             plano.highlighted 
                               ? 'btn-primary animate-glow' 
                               : 'btn-secondary hover:btn-primary'
                           }`}
-                          size="lg"
+                          size="sm"
                         >
                           Solicitar Plano
                         </Button>
