@@ -21,6 +21,7 @@ const AssinaturasPlanos = () => {
     periodo: string;
     dataRenovacao: string;
     status: string;
+    features?: string[];
   } | null>(null);
 
   useEffect(() => {
@@ -47,7 +48,7 @@ const AssinaturasPlanos = () => {
 
         const { data: plan } = await (supabase as any)
           .from('plan_catalog')
-          .select('name, price, interval, currency')
+          .select('name, price, interval, currency, features')
           .eq('id', sub.plan_id)
           .single();
 
@@ -74,6 +75,7 @@ const AssinaturasPlanos = () => {
             periodo,
             dataRenovacao,
             status: sub.status ?? 'ativo',
+            features: plan?.features || [],
           });
         }
       } catch (e) {
@@ -94,8 +96,24 @@ const planoAtual = useMemo(() => {
     periodo: "-",
     dataRenovacao: "-",
     status: student.membership_status || "ativo",
+    features: [],
   };
 }, [subInfo, student?.active_plan, student?.membership_status]);
+
+  // Determinar benefícios ativos baseado no plano
+  const beneficiosAtivos = useMemo(() => {
+    if (!planoAtual || planoAtual.nome === 'free') {
+      return beneficiosGratuitos;
+    }
+    
+    // Se tem features específicas do plano, usar elas
+    if (planoAtual.features && planoAtual.features.length > 0) {
+      return planoAtual.features;
+    }
+    
+    // Fallback para benefícios gratuitos se não há features específicas
+    return beneficiosGratuitos;
+  }, [planoAtual]);
 
   const beneficiosGratuitos = [
     "Acesso a treinos básicos",
@@ -103,15 +121,6 @@ const planoAtual = useMemo(() => {
     "Chat com o professor (limitado)"
   ];
 
-  const beneficiosPagos = [
-    "Acesso ilimitado a todos os treinos",
-    "Planos nutricionais personalizados", 
-    "Coach IA 24/7",
-    "Relatórios de progresso detalhados",
-    "Suporte prioritário",
-    "Novos treinos semanais",
-    "Acompanhamento profissional completo"
-  ];
 
   const [planosDisponiveis, setPlanosDisponiveis] = useState<any[]>([]);
 
@@ -263,7 +272,7 @@ const planoAtual = useMemo(() => {
               <div className="space-y-3">
                 <h3 className="font-semibold text-foreground mb-3">Benefícios inclusos:</h3>
                 <div className="grid gap-2">
-                  {beneficiosPagos.map((beneficio, index) => (
+                  {beneficiosAtivos.map((beneficio, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
                         <Check className="w-3 h-3 text-success" />
