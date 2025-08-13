@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
-import { ArrowLeft, Crown, Check, Star, Calendar } from "lucide-react";
+import { ArrowLeft, Crown, Check, Star, Calendar, Diamond, Trophy, Gem, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,21 @@ import { toast } from "@/hooks/use-toast";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+
+// Mapeamento de ícones dos planos
+const PLAN_ICONS = {
+  crown: { icon: Crown, color: 'text-yellow-500', bgColor: 'bg-yellow-500/20' },
+  star: { icon: Star, color: 'text-blue-500', bgColor: 'bg-blue-500/20' },
+  diamond: { icon: Diamond, color: 'text-purple-500', bgColor: 'bg-purple-500/20' },
+  trophy: { icon: Trophy, color: 'text-orange-500', bgColor: 'bg-orange-500/20' },
+  gem: { icon: Gem, color: 'text-emerald-500', bgColor: 'bg-emerald-500/20' }
+};
+
+// Função para obter ícone do plano
+const getPlanIcon = (iconKey?: string) => {
+  const iconData = PLAN_ICONS[iconKey as keyof typeof PLAN_ICONS] || PLAN_ICONS.crown;
+  return iconData;
+};
 
 // AssinaturasPlanos Component - Updated to fix caching issue
 const AssinaturasPlanos = () => {
@@ -356,62 +371,108 @@ const planoAtual = useMemo(() => {
 
         {/* Planos Disponíveis para Contratação */}
         {planosDisponiveis.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Planos Disponíveis</h2>
-            <div className="grid gap-4">
-              {planosDisponiveis.map((plano) => (
-                <Card key={plano.id} className={`p-6 ${plano.highlighted ? 'border-primary/50 bg-primary/5' : 'border-border/30'}`}>
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-bold text-foreground">{plano.name}</h3>
-                        {plano.highlighted && (
-                          <Badge variant="secondary" className="bg-primary/20 text-primary">
-                            Recomendado
-                          </Badge>
-                        )}
-                      </div>
-                      {plano.description && (
-                        <p className="text-sm text-muted-foreground mb-3">{plano.description}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-foreground">
-                        {new Intl.NumberFormat('pt-BR', { 
-                          style: 'currency', 
-                          currency: plano.currency || 'BRL' 
-                        }).format(plano.price)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        /{plano.interval === 'monthly' ? 'mês' : plano.interval === 'yearly' ? 'ano' : plano.interval}
-                      </p>
-                    </div>
-                  </div>
-
-                  {plano.features && plano.features.length > 0 && (
-                    <div className="mb-4">
-                      <div className="grid gap-2">
-                        {plano.features.map((feature: string, index: number) => (
-                          <div key={index} className="flex items-center gap-3">
-                            <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center">
-                              <Check className="w-3 h-3 text-success" />
-                            </div>
-                            <span className="text-sm text-foreground">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button 
-                    onClick={() => handleContratarPlano(plano.id)}
-                    className="w-full"
-                    variant={plano.highlighted ? "default" : "outline"}
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold text-gradient-primary">Planos Disponíveis</h2>
+              <p className="text-muted-foreground">Escolha o plano ideal para acelerar seus resultados</p>
+            </div>
+            
+            <div className="grid gap-6">
+              {planosDisponiveis.map((plano) => {
+                const iconData = getPlanIcon(plano.icon);
+                const IconComponent = iconData.icon;
+                
+                return (
+                  <Card 
+                    key={plano.id} 
+                    className={`group relative overflow-hidden transition-all duration-300 hover-lift ${
+                      plano.highlighted 
+                        ? 'card-premium border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5' 
+                        : 'card-gradient border-border/20 hover:border-primary/20'
+                    }`}
                   >
-                    Solicitar Plano
-                  </Button>
-                </Card>
-              ))}
+                    {/* Plano Recomendado Badge */}
+                    {plano.highlighted && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                        <Badge className="badge-premium shadow-glow">
+                          ⭐ Recomendado
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    <div className="p-6 pt-8 space-y-6">
+                      {/* Header com Ícone */}
+                      <div className="text-center space-y-4">
+                        <div className={`w-16 h-16 mx-auto rounded-2xl ${iconData.bgColor} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+                          <IconComponent className={`w-8 h-8 ${iconData.color}`} />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                            {plano.name}
+                          </h3>
+                          {plano.description && (
+                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                              {plano.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Preço */}
+                      <div className="text-center space-y-1">
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className={`text-3xl font-bold ${plano.highlighted ? 'text-gradient-primary' : 'text-foreground'}`}>
+                            {new Intl.NumberFormat('pt-BR', { 
+                              style: 'currency', 
+                              currency: plano.currency || 'BRL' 
+                            }).format(plano.price)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            /{plano.interval === 'monthly' ? 'mês' : plano.interval === 'yearly' ? 'ano' : plano.interval}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Features */}
+                      {plano.features && plano.features.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-foreground text-center">
+                            O que está incluído:
+                          </h4>
+                          <div className="space-y-3">
+                            {plano.features.map((feature: string, index: number) => (
+                              <div key={index} className="flex items-start gap-3 group/feature">
+                                <div className="w-5 h-5 bg-success/20 rounded-full flex items-center justify-center mt-0.5 transition-transform duration-200 group-hover/feature:scale-110">
+                                  <Check className="w-3 h-3 text-success" />
+                                </div>
+                                <span className="text-sm text-foreground leading-relaxed flex-1">
+                                  {feature}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botão de Ação */}
+                      <div className="pt-2">
+                        <Button 
+                          onClick={() => handleContratarPlano(plano.id)}
+                          className={`w-full h-12 text-base font-semibold transition-all duration-300 ${
+                            plano.highlighted 
+                              ? 'btn-primary animate-glow' 
+                              : 'btn-secondary hover:btn-primary'
+                          }`}
+                          size="lg"
+                        >
+                          Solicitar Plano
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
