@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
-
+import { supabase } from '@/integrations/supabase/client';
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -20,6 +20,11 @@ export const useAuth = () => {
         } catch (error) {
           console.error('Error fetching user profile:', error);
           setUserProfile(null);
+        }
+        try {
+          await supabase.rpc('ensure_student_record');
+        } catch (e) {
+          console.error('Error ensuring student record:', e);
         }
       } else {
         setUserProfile(null);

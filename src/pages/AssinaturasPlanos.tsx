@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { ArrowLeft, Crown, Check, Star, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,21 +6,94 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 const AssinaturasPlanos = () => {
   const navigate = useNavigate();
   const { student } = useStudentProfile();
+  const { user } = useAuth();
 
-  const planoAtual = useMemo(() => {
-    if (!student?.active_plan) return null;
-    return {
-      nome: student.active_plan,
-      preco: "-",
-      periodo: "-",
-      dataRenovacao: "-",
-      status: "ativo",
+  const [subInfo, setSubInfo] = useState<{
+    nome: string;
+    preco: string;
+    periodo: string;
+    dataRenovacao: string;
+    status: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      if (!user?.id) {
+        if (isMounted) setSubInfo(null);
+        return;
+      }
+      try {
+        const { data: sub } = await (supabase as any)
+          .from('plan_subscriptions')
+          .select('id, plan_id, status, start_at, end_at, teacher_id')
+          .eq('student_user_id', user.id)
+          .eq('status', 'active')
+          .order('start_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!sub) {
+          if (isMounted) setSubInfo(null);
+          return;
+        }
+
+        const { data: plan } = await (supabase as any)
+          .from('plan_catalog')
+          .select('name, price, interval, currency')
+          .eq('id', sub.plan_id)
+          .single();
+
+        const currency = plan?.currency || 'BRL';
+        const price = typeof plan?.price === 'number'
+          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(plan.price)
+          : '-';
+
+        const periodoMap: Record<string, string> = {
+          monthly: 'mês',
+          quarterly: 'trimestre',
+          yearly: 'ano'
+        };
+
+        const periodo = plan?.interval ? (periodoMap[plan.interval] || plan.interval) : '-';
+        const dataRenovacao = sub.end_at
+          ? new Date(sub.end_at).toLocaleDateString('pt-BR')
+          : '-';
+
+        if (isMounted) {
+          setSubInfo({
+            nome: plan?.name ?? student?.active_plan ?? 'free',
+            preco: price,
+            periodo,
+            dataRenovacao,
+            status: sub.status ?? 'ativo',
+          });
+        }
+      } catch (e) {
+        if (isMounted) setSubInfo(null);
+      }
     };
-  }, [student?.active_plan]);
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, student?.teacher_id]);
+const planoAtual = useMemo(() => {
+  if (subInfo) return subInfo;
+  if (!student?.active_plan) return null;
+  return {
+    nome: student.active_plan,
+    preco: "-",
+    periodo: "-",
+    dataRenovacao: "-",
+    status: student.membership_status || "ativo",
+  };
+}, [subInfo, student?.active_plan, student?.membership_status]);
 
   const beneficiosAtivos = [
     "Acesso ilimitado a todos os treinos",
@@ -94,7 +167,7 @@ const AssinaturasPlanos = () => {
                     <h2 className="text-lg font-bold text-foreground">{planoAtual.nome}</h2>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="bg-success/20 text-success">
-                        ATIVO
+                        {planoAtual.status?.toUpperCase?.() || 'ATIVO'}
                       </Badge>
                     </div>
                   </div>
