@@ -87,6 +87,13 @@ const AssinaturasPlanos = () => {
       isMounted = false;
     };
   }, [user?.id, student?.teacher_id]);
+
+  const beneficiosGratuitos = [
+    "Acesso a treinos básicos",
+    "Acompanhamento básico de progresso",
+    "Chat com o professor (limitado)"
+  ];
+
 const planoAtual = useMemo(() => {
   if (subInfo) return subInfo;
   if (!student?.active_plan) return null;
@@ -114,12 +121,6 @@ const planoAtual = useMemo(() => {
     // Fallback para benefícios gratuitos se não há features específicas
     return beneficiosGratuitos;
   }, [planoAtual]);
-
-  const beneficiosGratuitos = [
-    "Acesso a treinos básicos",
-    "Acompanhamento básico de progresso",
-    "Chat com o professor (limitado)"
-  ];
 
 
   const [planosDisponiveis, setPlanosDisponiveis] = useState<any[]>([]);
