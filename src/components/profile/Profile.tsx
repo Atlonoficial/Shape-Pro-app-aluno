@@ -264,8 +264,25 @@ export const Profile = () => {
         </CardContent>
       </Card>
 
+      {/* Anamnese */}
+      <h2 className="text-lg font-semibold mb-3 mt-6">Anamnese</h2>
+      <div className="space-y-3">
+        <Card role="button" onClick={() => navigate("/anamnese")} className="hover:bg-muted/40 transition-colors">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Histórico Médico</p>
+              <p className="text-sm text-muted-foreground">Questionário de saúde completo</p>
+            </div>
+            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">90%</span>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Dados e Configurações */}
-      <h2 className="text-lg font-semibold mb-3">Dados e Configurações</h2>
+      <h2 className="text-lg font-semibold mb-3 mt-6">Dados e Configurações</h2>
       <div className="space-y-3">
         <Card role="button" onClick={() => navigate("/assinaturas-planos")} className="hover:bg-muted/40 transition-colors">
           <CardContent className="p-4 flex items-center gap-4">
@@ -276,19 +293,6 @@ export const Profile = () => {
               <p className="font-medium">Assinaturas & Planos</p>
               <p className="text-sm text-muted-foreground">Gerencie sua assinatura</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card role="button" onClick={() => navigate("/anamnese")} className="hover:bg-muted/40 transition-colors">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-              <ClipboardList className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium">Cadastro Completo</p>
-              <p className="text-sm text-muted-foreground">Informações pessoais</p>
-            </div>
-            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">90%</span>
           </CardContent>
         </Card>
 
