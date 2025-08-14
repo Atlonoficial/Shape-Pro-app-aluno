@@ -1,85 +1,55 @@
-import { useEffect, useMemo, useState } from "react";
-import { Calendar, Clock, User, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Calendar, Clock, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/components/ui/use-toast";
+import { useStudentAppointments } from "@/hooks/useStudentAppointments";
+import { useStudentTeacherAvailability } from "@/hooks/useStudentTeacherAvailability";
+import { useAvailableSlots } from "@/hooks/useAvailableSlots";
 
 export const Agenda = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  const [loading, setLoading] = useState(true);
-  const [teacherId, setTeacherId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
 
-  type Slot = { start: string; end: string };
-  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
+  // Use the custom hooks
+  const { 
+    upcomingAppointments, 
+    pastAppointments, 
+    loading: appointmentsLoading, 
+    cancelAppointment 
+  } = useStudentAppointments();
+  
+  const { 
+    teacherId, 
+    loading: teacherLoading 
+  } = useStudentTeacherAvailability();
+  
+  const { 
+    getAvailableSlots, 
+    quickBookAppointment, 
+    loading: slotsLoading 
+  } = useAvailableSlots();
 
-  type Appt = { id: string; scheduled_time: string; type: string | null; title: string | null; status: string | null };
-  const [upcoming, setUpcoming] = useState<Appt[]>([]);
-  const [history, setHistory] = useState<Appt[]>([]);
+  const loading = appointmentsLoading || teacherLoading;
+  const nextAppointment = useMemo(() => upcomingAppointments[0] ?? null, [upcomingAppointments]);
 
-  const nextAppointment = useMemo(() => upcoming[0] ?? null, [upcoming]);
+  // Load available slots when date or teacher changes
+  const loadAvailableSlots = async () => {
+    if (!teacherId) {
+      setAvailableSlots([]);
+      return;
+    }
 
+    const slots = await getAvailableSlots(teacherId, selectedDate, 60);
+    setAvailableSlots(slots);
+  };
+
+  // Load slots when dependencies change
   useEffect(() => {
-    const load = async () => {
-      try {
-        if (!user?.id) { setLoading(false); return; }
-        setLoading(true);
-
-        // 1) Descobre o professor do aluno
-        const { data: studentRow, error: sErr } = await supabase
-          .from('students')
-          .select('teacher_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (sErr) throw sErr;
-        const tId = studentRow?.teacher_id ?? null;
-        setTeacherId(tId);
-
-        // 2) Busca agendamentos do aluno
-        const { data: appts, error: aErr } = await supabase
-          .from('appointments')
-          .select('id, scheduled_time, duration, type, title, status')
-          .eq('student_id', user.id)
-          .order('scheduled_time', { ascending: true });
-        if (aErr) throw aErr;
-
-        const now = new Date();
-        const upcomingList = (appts ?? []).filter(a => new Date(a.scheduled_time) >= now);
-        const historyList = (appts ?? []).filter(a => new Date(a.scheduled_time) < now).reverse();
-        setUpcoming(upcomingList);
-        setHistory(historyList);
-
-        // 3) Lista horários disponíveis do professor para a data
-        if (tId) {
-          const dateStr = selectedDate.toISOString().slice(0, 10);
-          const { data: slots, error: lErr } = await supabase.rpc('list_available_slots', {
-            p_teacher_id: tId,
-            p_date: dateStr,
-            p_slot_minutes: 60,
-          });
-          if (lErr) throw lErr;
-          const mapped: Slot[] = (slots ?? []).map((s: any) => ({ start: s.slot_start, end: s.slot_end }));
-          setAvailableSlots(mapped);
-        } else {
-          setAvailableSlots([]);
-        }
-      } catch (err: any) {
-        console.error('Agenda load error', err);
-        toast({ title: 'Erro', description: err.message ?? 'Falha ao carregar agenda', variant: 'destructive' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, [user?.id, selectedDate]);
+    loadAvailableSlots();
+  }, [teacherId, selectedDate]);
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
@@ -91,34 +61,20 @@ export const Agenda = () => {
     return d.toLocaleDateString();
   };
 
-  const handleBook = async (slot: Slot) => {
-    try {
-      if (!teacherId) return;
-      const { error } = await supabase.rpc('book_appointment', {
-        p_teacher_id: teacherId,
-        p_scheduled_time: slot.start,
-        p_type: 'class',
-        p_duration: 60,
-      });
-      if (error) throw error;
-      toast({ title: 'Agendado', description: 'Agendamento criado com sucesso!' });
-
-      // Atualiza listas
-      const { data: appts } = await supabase
-        .from('appointments')
-        .select('id, scheduled_time, duration, type, title, status')
-        .eq('student_id', user!.id)
-        .order('scheduled_time', { ascending: true });
-      const now = new Date();
-      const upcomingList = (appts ?? []).filter(a => new Date(a.scheduled_time) >= now);
-      const historyList = (appts ?? []).filter(a => new Date(a.scheduled_time) < now).reverse();
-      setUpcoming(upcomingList);
-      setHistory(historyList);
-      setAvailableSlots(prev => prev.filter(s => s.start !== slot.start));
-    } catch (err: any) {
-      console.error('Book error', err);
-      toast({ title: 'Erro', description: err.message ?? 'Falha ao agendar', variant: 'destructive' });
+  const handleBook = async (slot: any) => {
+    if (!teacherId) return;
+    
+    const result = await quickBookAppointment(teacherId, slot.slot_start);
+    if (result.success) {
+      // Reload available slots after successful booking
+      loadAvailableSlots();
     }
+  };
+
+  const handleCancel = async (appointmentId: string) => {
+    await cancelAppointment(appointmentId, "Cancelado pelo aluno");
+    // Slots will be automatically refreshed due to real-time updates
+    loadAvailableSlots();
   };
 
   const bumpDay = (days: number) => {
@@ -200,25 +156,31 @@ export const Agenda = () => {
             <p className="text-sm text-muted-foreground">Você ainda não está vinculado a um professor.</p>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {availableSlots.map((slot, index) => (
-                <Card
-                  key={index}
-                  className={`p-4 border transition-all cursor-pointer card-gradient border-border/50 hover:border-primary/50`}
-                  onClick={() => handleBook(slot)}
-                >
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Clock size={16} className="text-primary" />
-                      <span className={`font-medium text-foreground`}>
-                        {formatTime(slot.start)}
-                      </span>
-                    </div>
-                    <span className={`text-xs text-success`}>Disponível</span>
-                  </div>
-                </Card>
-              ))}
-              {availableSlots.length === 0 && (
-                <p className="col-span-2 text-sm text-muted-foreground">Sem horários disponíveis para esta data.</p>
+              {slotsLoading ? (
+                <p className="col-span-2 text-sm text-muted-foreground">Carregando horários...</p>
+              ) : (
+                <>
+                  {availableSlots.map((slot, index) => (
+                    <Card
+                      key={index}
+                      className={`p-4 border transition-all cursor-pointer card-gradient border-border/50 hover:border-primary/50`}
+                      onClick={() => handleBook(slot)}
+                    >
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Clock size={16} className="text-primary" />
+                          <span className={`font-medium text-foreground`}>
+                            {formatTime(slot.slot_start)}
+                          </span>
+                        </div>
+                        <span className={`text-xs text-success`}>Disponível</span>
+                      </div>
+                    </Card>
+                  ))}
+                  {availableSlots.length === 0 && (
+                    <p className="col-span-2 text-sm text-muted-foreground">Sem horários disponíveis para esta data.</p>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -228,7 +190,7 @@ export const Agenda = () => {
         <TabsContent value="agendados" className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Seus Agendamentos</h3>
 
-          {upcoming.map((agendamento) => (
+          {upcomingAppointments.map((agendamento) => (
             <Card key={agendamento.id} className="card-gradient p-4 border border-border/50">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -252,7 +214,11 @@ export const Agenda = () => {
                   <Button size="sm" variant="outline">
                     Editar
                   </Button>
-                  <Button size="sm" variant="destructive">
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleCancel(agendamento.id)}
+                  >
                     Cancelar
                   </Button>
                 </div>
@@ -260,7 +226,7 @@ export const Agenda = () => {
             </Card>
           ))}
 
-          {upcoming.length === 0 && (
+          {upcomingAppointments.length === 0 && (
             <p className="text-sm text-muted-foreground">Sem agendamentos futuros.</p>
           )}
         </TabsContent>
@@ -269,7 +235,7 @@ export const Agenda = () => {
         <TabsContent value="historico" className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Histórico</h3>
 
-          {history.map((item) => (
+          {pastAppointments.map((item) => (
             <Card key={item.id} className="card-gradient p-4 border border-border/50">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -298,7 +264,7 @@ export const Agenda = () => {
             </Card>
           ))}
 
-          {history.length === 0 && (
+          {pastAppointments.length === 0 && (
             <p className="text-sm text-muted-foreground">Nada por aqui ainda.</p>
           )}
         </TabsContent>
