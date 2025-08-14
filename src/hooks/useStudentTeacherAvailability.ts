@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { useActiveSubscription } from '@/hooks/useActiveSubscription';
 
 export interface TeacherAvailability {
   id: string;
@@ -15,6 +16,7 @@ export interface TeacherAvailability {
 export const useStudentTeacherAvailability = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { hasActiveSubscription, teacherId: subscriptionTeacherId } = useActiveSubscription();
   const [availability, setAvailability] = useState<TeacherAvailability[]>([]);
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,29 +30,22 @@ export const useStudentTeacherAvailability = () => {
     try {
       setLoading(true);
       
-      // First, get the teacher ID for this student
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('teacher_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (studentError) throw studentError;
-      
-      const teacherIdFound = studentData?.teacher_id;
-      setTeacherId(teacherIdFound);
-
-      if (!teacherIdFound) {
+      // Check if user has active subscription first
+      if (!hasActiveSubscription || !subscriptionTeacherId) {
+        setTeacherId(null);
         setAvailability([]);
         setLoading(false);
         return;
       }
 
+      // Use teacher ID from active subscription
+      setTeacherId(subscriptionTeacherId);
+
       // Then fetch the teacher's availability
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('teacher_availability')
         .select('*')
-        .eq('teacher_id', teacherIdFound)
+        .eq('teacher_id', subscriptionTeacherId)
         .order('weekday', { ascending: true })
         .order('start_time', { ascending: true });
 
@@ -74,7 +69,7 @@ export const useStudentTeacherAvailability = () => {
     // Set up real-time subscription for teacher availability changes
     let channel: any = null;
     
-    if (teacherId) {
+    if (teacherId && hasActiveSubscription) {
       channel = supabase
         .channel('teacher-availability')
         .on(
@@ -97,7 +92,7 @@ export const useStudentTeacherAvailability = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [user?.id, teacherId]);
+  }, [user?.id, teacherId, hasActiveSubscription]);
 
   // Helper function to get availability for a specific weekday
   const getAvailabilityForWeekday = (weekday: number) => {

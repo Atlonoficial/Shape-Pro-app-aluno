@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useStudentAppointments } from "@/hooks/useStudentAppointments";
 import { useStudentTeacherAvailability } from "@/hooks/useStudentTeacherAvailability";
 import { useAvailableSlots } from "@/hooks/useAvailableSlots";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 export const Agenda = () => {
   const navigate = useNavigate();
@@ -32,7 +33,13 @@ export const Agenda = () => {
     loading: slotsLoading 
   } = useAvailableSlots();
 
-  const loading = appointmentsLoading || teacherLoading;
+  const {
+    hasActiveSubscription,
+    statusMessage,
+    loading: subscriptionLoading
+  } = useActiveSubscription();
+
+  const loading = appointmentsLoading || teacherLoading || subscriptionLoading;
   const nextAppointment = useMemo(() => upcomingAppointments[0] ?? null, [upcomingAppointments]);
 
   // Load available slots when date or teacher changes
@@ -152,8 +159,26 @@ export const Agenda = () => {
 
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando...</p>
+          ) : !hasActiveSubscription ? (
+            <Card className="p-6 text-center border border-warning/20 bg-warning/5">
+              <div className="space-y-3">
+                <div className="w-16 h-16 bg-warning/10 rounded-full flex items-center justify-center mx-auto">
+                  <Calendar size={32} className="text-warning" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Consultoria Necessária</h4>
+                  <p className="text-sm text-muted-foreground mb-4">{statusMessage}</p>
+                  <Button 
+                    className="btn-primary"
+                    onClick={() => navigate("/assinaturas-planos")}
+                  >
+                    Ver Planos Disponíveis
+                  </Button>
+                </div>
+              </div>
+            </Card>
           ) : !teacherId ? (
-            <p className="text-sm text-muted-foreground">Você ainda não está vinculado a um professor.</p>
+            <p className="text-sm text-muted-foreground">Aguardando designação de professor...</p>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {slotsLoading ? (
