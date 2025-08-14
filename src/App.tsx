@@ -30,6 +30,7 @@ import { FotosProgresso } from "./pages/FotosProgresso";
 import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 import { AuthVerify } from "./pages/AuthVerify";
 import { AuthVerified } from "./pages/AuthVerified";
+import CadastroCompleto from "./pages/CadastroCompleto";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
               {/* <Route path="/exames-medicos" element={<ExamesMedicos />} /> */}
               {/* <Route path="/fotos-progresso" element={<FotosProgresso />} /> */}
               {/* <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} /> */}
+              <Route path="/cadastro-completo" element={<CadastroCompleto />} />
               <Route path="/anamnese" element={<Anamnese />} />
               <Route path="/exames-medicos" element={<ExamesMedicos />} />
               <Route path="/fotos-progresso" element={<FotosProgresso />} />
