@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -610,6 +610,54 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          onesignal_id: string | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          onesignal_id?: string | null
+          status: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          onesignal_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_required: boolean | null
@@ -802,6 +850,110 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_catalog: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json
+          highlighted: boolean
+          icon: string | null
+          id: string
+          interval: Database["public"]["Enums"]["billing_interval"]
+          is_active: boolean
+          name: string
+          price: number
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          highlighted?: boolean
+          icon?: string | null
+          id?: string
+          interval?: Database["public"]["Enums"]["billing_interval"]
+          is_active?: boolean
+          name: string
+          price?: number
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          highlighted?: boolean
+          icon?: string | null
+          id?: string
+          interval?: Database["public"]["Enums"]["billing_interval"]
+          is_active?: boolean
+          name?: string
+          price?: number
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_subscriptions: {
+        Row: {
+          approved_at: string | null
+          cancelled_at: string | null
+          cancelled_reason: string | null
+          created_at: string
+          end_at: string | null
+          id: string
+          metadata: Json
+          plan_id: string
+          start_at: string | null
+          status: string
+          student_user_id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          created_at?: string
+          end_at?: string | null
+          id?: string
+          metadata?: Json
+          plan_id: string
+          start_at?: string | null
+          status?: string
+          student_user_id: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          created_at?: string
+          end_at?: string | null
+          id?: string
+          metadata?: Json
+          plan_id?: string
+          start_at?: string | null
+          status?: string
+          student_user_id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -809,7 +961,10 @@ export type Database = {
           email: string
           id: string
           name: string
+          notification_preferences: Json | null
+          onesignal_player_id: string | null
           profile_complete: boolean | null
+          push_enabled: boolean | null
           updated_at: string | null
           user_type: string | null
         }
@@ -819,7 +974,10 @@ export type Database = {
           email: string
           id: string
           name: string
+          notification_preferences?: Json | null
+          onesignal_player_id?: string | null
           profile_complete?: boolean | null
+          push_enabled?: boolean | null
           updated_at?: string | null
           user_type?: string | null
         }
@@ -829,7 +987,10 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          notification_preferences?: Json | null
+          onesignal_player_id?: string | null
           profile_complete?: boolean | null
+          push_enabled?: boolean | null
           updated_at?: string | null
           user_type?: string | null
         }
@@ -1050,6 +1211,7 @@ export type Database = {
           measurements_updated_at: string | null
           membership_expiry: string | null
           membership_status: string | null
+          mode: string | null
           muscle_mass: number | null
           notifications: boolean | null
           teacher_id: string | null
@@ -1069,6 +1231,7 @@ export type Database = {
           measurements_updated_at?: string | null
           membership_expiry?: string | null
           membership_status?: string | null
+          mode?: string | null
           muscle_mass?: number | null
           notifications?: boolean | null
           teacher_id?: string | null
@@ -1088,6 +1251,7 @@ export type Database = {
           measurements_updated_at?: string | null
           membership_expiry?: string | null
           membership_status?: string | null
+          mode?: string | null
           muscle_mass?: number | null
           notifications?: boolean | null
           teacher_id?: string | null
@@ -1095,6 +1259,42 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           weight?: number | null
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1128,6 +1328,45 @@ export type Database = {
           teacher_id?: string
           updated_at?: string
           weekday?: number
+        }
+        Relationships: []
+      }
+      teacher_schedule_exceptions: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          is_available: boolean
+          reason: string | null
+          special_end_time: string | null
+          special_start_time: string | null
+          teacher_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          is_available?: boolean
+          reason?: string | null
+          special_end_time?: string | null
+          special_start_time?: string | null
+          teacher_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          is_available?: boolean
+          reason?: string | null
+          special_end_time?: string | null
+          special_start_time?: string | null
+          teacher_id?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1322,14 +1561,18 @@ export type Database = {
         Args: { code: string }
         Returns: string
       }
+      approve_subscription: {
+        Args: { p_subscription_id: string }
+        Returns: string
+      }
       book_appointment: {
         Args: {
-          p_teacher_id: string
-          p_scheduled_time: string
-          p_type?: string
-          p_duration?: number
-          p_title?: string
           p_description?: string
+          p_duration?: number
+          p_scheduled_time: string
+          p_teacher_id: string
+          p_title?: string
+          p_type?: string
         }
         Returns: string
       }
@@ -1341,35 +1584,80 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_entitlements: {
+        Args: { p_teacher_id: string; p_user_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       is_teacher_of: {
-        Args: { _teacher_id: string; _student_user_id: string }
+        Args: { _student_user_id: string; _teacher_id: string }
         Returns: boolean
       }
       list_available_slots: {
-        Args: { p_teacher_id: string; p_date: string; p_slot_minutes?: number }
+        Args: { p_date: string; p_slot_minutes?: number; p_teacher_id: string }
         Returns: {
-          slot_start: string
           slot_end: string
+          slot_start: string
+        }[]
+      }
+      list_available_slots_improved: {
+        Args: {
+          p_end_date: string
+          p_slot_minutes?: number
+          p_start_date: string
+          p_teacher_id: string
+        }
+        Returns: {
+          slot_date: string
+          slot_end: string
+          slot_start: string
         }[]
       }
       redeem_reward: {
         Args: { _reward_id: string }
         Returns: string
       }
+      sync_student_membership: {
+        Args: { p_student_user_id: string; p_teacher_id: string }
+        Returns: string
+      }
       teacher_link_students: {
         Args: { _emails: string[] }
         Returns: Json
       }
+      teacher_update_student_profile: {
+        Args:
+          | {
+              p_active_plan?: string
+              p_email?: string
+              p_goals?: string[]
+              p_membership_expiry?: string
+              p_membership_status?: string
+              p_mode?: string
+              p_name?: string
+              p_student_user_id: string
+            }
+          | {
+              p_active_plan?: string
+              p_email?: string
+              p_goals?: string[]
+              p_membership_expiry?: string
+              p_membership_status?: string
+              p_name?: string
+              p_student_user_id: string
+            }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "student" | "professor" | "admin"
+      billing_interval: "monthly" | "quarterly" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1498,6 +1786,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["student", "professor", "admin"],
+      billing_interval: ["monthly", "quarterly", "yearly"],
     },
   },
 } as const
