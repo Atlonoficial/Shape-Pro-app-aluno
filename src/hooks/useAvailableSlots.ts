@@ -21,19 +21,35 @@ export const useAvailableSlots = () => {
       
       const dateStr = typeof date === 'string' ? date : date.toISOString().slice(0, 10);
       
+      console.log('Fetching slots for:', { teacherId, dateStr, slotMinutes });
+      
       const { data, error } = await supabase.rpc('list_available_slots', {
         p_teacher_id: teacherId,
         p_date: dateStr,
         p_slot_minutes: slotMinutes,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RPC Error:', error);
+        throw error;
+      }
+      
+      console.log('Available slots returned:', data);
       return data || [];
     } catch (error: any) {
       console.error('Error fetching available slots:', error);
+      
+      // More specific error messages
+      let errorMessage = 'Falha ao buscar horários disponíveis';
+      if (error.message?.includes('Not authorized')) {
+        errorMessage = 'Você não tem permissão para visualizar os horários deste professor';
+      } else if (error.message?.includes('Not authenticated')) {
+        errorMessage = 'Você precisa estar logado para ver os horários';
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Falha ao buscar horários disponíveis',
+        description: errorMessage,
         variant: 'destructive',
       });
       return [];

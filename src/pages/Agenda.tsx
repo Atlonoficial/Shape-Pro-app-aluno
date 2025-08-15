@@ -24,7 +24,9 @@ export const Agenda = () => {
   
   const { 
     teacherId, 
-    loading: teacherLoading 
+    loading: teacherLoading,
+    availability,
+    getWeekdayName 
   } = useStudentTeacherAvailability();
   
   const { 
@@ -43,13 +45,15 @@ export const Agenda = () => {
   const nextAppointment = useMemo(() => upcomingAppointments[0] ?? null, [upcomingAppointments]);
 
   // Load available slots when date or teacher changes
+  // Load available slots for selected date
   const loadAvailableSlots = async () => {
-    if (!teacherId) {
-      setAvailableSlots([]);
+    if (!teacherId || !selectedDate) {
+      console.log('Missing data for loading slots:', { teacherId, selectedDate });
       return;
     }
-
-    const slots = await getAvailableSlots(teacherId, selectedDate, 60);
+    
+    console.log('Loading available slots for:', { teacherId, selectedDate: selectedDate.toDateString() });
+    const slots = await getAvailableSlots(teacherId, selectedDate);
     setAvailableSlots(slots);
   };
 
@@ -63,8 +67,8 @@ export const Agenda = () => {
     return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
+  const formatDate = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
     return d.toLocaleDateString();
   };
 
@@ -202,14 +206,24 @@ export const Agenda = () => {
                       </div>
                     </Card>
                   ))}
-                  {availableSlots.length === 0 && (
+                  {availableSlots.length === 0 && !loading && (
                     <div className="col-span-2 text-center py-8">
                       <p className="text-muted-foreground mb-4">
-                        Nenhum horário disponível para esta data
+                        Nenhum horário disponível para {formatDate(selectedDate)}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        Navegue pelos dias para encontrar horários disponíveis
+                      <p className="text-sm text-muted-foreground mb-4">
+                        O professor não tem disponibilidade configurada para este dia
                       </p>
+                      <div className="text-sm text-muted-foreground">
+                        <p className="font-medium mb-2">Dias disponíveis:</p>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {availability.map((av) => (
+                            <span key={av.id} className="px-2 py-1 bg-muted rounded text-xs">
+                              {getWeekdayName(av.weekday)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>

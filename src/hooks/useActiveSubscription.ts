@@ -32,7 +32,7 @@ export const useActiveSubscription = () => {
       setLoading(true);
       setError(null);
 
-      // Check if user has active subscription by querying students table
+      // First get student data to get teacher_id
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('teacher_id, active_plan, membership_status, membership_expiry')
@@ -41,13 +41,20 @@ export const useActiveSubscription = () => {
 
       if (studentError) throw studentError;
 
-      if (studentData && studentData.teacher_id && studentData.membership_status === 'active' && studentData.active_plan !== 'free') {
+      if (!studentData || !studentData.teacher_id) {
+        setSubscription(null);
+        setLoading(false);
+        return;
+      }
+
+      // For now, use the legacy approach until types are updated
+      if (studentData.active_plan && studentData.active_plan !== 'free' && studentData.membership_status === 'active') {
         // Check if subscription is not expired
         const isExpired = studentData.membership_expiry && new Date(studentData.membership_expiry) <= new Date();
         
         if (!isExpired) {
           setSubscription({
-            id: 'student-subscription',
+            id: 'legacy-subscription',
             plan_id: studentData.active_plan,
             teacher_id: studentData.teacher_id,
             status: studentData.membership_status,
@@ -74,9 +81,9 @@ export const useActiveSubscription = () => {
   useEffect(() => {
     fetchActiveSubscription();
 
-    // Set up real-time subscription for students table changes
+    // Set up real-time subscription for changes
     const channel = supabase
-      .channel('student-subscription-changes')
+      .channel('subscription-changes')
       .on(
         'postgres_changes',
         {
@@ -84,6 +91,18 @@ export const useActiveSubscription = () => {
           schema: 'public',
           table: 'students',
           filter: `user_id=eq.${user?.id}`,
+        },
+        () => {
+          fetchActiveSubscription();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'plan_subscriptions',
+          filter: `student_user_id=eq.${user?.id}`,
         },
         () => {
           fetchActiveSubscription();
