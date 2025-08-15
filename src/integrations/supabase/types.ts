@@ -62,6 +62,9 @@ export type Database = {
       appointments: {
         Row: {
           attachments: string[] | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string | null
           description: string | null
           duration: number | null
@@ -75,6 +78,9 @@ export type Database = {
           scheduled_time: string
           status: string | null
           student_id: string | null
+          student_notes: string | null
+          student_objectives: string | null
+          student_title: string | null
           teacher_id: string | null
           title: string
           type: string | null
@@ -82,6 +88,9 @@ export type Database = {
         }
         Insert: {
           attachments?: string[] | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -95,6 +104,9 @@ export type Database = {
           scheduled_time: string
           status?: string | null
           student_id?: string | null
+          student_notes?: string | null
+          student_objectives?: string | null
+          student_title?: string | null
           teacher_id?: string | null
           title: string
           type?: string | null
@@ -102,6 +114,9 @@ export type Database = {
         }
         Update: {
           attachments?: string[] | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -115,6 +130,9 @@ export type Database = {
           scheduled_time?: string
           status?: string | null
           student_id?: string | null
+          student_notes?: string | null
+          student_objectives?: string | null
+          student_title?: string | null
           teacher_id?: string | null
           title?: string
           type?: string | null
@@ -1570,6 +1588,9 @@ export type Database = {
           p_description?: string
           p_duration?: number
           p_scheduled_time: string
+          p_student_notes?: string
+          p_student_objectives?: string
+          p_student_title?: string
           p_teacher_id: string
           p_title?: string
           p_type?: string

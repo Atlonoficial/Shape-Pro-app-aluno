@@ -47,7 +47,24 @@ export default function Agenda() {
   } = useActiveSubscription();
 
   const loading = appointmentsLoading || teacherLoading || subscriptionLoading;
-  const nextAppointment = useMemo(() => upcomingAppointments[0] ?? null, [upcomingAppointments]);
+  
+  // Filtrar agendamentos por status e data
+  const currentDateTime = new Date().toISOString();
+  
+  const confirmedAppointments = useMemo(() => {
+    return upcomingAppointments.filter(apt => 
+      (apt.status === 'scheduled' || apt.status === 'confirmed') && 
+      apt.scheduled_time > currentDateTime
+    );
+  }, [upcomingAppointments, currentDateTime]);
+  
+  const historicalAppointments = useMemo(() => {
+    return [...upcomingAppointments, ...pastAppointments].filter(apt => 
+      apt.scheduled_time < currentDateTime || apt.status === 'cancelled'
+    );
+  }, [upcomingAppointments, pastAppointments, currentDateTime]);
+  
+  const nextAppointment = useMemo(() => confirmedAppointments[0] ?? null, [confirmedAppointments]);
 
   // Load available slots when date or teacher changes
   // Load available slots for selected date
@@ -308,7 +325,7 @@ export default function Agenda() {
         <TabsContent value="agendados" className="space-y-3 sm:space-y-4">
           <h3 className="text-base sm:text-lg font-semibold text-foreground">Seus Agendamentos</h3>
 
-          {upcomingAppointments.map((agendamento) => (
+          {confirmedAppointments.map((agendamento) => (
             <Card key={agendamento.id} className="card-gradient p-3 sm:p-4 border border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
                 <div className="flex-1 min-w-0">
@@ -317,21 +334,33 @@ export default function Agenda() {
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       agendamento.status === 'confirmed' || agendamento.status === 'confirmado'
                         ? 'bg-success/10 text-success'
-                        : agendamento.status === 'cancelled' || agendamento.status === 'cancelado'
-                        ? 'bg-destructive/10 text-destructive'
                         : 'bg-warning/10 text-warning'
                     }`}>
                       {agendamento.status === 'confirmed' || agendamento.status === 'confirmado' 
                         ? 'Confirmado' 
-                        : agendamento.status === 'cancelled' || agendamento.status === 'cancelado'
-                        ? 'Cancelado'
-                        : 'Pendente'}
+                        : 'Agendado'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     <span>{formatDate(agendamento.scheduled_time)} às {formatTime(agendamento.scheduled_time)}</span>
                   </div>
+
+                  {/* Mostrar objetivo e observações se disponíveis */}
+                  {(agendamento.student_objectives || agendamento.student_notes) && (
+                    <div className="mt-2 pt-2 border-t border-border/30">
+                      {agendamento.student_objectives && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          <span className="font-medium">Objetivo:</span> {agendamento.student_objectives}
+                        </p>
+                      )}
+                      {agendamento.student_notes && (
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-medium">Observações:</span> {agendamento.student_notes}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 w-full sm:w-auto">
@@ -357,8 +386,8 @@ export default function Agenda() {
             </Card>
           ))}
 
-          {upcomingAppointments.length === 0 && (
-            <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">Sem agendamentos futuros.</p>
+          {confirmedAppointments.length === 0 && (
+            <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">Sem agendamentos confirmados.</p>
           )}
         </TabsContent>
 
@@ -366,36 +395,81 @@ export default function Agenda() {
         <TabsContent value="historico" className="space-y-3 sm:space-y-4">
           <h3 className="text-base sm:text-lg font-semibold text-foreground">Histórico</h3>
 
-          {pastAppointments.map((item) => (
+          {historicalAppointments.map((item) => (
             <Card key={item.id} className="card-gradient p-3 sm:p-4 border border-border/50">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{item.title ?? item.type ?? 'Sessão'}</h4>
-                    {item.status === 'cancelled' ? (
-                      <XCircle size={16} className="text-destructive" />
-                    ) : (
-                      <CheckCircle size={16} className="text-success" />
-                    )}
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{item.title ?? item.type ?? 'Sessão'}</h4>
+                      {item.status === 'cancelled' ? (
+                        <XCircle size={16} className="text-destructive" />
+                      ) : (
+                        <CheckCircle size={16} className="text-success" />
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                      <span>{formatDate(item.scheduled_time)} às {formatTime(item.scheduled_time)}</span>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                    <span>{formatDate(item.scheduled_time)} às {formatTime(item.scheduled_time)}</span>
-                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    item.status === 'cancelled'
+                      ? 'bg-destructive/10 text-destructive'
+                      : 'bg-success/10 text-success'
+                  }`}>
+                    {item.status === 'cancelled' ? 'Cancelado' : 'Concluído'}
+                  </span>
                 </div>
 
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  item.status === 'cancelled'
-                    ? 'bg-destructive/10 text-destructive'
-                    : 'bg-success/10 text-success'
-                }`}>
-                  {item.status === 'cancelled' ? 'Cancelado' : 'Concluído'}
-                </span>
+                {/* Mostrar detalhes do agendamento */}
+                <div className="space-y-2">
+                  {/* Objetivo e observações do aluno */}
+                  {(item.student_objectives || item.student_notes) && (
+                    <div className="p-2 bg-muted/30 rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Detalhes da Sessão:</p>
+                      {item.student_objectives && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          <span className="font-medium">Objetivo:</span> {item.student_objectives}
+                        </p>
+                      )}
+                      {item.student_notes && (
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-medium">Observações:</span> {item.student_notes}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Motivo do cancelamento */}
+                  {item.status === 'cancelled' && (item.cancellation_reason || item.notes) && (
+                    <div className="p-2 bg-destructive/5 border border-destructive/20 rounded-md">
+                      <p className="text-xs font-medium text-destructive mb-1">Motivo do Cancelamento:</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.cancellation_reason || item.notes || 'Não informado'}
+                      </p>
+                      {item.cancelled_at && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Cancelado em: {formatDate(item.cancelled_at)} às {formatTime(item.cancelled_at)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Notas do professor */}
+                  {item.notes && item.status !== 'cancelled' && (
+                    <div className="p-2 bg-primary/5 border border-primary/20 rounded-md">
+                      <p className="text-xs font-medium text-primary mb-1">Observações do Professor:</p>
+                      <p className="text-xs text-muted-foreground">{item.notes}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
 
-          {pastAppointments.length === 0 && (
+          {historicalAppointments.length === 0 && (
             <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">Nada por aqui ainda.</p>
           )}
         </TabsContent>

@@ -11,6 +11,12 @@ export interface StudentAppointment {
   title: string | null;
   status: string | null;
   teacher_id: string | null;
+  student_objectives: string | null;
+  student_notes: string | null;
+  notes: string | null;
+  cancellation_reason: string | null;
+  cancelled_by: string | null;
+  cancelled_at: string | null;
 }
 
 export const useStudentAppointments = () => {
@@ -30,7 +36,7 @@ export const useStudentAppointments = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('appointments')
-        .select('id, scheduled_time, duration, type, title, status, teacher_id')
+        .select('id, scheduled_time, duration, type, title, status, teacher_id, student_objectives, student_notes, notes, cancellation_reason, cancelled_by, cancelled_at')
         .eq('student_id', user.id)
         .order('scheduled_time', { ascending: true });
 
@@ -64,7 +70,9 @@ export const useStudentAppointments = () => {
         .from('appointments')
         .update({ 
           status: 'cancelled',
-          notes: reason || 'Cancelado pelo aluno'
+          cancellation_reason: reason || 'Cancelado pelo aluno',
+          cancelled_by: user?.id,
+          cancelled_at: new Date().toISOString()
         })
         .eq('id', appointmentId)
         .eq('student_id', user?.id);
