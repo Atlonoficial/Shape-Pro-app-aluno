@@ -203,7 +203,14 @@ export const Agenda = () => {
                     </Card>
                   ))}
                   {availableSlots.length === 0 && (
-                    <p className="col-span-2 text-sm text-muted-foreground">Sem horários disponíveis para esta data.</p>
+                    <div className="col-span-2 text-center py-8">
+                      <p className="text-muted-foreground mb-4">
+                        Nenhum horário disponível para esta data
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Navegue pelos dias para encontrar horários disponíveis
+                      </p>
+                    </div>
                   )}
                 </>
               )}

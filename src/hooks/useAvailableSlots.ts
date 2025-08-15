@@ -45,7 +45,7 @@ export const useAvailableSlots = () => {
   const bookAppointment = async (
     teacherId: string,
     scheduledTime: string,
-    type: string = 'class',
+    type: string = 'consultation',
     duration: number = 60,
     title?: string,
     description?: string
@@ -96,7 +96,7 @@ export const useAvailableSlots = () => {
     return bookAppointment(
       teacherId,
       scheduledTime,
-      options?.type || 'class',
+      options?.type || 'consultation',
       options?.duration || 60,
       options?.title,
       options?.description
