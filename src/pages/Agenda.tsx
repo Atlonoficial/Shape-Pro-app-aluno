@@ -23,7 +23,8 @@ export default function Agenda() {
     pastAppointments, 
     loading: appointmentsLoading, 
     cancelAppointment,
-    refreshAppointments 
+    refreshAppointments,
+    isOptimistic 
   } = useStudentAppointments();
   
   const { 
@@ -116,7 +117,7 @@ export default function Agenda() {
 
   const handleCancel = async (appointmentId: string) => {
     await cancelAppointment(appointmentId, "Cancelado pelo aluno");
-    // Slots will be automatically refreshed due to real-time updates
+    // Refresh available slots after cancellation
     loadAvailableSlots();
   };
 
@@ -322,16 +323,22 @@ export default function Agenda() {
                 </div>
 
                 <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 w-full sm:w-auto">
-                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none text-xs sm:text-sm">
-                    Editar
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1 sm:flex-none text-xs sm:text-sm"
+                    disabled={isOptimistic(agendamento.id)}
+                  >
+                    {isOptimistic(agendamento.id) ? 'Processando...' : 'Editar'}
                   </Button>
                   <Button 
                     size="sm" 
                     variant="destructive"
                     onClick={() => handleCancel(agendamento.id)}
+                    disabled={isOptimistic(agendamento.id)}
                     className="flex-1 sm:flex-none text-xs sm:text-sm"
                   >
-                    Cancelar
+                    {isOptimistic(agendamento.id) ? 'Cancelando...' : 'Cancelar'}
                   </Button>
                 </div>
               </div>

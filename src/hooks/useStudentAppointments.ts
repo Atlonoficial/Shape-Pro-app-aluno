@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -18,6 +18,7 @@ export const useStudentAppointments = () => {
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<StudentAppointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [optimisticOperations, setOptimisticOperations] = useState<Set<string>>(new Set());
 
   const fetchAppointments = async () => {
     if (!user?.id) {
@@ -47,7 +48,17 @@ export const useStudentAppointments = () => {
     }
   };
 
-  const cancelAppointment = async (appointmentId: string, reason?: string) => {
+  const cancelAppointment = useCallback(async (appointmentId: string, reason?: string) => {
+    // Optimistic UI - immediately update local state
+    setOptimisticOperations(prev => new Set(prev).add(appointmentId));
+    setAppointments(prev => 
+      prev.map(apt => 
+        apt.id === appointmentId 
+          ? { ...apt, status: 'cancelled' }
+          : apt
+      )
+    );
+
     try {
       const { error } = await supabase
         .from('appointments')
@@ -64,20 +75,45 @@ export const useStudentAppointments = () => {
         title: 'Sucesso',
         description: 'Agendamento cancelado com sucesso',
       });
-
-      // Refresh appointments
-      fetchAppointments();
     } catch (error: any) {
       console.error('Error cancelling appointment:', error);
+      
+      // Rollback optimistic update on error
+      setAppointments(prev => 
+        prev.map(apt => 
+          apt.id === appointmentId 
+            ? { ...apt, status: 'scheduled' }
+            : apt
+        )
+      );
+      
       toast({
         title: 'Erro',
         description: 'Falha ao cancelar agendamento',
         variant: 'destructive',
       });
+    } finally {
+      setOptimisticOperations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(appointmentId);
+        return newSet;
+      });
     }
-  };
+  }, [user?.id, toast]);
 
-  const rescheduleAppointment = async (appointmentId: string, newDateTime: string) => {
+  const rescheduleAppointment = useCallback(async (appointmentId: string, newDateTime: string) => {
+    // Optimistic UI - immediately update local state
+    setOptimisticOperations(prev => new Set(prev).add(appointmentId));
+    const originalAppointment = appointments.find(apt => apt.id === appointmentId);
+    
+    setAppointments(prev => 
+      prev.map(apt => 
+        apt.id === appointmentId 
+          ? { ...apt, scheduled_time: newDateTime, status: 'scheduled' }
+          : apt
+      )
+    );
+
     try {
       const { error } = await supabase
         .from('appointments')
@@ -94,43 +130,95 @@ export const useStudentAppointments = () => {
         title: 'Sucesso',
         description: 'Agendamento reagendado com sucesso',
       });
-
-      // Refresh appointments
-      fetchAppointments();
     } catch (error: any) {
       console.error('Error rescheduling appointment:', error);
+      
+      // Rollback optimistic update on error
+      if (originalAppointment) {
+        setAppointments(prev => 
+          prev.map(apt => 
+            apt.id === appointmentId 
+              ? originalAppointment
+              : apt
+          )
+        );
+      }
+      
       toast({
         title: 'Erro',
         description: 'Falha ao reagendar',
         variant: 'destructive',
       });
+    } finally {
+      setOptimisticOperations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(appointmentId);
+        return newSet;
+      });
     }
-  };
+  }, [appointments, user?.id, toast]);
+
+  // Handle real-time updates with granular updates
+  const handleRealtimeUpdate = useCallback((payload: any) => {
+    if (payload.eventType === 'INSERT') {
+      setAppointments(prev => [...prev, payload.new]);
+    } else if (payload.eventType === 'UPDATE') {
+      setAppointments(prev => 
+        prev.map(apt => 
+          apt.id === payload.new.id ? payload.new : apt
+        )
+      );
+    } else if (payload.eventType === 'DELETE') {
+      setAppointments(prev => 
+        prev.filter(apt => apt.id !== payload.old.id)
+      );
+    }
+  }, []);
 
   useEffect(() => {
+    if (!user?.id) return;
+    
     fetchAppointments();
 
-    // Set up real-time subscription
+    // Set up granular real-time subscriptions for instant updates
     const channel = supabase
-      .channel('student-appointments')
+      .channel('student-appointments-realtime')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'appointments',
-          filter: `student_id=eq.${user?.id}`,
+          filter: `student_id=eq.${user.id}`,
         },
-        () => {
-          fetchAppointments();
-        }
+        (payload) => handleRealtimeUpdate({ eventType: 'INSERT', new: payload.new })
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'appointments',
+          filter: `student_id=eq.${user.id}`,
+        },
+        (payload) => handleRealtimeUpdate({ eventType: 'UPDATE', new: payload.new, old: payload.old })
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'appointments',
+          filter: `student_id=eq.${user.id}`,
+        },
+        (payload) => handleRealtimeUpdate({ eventType: 'DELETE', old: payload.old })
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, handleRealtimeUpdate]);
 
   // Separate upcoming and past appointments
   const now = new Date();
@@ -149,5 +237,7 @@ export const useStudentAppointments = () => {
     cancelAppointment,
     rescheduleAppointment,
     refreshAppointments: fetchAppointments,
+    optimisticOperations,
+    isOptimistic: (id: string) => optimisticOperations.has(id),
   };
 };
