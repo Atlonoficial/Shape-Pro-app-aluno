@@ -6,20 +6,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { useStudentAppointments } from "@/hooks/useStudentAppointments";
 import { useStudentTeacherAvailability } from "@/hooks/useStudentTeacherAvailability";
-import { useAvailableSlots } from "@/hooks/useAvailableSlots";
+import { useAvailableSlots, AvailableSlot } from "@/hooks/useAvailableSlots";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { BookingConfirmationDialog } from "@/components/booking/BookingConfirmationDialog";
 
-export const Agenda = () => {
+export default function Agenda() {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
 
   // Use the custom hooks
   const { 
     upcomingAppointments, 
     pastAppointments, 
     loading: appointmentsLoading, 
-    cancelAppointment 
+    cancelAppointment,
+    refreshAppointments 
   } = useStudentAppointments();
   
   const { 
@@ -31,7 +35,7 @@ export const Agenda = () => {
   
   const { 
     getAvailableSlots, 
-    quickBookAppointment, 
+    bookAppointment, 
     loading: slotsLoading 
   } = useAvailableSlots();
 
@@ -79,12 +83,33 @@ export const Agenda = () => {
     return d.toLocaleDateString();
   };
 
-  const handleBook = async (slot: any) => {
-    if (!teacherId) return;
+  // Booking handlers
+  const handleOpenBookingDialog = (slot: AvailableSlot) => {
+    setSelectedSlot(slot);
+    setShowBookingDialog(true);
+  };
+
+  const handleConfirmBooking = async (formData: {
+    type: string;
+    title: string;
+    objective: string;
+    notes: string;
+  }) => {
+    if (!teacherId || !selectedSlot) return;
     
-    const result = await quickBookAppointment(teacherId, slot.slot_start);
+    const result = await bookAppointment(
+      teacherId,
+      selectedSlot.slot_start,
+      formData.type,
+      60, // duration in minutes
+      formData.title,
+      `${formData.objective}\n\nObservações: ${formData.notes}`
+    );
+    
     if (result.success) {
-      // Reload available slots after successful booking
+      setShowBookingDialog(false);
+      setSelectedSlot(null);
+      await refreshAppointments();
       loadAvailableSlots();
     }
   };
@@ -199,10 +224,9 @@ export const Agenda = () => {
                   {availableSlots.map((slot, index) => (
                     <Card
                       key={index}
-                      className={`p-4 border transition-all cursor-pointer card-gradient border-border/50 hover:border-primary/50`}
-                      onClick={() => handleBook(slot)}
+                      className={`p-4 border transition-all card-gradient border-border/50 hover:border-primary/50`}
                     >
-                      <div className="text-center">
+                      <div className="text-center space-y-2">
                         <div className="flex items-center justify-center gap-1 mb-1">
                           <Clock size={16} className="text-primary" />
                           <span className={`font-medium text-foreground`}>
@@ -210,6 +234,14 @@ export const Agenda = () => {
                           </span>
                         </div>
                         <span className={`text-xs text-success`}>Disponível</span>
+                        <Button
+                          size="sm"
+                          onClick={() => handleOpenBookingDialog(slot)}
+                          disabled={slotsLoading}
+                          className="w-full"
+                        >
+                          Agendar Horário
+                        </Button>
                       </div>
                     </Card>
                   ))}
@@ -333,6 +365,15 @@ export const Agenda = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Booking Confirmation Dialog */}
+      <BookingConfirmationDialog
+        open={showBookingDialog}
+        onOpenChange={setShowBookingDialog}
+        onConfirm={handleConfirmBooking}
+        selectedSlot={selectedSlot}
+        loading={slotsLoading}
+      />
     </div>
   );
-};
+}

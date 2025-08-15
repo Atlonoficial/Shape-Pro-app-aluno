@@ -22,7 +22,7 @@ import AssinaturasPlanos from "./pages/AssinaturasPlanos";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import { IniciarTreino } from "./pages/IniciarTreino";
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
-import { Agenda } from "./pages/Agenda";
+import Agenda from "./pages/Agenda";
 import { Metas } from "./pages/Metas";
 import { ResetPassword } from "./pages/ResetPassword";
 import { ExamesMedicos } from "./pages/ExamesMedicos";
