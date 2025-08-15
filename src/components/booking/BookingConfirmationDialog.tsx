@@ -82,9 +82,6 @@ export function BookingConfirmationDialog({
     if (!formData.title.trim()) {
       newErrors.title = 'Título é obrigatório';
     }
-    if (!formData.objective.trim()) {
-      newErrors.objective = 'Objetivo é obrigatório';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -188,7 +185,7 @@ export function BookingConfirmationDialog({
 
           {/* Objetivo */}
           <div className="space-y-2">
-            <Label htmlFor="objective">Objetivo da Sessão *</Label>
+            <Label htmlFor="objective">Objetivo da Sessão</Label>
             <Textarea
               id="objective"
               value={formData.objective}
