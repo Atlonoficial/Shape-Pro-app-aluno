@@ -59,6 +59,13 @@ export const Agenda = () => {
 
   // Load slots when dependencies change
   useEffect(() => {
+    console.log('Agenda - Availability data:', {
+      availability,
+      availabilityCount: availability.length,
+      teacherId,
+      hasActiveSubscription,
+      loading: teacherLoading
+    });
     loadAvailableSlots();
   }, [teacherId, selectedDate]);
 
@@ -217,12 +224,23 @@ export const Agenda = () => {
                       <div className="text-sm text-muted-foreground">
                         <p className="font-medium mb-2">Dias disponíveis:</p>
                         <div className="flex flex-wrap gap-2 justify-center">
-                          {availability.map((av) => (
-                            <span key={av.id} className="px-2 py-1 bg-muted rounded text-xs">
-                              {getWeekdayName(av.weekday)}
+                          {availability.length > 0 ? (
+                            availability.map((av) => (
+                              <span key={av.id} className="px-2 py-1 bg-muted rounded text-xs">
+                                {getWeekdayName(av.weekday)} ({av.start_time} - {av.end_time})
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {teacherId ? 'Professor não tem disponibilidade configurada' : 'Carregando disponibilidade...'}
                             </span>
-                          ))}
+                          )}
                         </div>
+                        {availability.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Use os botões acima para navegar para os dias disponíveis
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

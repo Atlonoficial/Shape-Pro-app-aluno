@@ -50,6 +50,13 @@ export const useStudentTeacherAvailability = () => {
         .order('start_time', { ascending: true });
 
       if (availabilityError) throw availabilityError;
+      
+      console.log('Teacher availability data loaded:', {
+        teacherId: subscriptionTeacherId,
+        availabilityData,
+        totalSlots: availabilityData?.length || 0
+      });
+      
       setAvailability(availabilityData || []);
     } catch (error: any) {
       console.error('Error fetching teacher availability:', error);
