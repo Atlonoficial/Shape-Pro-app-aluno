@@ -223,10 +223,10 @@ export const useStudentAppointments = () => {
   // Separate upcoming and past appointments
   const now = new Date();
   const upcomingAppointments = appointments.filter(
-    (apt) => new Date(apt.scheduled_time) >= now
+    (apt) => new Date(apt.scheduled_time) >= now && apt.status !== 'cancelled'
   );
   const pastAppointments = appointments.filter(
-    (apt) => new Date(apt.scheduled_time) < now
+    (apt) => new Date(apt.scheduled_time) < now || apt.status === 'cancelled'
   ).reverse();
 
   return {

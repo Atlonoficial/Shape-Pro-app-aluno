@@ -311,9 +311,15 @@ export default function Agenda() {
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       agendamento.status === 'confirmed' || agendamento.status === 'confirmado'
                         ? 'bg-success/10 text-success'
+                        : agendamento.status === 'cancelled' || agendamento.status === 'cancelado'
+                        ? 'bg-destructive/10 text-destructive'
                         : 'bg-warning/10 text-warning'
                     }`}>
-                      {agendamento.status === 'confirmed' || agendamento.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                      {agendamento.status === 'confirmed' || agendamento.status === 'confirmado' 
+                        ? 'Confirmado' 
+                        : agendamento.status === 'cancelled' || agendamento.status === 'cancelado'
+                        ? 'Cancelado'
+                        : 'Pendente'}
                     </span>
                   </div>
 
