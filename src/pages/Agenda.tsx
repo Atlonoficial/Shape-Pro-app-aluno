@@ -129,9 +129,9 @@ export default function Agenda() {
   };
 
   return (
-    <div className="p-4 pt-8 pb-24">
+    <div className="px-3 sm:px-4 pt-6 sm:pt-8 pb-20 sm:pb-24 max-w-7xl mx-auto">
       {/* Header com botão de volta */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <Button
           variant="ghost"
           size="sm"
@@ -141,54 +141,67 @@ export default function Agenda() {
           <ArrowLeft size={20} />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus treinos e consultas</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Agenda</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gerencie seus treinos e consultas</p>
         </div>
       </div>
 
       {/* Próximo Agendamento */}
-      <Card className="card-gradient p-6 mb-6 border border-primary/20">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-variant rounded-full flex items-center justify-center">
-            <Calendar size={24} className="text-white" />
+      <Card className="card-gradient p-4 sm:p-6 mb-4 sm:mb-6 border border-primary/20">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-primary-variant rounded-full flex items-center justify-center">
+            <Calendar size={20} className="sm:size-6 text-white" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-foreground">Próximo Agendamento</h3>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">Próximo Agendamento</h3>
             {nextAppointment ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {formatDate(nextAppointment.scheduled_time)} às {formatTime(nextAppointment.scheduled_time)} - {nextAppointment.title ?? nextAppointment.type ?? 'Sessão'}
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">Sem agendamentos futuros</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Sem agendamentos futuros</p>
             )}
           </div>
-          <Button size="sm" className="btn-primary" disabled={!nextAppointment}>
-            Ver Detalhes
+          <Button size="sm" className="btn-primary text-xs sm:text-sm px-2 sm:px-3" disabled={!nextAppointment}>
+            <span className="hidden sm:inline">Ver Detalhes</span>
+            <span className="sm:hidden">Ver</span>
           </Button>
         </div>
       </Card>
 
       <Tabs defaultValue="disponiveis" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="disponiveis">Disponíveis</TabsTrigger>
-          <TabsTrigger value="agendados">Agendados</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10">
+          <TabsTrigger value="disponiveis" className="text-xs sm:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Disponíveis</span>
+            <span className="sm:hidden">Livres</span>
+          </TabsTrigger>
+          <TabsTrigger value="agendados" className="text-xs sm:text-sm px-1 sm:px-3">
+            <span className="hidden sm:inline">Agendados</span>
+            <span className="sm:hidden">Agenda</span>
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="text-xs sm:text-sm px-1 sm:px-3">Histórico</TabsTrigger>
         </TabsList>
 
         {/* Horários Disponíveis */}
         <TabsContent value="disponiveis" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">
-              Horários para {selectedDate.toLocaleDateString()}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">
+              Horários para {selectedDate.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: 'short',
+                ...(window.innerWidth >= 640 && { year: 'numeric' })
+              })}
             </h3>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => bumpDay(-1)}>
-                <Calendar size={16} className="mr-1" />
-                Dia anterior
+              <Button variant="outline" size="sm" onClick={() => bumpDay(-1)} className="flex-1 sm:flex-none">
+                <Calendar size={14} className="mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Dia anterior</span>
+                <span className="sm:hidden">Anterior</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => bumpDay(1)}>
-                <Calendar size={16} className="mr-1" />
-                Próximo dia
+              <Button variant="outline" size="sm" onClick={() => bumpDay(1)} className="flex-1 sm:flex-none">
+                <Calendar size={14} className="mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Próximo dia</span>
+                <span className="sm:hidden">Próximo</span>
               </Button>
             </div>
           </div>
@@ -216,20 +229,20 @@ export default function Agenda() {
           ) : !teacherId ? (
             <p className="text-sm text-muted-foreground">Aguardando designação de professor...</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {slotsLoading ? (
-                <p className="col-span-2 text-sm text-muted-foreground">Carregando horários...</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {slotsLoading ? (
+                <p className="col-span-full text-sm text-muted-foreground text-center py-4">Carregando horários...</p>
               ) : (
                 <>
                   {availableSlots.map((slot, index) => (
                     <Card
                       key={index}
-                      className={`p-4 border transition-all card-gradient border-border/50 hover:border-primary/50`}
+                      className={`p-3 sm:p-4 border transition-all card-gradient border-border/50 hover:border-primary/50`}
                     >
                       <div className="text-center space-y-2">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Clock size={16} className="text-primary" />
-                          <span className={`font-medium text-foreground`}>
+                          <Clock size={14} className="sm:size-4 text-primary" />
+                          <span className={`font-medium text-foreground text-sm sm:text-base`}>
                             {formatTime(slot.slot_start)}
                           </span>
                         </div>
@@ -238,32 +251,34 @@ export default function Agenda() {
                           size="sm"
                           onClick={() => handleOpenBookingDialog(slot)}
                           disabled={slotsLoading}
-                          className="w-full"
+                          className="w-full text-xs sm:text-sm h-8 sm:h-9"
                         >
-                          Agendar Horário
+                          <span className="hidden sm:inline">Agendar Horário</span>
+                          <span className="sm:hidden">Agendar</span>
                         </Button>
                       </div>
                     </Card>
                   ))}
                   {availableSlots.length === 0 && !loading && (
-                    <div className="col-span-2 text-center py-8">
-                      <p className="text-muted-foreground mb-4">
+                    <div className="col-span-full text-center py-6 sm:py-8">
+                      <p className="text-sm sm:text-base text-muted-foreground mb-4">
                         Nenhum horário disponível para {formatDate(selectedDate)}
                       </p>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                         O professor não tem disponibilidade configurada para este dia
                       </p>
                       <div className="text-sm text-muted-foreground">
                         <p className="font-medium mb-2">Dias disponíveis:</p>
-                        <div className="flex flex-wrap gap-2 justify-center">
+                        <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
                           {availability.length > 0 ? (
                             availability.map((av) => (
                               <span key={av.id} className="px-2 py-1 bg-muted rounded text-xs">
-                                {getWeekdayName(av.weekday)} ({av.start_time} - {av.end_time})
+                                <span className="hidden sm:inline">{getWeekdayName(av.weekday)} ({av.start_time} - {av.end_time})</span>
+                                <span className="sm:hidden">{getWeekdayName(av.weekday).slice(0, 3)}</span>
                               </span>
                             ))
                           ) : (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground text-center">
                               {teacherId ? 'Professor não tem disponibilidade configurada' : 'Carregando disponibilidade...'}
                             </span>
                           )}
@@ -283,15 +298,15 @@ export default function Agenda() {
         </TabsContent>
 
         {/* Agendamentos Ativos */}
-        <TabsContent value="agendados" className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">Seus Agendamentos</h3>
+        <TabsContent value="agendados" className="space-y-3 sm:space-y-4">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">Seus Agendamentos</h3>
 
           {upcomingAppointments.map((agendamento) => (
-            <Card key={agendamento.id} className="card-gradient p-4 border border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-foreground">{agendamento.title ?? agendamento.type ?? 'Sessão'}</h4>
+            <Card key={agendamento.id} className="card-gradient p-3 sm:p-4 border border-border/50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                    <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{agendamento.title ?? agendamento.type ?? 'Sessão'}</h4>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       agendamento.status === 'confirmed' || agendamento.status === 'confirmado'
                         ? 'bg-success/10 text-success'
@@ -301,19 +316,20 @@ export default function Agenda() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     <span>{formatDate(agendamento.scheduled_time)} às {formatTime(agendamento.scheduled_time)}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <Button size="sm" variant="outline">
+                <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 w-full sm:w-auto">
+                  <Button size="sm" variant="outline" className="flex-1 sm:flex-none text-xs sm:text-sm">
                     Editar
                   </Button>
                   <Button 
                     size="sm" 
                     variant="destructive"
                     onClick={() => handleCancel(agendamento.id)}
+                    className="flex-1 sm:flex-none text-xs sm:text-sm"
                   >
                     Cancelar
                   </Button>
@@ -323,20 +339,20 @@ export default function Agenda() {
           ))}
 
           {upcomingAppointments.length === 0 && (
-            <p className="text-sm text-muted-foreground">Sem agendamentos futuros.</p>
+            <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">Sem agendamentos futuros.</p>
           )}
         </TabsContent>
 
         {/* Histórico */}
-        <TabsContent value="historico" className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">Histórico</h3>
+        <TabsContent value="historico" className="space-y-3 sm:space-y-4">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">Histórico</h3>
 
           {pastAppointments.map((item) => (
-            <Card key={item.id} className="card-gradient p-4 border border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
+            <Card key={item.id} className="card-gradient p-3 sm:p-4 border border-border/50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-foreground">{item.title ?? item.type ?? 'Sessão'}</h4>
+                    <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{item.title ?? item.type ?? 'Sessão'}</h4>
                     {item.status === 'cancelled' ? (
                       <XCircle size={16} className="text-destructive" />
                     ) : (
@@ -344,7 +360,7 @@ export default function Agenda() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     <span>{formatDate(item.scheduled_time)} às {formatTime(item.scheduled_time)}</span>
                   </div>
                 </div>
@@ -361,7 +377,7 @@ export default function Agenda() {
           ))}
 
           {pastAppointments.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nada por aqui ainda.</p>
+            <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">Nada por aqui ainda.</p>
           )}
         </TabsContent>
       </Tabs>
