@@ -9,16 +9,9 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   plugins: {
-    FirebaseApp: {
-      presentationMode: 'fullscreen',
-      loggingEnabled: true
-    },
-    FirebaseAuthentication: {
-      skipNativeAuth: false,
-      providers: ['google.com', 'apple.com']
-    },
-    FirebaseMessaging: {
-      presentationOptions: ['badge', 'sound', 'alert']
+    OneSignal: {
+      appId: "your-onesignal-app-id",
+      googleProjectNumber: "your-google-project-number"
     }
   }
 };
