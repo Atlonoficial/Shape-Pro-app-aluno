@@ -98,13 +98,19 @@ export default function Agenda() {
   }) => {
     if (!teacherId || !selectedSlot) return;
     
+    // Concatena objetivo e observações na descrição
+    const description = [
+      formData.objective && `Objetivo: ${formData.objective}`,
+      formData.notes && `Observações: ${formData.notes}`
+    ].filter(Boolean).join('\n');
+    
     const result = await bookAppointment(
       teacherId,
       selectedSlot.slot_start,
       formData.type,
       60, // duration in minutes
       formData.title,
-      `${formData.objective}\n\nObservações: ${formData.notes}`
+      description
     );
     
     if (result.success) {
