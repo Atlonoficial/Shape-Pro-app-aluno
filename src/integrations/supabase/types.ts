@@ -1349,6 +1349,36 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_booking_settings: {
+        Row: {
+          allow_same_day: boolean
+          created_at: string
+          id: string
+          minimum_advance_hours: number
+          teacher_id: string
+          updated_at: string
+          visibility_days: number
+        }
+        Insert: {
+          allow_same_day?: boolean
+          created_at?: string
+          id?: string
+          minimum_advance_hours?: number
+          teacher_id: string
+          updated_at?: string
+          visibility_days?: number
+        }
+        Update: {
+          allow_same_day?: boolean
+          created_at?: string
+          id?: string
+          minimum_advance_hours?: number
+          teacher_id?: string
+          updated_at?: string
+          visibility_days?: number
+        }
+        Relationships: []
+      }
       teacher_schedule_exceptions: {
         Row: {
           created_at: string
