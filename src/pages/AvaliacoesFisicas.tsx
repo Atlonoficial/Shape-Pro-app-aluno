@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingUp, Scale, Ruler, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { useAuthContext } from "@/components/auth/AuthProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -21,7 +21,7 @@ interface PhysicalAssessment {
 
 export const AvaliacoesFisicas = () => {
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   const [assessments, setAssessments] = useState<PhysicalAssessment[]>([]);
   const [loading, setLoading] = useState(true);
 
