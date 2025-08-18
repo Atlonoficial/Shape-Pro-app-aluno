@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface AvailableSlot {
-  slot_date: string;
   slot_start: string;
   slot_end: string;
 }
@@ -24,11 +23,9 @@ export const useAvailableSlots = () => {
       
       console.log('Fetching slots for:', { teacherId, dateStr, slotMinutes });
       
-      // Use improved function that respects teacher booking settings
-      const { data, error } = await supabase.rpc('list_available_slots_improved', {
+      const { data, error } = await supabase.rpc('list_available_slots', {
         p_teacher_id: teacherId,
-        p_start_date: dateStr,
-        p_end_date: dateStr, // Same date for start and end to get slots for specific day
+        p_date: dateStr,
         p_slot_minutes: slotMinutes,
       });
 
