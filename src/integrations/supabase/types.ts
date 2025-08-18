@@ -1669,7 +1669,7 @@ export type Database = {
           slot_end: string
           slot_minutes: number
           slot_start: string
-          teacher_id: string
+          slot_teacher_id: string
         }[]
       }
       redeem_reward: {

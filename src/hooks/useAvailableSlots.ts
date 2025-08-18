@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export interface AvailableSlot {
   slot_date: string;
   slot_start: string;
   slot_end: string;
   slot_minutes: number;
-  teacher_id: string;
+  slot_teacher_id: string;
 }
 
 export const useAvailableSlots = () => {
@@ -42,10 +42,16 @@ export const useAvailableSlots = () => {
       console.log('✅ Slots disponíveis retornados:', data);
       console.log('📊 Total de slots encontrados:', data?.length || 0);
       
-      // Log cada slot individual para debug
+      // Log each individual slot for debugging
       if (data && data.length > 0) {
         data.forEach((slot: any, index: number) => {
-          console.log(`📅 Slot ${index + 1}: ${slot.slot_start} - ${slot.slot_end}`);
+          console.log(`📅 Slot ${index + 1}:`, {
+            start: slot.slot_start,
+            end: slot.slot_end,
+            minutes: slot.slot_minutes,
+            teacherId: slot.slot_teacher_id,
+            date: slot.slot_date
+          });
         });
       } else {
         console.log('⚠️ Nenhum slot disponível encontrado');

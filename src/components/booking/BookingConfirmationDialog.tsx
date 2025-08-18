@@ -35,7 +35,7 @@ interface BookingConfirmationDialogProps {
     slot_start: string;
     slot_end: string;
     slot_minutes: number;
-    teacher_id: string;
+    slot_teacher_id: string;
   } | null;
   loading?: boolean;
 }
