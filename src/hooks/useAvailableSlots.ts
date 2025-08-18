@@ -23,6 +23,7 @@ export const useAvailableSlots = () => {
       const dateStr = typeof date === 'string' ? date : date.toISOString().slice(0, 10);
       
       console.log('Fetching slots for:', { teacherId, dateStr, slotMinutes });
+      console.log('Current time:', new Date().toISOString());
       
       const { data, error } = await supabase.rpc('list_available_slots_improved', {
         p_teacher_id: teacherId,
@@ -37,6 +38,7 @@ export const useAvailableSlots = () => {
       }
       
       console.log('Available slots returned:', data);
+      console.log('Total slots found:', data?.length || 0);
       return data || [];
     } catch (error: any) {
       console.error('Error fetching available slots:', error);
