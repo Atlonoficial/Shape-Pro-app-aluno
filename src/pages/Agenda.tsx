@@ -76,62 +76,36 @@ export default function Agenda() {
 
   // Load available slots for selected date
   const loadAvailableSlots = useCallback(async () => {
-    if (!teacherId || !selectedDate) {
-      console.log('❌ Missing data for loading slots:', { teacherId, selectedDate });
+    if (!teacherId || !selectedDate || availability.length === 0) {
       setAvailableSlots([]);
       return;
     }
     
     const selectedWeekday = selectedDate.getDay();
-    
-    // Get the correct slot duration from teacher availability for this weekday
     const availabilityForDay = availability.find(av => av.weekday === selectedWeekday);
     const slotMinutes = availabilityForDay?.slot_minutes || 60;
     
-    console.log('🔄 [REAL-TIME SYNC] Loading slots:', { 
-      teacherId, 
-      selectedDate: selectedDate.toDateString(),
-      weekday: selectedWeekday,
-      configuredSlotMinutes: slotMinutes,
-      availabilityCount: availability.length,
-      availabilityForDay: availabilityForDay ? {
-        id: availabilityForDay.id,
-        slot_minutes: availabilityForDay.slot_minutes,
-        start_time: availabilityForDay.start_time,
-        end_time: availabilityForDay.end_time
-      } : null
-    });
-    
-    const slots = await getAvailableSlots(teacherId, selectedDate, slotMinutes);
-    console.log('✅ [REAL-TIME SYNC] Slots carregados:', {
-      count: slots.length,
-      duration: slotMinutes,
-      slots: slots.map(s => ({ 
-        start: s.slot_start, 
-        end: s.slot_end, 
-        minutes: s.slot_minutes 
-      }))
-    });
-    setAvailableSlots(slots);
-  }, [teacherId, selectedDate, availability, getAvailableSlots]);
+    try {
+      const slots = await getAvailableSlots(teacherId, selectedDate, slotMinutes);
+      setAvailableSlots(slots);
+    } catch (error) {
+      console.error('Erro ao carregar slots:', error);
+      setAvailableSlots([]);
+    }
+  }, [teacherId, selectedDate, getAvailableSlots]); // Removido availability das dependencies
 
   // Load slots when data is available and stable
   useEffect(() => {
     if (!teacherLoading && teacherId && availability.length > 0) {
-      console.log('🚀 [STABLE LOAD] Loading slots for stable data:', {
-        teacherId,
-        availabilityCount: availability.length,
-        selectedDate: selectedDate.toDateString()
-      });
       loadAvailableSlots();
     }
-  }, [teacherId, selectedDate, availability, teacherLoading, loadAvailableSlots]);
+  }, [teacherId, selectedDate, teacherLoading]); // Removido dependencies problemáticas
 
   // Real-time listener for teacher availability changes
   useEffect(() => {
     if (!teacherId || !hasActiveSubscription) return;
 
-    console.log('👂 [REAL-TIME] Setting up availability listener for teacherId:', teacherId);
+    let timeoutId: NodeJS.Timeout;
     
     const channel = supabase
       .channel(`agenda-availability-${teacherId}`)
@@ -144,21 +118,20 @@ export default function Agenda() {
           filter: `teacher_id=eq.${teacherId}`,
         },
         (payload) => {
-          console.log('🔔 [REAL-TIME] Teacher availability changed:', payload);
-          console.log('🔄 [REAL-TIME] Forcing slots reload...');
-          // Force reload after a small delay to ensure data is updated
-          setTimeout(() => {
+          // Debounce para evitar múltiplas atualizações
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
             loadAvailableSlots();
-          }, 500);
+          }, 1000);
         }
       )
       .subscribe();
 
     return () => {
-      console.log('🔌 [REAL-TIME] Cleaning up availability listener');
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [teacherId, hasActiveSubscription, loadAvailableSlots]);
+  }, [teacherId, hasActiveSubscription]); // Removido loadAvailableSlots das dependencies
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
