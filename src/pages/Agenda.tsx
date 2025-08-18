@@ -215,21 +215,25 @@ export default function Agenda() {
     } catch (error: any) {
       console.error('Error in handleConfirmBooking:', error);
       
-      // Tratamento específico para erro P0001
-      if (error?.code === 'P0001' || error?.message?.includes('not available')) {
+      // Tratamento específico para diferentes tipos de erro
+      if (error?.message?.includes('not available')) {
         toast({
           title: 'Horário indisponível',
-          description: 'Este horário foi agendado por outro usuário. Escolha outro horário disponível.',
+          description: 'Este horário não está mais disponível. Os horários foram atualizados.',
           variant: 'destructive',
         });
-        
-        setShowBookingDialog(false);
-        setSelectedSlot(null);
-        
-        // Recarrega slots automaticamente
-        setTimeout(() => {
-          loadAvailableSlots();
-        }, 1000);
+      } else if (error?.message?.includes('too close')) {
+        toast({
+          title: 'Tempo insuficiente',
+          description: 'O agendamento deve ser feito com mais antecedência.',
+          variant: 'destructive',
+        });
+      } else if (error?.message?.includes('same day')) {
+        toast({
+          title: 'Agendamento não permitido',
+          description: 'Agendamentos no mesmo dia não são permitidos.',
+          variant: 'destructive',
+        });
       } else {
         // Outros erros
         toast({
@@ -238,6 +242,14 @@ export default function Agenda() {
           variant: 'destructive',
         });
       }
+      
+      setShowBookingDialog(false);
+      setSelectedSlot(null);
+      
+      // Sempre recarrega slots após erro para garantir sincronização
+      setTimeout(() => {
+        loadAvailableSlots();
+      }, 500);
       
       // Re-throw para que o dialog também possa tratar se necessário
       throw error;
