@@ -8,6 +8,8 @@ import { useStudentAppointments } from "@/hooks/useStudentAppointments";
 import { useStudentTeacherAvailability } from "@/hooks/useStudentTeacherAvailability";
 import { useAvailableSlots, AvailableSlot } from "@/hooks/useAvailableSlots";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { useTeacherBookingSettings } from "@/hooks/useTeacherBookingSettings";
+import { formatMinutesToHoursAndMinutes } from "@/lib/utils";
 import { BookingConfirmationDialog } from "@/components/booking/BookingConfirmationDialog";
 
 export default function Agenda() {
@@ -46,7 +48,12 @@ export default function Agenda() {
     loading: subscriptionLoading
   } = useActiveSubscription();
 
-  const loading = appointmentsLoading || teacherLoading || subscriptionLoading;
+  const {
+    minimumAdvanceMinutes,
+    loading: bookingSettingsLoading
+  } = useTeacherBookingSettings(teacherId);
+
+  const loading = appointmentsLoading || teacherLoading || subscriptionLoading || bookingSettingsLoading;
   
   // Filtrar agendamentos por status e data
   const currentDateTime = new Date().toISOString();
@@ -294,7 +301,7 @@ export default function Agenda() {
                       </p>
                       <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                         {availability.some(av => av.weekday === selectedDate.getDay()) ? 
-                          'Os horários podem não estar disponíveis devido ao tempo mínimo de antecedência (2 horas) ou já estarem ocupados.' :
+                          `Os horários podem não estar disponíveis devido ao tempo mínimo de antecedência (${formatMinutesToHoursAndMinutes(minimumAdvanceMinutes)}) ou já estarem ocupados.` :
                           'O professor não tem disponibilidade configurada para este dia.'
                         }
                       </p>
