@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Calendar, Clock, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,11 +74,11 @@ export default function Agenda() {
   
   const nextAppointment = useMemo(() => confirmedAppointments[0] ?? null, [confirmedAppointments]);
 
-  // Load available slots when date or teacher changes
   // Load available slots for selected date
-  const loadAvailableSlots = async () => {
+  const loadAvailableSlots = useCallback(async () => {
     if (!teacherId || !selectedDate) {
       console.log('❌ Missing data for loading slots:', { teacherId, selectedDate });
+      setAvailableSlots([]);
       return;
     }
     
@@ -113,33 +113,25 @@ export default function Agenda() {
       }))
     });
     setAvailableSlots(slots);
-  };
+  }, [teacherId, selectedDate, availability, getAvailableSlots]);
 
-  // Real-time synchronization - reload slots when any configuration changes
+  // Load slots when data is available and stable
   useEffect(() => {
-    console.log('🔄 [REAL-TIME SYNC] Configuration change detected:', {
-      teacherId,
-      selectedDate: selectedDate.toDateString(),
-      hasAvailability: availability.length > 0,
-      availabilityDetails: availability.map(av => ({
-        weekday: av.weekday,
-        slot_minutes: av.slot_minutes,
-        times: `${av.start_time}-${av.end_time}`
-      })),
-      loading: teacherLoading
-    });
-    
-    if (!teacherLoading && availability.length > 0) {
-      console.log('🚀 [REAL-TIME SYNC] Reloading slots automatically...');
+    if (!teacherLoading && teacherId && availability.length > 0) {
+      console.log('🚀 [STABLE LOAD] Loading slots for stable data:', {
+        teacherId,
+        availabilityCount: availability.length,
+        selectedDate: selectedDate.toDateString()
+      });
       loadAvailableSlots();
     }
-  }, [teacherId, selectedDate, availability, teacherLoading]);
+  }, [teacherId, selectedDate, availability, teacherLoading, loadAvailableSlots]);
 
-  // Additional real-time listener for immediate updates
+  // Real-time listener for teacher availability changes
   useEffect(() => {
     if (!teacherId || !hasActiveSubscription) return;
 
-    console.log('👂 [REAL-TIME] Setting up additional availability listener for teacherId:', teacherId);
+    console.log('👂 [REAL-TIME] Setting up availability listener for teacherId:', teacherId);
     
     const channel = supabase
       .channel(`agenda-availability-${teacherId}`)
@@ -166,7 +158,7 @@ export default function Agenda() {
       console.log('🔌 [REAL-TIME] Cleaning up availability listener');
       supabase.removeChannel(channel);
     };
-  }, [teacherId, hasActiveSubscription]);
+  }, [teacherId, hasActiveSubscription, loadAvailableSlots]);
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
