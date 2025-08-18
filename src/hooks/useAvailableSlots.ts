@@ -22,23 +22,32 @@ export const useAvailableSlots = () => {
       
       const dateStr = typeof date === 'string' ? date : date.toISOString().slice(0, 10);
       
-      console.log('Fetching slots for:', { teacherId, dateStr, slotMinutes });
-      console.log('Current time:', new Date().toISOString());
+      console.log('🕒 Buscando slots para:', { teacherId, dateStr, slotMinutes });
+      console.log('⏰ Hora atual:', new Date().toISOString());
       
       const { data, error } = await supabase.rpc('list_available_slots_improved', {
         p_teacher_id: teacherId,
         p_start_date: dateStr,
-        p_end_date: dateStr, // Same date for start and end to get slots for specific day
+        p_end_date: dateStr, 
         p_slot_minutes: slotMinutes,
       });
 
       if (error) {
-        console.error('RPC Error:', error);
+        console.error('❌ Erro na RPC:', error);
         throw error;
       }
       
-      console.log('Available slots returned:', data);
-      console.log('Total slots found:', data?.length || 0);
+      console.log('✅ Slots disponíveis retornados:', data);
+      console.log('📊 Total de slots encontrados:', data?.length || 0);
+      
+      // Log cada slot individual para debug
+      if (data && data.length > 0) {
+        data.forEach((slot: any, index: number) => {
+          console.log(`📅 Slot ${index + 1}: ${slot.slot_start} - ${slot.slot_end}`);
+        });
+      } else {
+        console.log('⚠️ Nenhum slot disponível encontrado');
+      }
       return data || [];
     } catch (error: any) {
       console.error('Error fetching available slots:', error);
