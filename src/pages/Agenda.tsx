@@ -74,8 +74,15 @@ export default function Agenda() {
       return;
     }
     
-    console.log('Loading available slots for:', { teacherId, selectedDate: selectedDate.toDateString() });
+    console.log('Loading available slots for:', { 
+      teacherId, 
+      selectedDate: selectedDate.toDateString(),
+      currentTime: new Date().toISOString(),
+      weekday: selectedDate.getDay()
+    });
+    
     const slots = await getAvailableSlots(teacherId, selectedDate);
+    console.log('Received slots:', slots);
     setAvailableSlots(slots);
   };
 
@@ -286,7 +293,10 @@ export default function Agenda() {
                         Nenhum horário disponível para {formatDate(selectedDate)}
                       </p>
                       <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-                        O professor não tem disponibilidade configurada para este dia
+                        {availability.some(av => av.weekday === selectedDate.getDay()) ? 
+                          'Os horários podem não estar disponíveis devido ao tempo mínimo de antecedência (2 horas) ou já estarem ocupados.' :
+                          'O professor não tem disponibilidade configurada para este dia.'
+                        }
                       </p>
                       <div className="text-sm text-muted-foreground">
                         <p className="font-medium mb-2">Dias disponíveis:</p>
