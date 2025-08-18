@@ -92,16 +92,28 @@ export function BookingConfirmationDialog({
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    await onConfirm(formData);
-    
-    // Reset form
-    setFormData({
-      type: 'consultation',
-      title: '',
-      objective: '',
-      notes: '',
-    });
-    setErrors({});
+    try {
+      await onConfirm({
+        type: formData.type,
+        title: formData.title,
+        objective: formData.objective,
+        notes: formData.notes,
+      });
+      
+      // Reset form apenas se sucesso
+      setFormData({
+        type: 'consultation',
+        title: '',
+        objective: '',
+        notes: '',
+      });
+      setErrors({});
+    } catch (error: any) {
+      console.error('Error during booking:', error);
+      
+      // Não precisa tratar erros aqui pois já foram tratados no componente pai
+      // O dialog será fechado automaticamente pelo componente pai
+    }
   };
 
   const handleClose = () => {

@@ -12,9 +12,11 @@ import { useTeacherBookingSettings } from "@/hooks/useTeacherBookingSettings";
 import { formatMinutesToHoursAndMinutes } from "@/lib/utils";
 import { BookingConfirmationDialog } from "@/components/booking/BookingConfirmationDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Agenda() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -144,36 +146,101 @@ export default function Agenda() {
   };
 
   // Booking handlers
-  const handleOpenBookingDialog = (slot: AvailableSlot) => {
-    setSelectedSlot(slot);
-    setShowBookingDialog(true);
+  const handleOpenBookingDialog = async (slot: AvailableSlot) => {
+    // Validação prévia: verificar se o slot ainda está disponível
+    if (!teacherId) return;
+    
+    try {
+      // Pequeno delay para garantir sincronização
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const currentSlots = await getAvailableSlots(teacherId, selectedDate, slot.slot_minutes);
+      const stillAvailable = currentSlots.some(s => 
+        s.slot_start === slot.slot_start && s.slot_end === slot.slot_end
+      );
+      
+      if (!stillAvailable) {
+        toast({
+          title: 'Horário não disponível',
+          description: 'Este horário foi agendado por outro usuário. Os horários foram atualizados.',
+          variant: 'destructive',
+        });
+        loadAvailableSlots(); // Recarrega slots
+        return;
+      }
+      
+      setSelectedSlot(slot);
+      setShowBookingDialog(true);
+    } catch (error) {
+      console.error('Erro ao validar slot:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao verificar disponibilidade do horário. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleConfirmBooking = async (formData: {
-    type: string;
-    title: string;
-    objective: string;
-    notes: string;
-  }) => {
-    if (!teacherId || !selectedSlot) return;
-    
-    const result = await bookAppointment(
-      teacherId,
-      selectedSlot.slot_start,
-      formData.type,
-      selectedSlot.slot_minutes, // Use dynamic duration from slot
-      formData.title,
-      '', // description (pode ficar vazio agora)
-      formData.title, // studentTitle
-      formData.objective, // studentObjectives  
-      formData.notes // studentNotes
-    );
-    
-    if (result.success) {
-      setShowBookingDialog(false);
-      setSelectedSlot(null);
-      await refreshAppointments();
-      loadAvailableSlots();
+  const handleConfirmBooking = async (bookingData: any) => {
+    if (!selectedSlot || !teacherId) return;
+
+    try {
+      const result = await bookAppointment(
+        teacherId,
+        selectedSlot.slot_start,
+        bookingData.type,
+        selectedSlot.slot_minutes,
+        bookingData.title,
+        '',
+        bookingData.title,
+        bookingData.objective,
+        bookingData.notes
+      );
+
+      if (result.success) {
+        setShowBookingDialog(false);
+        setSelectedSlot(null);
+        
+        // Refresh data
+        await Promise.all([
+          refreshAppointments(),
+          loadAvailableSlots()
+        ]);
+        
+        toast({
+          title: 'Agendamento confirmado',
+          description: 'Seu agendamento foi criado com sucesso!',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in handleConfirmBooking:', error);
+      
+      // Tratamento específico para erro P0001
+      if (error?.code === 'P0001' || error?.message?.includes('not available')) {
+        toast({
+          title: 'Horário indisponível',
+          description: 'Este horário foi agendado por outro usuário. Escolha outro horário disponível.',
+          variant: 'destructive',
+        });
+        
+        setShowBookingDialog(false);
+        setSelectedSlot(null);
+        
+        // Recarrega slots automaticamente
+        setTimeout(() => {
+          loadAvailableSlots();
+        }, 1000);
+      } else {
+        // Outros erros
+        toast({
+          title: 'Erro no agendamento',
+          description: error?.message || 'Falha ao criar agendamento. Tente novamente.',
+          variant: 'destructive',
+        });
+      }
+      
+      // Re-throw para que o dialog também possa tratar se necessário
+      throw error;
     }
   };
 
