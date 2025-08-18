@@ -11,6 +11,7 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { useTeacherBookingSettings } from "@/hooks/useTeacherBookingSettings";
 import { formatMinutesToHoursAndMinutes } from "@/lib/utils";
 import { BookingConfirmationDialog } from "@/components/booking/BookingConfirmationDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Agenda() {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ export default function Agenda() {
   // Load available slots for selected date
   const loadAvailableSlots = async () => {
     if (!teacherId || !selectedDate) {
-      console.log('Missing data for loading slots:', { teacherId, selectedDate });
+      console.log('❌ Missing data for loading slots:', { teacherId, selectedDate });
       return;
     }
     
@@ -85,33 +86,87 @@ export default function Agenda() {
     
     // Get the correct slot duration from teacher availability for this weekday
     const availabilityForDay = availability.find(av => av.weekday === selectedWeekday);
-    const slotMinutes = availabilityForDay?.slot_minutes || 60; // fallback to 60 if not found
+    const slotMinutes = availabilityForDay?.slot_minutes || 60;
     
-    console.log('Loading available slots for:', { 
+    console.log('🔄 [REAL-TIME SYNC] Loading slots:', { 
       teacherId, 
       selectedDate: selectedDate.toDateString(),
-      currentTime: new Date().toISOString(),
       weekday: selectedWeekday,
       configuredSlotMinutes: slotMinutes,
-      availabilityForDay
+      availabilityCount: availability.length,
+      availabilityForDay: availabilityForDay ? {
+        id: availabilityForDay.id,
+        slot_minutes: availabilityForDay.slot_minutes,
+        start_time: availabilityForDay.start_time,
+        end_time: availabilityForDay.end_time
+      } : null
     });
     
     const slots = await getAvailableSlots(teacherId, selectedDate, slotMinutes);
-    console.log('Received slots:', slots);
+    console.log('✅ [REAL-TIME SYNC] Slots carregados:', {
+      count: slots.length,
+      duration: slotMinutes,
+      slots: slots.map(s => ({ 
+        start: s.slot_start, 
+        end: s.slot_end, 
+        minutes: s.slot_minutes 
+      }))
+    });
     setAvailableSlots(slots);
   };
 
-  // Load slots when dependencies change
+  // Real-time synchronization - reload slots when any configuration changes
   useEffect(() => {
-    console.log('Agenda - Availability data:', {
-      availability,
-      availabilityCount: availability.length,
+    console.log('🔄 [REAL-TIME SYNC] Configuration change detected:', {
       teacherId,
-      hasActiveSubscription,
+      selectedDate: selectedDate.toDateString(),
+      hasAvailability: availability.length > 0,
+      availabilityDetails: availability.map(av => ({
+        weekday: av.weekday,
+        slot_minutes: av.slot_minutes,
+        times: `${av.start_time}-${av.end_time}`
+      })),
       loading: teacherLoading
     });
-    loadAvailableSlots();
-  }, [teacherId, selectedDate, availability]);
+    
+    if (!teacherLoading && availability.length > 0) {
+      console.log('🚀 [REAL-TIME SYNC] Reloading slots automatically...');
+      loadAvailableSlots();
+    }
+  }, [teacherId, selectedDate, availability, teacherLoading]);
+
+  // Additional real-time listener for immediate updates
+  useEffect(() => {
+    if (!teacherId || !hasActiveSubscription) return;
+
+    console.log('👂 [REAL-TIME] Setting up additional availability listener for teacherId:', teacherId);
+    
+    const channel = supabase
+      .channel(`agenda-availability-${teacherId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'teacher_availability',
+          filter: `teacher_id=eq.${teacherId}`,
+        },
+        (payload) => {
+          console.log('🔔 [REAL-TIME] Teacher availability changed:', payload);
+          console.log('🔄 [REAL-TIME] Forcing slots reload...');
+          // Force reload after a small delay to ensure data is updated
+          setTimeout(() => {
+            loadAvailableSlots();
+          }, 500);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔌 [REAL-TIME] Cleaning up availability listener');
+      supabase.removeChannel(channel);
+    };
+  }, [teacherId, hasActiveSubscription]);
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
