@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, TrendingUp, Scale, Ruler, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { NewAssessmentDialog } from "@/components/physical-assessment/NewAssessmentDialog";
 
 interface PhysicalAssessment {
   id: string;
@@ -24,56 +25,56 @@ export const AvaliacoesFisicas = () => {
   const [assessments, setAssessments] = useState<PhysicalAssessment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAssessments = async () => {
-      if (!user?.id) return;
+  const fetchAssessments = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Buscar avaliações físicas da tabela progress com filtro por tipo
+      const { data, error } = await supabase
+        .from("progress")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("type", "physical_assessment")
+        .order("date", { ascending: false });
+
+      if (error) throw error;
       
-      try {
-        // Buscar avaliações físicas da tabela progress com filtro por tipo
-        const { data, error } = await supabase
-          .from("progress")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("type", "physical_assessment")
-          .order("date", { ascending: false });
-
-        if (error) throw error;
+      // Agrupar dados por data para formar avaliações completas
+      const groupedData = (data || []).reduce((acc: any, item: any) => {
+        const dateKey = item.date.split('T')[0];
+        if (!acc[dateKey]) {
+          acc[dateKey] = { 
+            id: dateKey, 
+            date: dateKey, 
+            created_at: item.created_at 
+          };
+        }
         
-        // Agrupar dados por data para formar avaliações completas
-        const groupedData = (data || []).reduce((acc: any, item: any) => {
-          const dateKey = item.date.split('T')[0];
-          if (!acc[dateKey]) {
-            acc[dateKey] = { 
-              id: dateKey, 
-              date: dateKey, 
-              created_at: item.created_at 
-            };
-          }
-          
-          if (item.unit === 'kg' && item.notes?.includes('weight')) {
-            acc[dateKey].weight = item.value;
-          } else if (item.unit === '%' && item.notes?.includes('body_fat')) {
-            acc[dateKey].body_fat = item.value;
-          } else if (item.unit === 'kg' && item.notes?.includes('muscle')) {
-            acc[dateKey].muscle_mass = item.value;
-          } else if (item.unit === 'cm') {
-            acc[dateKey].height = item.value;
-          }
-          
-          return acc;
-        }, {});
+        if (item.unit === 'kg' && item.notes?.includes('weight')) {
+          acc[dateKey].weight = item.value;
+        } else if (item.unit === '%' && item.notes?.includes('body_fat')) {
+          acc[dateKey].body_fat = item.value;
+        } else if (item.unit === 'kg' && item.notes?.includes('muscle')) {
+          acc[dateKey].muscle_mass = item.value;
+        } else if (item.unit === 'cm') {
+          acc[dateKey].height = item.value;
+        }
+        
+        return acc;
+      }, {});
 
-        setAssessments(Object.values(groupedData));
-      } catch (error) {
-        console.error("Erro ao buscar avaliações:", error);
-        toast.error("Erro ao carregar avaliações físicas");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssessments();
+      setAssessments(Object.values(groupedData));
+    } catch (error) {
+      console.error("Erro ao buscar avaliações:", error);
+      toast.error("Erro ao carregar avaliações físicas");
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    fetchAssessments();
+  }, [fetchAssessments]);
 
   // Preparar dados para o gráfico de peso
   const weightData = assessments
@@ -146,6 +147,11 @@ export const AvaliacoesFisicas = () => {
             </p>
           </CardContent>
         </Card>
+
+        {/* Add Assessment Button */}
+        <div className="mb-6">
+          <NewAssessmentDialog onAssessmentCreated={fetchAssessments} />
+        </div>
 
         {/* Historical Assessments */}
         <h2 className="text-lg font-semibold mb-3">Histórico de Avaliações</h2>
