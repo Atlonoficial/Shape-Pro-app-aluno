@@ -30,14 +30,16 @@ export const useTeacherBookingSettings = (teacherId?: string | null) => {
         .from('teacher_booking_settings')
         .select('*')
         .eq('teacher_id', teacherId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching teacher booking settings:', error);
         return;
       }
       
-      setSettings(data);
+      if (data) {
+        setSettings(data);
+      }
     } catch (error: any) {
       console.error('Error fetching teacher booking settings:', error);
     } finally {

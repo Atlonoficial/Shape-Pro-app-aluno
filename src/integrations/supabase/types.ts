@@ -1354,7 +1354,7 @@ export type Database = {
           allow_same_day: boolean
           created_at: string
           id: string
-          minimum_advance_hours: number
+          minimum_advance_minutes: number
           teacher_id: string
           updated_at: string
           visibility_days: number
@@ -1363,7 +1363,7 @@ export type Database = {
           allow_same_day?: boolean
           created_at?: string
           id?: string
-          minimum_advance_hours?: number
+          minimum_advance_minutes?: number
           teacher_id: string
           updated_at?: string
           visibility_days?: number
@@ -1372,7 +1372,7 @@ export type Database = {
           allow_same_day?: boolean
           created_at?: string
           id?: string
-          minimum_advance_hours?: number
+          minimum_advance_minutes?: number
           teacher_id?: string
           updated_at?: string
           visibility_days?: number
