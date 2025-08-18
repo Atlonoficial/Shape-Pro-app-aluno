@@ -1667,7 +1667,9 @@ export type Database = {
         Returns: {
           slot_date: string
           slot_end: string
+          slot_minutes: number
           slot_start: string
+          teacher_id: string
         }[]
       }
       redeem_reward: {

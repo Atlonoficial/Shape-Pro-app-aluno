@@ -6,6 +6,8 @@ export interface AvailableSlot {
   slot_date: string;
   slot_start: string;
   slot_end: string;
+  slot_minutes: number;
+  teacher_id: string;
 }
 
 export const useAvailableSlots = () => {
@@ -75,7 +77,7 @@ export const useAvailableSlots = () => {
     teacherId: string,
     scheduledTime: string,
     type: string = 'consultation',
-    duration: number = 60,
+    duration?: number,
     title?: string,
     description?: string,
     studentTitle?: string,

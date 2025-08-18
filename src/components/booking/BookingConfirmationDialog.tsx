@@ -34,6 +34,8 @@ interface BookingConfirmationDialogProps {
   selectedSlot: {
     slot_start: string;
     slot_end: string;
+    slot_minutes: number;
+    teacher_id: string;
   } | null;
   loading?: boolean;
 }
@@ -141,6 +143,10 @@ export function BookingConfirmationDialog({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               {time} - {endTime}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <User className="h-3 w-3" />
+              Duração: {selectedSlot.slot_minutes} minutos
             </div>
           </div>
 

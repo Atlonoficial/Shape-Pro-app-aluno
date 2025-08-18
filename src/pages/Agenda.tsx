@@ -133,7 +133,7 @@ export default function Agenda() {
       teacherId,
       selectedSlot.slot_start,
       formData.type,
-      60, // duration in minutes
+      selectedSlot.slot_minutes, // Use dynamic duration from slot
       formData.title,
       '', // description (pode ficar vazio agora)
       formData.title, // studentTitle
@@ -276,12 +276,15 @@ export default function Agenda() {
                     >
                       <div className="text-center space-y-2">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Clock size={14} className="sm:size-4 text-primary" />
-                          <span className={`font-medium text-foreground text-sm sm:text-base`}>
-                            {formatTime(slot.slot_start)}
-                          </span>
-                        </div>
-                        <span className={`text-xs text-success`}>Disponível</span>
+                           <Clock size={14} className="sm:size-4 text-primary" />
+                           <span className={`font-medium text-foreground text-sm sm:text-base`}>
+                             {formatTime(slot.slot_start)} - {formatTime(slot.slot_end)}
+                           </span>
+                         </div>
+                         <div className="text-xs text-muted-foreground mb-1">
+                           {slot.slot_minutes} minutos
+                         </div>
+                         <span className={`text-xs text-success`}>Disponível</span>
                         <Button
                           size="sm"
                           onClick={() => handleOpenBookingDialog(slot)}
