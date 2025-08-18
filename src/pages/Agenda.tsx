@@ -81,14 +81,22 @@ export default function Agenda() {
       return;
     }
     
+    const selectedWeekday = selectedDate.getDay();
+    
+    // Get the correct slot duration from teacher availability for this weekday
+    const availabilityForDay = availability.find(av => av.weekday === selectedWeekday);
+    const slotMinutes = availabilityForDay?.slot_minutes || 60; // fallback to 60 if not found
+    
     console.log('Loading available slots for:', { 
       teacherId, 
       selectedDate: selectedDate.toDateString(),
       currentTime: new Date().toISOString(),
-      weekday: selectedDate.getDay()
+      weekday: selectedWeekday,
+      configuredSlotMinutes: slotMinutes,
+      availabilityForDay
     });
     
-    const slots = await getAvailableSlots(teacherId, selectedDate);
+    const slots = await getAvailableSlots(teacherId, selectedDate, slotMinutes);
     console.log('Received slots:', slots);
     setAvailableSlots(slots);
   };
@@ -103,7 +111,7 @@ export default function Agenda() {
       loading: teacherLoading
     });
     loadAvailableSlots();
-  }, [teacherId, selectedDate]);
+  }, [teacherId, selectedDate, availability]);
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
