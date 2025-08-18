@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 export interface TeacherBookingSettings {
   id: string;
   teacher_id: string;
-  minimum_advance_hours: number;
+  minimum_advance_minutes: number;
   visibility_days: number;
   allow_same_day: boolean;
   created_at: string;
@@ -52,7 +52,7 @@ export const useTeacherBookingSettings = (teacherId?: string | null) => {
   return {
     settings,
     loading,
-    minimumAdvanceMinutes: settings ? settings.minimum_advance_hours * 60 : 60, // Convert hours to minutes
+    minimumAdvanceMinutes: settings?.minimum_advance_minutes || 60,
     maximumAdvanceDays: settings?.visibility_days || 30,
     allowSameDayBooking: settings?.allow_same_day || false,
     refreshSettings: fetchSettings,
