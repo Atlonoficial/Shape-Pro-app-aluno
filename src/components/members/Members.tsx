@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
-import { Play, Package, Loader2 } from "lucide-react";
+import { Play, Package, Loader2, Users, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
+import { StudentsList } from "./StudentsList";
+import { StudentAssessments } from "./StudentAssessments";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { Student } from "@/lib/supabase";
 // Temporary placeholder - Firebase removed
 // import { getCoursesByUser, Course } from "@/lib/firestore";
 
 
 export const Members = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { student } = useStudentProfile();
-  const [activeTab, setActiveTab] = useState<'courses'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'students'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isTeacher = userProfile?.user_type === 'teacher';
 
   useEffect(() => {
     // Simplified - no Firebase dependency
@@ -26,6 +32,15 @@ export const Members = () => {
       <ModuleDetail 
         moduleId={selectedModule} 
         onBack={() => setSelectedModule(null)} 
+      />
+    );
+  }
+
+  if (selectedStudent) {
+    return (
+      <StudentAssessments
+        student={selectedStudent}
+        onBack={() => setSelectedStudent(null)}
       />
     );
   }
@@ -78,6 +93,19 @@ export const Members = () => {
           Cursos
         </Button>
         
+        {isTeacher && (
+          <Button
+            onClick={() => setActiveTab('students')}
+            className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
+              activeTab === 'students' 
+                ? 'btn-primary' 
+                : 'btn-secondary'
+            }`}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Alunos
+          </Button>
+        )}
       </div>
 
       {/* Content */}
@@ -115,6 +143,10 @@ export const Members = () => {
             </div>
           )}
         </div>
+      )}
+
+      {activeTab === 'students' && isTeacher && (
+        <StudentsList onSelectStudent={setSelectedStudent} />
       )}
 
     </div>

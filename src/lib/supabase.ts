@@ -31,6 +31,11 @@ export interface Student {
   membership_expiry?: string;
   created_at?: string;
   updated_at?: string;
+  profiles?: {
+    name: string;
+    email: string;
+    avatar_url?: string;
+  };
 }
 
 export interface Workout {
@@ -184,6 +189,59 @@ export const onAuthStateChange = (callback: (user: User | null, session: Session
 };
 
 // Student functions
+export const getStudentsByTeacher = (teacherId: string, callback: (students: any[]) => void) => {
+  const channel = supabase
+    .channel('teacher-students-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'students',
+        filter: `teacher_id=eq.${teacherId}`
+      },
+      () => {
+        fetchStudents();
+      }
+    )
+    .subscribe();
+
+  const fetchStudents = async () => {
+    const { data, error } = await supabase
+      .from('students')
+      .select(`
+        *,
+        profiles!students_user_id_fkey(name, email, avatar_url)
+      `)
+      .eq('teacher_id', teacherId);
+
+    if (error) {
+      console.error('Error fetching students:', error);
+      callback([]);
+      return;
+    }
+    callback(data || []);
+  };
+
+  fetchStudents();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+export const getStudentAssessments = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('progress')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('type', 'physical_assessment')
+    .order('date', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
 export const getStudentByUserId = (userId: string, callback: (student: Student | null) => void) => {
   const channel = supabase
     .channel('student-changes')
