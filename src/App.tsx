@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
+import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 // Removed Firebase-dependent pages
 // import Login from "./pages/login";
@@ -62,7 +63,11 @@ const App = () => (
               <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
               <Route path="/iniciar-treino" element={<IniciarTreino />} />
               <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
-              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/agenda" element={
+                <AuthGuard>
+                  <Agenda />
+                </AuthGuard>
+              } />
               <Route path="/metas" element={<Metas />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth/verify" element={<AuthVerify />} />

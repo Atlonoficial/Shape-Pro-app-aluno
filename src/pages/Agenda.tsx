@@ -297,7 +297,9 @@ export default function Agenda() {
           </div>
 
           {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando...</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground">Carregando horários do professor...</p>
+            </div>
           ) : !hasActiveSubscription ? (
             <Card className="p-6 text-center border border-warning/20 bg-warning/5">
               <div className="space-y-3">
