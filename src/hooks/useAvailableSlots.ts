@@ -64,7 +64,10 @@ export const useAvailableSlots = () => {
     type: string = 'consultation',
     duration: number = 60,
     title?: string,
-    description?: string
+    description?: string,
+    studentTitle?: string,
+    studentObjectives?: string,
+    studentNotes?: string
   ): Promise<{ success: boolean; appointmentId?: string }> => {
     try {
       setLoading(true);
@@ -76,6 +79,9 @@ export const useAvailableSlots = () => {
         p_duration: duration,
         p_title: title,
         p_description: description,
+        p_student_title: studentTitle,
+        p_student_objectives: studentObjectives,
+        p_student_notes: studentNotes,
       });
 
       if (error) throw error;
@@ -107,6 +113,9 @@ export const useAvailableSlots = () => {
       duration?: number;
       title?: string;
       description?: string;
+      studentTitle?: string;
+      studentObjectives?: string;
+      studentNotes?: string;
     }
   ) => {
     return bookAppointment(
@@ -115,7 +124,10 @@ export const useAvailableSlots = () => {
       options?.type || 'consultation',
       options?.duration || 60,
       options?.title,
-      options?.description
+      options?.description,
+      options?.studentTitle,
+      options?.studentObjectives,
+      options?.studentNotes
     );
   };
 
