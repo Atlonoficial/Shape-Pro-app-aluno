@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Scale, Ruler, Activity, TrendingUp, ChevronDown } from "lucide-react";
+import { Plus, Scale, Ruler, Activity, TrendingUp, ChevronDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,6 +45,17 @@ interface AssessmentData {
   
   // Protocolo de dobras cutâneas
   skinfold_protocol: string;
+  
+  // Dobras cutâneas específicas
+  tricipital: string;
+  bicipital: string;
+  subescapular: string;
+  axilar_media: string;
+  peitoral: string;
+  abdominal: string;
+  supra_iliaca: string;
+  coxa: string;
+  panturrilha_medial: string;
 }
 
 interface NewAssessmentDialogProps {
@@ -85,7 +97,18 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
     left_proximal_thigh: "",
     
     // Protocolo de dobras cutâneas
-    skinfold_protocol: ""
+    skinfold_protocol: "",
+    
+    // Dobras cutâneas específicas
+    tricipital: "",
+    bicipital: "",
+    subescapular: "",
+    axilar_media: "",
+    peitoral: "",
+    abdominal: "",
+    supra_iliaca: "",
+    coxa: "",
+    panturrilha_medial: ""
   });
   
   const { user } = useAuthContext();
@@ -247,6 +270,33 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
         });
       }
 
+      // Dobras cutâneas específicas
+      const skinfoldFields = {
+        tricipital: "Dobra tricipital",
+        bicipital: "Dobra bicipital",
+        subescapular: "Dobra subescapular",
+        axilar_media: "Dobra axilar média",
+        peitoral: "Dobra peitoral",
+        abdominal: "Dobra abdominal",
+        supra_iliaca: "Dobra supra ilíaca",
+        coxa: "Dobra da coxa",
+        panturrilha_medial: "Dobra panturrilha medial"
+      };
+
+      Object.entries(skinfoldFields).forEach(([key, label]) => {
+        const value = formData[key as keyof AssessmentData];
+        if (value.trim()) {
+          progressRecords.push({
+            user_id: user.id,
+            type: "physical_assessment",
+            value: parseFloat(value),
+            unit: "mm",
+            date: assessmentDate,
+            notes: label
+          });
+        }
+      });
+
       // Inserir todos os registros de uma vez
       const { error } = await supabase
         .from("progress")
@@ -289,7 +339,18 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
         left_proximal_thigh: "",
         
         // Protocolo de dobras cutâneas
-        skinfold_protocol: ""
+        skinfold_protocol: "",
+        
+        // Dobras cutâneas específicas
+        tricipital: "",
+        bicipital: "",
+        subescapular: "",
+        axilar_media: "",
+        peitoral: "",
+        abdominal: "",
+        supra_iliaca: "",
+        coxa: "",
+        panturrilha_medial: ""
       });
       setOpen(false);
       onAssessmentCreated();
@@ -302,21 +363,45 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
     }
   };
 
+  // Definir protocolos e seus campos específicos
+  const protocolFields = {
+    "3-dobras-guedes": ["tricipital", "subescapular", "supra_iliaca"],
+    "3-dobras-jackson-pollock": ["peitoral", "abdominal", "coxa"],
+    "4-dobras-durnin-womersley": ["tricipital", "bicipital", "subescapular", "supra_iliaca"],
+    "4-dobras-faulkner": ["tricipital", "subescapular", "supra_iliaca", "abdominal"],
+    "4-dobras-petroski": ["tricipital", "subescapular", "supra_iliaca", "panturrilha_medial"],
+    "7-dobras-jackson-pollock-ward": ["tricipital", "subescapular", "axilar_media", "peitoral", "abdominal", "supra_iliaca", "coxa"]
+  };
+
+  // Informações detalhadas sobre cada dobra
+  const skinfoldInfo = {
+    tricipital: "Face posterior do braço, no ponto médio entre o acrômio e o olécrano. Pinça vertical.",
+    bicipital: "Face anterior do braço, no mesmo nível da medida tricipital. Pinça vertical.", 
+    subescapular: "Logo abaixo do ângulo inferior da escápula, em direção oblíqua (45° com a coluna).",
+    axilar_media: "Na linha axilar média, na altura do processo xifóide do esterno. Pinça oblíqua.",
+    peitoral: "No ponto médio entre a linha axilar anterior e o mamilo (homens) ou 1/3 da dobra axilar (mulheres).",
+    abdominal: "Aproximadamente 2 cm à direita da cicatriz umbilical. Pinça vertical.",
+    supra_iliaca: "Logo acima da crista ilíaca, na linha axilar média. Pinça oblíqua.",
+    coxa: "Face anterior da coxa, no ponto médio entre a dobra inguinal e a borda superior da patela.",
+    panturrilha_medial: "Face medial da perna, no ponto de maior perímetro da panturrilha."
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Avaliação
-        </Button>
-      </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Nova Avaliação Física</DialogTitle>
-        </DialogHeader>
+    <TooltipProvider>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Avaliação
+          </Button>
+        </DialogTrigger>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Avaliação Física</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
           {/* Medidas Básicas */}
           <Collapsible defaultOpen>
             <CollapsibleTrigger className="w-full">
@@ -655,24 +740,63 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
             <CollapsibleContent>
               <Card>
                 <CardContent className="p-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label>Selecione um protocolo</Label>
-                    <Select 
-                      value={formData.skinfold_protocol} 
-                      onValueChange={(value) => handleInputChange("skinfold_protocol", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um protocolo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="3-dobras-guedes">3 Dobras - Guedes</SelectItem>
-                        <SelectItem value="3-dobras-jackson-pollock">3 Dobras - Jackson & Pollock</SelectItem>
-                        <SelectItem value="4-dobras-durnin-womersley">4 Dobras - Durnin & Womersley</SelectItem>
-                        <SelectItem value="4-dobras-faulkner">4 Dobras - Faulkner</SelectItem>
-                        <SelectItem value="4-dobras-petroski">4 Dobras - Petroski</SelectItem>
-                        <SelectItem value="7-dobras-jackson-pollock-ward">7 Dobras - Jackson, Pollock & Ward</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Selecione um protocolo</Label>
+                      <Select 
+                        value={formData.skinfold_protocol} 
+                        onValueChange={(value) => handleInputChange("skinfold_protocol", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um protocolo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3-dobras-guedes">3 Dobras - Guedes</SelectItem>
+                          <SelectItem value="3-dobras-jackson-pollock">3 Dobras - Jackson & Pollock</SelectItem>
+                          <SelectItem value="4-dobras-durnin-womersley">4 Dobras - Durnin & Womersley</SelectItem>
+                          <SelectItem value="4-dobras-faulkner">4 Dobras - Faulkner</SelectItem>
+                          <SelectItem value="4-dobras-petroski">4 Dobras - Petroski</SelectItem>
+                          <SelectItem value="7-dobras-jackson-pollock-ward">7 Dobras - Jackson, Pollock & Ward</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Campos específicos baseados no protocolo */}
+                    {formData.skinfold_protocol && protocolFields[formData.skinfold_protocol as keyof typeof protocolFields] && (
+                      <div className="space-y-3 mt-4 p-3 bg-accent/20 rounded-lg">
+                        <h4 className="font-medium text-sm text-muted-foreground">
+                          Medições do protocolo selecionado:
+                        </h4>
+                        <div className="grid grid-cols-1 gap-4">
+                          {protocolFields[formData.skinfold_protocol as keyof typeof protocolFields].map((field) => (
+                            <div key={field} className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Label className="capitalize">
+                                  {field.replace(/_/g, " ")}
+                                </Label>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3 h-3 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="max-w-xs">
+                                    <p className="text-xs">
+                                      {skinfoldInfo[field as keyof typeof skinfoldInfo]}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="Digite em mm..."
+                                value={formData[field as keyof AssessmentData]}
+                                onChange={(e) => handleInputChange(field as keyof AssessmentData, e.target.value)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -697,7 +821,8 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 };
