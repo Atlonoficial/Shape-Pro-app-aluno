@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, User, Activity, Ruler, Weight } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Activity, Ruler, Weight, ClipboardList, Heart, AlertTriangle, Pill, Moon, Bandage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getStudentAssessments, Student } from '@/lib/supabase';
+import { useStudentAnamnese } from '@/hooks/useStudentAnamnese';
 
 interface StudentAssessmentsProps {
   student: any;
@@ -22,6 +23,7 @@ interface AssessmentData {
 export const StudentAssessments = ({ student, onBack }: StudentAssessmentsProps) => {
   const [assessments, setAssessments] = useState<AssessmentData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { record: anamneseRecord, loading: anamneseLoading } = useStudentAnamnese(student.user_id);
 
   useEffect(() => {
     const fetchAssessments = async () => {
@@ -130,6 +132,157 @@ export const StudentAssessments = ({ student, onBack }: StudentAssessmentsProps)
           </CardContent>
         </Card>
       ) : null}
+
+      {/* Anamnese Section */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <ClipboardList className="w-5 h-5" />
+          Anamnese
+        </h2>
+
+        {anamneseLoading ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground mt-2">Carregando anamnese...</p>
+            </CardContent>
+          </Card>
+        ) : !anamneseRecord ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Anamnese não preenchida pelo aluno</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {/* Doenças */}
+            {(anamneseRecord.doencas?.length > 0 || anamneseRecord.outras_doencas) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    Doenças
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {anamneseRecord.doencas?.map((doenca, index) => (
+                      <Badge key={index} variant="secondary" className="mr-2">
+                        {doenca}
+                      </Badge>
+                    ))}
+                    {anamneseRecord.outras_doencas && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium mb-1">Outras doenças:</p>
+                        <p className="text-sm text-muted-foreground">{anamneseRecord.outras_doencas}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Alergias */}
+            {(anamneseRecord.alergias?.length > 0 || anamneseRecord.outras_alergias) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Alergias
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {anamneseRecord.alergias?.map((alergia, index) => (
+                      <Badge key={index} variant="destructive" className="mr-2">
+                        {alergia}
+                      </Badge>
+                    ))}
+                    {anamneseRecord.outras_alergias && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium mb-1">Outras alergias:</p>
+                        <p className="text-sm text-muted-foreground">{anamneseRecord.outras_alergias}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Medicações */}
+            {anamneseRecord.medicacoes?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Pill className="w-4 h-4" />
+                    Medicações
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {anamneseRecord.medicacoes.map((medicacao, index) => (
+                      <Badge key={index} variant="outline" className="mr-2">
+                        {medicacao}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Sono */}
+            {(anamneseRecord.horas_sono || anamneseRecord.qualidade_sono) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Moon className="w-4 h-4" />
+                    Sono
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {anamneseRecord.horas_sono && (
+                      <div>
+                        <p className="text-sm font-medium">Horas de sono:</p>
+                        <p className="text-sm text-muted-foreground">{anamneseRecord.horas_sono}</p>
+                      </div>
+                    )}
+                    {anamneseRecord.qualidade_sono && (
+                      <div>
+                        <p className="text-sm font-medium">Qualidade do sono:</p>
+                        <p className="text-sm text-muted-foreground">{anamneseRecord.qualidade_sono}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Lesões */}
+            {anamneseRecord.lesoes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Bandage className="w-4 h-4" />
+                    Lesões
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{anamneseRecord.lesoes}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Data de atualização */}
+            {anamneseRecord.updated_at && (
+              <div className="text-center text-xs text-muted-foreground">
+                Última atualização: {new Date(anamneseRecord.updated_at).toLocaleDateString('pt-BR')}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Assessment History */}
       <div>

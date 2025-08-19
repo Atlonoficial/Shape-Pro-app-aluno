@@ -557,3 +557,17 @@ export const updateMealLog = async (logId: string, updates: any) => {
   if (error) throw error;
   return data;
 };
+
+// Anamnese functions for teachers
+export const getStudentAnamnese = async (studentUserId: string) => {
+  const { data, error } = await supabase
+    .from('anamneses')
+    .select('*')
+    .eq('user_id', studentUserId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+};
