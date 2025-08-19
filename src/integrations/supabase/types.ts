@@ -140,6 +140,33 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          access_type: string
+          id: string
+          record_id: string | null
+          table_name: string
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          access_type: string
+          id?: string
+          record_id?: string | null
+          table_name: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          id?: string
+          record_id?: string | null
+          table_name?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           action_text: string | null
@@ -1101,6 +1128,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_log: {
+        Row: {
+          created_at: string
+          id: string
+          operation_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          operation_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          operation_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       reward_redemptions: {
         Row: {
           created_at: string
@@ -1352,6 +1400,7 @@ export type Database = {
       teacher_booking_settings: {
         Row: {
           allow_same_day: boolean
+          auto_confirm: boolean
           created_at: string
           id: string
           minimum_advance_minutes: number
@@ -1361,6 +1410,7 @@ export type Database = {
         }
         Insert: {
           allow_same_day?: boolean
+          auto_confirm?: boolean
           created_at?: string
           id?: string
           minimum_advance_minutes?: number
@@ -1370,6 +1420,7 @@ export type Database = {
         }
         Update: {
           allow_same_day?: boolean
+          auto_confirm?: boolean
           created_at?: string
           id?: string
           minimum_advance_minutes?: number
@@ -1631,6 +1682,22 @@ export type Database = {
         Args: { targets: string[] }
         Returns: boolean
       }
+      check_rate_limit: {
+        Args: {
+          max_attempts?: number
+          operation_type: string
+          time_window?: unknown
+        }
+        Returns: boolean
+      }
+      clean_old_appointments: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_rate_limit_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       ensure_student_record: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1672,6 +1739,10 @@ export type Database = {
           slot_teacher_id: string
         }[]
       }
+      log_sensitive_access: {
+        Args: { access_type: string; record_id: string; table_name: string }
+        Returns: undefined
+      }
       redeem_reward: {
         Args: { _reward_id: string }
         Returns: string
@@ -1706,6 +1777,10 @@ export type Database = {
               p_student_user_id: string
             }
         Returns: string
+      }
+      validate_input: {
+        Args: { allow_html?: boolean; input_text: string; max_length?: number }
+        Returns: boolean
       }
     }
     Enums: {

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AddMedicalExamDialog } from "@/components/medical/AddMedicalExamDialog";
 
 interface MedicalExam {
   id: string;
@@ -21,6 +22,7 @@ export const ExamesMedicos = () => {
   const { user } = useAuthContext();
   const [exams, setExams] = useState<MedicalExam[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -45,6 +47,27 @@ export const ExamesMedicos = () => {
 
     fetchExams();
   }, [user?.id]);
+
+  const handleAddSuccess = () => {
+    const fetchExams = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await (supabase as any)
+          .from("medical_exams")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("date", { ascending: false });
+
+        if (error) throw error;
+        setExams((data || []) as MedicalExam[]);
+      } catch (error) {
+        console.error("Erro ao buscar exames:", error);
+        toast.error("Erro ao carregar exames médicos");
+      }
+    };
+    fetchExams();
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -77,7 +100,11 @@ export const ExamesMedicos = () => {
         </Card>
 
         {/* Upload Button */}
-        <Button className="w-full mb-4" variant="outline">
+        <Button 
+          className="w-full mb-4" 
+          variant="outline"
+          onClick={() => setShowAddDialog(true)}
+        >
           <Upload className="w-4 h-4 mr-2" />
           Adicionar Novo Exame
         </Button>
@@ -134,6 +161,12 @@ export const ExamesMedicos = () => {
           </div>
         )}
       </div>
+
+      <AddMedicalExamDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 };

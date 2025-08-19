@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AddProgressPhotoDialog } from "@/components/progress/AddProgressPhotoDialog";
 
 interface ProgressPhoto {
   id: string;
@@ -22,6 +23,7 @@ export const FotosProgresso = () => {
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -46,6 +48,27 @@ export const FotosProgresso = () => {
 
     fetchPhotos();
   }, [user?.id]);
+
+  const handleAddSuccess = () => {
+    const fetchPhotos = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await (supabase as any)
+          .from("progress_photos")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("date", { ascending: false });
+
+        if (error) throw error;
+        setPhotos((data || []) as ProgressPhoto[]);
+      } catch (error) {
+        console.error("Erro ao buscar fotos:", error);
+        toast.error("Erro ao carregar fotos de progresso");
+      }
+    };
+    fetchPhotos();
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -102,7 +125,11 @@ export const FotosProgresso = () => {
         </Card>
 
         {/* Add Photo Button */}
-        <Button className="w-full mb-4" variant="outline">
+        <Button 
+          className="w-full mb-4" 
+          variant="outline"
+          onClick={() => setShowAddDialog(true)}
+        >
           <Camera className="w-4 h-4 mr-2" />
           Adicionar Nova Foto
         </Button>
@@ -176,6 +203,12 @@ export const FotosProgresso = () => {
           </div>
         )}
       </div>
+
+      <AddProgressPhotoDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 };
