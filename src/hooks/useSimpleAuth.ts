@@ -24,14 +24,6 @@ export const useChat = (conversationId: string) => ({ messages: [], loading: fal
 export const useFCMTokens = () => ({ requestPermission: () => {}, clearToken: () => {} });
 export const useMealLogs = () => ({ logs: [], loading: false, logMeal: () => {}, addMealLog: () => {} });
 export const useMyData = (userId?: string) => ({ student: null, trainings: [], loading: false, error: null });
-export const useMyNutrition = () => ({ 
-  nutritionPlans: [], 
-  mealLogs: [], 
-  activePlan: null, 
-  loading: false, 
-  logMeal: () => {}, 
-  addMealLog: () => {} 
-});
 export const useMyTrainings = (userId?: string) => ({ trainings: [], loading: false, error: null });
 export const useMyWorkouts = () => ({ 
   workouts: [], 

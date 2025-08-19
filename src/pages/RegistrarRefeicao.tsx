@@ -1,53 +1,84 @@
-import { Plus, Apple, Clock, Target, ArrowLeft } from "lucide-react";
+import { Plus, Apple, Clock, Target, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useMyNutrition } from "@/hooks/useMyNutrition";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export const RegistrarRefeicao = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { activePlan, todaysMeals, dailyStats, loading, logMeal } = useMyNutrition();
+  const { toast } = useToast();
+  const [loadingMeals, setLoadingMeals] = useState<Set<string>>(new Set());
 
-  const refeicoesDoDia = [
-    { 
-      nome: "Café da Manhã", 
-      horario: "07:30", 
-      calorias: 450, 
-      status: "concluido",
-      alimentos: ["Aveia", "Banana", "Whey Protein"]
-    },
-    { 
-      nome: "Lanche da Manhã", 
-      horario: "10:00", 
-      calorias: 200, 
-      status: "concluido",
-      alimentos: ["Maçã", "Castanhas"]
-    },
-    { 
-      nome: "Almoço", 
-      horario: "12:30", 
-      calorias: 650, 
-      status: "pendente",
-      alimentos: []
-    },
-    { 
-      nome: "Lanche da Tarde", 
-      horario: "15:30", 
-      calorias: 300, 
-      status: "pendente",
-      alimentos: []
-    },
-    { 
-      nome: "Jantar", 
-      horario: "19:00", 
-      calorias: 550, 
-      status: "pendente",
-      alimentos: []
+  const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
+    if (!user?.id || !activePlan) return;
+    
+    setLoadingMeals(prev => new Set([...prev, mealId]));
+    
+    try {
+      await logMeal(mealId, !isCompleted);
+      toast({
+        title: !isCompleted ? "Refeição registrada!" : "Registro removido",
+        description: !isCompleted ? "Refeição marcada como concluída." : "Refeição desmarcada.",
+      });
+    } catch (error) {
+      console.error('Error logging meal:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível registrar a refeição. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingMeals(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(mealId);
+        return newSet;
+      });
     }
-  ];
+  };
 
-  const metaDiaria = 2150;
-  const consumido = refeicoesDoDia
-    .filter(r => r.status === "concluido")
-    .reduce((total, r) => total + r.calorias, 0);
+  if (loading) {
+    return (
+      <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">Carregando suas refeições...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activePlan) {
+    return (
+      <div className="p-4 pt-8 pb-24">
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="p-2"
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Controle Nutricional</h1>
+            <p className="text-sm text-muted-foreground">Registre suas refeições de hoje</p>
+          </div>
+        </div>
+        
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Nenhum plano nutricional disponível ainda.</p>
+          <p className="text-sm text-muted-foreground mt-2">Aguarde seu nutricionista criar um plano para você!</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { consumed, target } = dailyStats;
 
   return (
     <div className="p-4 pt-8 pb-24">
@@ -72,7 +103,7 @@ export const RegistrarRefeicao = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Meta Calórica</h3>
-            <p className="text-sm text-muted-foreground">{consumido} / {metaDiaria} kcal</p>
+            <p className="text-sm text-muted-foreground">{Math.round(consumed.calories)} / {Math.round(target.calories)} kcal</p>
           </div>
           <div className="w-16 h-16 bg-gradient-to-br from-warning to-warning/80 rounded-full flex items-center justify-center">
             <Target size={24} className="text-white" />
@@ -82,69 +113,104 @@ export const RegistrarRefeicao = () => {
         <div className="w-full bg-muted rounded-full h-3 mb-4">
           <div 
             className="bg-gradient-to-r from-warning to-warning/80 h-3 rounded-full transition-all duration-300"
-            style={{ width: `${Math.min((consumido / metaDiaria) * 100, 100)}%` }}
+            style={{ width: `${Math.min(target.calories > 0 ? (consumed.calories / target.calories) * 100 : 0, 100)}%` }}
           ></div>
         </div>
         
         <div className="text-center">
           <span className="text-sm font-medium text-foreground">
-            Restam {metaDiaria - consumido} kcal
+            Restam {Math.round(Math.max(target.calories - consumed.calories, 0))} kcal
           </span>
         </div>
       </Card>
 
-      {/* Refeições do Dia */}
-      <div className="space-y-4">
+        <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground">Refeições de Hoje</h3>
-          <Button size="sm" className="btn-primary">
+          <Button 
+            size="sm" 
+            className="btn-primary" 
+            onClick={() => {
+              toast({
+                title: "Em breve",
+                description: "Funcionalidade em desenvolvimento.",
+              });
+            }}
+          >
             <Plus size={16} className="mr-1" />
             Adicionar
           </Button>
         </div>
         
-        {refeicoesDoDia.map((refeicao, index) => (
-          <Card key={index} className="card-gradient p-4 border border-border/50">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-foreground">{refeicao.nome}</h4>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} className="text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">{refeicao.horario}</span>
+{activePlan.meals && activePlan.meals.length > 0 ? (
+          activePlan.meals.map((meal: any, index: number) => {
+            const mealLog = todaysMeals.find(log => log.meal_id === meal.id);
+            const isCompleted = mealLog?.consumed || false;
+            const isLoading = loadingMeals.has(meal.id);
+            
+            return (
+              <Card key={meal.id || index} className="card-gradient p-4 border border-border/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-foreground">{meal.name}</h4>
+                      {meal.time && (
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} className="text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{meal.time}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-warning font-medium">{meal.calories || 0} kcal</span>
+                      {isCompleted && (
+                        <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">
+                          Concluído
+                        </span>
+                      )}
+                    </div>
+                    
+                    {meal.ingredients && meal.ingredients.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          {Array.isArray(meal.ingredients) ? meal.ingredients.join(", ") : meal.ingredients}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {isLoading ? (
+                      <Loader2 size={20} className="animate-spin text-muted-foreground" />
+                    ) : isCompleted ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleMealToggle(meal.id, true)}
+                      >
+                        <Apple size={16} className="text-success mr-1" />
+                        Concluído
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleMealToggle(meal.id, false)}
+                      >
+                        Registrar
+                      </Button>
+                    )}
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-warning font-medium">{refeicao.calorias} kcal</span>
-                  {refeicao.status === "concluido" && (
-                    <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">
-                      Concluído
-                    </span>
-                  )}
-                </div>
-                
-                {refeicao.alimentos.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs text-muted-foreground">
-                      {refeicao.alimentos.join(", ")}
-                    </p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {refeicao.status === "concluido" ? (
-                  <Apple size={20} className="text-success" />
-                ) : (
-                  <Button size="sm" variant="outline">
-                    Registrar
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
+              </Card>
+            );
+          })
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Nenhuma refeição programada para hoje.</p>
+          </div>
+        )}
       </div>
 
       {/* Dicas Nutricionais */}

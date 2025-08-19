@@ -480,3 +480,80 @@ export const sendChatMessage = async (message: Omit<ChatMessage, 'id' | 'created
   if (error) throw error;
   return data;
 };
+
+// Meal logs functions
+export const getMealLogsByUserAndDate = (userId: string, date: string, callback: (logs: any[]) => void) => {
+  const channel = supabase
+    .channel('meal-logs-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'meal_logs',
+        filter: `user_id=eq.${userId}`
+      },
+      () => {
+        fetchMealLogs();
+      }
+    )
+    .subscribe();
+
+  const fetchMealLogs = async () => {
+    const { data, error } = await supabase
+      .from('meal_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('date', `${date}T00:00:00`)
+      .lt('date', `${date}T23:59:59`)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching meal logs:', error);
+      callback([]);
+      return;
+    }
+    callback(data || []);
+  };
+
+  fetchMealLogs();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+export const createMealLog = async (mealLog: {
+  user_id: string;
+  nutrition_plan_id: string;
+  meal_id: string;
+  date: string;
+  consumed: boolean;
+  actual_time?: string;
+  notes?: string;
+  photo_url?: string;
+  rating?: number;
+  custom_portion_amount?: number;
+  custom_portion_unit?: string;
+}) => {
+  const { data, error } = await supabase
+    .from('meal_logs')
+    .insert(mealLog)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateMealLog = async (logId: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('meal_logs')
+    .update(updates)
+    .eq('id', logId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};

@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { NutritionCard } from "./NutritionCard";
 import { MetricCard } from "@/components/ui/MetricCard";
-import { useMyNutrition } from "@/hooks/useFirebaseStubs";
+import { useMyNutrition } from "@/hooks/useMyNutrition";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Nutrition = () => {
@@ -20,8 +20,8 @@ export const Nutrition = () => {
     if (!user?.id || !activePlan) return;
     
     try {
-      const isAlreadyLogged = todaysMeals.some((log: any) => log.mealId === mealId && log.consumed);
-      await logMeal();
+      const isAlreadyLogged = todaysMeals.some((log: any) => log.meal_id === mealId && log.consumed);
+      await logMeal(mealId, !isAlreadyLogged);
     } catch (error) {
       console.error('Error logging meal:', error);
     }
@@ -120,7 +120,7 @@ export const Nutrition = () => {
           </div>
         ) : (
           activePlan.meals.map((meal) => {
-            const mealLog = todaysMeals.find(log => log.mealId === meal.id);
+            const mealLog = todaysMeals.find(log => log.meal_id === meal.id);
             const isCompleted = mealLog?.consumed || false;
             
             return (

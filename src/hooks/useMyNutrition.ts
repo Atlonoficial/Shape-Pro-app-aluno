@@ -1,0 +1,183 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from './useAuth';
+import { getNutritionPlansByUser, getMealLogsByUserAndDate, createMealLog } from '@/lib/supabase';
+import { NutritionPlan } from '@/lib/supabase';
+
+export interface MealLog {
+  id: string;
+  user_id: string;
+  nutrition_plan_id: string;
+  meal_id: string;
+  date: string;
+  consumed: boolean;
+  actual_time?: string;
+  notes?: string;
+  photo_url?: string;
+  rating?: number;
+  custom_portion_amount?: number;
+  custom_portion_unit?: string;
+  created_at: string;
+}
+
+export interface DailyStats {
+  consumed: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  target: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  percentage: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+}
+
+export const useMyNutrition = () => {
+  const { user } = useAuth();
+  const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
+  const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activePlan, setActivePlan] = useState<NutritionPlan | null>(null);
+  const [todaysMeals, setTodaysMeals] = useState<MealLog[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStats>({
+    consumed: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+    target: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+    percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  });
+
+  useEffect(() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    let plansUnsubscribe: (() => void) | undefined;
+    let logsUnsubscribe: (() => void) | undefined;
+
+    // Buscar planos de nutrição
+    plansUnsubscribe = getNutritionPlansByUser(user.id, (plans) => {
+      setNutritionPlans(plans);
+      // Selecionar o primeiro plano ativo como plano atual
+      const currentPlan = plans.find(plan => 
+        (!plan.end_date || new Date(plan.end_date) >= new Date()) &&
+        (!plan.start_date || new Date(plan.start_date) <= new Date())
+      ) || plans[0] || null;
+      setActivePlan(currentPlan);
+      setLoading(false);
+    });
+
+    // Buscar logs de refeições de hoje
+    const today = new Date().toISOString().split('T')[0];
+    logsUnsubscribe = getMealLogsByUserAndDate(user.id, today, (logs) => {
+      setMealLogs(logs);
+      setTodaysMeals(logs);
+    });
+
+    return () => {
+      if (plansUnsubscribe) plansUnsubscribe();
+      if (logsUnsubscribe) logsUnsubscribe();
+    };
+  }, [user?.id]);
+
+  // Calcular estatísticas diárias
+  useEffect(() => {
+    if (!activePlan) {
+      setDailyStats({
+        consumed: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        target: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      });
+      return;
+    }
+
+    const target = {
+      calories: activePlan.daily_calories || 0,
+      protein: activePlan.daily_protein || 0,
+      carbs: activePlan.daily_carbs || 0,
+      fat: activePlan.daily_fat || 0,
+    };
+
+    // Calcular consumido baseado nos logs de hoje
+    const consumed = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    
+    todaysMeals.forEach(log => {
+      if (log.consumed) {
+        // Encontrar a refeição no plano ativo
+        const meal = activePlan.meals?.find((m: any) => m.id === log.meal_id);
+        if (meal) {
+          consumed.calories += meal.calories || 0;
+          consumed.protein += meal.protein || 0;
+          consumed.carbs += meal.carbs || 0;
+          consumed.fat += meal.fat || 0;
+        }
+      }
+    });
+
+    const percentage = {
+      calories: target.calories > 0 ? (consumed.calories / target.calories) * 100 : 0,
+      protein: target.protein > 0 ? (consumed.protein / target.protein) * 100 : 0,
+      carbs: target.carbs > 0 ? (consumed.carbs / target.carbs) * 100 : 0,
+      fat: target.fat > 0 ? (consumed.fat / target.fat) * 100 : 0,
+    };
+
+    setDailyStats({ consumed, target, percentage });
+  }, [activePlan, todaysMeals]);
+
+  const logMeal = async (mealId: string, consumed: boolean = true, notes?: string) => {
+    if (!user?.id || !activePlan) throw new Error('Usuário não autenticado ou plano não encontrado');
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    try {
+      // Verificar se já existe log para esta refeição hoje
+      const existingLog = todaysMeals.find(log => 
+        log.meal_id === mealId && 
+        log.date.split('T')[0] === today
+      );
+
+      if (existingLog) {
+        // Atualizar log existente via supabase
+        const { supabase } = await import('@/integrations/supabase/client');
+        await supabase
+          .from('meal_logs')
+          .update({ consumed, notes })
+          .eq('id', existingLog.id);
+      } else {
+        // Criar novo log
+        await createMealLog({
+          user_id: user.id,
+          nutrition_plan_id: activePlan.id,
+          meal_id: mealId,
+          date: new Date().toISOString(),
+          consumed,
+          notes,
+          actual_time: new Date().toTimeString().split(' ')[0]
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao registrar refeição:', error);
+      throw error;
+    }
+  };
+
+  const addMealLog = logMeal; // Alias para compatibilidade
+
+  return {
+    nutritionPlans,
+    mealLogs,
+    activePlan,
+    todaysMeals,
+    dailyStats,
+    loading,
+    logMeal,
+    addMealLog
+  };
+};
