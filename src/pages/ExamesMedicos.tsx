@@ -79,13 +79,17 @@ export const ExamesMedicos = () => {
     return exams.filter(exam => exam.category === category).length;
   };
 
-  const filteredExams = selectedCategory === 'all' 
-    ? exams 
-    : exams.filter(exam => exam.category === selectedCategory);
-
   const handleAddSuccess = () => {
     fetchExams();
   };
+
+  // Calculate filtered exams based on selected category
+  const filteredExams = React.useMemo(() => {
+    if (selectedCategory === 'all') {
+      return exams;
+    }
+    return exams.filter(exam => exam.category === selectedCategory);
+  }, [exams, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-background">
