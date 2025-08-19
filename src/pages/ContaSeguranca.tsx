@@ -1,33 +1,95 @@
-import { useState } from "react";
-import { ArrowLeft, User, Lock, Mail, Key, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, User, Lock, Mail, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContaSeguranca = () => {
   const navigate = useNavigate();
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const { user, userProfile } = useAuth();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingPassword, setLoadingPassword] = useState(false);
   
   const [formData, setFormData] = useState({
-    email: "usuario@exemplo.com",
-    currentPassword: "",
+    email: "",
     newPassword: "",
     confirmPassword: ""
   });
 
-  const handleEmailChange = () => {
-    toast({
-      title: "Email atualizado!",
-      description: "Verifique sua caixa de entrada para confirmar o novo email.",
-    });
+  // Carrega dados reais do usuário
+  useEffect(() => {
+    if (user?.email) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email
+      }));
+    }
+  }, [user?.email]);
+
+  const handleEmailChange = async () => {
+    if (!formData.email.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, digite um email válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.email === user?.email) {
+      toast({
+        title: "Informação",
+        description: "Este já é o seu email atual.",
+      });
+      return;
+    }
+
+    setLoadingEmail(true);
+    
+    try {
+      // Atualizar email no Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({
+        email: formData.email
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      // Atualizar também na tabela profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ email: formData.email })
+        .eq('id', user?.id);
+
+      if (profileError) {
+        console.warn('Erro ao atualizar perfil:', profileError);
+      }
+
+      toast({
+        title: "Email atualizado!",
+        description: "Verifique sua caixa de entrada para confirmar o novo email.",
+      });
+    } catch (error: any) {
+      console.error('Erro ao atualizar email:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o email.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingEmail(false);
+    }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: "Erro",
@@ -46,17 +108,39 @@ const ContaSeguranca = () => {
       return;
     }
 
-    toast({
-      title: "Senha alterada!",
-      description: "Sua senha foi atualizada com sucesso.",
-    });
-    
-    setFormData(prev => ({
-      ...prev,
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    }));
+    setLoadingPassword(true);
+
+    try {
+      // Supabase não requer senha atual para alteração por design de segurança
+      const { error } = await supabase.auth.updateUser({
+        password: formData.newPassword
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Senha alterada!",
+        description: "Sua senha foi atualizada com sucesso.",
+      });
+      
+      // Limpar formulário
+      setFormData(prev => ({
+        ...prev,
+        newPassword: "",
+        confirmPassword: ""
+      }));
+    } catch (error: any) {
+      console.error('Erro ao alterar senha:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível alterar a senha.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingPassword(false);
+    }
   };
 
   return (
@@ -97,9 +181,16 @@ const ContaSeguranca = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   className="flex-1"
                 />
-                <Button onClick={handleEmailChange}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Alterar
+                <Button 
+                  onClick={handleEmailChange} 
+                  disabled={loadingEmail || !formData.email.trim() || formData.email === user?.email}
+                >
+                  {loadingEmail ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4 mr-2" />
+                  )}
+                  {loadingEmail ? "Alterando..." : "Alterar"}
                 </Button>
               </div>
             </div>
@@ -116,27 +207,6 @@ const ContaSeguranca = () => {
           </div>
           
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="currentPassword">Senha Atual</Label>
-              <div className="relative mt-1">
-                <Input
-                  id="currentPassword"
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={formData.currentPassword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  placeholder="Digite sua senha atual"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-
             <div>
               <Label htmlFor="newPassword">Nova Senha</Label>
               <div className="relative mt-1">
@@ -182,10 +252,14 @@ const ContaSeguranca = () => {
             <Button 
               onClick={handlePasswordChange}
               className="w-full"
-              disabled={!formData.currentPassword || !formData.newPassword || !formData.confirmPassword}
+              disabled={loadingPassword || !formData.newPassword || !formData.confirmPassword}
             >
-              <Key className="w-4 h-4 mr-2" />
-              Alterar Senha
+              {loadingPassword ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Key className="w-4 h-4 mr-2" />
+              )}
+              {loadingPassword ? "Alterando..." : "Alterar Senha"}
             </Button>
           </div>
         </Card>
