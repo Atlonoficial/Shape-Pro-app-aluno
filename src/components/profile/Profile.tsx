@@ -290,8 +290,8 @@ export const Profile = () => {
               <ClipboardList className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Histórico Médico</p>
-              <p className="text-sm text-muted-foreground">Questionário de saúde completo</p>
+              <p className="font-medium">Anamnese</p>
+              <p className="text-sm text-muted-foreground">Histórico médico e questionário de saúde</p>
             </div>
             <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">90%</span>
           </CardContent>
