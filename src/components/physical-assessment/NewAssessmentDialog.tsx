@@ -120,13 +120,20 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('=== DEBUG: Iniciando submissão ===');
+    console.log('User:', user);
+    
     if (!user?.id) {
+      console.error('Usuário não autenticado');
       toast.error("Usuário não autenticado");
       return;
     }
 
     // Verificar se pelo menos um campo foi preenchido
     const hasData = Object.values(formData).some(value => value.trim() !== "");
+    console.log('Has data:', hasData);
+    console.log('Form data:', formData);
+    
     if (!hasData) {
       toast.error("Preencha pelo menos uma medida");
       return;
@@ -297,12 +304,22 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
         }
       });
 
+      // Log dos dados para debug
+      console.log('User ID:', user.id);
+      console.log('Progress records to insert:', progressRecords);
+      
       // Inserir todos os registros de uma vez
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from("progress")
-        .insert(progressRecords);
+        .insert(progressRecords)
+        .select();
 
-      if (error) throw error;
+      console.log('Insert result:', { error, data });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast.success("Avaliação física registrada com sucesso!");
       
