@@ -624,6 +624,7 @@ export type Database = {
       }
       medical_exams: {
         Row: {
+          category: string
           created_at: string
           date: string
           file_url: string | null
@@ -634,6 +635,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string
           created_at?: string
           date: string
           file_url?: string | null
@@ -644,6 +646,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string
           created_at?: string
           date?: string
           file_url?: string | null

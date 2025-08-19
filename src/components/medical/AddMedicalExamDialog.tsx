@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { FileText, Upload, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileText, Upload, X, Droplets, Heart, ScanLine, ClipboardList } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -23,6 +24,7 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
+  const [category, setCategory] = useState<'blood' | 'cardiology' | 'imaging' | 'others'>('others');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -87,6 +89,7 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
           date,
           notes: notes.trim() || null,
           file_url: urlData.signedUrl,
+          category,
         });
 
       if (dbError) throw dbError;
@@ -100,6 +103,7 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
       setTitle('');
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setNotes('');
+      setCategory('others');
       setSelectedFile(null);
       
       onSuccess();
@@ -155,6 +159,41 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
               onChange={(e) => setDate(e.target.value)}
               disabled={uploading}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="category">Categoria do Exame</Label>
+            <Select value={category} onValueChange={(value: 'blood' | 'cardiology' | 'imaging' | 'others') => setCategory(value)} disabled={uploading}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="blood">
+                  <div className="flex items-center gap-2">
+                    <Droplets className="w-4 h-4 text-red-500" />
+                    Exames de Sangue
+                  </div>
+                </SelectItem>
+                <SelectItem value="cardiology">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-500" />
+                    Cardiológicos
+                  </div>
+                </SelectItem>
+                <SelectItem value="imaging">
+                  <div className="flex items-center gap-2">
+                    <ScanLine className="w-4 h-4 text-blue-500" />
+                    Exames de Imagem
+                  </div>
+                </SelectItem>
+                <SelectItem value="others">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-gray-500" />
+                    Outros
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
