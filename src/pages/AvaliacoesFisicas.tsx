@@ -50,13 +50,13 @@ export const AvaliacoesFisicas = () => {
           };
         }
         
-        if (item.unit === 'kg' && item.notes?.includes('weight')) {
+        if (item.notes === 'weight') {
           acc[dateKey].weight = item.value;
-        } else if (item.unit === '%' && item.notes?.includes('body_fat')) {
+        } else if (item.notes === 'body_fat') {
           acc[dateKey].body_fat = item.value;
-        } else if (item.unit === 'kg' && item.notes?.includes('muscle')) {
+        } else if (item.notes === 'muscle_mass') {
           acc[dateKey].muscle_mass = item.value;
-        } else if (item.unit === 'cm') {
+        } else if (item.notes === 'height') {
           acc[dateKey].height = item.value;
         }
         

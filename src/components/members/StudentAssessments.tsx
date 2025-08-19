@@ -67,10 +67,12 @@ export const StudentAssessments: React.FC<StudentAssessmentsProps> = ({ student,
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const getAssessmentIcon = (type: string) => {
-    switch (type) {
+  const getAssessmentIcon = (notes: string) => {
+    switch (notes) {
       case 'weight': return <Scale className="w-4 h-4" />;
       case 'height': return <Ruler className="w-4 h-4" />;
+      case 'body_fat': return <Activity className="w-4 h-4" />;
+      case 'muscle_mass': return <User className="w-4 h-4" />;
       default: return <Activity className="w-4 h-4" />;
     }
   };
@@ -216,12 +218,18 @@ export const StudentAssessments: React.FC<StudentAssessmentsProps> = ({ student,
                         {dayAssessments.map((assessment) => (
                           <div key={assessment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <div className="flex items-center gap-3">
-                              {getAssessmentIcon(assessment.type)}
+                              {getAssessmentIcon(assessment.notes || 'default')}
                               <div>
-                                <p className="font-medium capitalize">{assessment.type.replace('_', ' ')}</p>
-                                {assessment.notes && (
-                                  <p className="text-sm text-muted-foreground">{assessment.notes}</p>
-                                )}
+                                <p className="font-medium capitalize">
+                                  {assessment.notes === 'weight' ? 'Peso' :
+                                   assessment.notes === 'height' ? 'Altura' :
+                                   assessment.notes === 'body_fat' ? 'Gordura Corporal' :
+                                   assessment.notes === 'muscle_mass' ? 'Massa Muscular' :
+                                   'Medição'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(assessment.date).toLocaleDateString('pt-BR')}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right">

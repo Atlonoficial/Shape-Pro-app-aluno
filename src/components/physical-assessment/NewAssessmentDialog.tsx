@@ -189,7 +189,7 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
           value: parseFloat(formData.muscle_mass),
           unit: "kg", 
           date: assessmentDate,
-          notes: "muscle"
+          notes: "muscle_mass"
         });
       }
 

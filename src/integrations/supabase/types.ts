@@ -441,10 +441,12 @@ export type Database = {
           category: string | null
           created_at: string | null
           created_by: string | null
+          description: string | null
           difficulty: string
           duration: number | null
           equipment: string[] | null
           id: string
+          image_url: string | null
           instructions: string | null
           muscle_group: string
           muscle_groups: string[] | null
@@ -459,10 +461,12 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           difficulty: string
           duration?: number | null
           equipment?: string[] | null
           id?: string
+          image_url?: string | null
           instructions?: string | null
           muscle_group: string
           muscle_groups?: string[] | null
@@ -477,10 +481,12 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           difficulty?: string
           duration?: number | null
           equipment?: string[] | null
           id?: string
+          image_url?: string | null
           instructions?: string | null
           muscle_group?: string
           muscle_groups?: string[] | null
@@ -763,6 +769,63 @@ export type Database = {
           target_users?: string[] | null
           title?: string
           type?: string | null
+        }
+        Relationships: []
+      }
+      nutrition_formulas: {
+        Row: {
+          category: string | null
+          cook_time: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          ingredients: Json
+          instructions: string | null
+          name: string
+          prep_time: number | null
+          servings: number | null
+          total_calories: number | null
+          total_carbs: number | null
+          total_fat: number | null
+          total_protein: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cook_time?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: string | null
+          name: string
+          prep_time?: number | null
+          servings?: number | null
+          total_calories?: number | null
+          total_carbs?: number | null
+          total_fat?: number | null
+          total_protein?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cook_time?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: string | null
+          name?: string
+          prep_time?: number | null
+          servings?: number | null
+          total_calories?: number | null
+          total_carbs?: number | null
+          total_fat?: number | null
+          total_protein?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
