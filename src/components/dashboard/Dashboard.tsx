@@ -189,9 +189,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
 
       {/* Points Widget */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="col-span-2">
-          <PointsWidget onClick={onGamificationClick} compact />
-        </div>
+        <PointsWidget onClick={onGamificationClick} compact />
       </div>
 
       {workouts && workouts.length > 0 && (
