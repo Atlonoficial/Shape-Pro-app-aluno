@@ -79,17 +79,29 @@ export const useAvailableSlots = () => {
     }
   };
 
-  const bookAppointment = async (
-    teacherId: string,
-    scheduledTime: string,
-    type: string = 'consultation',
-    duration?: number,
-    title?: string,
-    description?: string,
-    studentTitle?: string,
-    studentObjectives?: string,
-    studentNotes?: string
-  ): Promise<{ success: boolean; appointmentId?: string }> => {
+  const bookAppointment = async ({
+    teacherId,
+    scheduledTime,
+    type = 'class',
+    duration,
+    title,
+    description,
+    studentTitle,
+    studentObjectives,
+    studentNotes,
+    locationId,
+  }: {
+    teacherId: string;
+    scheduledTime: string;
+    type?: string;
+    duration?: number;
+    title?: string;
+    description?: string;
+    studentTitle?: string;
+    studentObjectives?: string;
+    studentNotes?: string;
+    locationId?: string;
+  }): Promise<string | null> => {
     try {
       setLoading(true);
       
@@ -104,24 +116,39 @@ export const useAvailableSlots = () => {
         p_student_objectives: studentObjectives,
         p_student_notes: studentNotes,
         p_location_id: locationId,
-      });
+      } as any);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       toast({
-        title: 'Sucesso',
-        description: 'Agendamento criado com sucesso!',
+        title: 'Agendamento confirmado!',
+        description: 'Seu agendamento foi criado com sucesso.',
       });
 
-      return { success: true, appointmentId: data };
+      return data;
     } catch (error: any) {
       console.error('Error booking appointment:', error);
+      
+      let errorMessage = 'Erro ao confirmar agendamento';
+      if (error.message?.includes('Selected time is not available')) {
+        errorMessage = 'Este horário não está mais disponível';
+      } else if (error.message?.includes('too close to current time')) {
+        errorMessage = 'Horário muito próximo do atual. Tente um horário mais tarde.';
+      } else if (error.message?.includes('Same day booking is not allowed')) {
+        errorMessage = 'Agendamentos no mesmo dia não são permitidos';
+      } else if (error.message?.includes('Not authorized')) {
+        errorMessage = 'Você não tem permissão para agendar com este professor';
+      }
+      
       toast({
         title: 'Erro',
-        description: error.message || 'Falha ao criar agendamento',
+        description: errorMessage,
         variant: 'destructive',
       });
-      return { success: false };
+      
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -130,7 +157,7 @@ export const useAvailableSlots = () => {
   const quickBookAppointment = async (
     teacherId: string,
     scheduledTime: string,
-    options?: {
+    options: {
       type?: string;
       duration?: number;
       title?: string;
@@ -138,19 +165,14 @@ export const useAvailableSlots = () => {
       studentTitle?: string;
       studentObjectives?: string;
       studentNotes?: string;
-    }
-  ) => {
-    return bookAppointment(
+      locationId?: string;
+    } = {}
+  ): Promise<string | null> => {
+    return bookAppointment({
       teacherId,
       scheduledTime,
-      options?.type || 'consultation',
-      options?.duration || 60,
-      options?.title,
-      options?.description,
-      options?.studentTitle,
-      options?.studentObjectives,
-      options?.studentNotes
-    );
+      ...options,
+    });
   };
 
   return {

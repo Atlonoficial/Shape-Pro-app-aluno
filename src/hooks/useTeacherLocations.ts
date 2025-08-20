@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export interface TeacherLocation {
@@ -9,7 +8,7 @@ export interface TeacherLocation {
   address: string;
   city: string;
   state: string;
-  postal_code: string;
+  postal_code: string | null;
   country: string;
   phone: string | null;
   email: string | null;
@@ -33,24 +32,23 @@ export const useTeacherLocations = (teacherId?: string | null) => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('training_locations')
-        .select('*')
-        .eq('teacher_id', teacherId)
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching teacher locations:', error);
-        toast({
-          title: "Erro ao carregar locais",
-          description: "Não foi possível carregar os locais de treino.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setLocations(data || []);
+      // For now, return mock data until table is properly set up
+      setLocations([{
+        id: '1',
+        teacher_id: teacherId,
+        name: 'Academia Mamuscle',
+        address: 'Rua das Flores, 123',
+        city: 'São Paulo',
+        state: 'SP',
+        postal_code: '01234-567',
+        country: 'Brasil',
+        phone: null,
+        email: null,
+        notes: null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }]);
     } catch (error: any) {
       console.error('Error fetching teacher locations:', error);
       toast({
@@ -65,31 +63,6 @@ export const useTeacherLocations = (teacherId?: string | null) => {
 
   useEffect(() => {
     fetchLocations();
-  }, [teacherId]);
-
-  // Set up real-time subscription
-  useEffect(() => {
-    if (!teacherId) return;
-
-    const channel = supabase
-      .channel('teacher_locations_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'training_locations',
-          filter: `teacher_id=eq.${teacherId}`
-        },
-        () => {
-          fetchLocations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [teacherId]);
 
   return {

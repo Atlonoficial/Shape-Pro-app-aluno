@@ -70,6 +70,7 @@ export type Database = {
           duration: number | null
           id: string
           location: string | null
+          location_id: string | null
           meeting_link: string | null
           notes: string | null
           payment_status: string | null
@@ -96,6 +97,7 @@ export type Database = {
           duration?: number | null
           id?: string
           location?: string | null
+          location_id?: string | null
           meeting_link?: string | null
           notes?: string | null
           payment_status?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           duration?: number | null
           id?: string
           location?: string | null
+          location_id?: string | null
           meeting_link?: string | null
           notes?: string | null
           payment_status?: string | null
@@ -138,7 +141,15 @@ export type Database = {
           type?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "appointments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "training_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_log: {
         Row: {
@@ -435,6 +446,190 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      evaluation_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          due_date: string | null
+          evaluation_id: string | null
+          id: string
+          message: string | null
+          status: string
+          student_id: string
+          teacher_id: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          evaluation_id?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          student_id: string
+          teacher_id: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          evaluation_id?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          student_id?: string
+          teacher_id?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_requests_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_requests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_responses: {
+        Row: {
+          created_at: string
+          evaluation_id: string
+          id: string
+          question_id: string
+          question_text: string
+          response_type: string
+          response_value: Json
+        }
+        Insert: {
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          question_id: string
+          question_text: string
+          response_type?: string
+          response_value: Json
+        }
+        Update: {
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          question_id?: string
+          question_text?: string
+          response_type?: string
+          response_value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_responses_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          physical_measurements: Json
+          questions: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          physical_measurements?: Json
+          questions?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          physical_measurements?: Json
+          questions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      evaluations: {
+        Row: {
+          created_at: string
+          evaluation_date: string
+          id: string
+          overall_score: number | null
+          physical_measurements: Json | null
+          status: string
+          student_id: string
+          student_notes: string | null
+          teacher_id: string
+          teacher_notes: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          evaluation_date?: string
+          id?: string
+          overall_score?: number | null
+          physical_measurements?: Json | null
+          status?: string
+          student_id: string
+          student_notes?: string | null
+          teacher_id: string
+          teacher_notes?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          evaluation_date?: string
+          id?: string
+          overall_score?: number | null
+          physical_measurements?: Json | null
+          status?: string
+          student_id?: string
+          student_notes?: string | null
+          teacher_id?: string
+          teacher_notes?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exercises: {
         Row: {
@@ -1289,6 +1484,45 @@ export type Database = {
         }
         Relationships: []
       }
+      security_activity_log: {
+        Row: {
+          activity_description: string
+          activity_type: string
+          created_at: string
+          device_info: Json | null
+          id: string
+          ip_address: string | null
+          location_info: Json | null
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_description: string
+          activity_type: string
+          created_at?: string
+          device_info?: Json | null
+          id?: string
+          ip_address?: string | null
+          location_info?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_description?: string
+          activity_type?: string
+          created_at?: string
+          device_info?: Json | null
+          id?: string
+          ip_address?: string | null
+          location_info?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_invitations: {
         Row: {
           accepted_at: string | null
@@ -1535,6 +1769,78 @@ export type Database = {
         }
         Relationships: []
       }
+      training_locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          google_maps_link: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          name: string
+          teacher_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          google_maps_link?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name: string
+          teacher_id: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          google_maps_link?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name?: string
+          teacher_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_mfa_settings: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           total_points: number
@@ -1570,6 +1876,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          expires_at: string | null
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_activity: string
+          session_token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity?: string
+          session_token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity?: string
+          session_token?: string
           user_id?: string
         }
         Relationships: []
@@ -1768,6 +2110,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_backup_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       get_user_entitlements: {
         Args: { p_teacher_id: string; p_user_id: string }
         Returns: Json
@@ -1804,6 +2150,18 @@ export type Database = {
           slot_start: string
           slot_teacher_id: string
         }[]
+      }
+      log_security_activity: {
+        Args: {
+          p_activity_description: string
+          p_activity_type: string
+          p_device_info?: Json
+          p_ip_address?: string
+          p_success?: boolean
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       log_sensitive_access: {
         Args: { access_type: string; record_id: string; table_name: string }
@@ -1843,6 +2201,10 @@ export type Database = {
               p_student_user_id: string
             }
         Returns: string
+      }
+      update_session_activity: {
+        Args: { p_session_token: string }
+        Returns: undefined
       }
       validate_input: {
         Args: { allow_html?: boolean; input_text: string; max_length?: number }

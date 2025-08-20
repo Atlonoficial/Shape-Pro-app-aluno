@@ -185,19 +185,20 @@ export default function Agenda() {
     if (!selectedSlot || !teacherId) return;
 
     try {
-      const result = await bookAppointment(
+      const result = await bookAppointment({
         teacherId,
-        selectedSlot.slot_start,
-        bookingData.type,
-        selectedSlot.slot_minutes,
-        bookingData.title,
-        '',
-        bookingData.title,
-        bookingData.objective,
-        bookingData.notes
-      );
+        scheduledTime: selectedSlot.slot_start,
+        type: bookingData.type,
+        duration: selectedSlot.slot_minutes,
+        title: bookingData.title,
+        description: '',
+        studentTitle: bookingData.title,
+        studentObjectives: bookingData.objective,
+        studentNotes: bookingData.notes,
+        locationId: bookingData.location_id || undefined,
+      });
 
-      if (result.success) {
+      if (result) {
         setShowBookingDialog(false);
         setSelectedSlot(null);
         
