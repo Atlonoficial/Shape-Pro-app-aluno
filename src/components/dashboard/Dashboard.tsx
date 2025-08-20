@@ -7,6 +7,7 @@ import { CoachAICard } from "./CoachAICard";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
+import { PointsWidget } from "@/components/gamification/PointsWidget";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useWorkouts, useNotifications } from "@/hooks/useSupabase";
@@ -15,9 +16,10 @@ import { useWeightProgress } from "@/hooks/useWeightProgress";
 interface DashboardProps {
   onCoachClick?: () => void;
   onWorkoutClick?: () => void;
+  onGamificationClick?: () => void;
 }
 
-export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
+export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
@@ -163,6 +165,11 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         <p className="text-foreground">
           Estou aqui para te guiar, vamos começar?
         </p>
+      </div>
+
+      {/* Points Widget */}
+      <div className="mb-6">
+        <PointsWidget onClick={onGamificationClick} />
       </div>
 
       {/* Weight Progress Chart */}

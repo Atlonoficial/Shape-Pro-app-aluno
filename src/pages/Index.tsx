@@ -9,6 +9,7 @@ import { Nutrition } from "@/components/nutrition/Nutrition";
 import { Profile } from "@/components/profile/Profile";
 import { Members } from "@/components/members/Members";
 import { AIAssistant } from "@/components/assistant/AIAssistant";
+import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
 import { Rewards } from "@/components/rewards/Rewards";
 
 const Index = () => {
@@ -30,14 +31,20 @@ const Index = () => {
     setActiveTab('workouts');
   };
 
+  const handleGamificationClick = () => {
+    setActiveTab('gamification');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} />;
+        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} onGamificationClick={handleGamificationClick} />;
       case 'workouts':
         return <Workouts />;
       case 'nutrition':
         return <Nutrition />;
+      case 'gamification':
+        return <GamificationDashboard />;
       case 'members':
         return <Members />;
       case 'assistant':
@@ -47,7 +54,7 @@ const Index = () => {
       case 'profile':
         return <Profile />;
       default:
-        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} />;
+        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} onGamificationClick={handleGamificationClick} />;
     }
   };
 

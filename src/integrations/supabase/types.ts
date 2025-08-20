@@ -345,6 +345,90 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_participations: {
+        Row: {
+          challenge_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          id: string
+          points_earned: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          points_earned?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          points_earned?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          is_active: boolean
+          participants: string[]
+          points_reward: number
+          start_date: string
+          target_value: number
+          teacher_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          participants?: string[]
+          points_reward?: number
+          start_date?: string
+          target_value?: number
+          teacher_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          participants?: string[]
+          points_reward?: number
+          start_date?: string
+          target_value?: number
+          teacher_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           attachments: Json | null
@@ -834,6 +918,63 @@ export type Database = {
         }
         Relationships: []
       }
+      gamification_settings: {
+        Row: {
+          created_at: string
+          id: string
+          level_up_bonus: number
+          max_daily_points: number
+          points_ai_interaction: number
+          points_assessment: number
+          points_checkin: number
+          points_goal_achieved: number
+          points_meal_log: number
+          points_medical_exam: number
+          points_progress_update: number
+          points_teacher_message: number
+          points_workout: number
+          streak_multiplier: number
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level_up_bonus?: number
+          max_daily_points?: number
+          points_ai_interaction?: number
+          points_assessment?: number
+          points_checkin?: number
+          points_goal_achieved?: number
+          points_meal_log?: number
+          points_medical_exam?: number
+          points_progress_update?: number
+          points_teacher_message?: number
+          points_workout?: number
+          streak_multiplier?: number
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level_up_bonus?: number
+          max_daily_points?: number
+          points_ai_interaction?: number
+          points_assessment?: number
+          points_checkin?: number
+          points_goal_achieved?: number
+          points_meal_log?: number
+          points_medical_exam?: number
+          points_progress_update?: number
+          points_teacher_message?: number
+          points_workout?: number
+          streak_multiplier?: number
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meal_logs: {
         Row: {
           actual_time: string | null
@@ -994,6 +1135,39 @@ export type Database = {
           id?: string
           notes?: string | null
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      monthly_rankings: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          position: number
+          teacher_id: string
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          position: number
+          teacher_id: string
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          position?: number
+          teacher_id?: string
+          total_points?: number
           updated_at?: string
           user_id?: string
         }
@@ -2266,6 +2440,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      award_points_enhanced: {
+        Args: {
+          p_activity_type: string
+          p_custom_points?: number
+          p_description?: string
+          p_metadata?: Json
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       book_appointment: {
         Args:
           | {
@@ -2416,6 +2600,10 @@ export type Database = {
               p_student_user_id: string
             }
         Returns: string
+      }
+      update_monthly_rankings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_session_activity: {
         Args: { p_session_token: string }
