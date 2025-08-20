@@ -103,6 +103,7 @@ export const useAvailableSlots = () => {
         p_student_title: studentTitle,
         p_student_objectives: studentObjectives,
         p_student_notes: studentNotes,
+        p_location_id: locationId,
       });
 
       if (error) throw error;

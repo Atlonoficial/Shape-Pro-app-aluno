@@ -18,13 +18,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock, User, MapPin } from 'lucide-react';
+import { useTeacherLocations } from '@/hooks/useTeacherLocations';
 
 interface BookingFormData {
   type: 'consultation' | 'training' | 'assessment';
   title: string;
   objective: string;
   notes: string;
+  location_id: string;
 }
 
 interface BookingConfirmationDialogProps {
@@ -58,7 +60,10 @@ export function BookingConfirmationDialog({
     title: '',
     objective: '',
     notes: '',
+    location_id: '',
   });
+
+  const { locations, loading: locationsLoading } = useTeacherLocations(selectedSlot?.slot_teacher_id);
 
   const [errors, setErrors] = useState<Partial<BookingFormData>>({});
 
@@ -98,6 +103,7 @@ export function BookingConfirmationDialog({
         title: formData.title,
         objective: formData.objective,
         notes: formData.notes,
+        location_id: formData.location_id,
       });
       
       // Reset form apenas se sucesso
@@ -106,6 +112,7 @@ export function BookingConfirmationDialog({
         title: '',
         objective: '',
         notes: '',
+        location_id: '',
       });
       setErrors({});
     } catch (error: any) {
@@ -122,6 +129,7 @@ export function BookingConfirmationDialog({
       title: '',
       objective: '',
       notes: '',
+      location_id: '',
     });
     setErrors({});
     onOpenChange(false);
@@ -178,6 +186,38 @@ export function BookingConfirmationDialog({
                 {sessionTypes.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Local do Treino */}
+          <div className="space-y-2">
+            <Label htmlFor="location">Local do Treino</Label>
+            <Select
+              value={formData.location_id}
+              onValueChange={(value: string) =>
+                setFormData(prev => ({ ...prev, location_id: value }))
+              }
+              disabled={locationsLoading || locations.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={
+                  locationsLoading 
+                    ? "Carregando locais..." 
+                    : locations.length === 0 
+                      ? "Nenhum local disponível"
+                      : "Selecione o local do treino"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((location) => (
+                  <SelectItem key={location.id} value={location.id}>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3 w-3" />
+                      <span>{location.name} - {location.city}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
