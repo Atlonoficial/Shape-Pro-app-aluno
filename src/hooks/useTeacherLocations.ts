@@ -34,7 +34,7 @@ export const useTeacherLocations = (teacherId?: string | null) => {
       
       // For now, return mock data until table is properly set up
       setLocations([{
-        id: '1',
+        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
         teacher_id: teacherId,
         name: 'Academia Mamuscle',
         address: 'Rua das Flores, 123',

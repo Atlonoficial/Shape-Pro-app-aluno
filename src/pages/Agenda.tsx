@@ -181,8 +181,24 @@ export default function Agenda() {
     }
   };
 
+  // Helper function to validate UUID
+  const isValidUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
   const handleConfirmBooking = async (bookingData: any) => {
     if (!selectedSlot || !teacherId) return;
+
+    // Validate and clean location_id
+    let validLocationId: string | null = null;
+    if (bookingData.location_id && bookingData.location_id !== 'no-location' && bookingData.location_id !== '') {
+      if (isValidUUID(bookingData.location_id)) {
+        validLocationId = bookingData.location_id;
+      } else {
+        console.warn('Invalid UUID provided for location_id, setting to null:', bookingData.location_id);
+      }
+    }
 
     try {
       const result = await bookAppointment({
@@ -195,7 +211,7 @@ export default function Agenda() {
         studentTitle: bookingData.title,
         studentObjectives: bookingData.objective,
         studentNotes: bookingData.notes,
-        locationId: !bookingData.location_id || bookingData.location_id === '' ? null : bookingData.location_id,
+        locationId: validLocationId,
       });
 
       if (result) {
