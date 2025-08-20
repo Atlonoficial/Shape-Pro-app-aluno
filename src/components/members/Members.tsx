@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Play, Package, Loader2, Users, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
@@ -6,44 +6,17 @@ import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useCourses } from "@/hooks/useCourses";
 import { Student } from "@/lib/supabase";
-// Temporary placeholder - Firebase removed
-// import { getCoursesByUser, Course } from "@/lib/firestore";
 
 
 export const Members = () => {
   const { user, userProfile } = useAuth();
   const { student } = useStudentProfile();
+  const { courses, loading } = useCourses();
   const [activeTab, setActiveTab] = useState<'courses' | 'students'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [courses, setCourses] = useState<any[]>([
-    {
-      id: '1',
-      title: 'Dieta Inteligente',
-      description: 'Módulo 2',
-      thumbnail: '/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png'
-    },
-    {
-      id: '2',
-      title: 'Metabolismo Feminino',
-      description: 'Módulo 1',
-      thumbnail: '/lovable-uploads/44934fca-7868-4c3b-ac23-e51f6e1619f0.png'
-    },
-    {
-      id: '3',
-      title: 'Treino Funcional',
-      description: 'Módulo 3',
-      thumbnail: '/lovable-uploads/65cd0e38-8355-4d41-8be9-a292750e3daa.png'
-    },
-    {
-      id: '4',
-      title: 'Nutrição Esportiva',
-      description: 'Módulo 1',
-      thumbnail: '/lovable-uploads/285eda96-c32f-4481-bbd8-9ab4550756b9.png'
-    }
-  ]);
-  const [loading, setLoading] = useState(false);
 
   const isTeacher = userProfile?.user_type === 'teacher';
 
@@ -155,7 +128,7 @@ export const Members = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <div className="absolute bottom-2 left-2 right-2">
                       <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{course.title}</h4>
-                      <p className="text-[10px] text-white/80 leading-tight">{course.description}</p>
+                      <p className="text-[10px] text-white/80 leading-tight">{course.category || 'Curso'}</p>
                     </div>
                   </div>
                 </div>
