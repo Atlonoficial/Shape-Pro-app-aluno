@@ -188,6 +188,11 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
         loading={workoutsLoading || progressLoading} 
       />
 
+      {/* Points Widget */}
+      <div className="mb-6">
+        <PointsWidget onClick={onGamificationClick} />
+      </div>
+
 
       {workouts && workouts.length > 0 && (
         <div className="card-gradient p-6">
