@@ -57,23 +57,29 @@ export const WeightInputModal = ({ isOpen, onClose, onSave }: WeightInputModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="mx-4 sm:mx-0 sm:max-w-md w-full max-w-sm">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-primary">
+          <DialogTitle className="flex items-center gap-2 text-primary text-base sm:text-lg">
             <Scale className="w-5 h-5" />
-            Registrar Peso Semanal
+            <span className="text-sm sm:text-base">
+              Registrar Peso - {new Date().toLocaleDateString('pt-BR', { 
+                weekday: 'long',
+                day: '2-digit',
+                month: 'short'
+              })}
+            </span>
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">
+        <div className="space-y-4 py-2 sm:py-4">
+          <div className="text-center px-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4">
               É sexta-feira! Que tal registrar seu peso para acompanhar sua evolução?
             </p>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="weight">Peso atual (kg)</Label>
+          <div className="space-y-2 px-2">
+            <Label htmlFor="weight" className="text-sm">Peso atual (kg)</Label>
             <Input
               id="weight"
               type="number"
@@ -83,23 +89,23 @@ export const WeightInputModal = ({ isOpen, onClose, onSave }: WeightInputModalPr
               step="0.1"
               min="1"
               max="300"
-              className="text-center text-lg"
+              className="text-center text-base sm:text-lg h-12"
             />
           </div>
           
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 px-2">
             <Button
               variant="outline"
               onClick={handleSkip}
               disabled={loading}
-              className="flex-1"
+              className="flex-1 h-10"
             >
               Pular
             </Button>
             <Button
               onClick={handleSave}
               disabled={loading || !weight}
-              className="flex-1 btn-primary"
+              className="flex-1 h-10"
             >
               {loading ? 'Salvando...' : 'Registrar'}
             </Button>

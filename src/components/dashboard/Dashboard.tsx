@@ -21,7 +21,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
-  const { addWeightEntry, hasWeighedThisWeek } = useWeightProgress(user?.id || '');
+  const { addWeightEntry, shouldShowWeightModal } = useWeightProgress(user?.id || '');
   
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
@@ -34,15 +34,15 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Check if should show weight modal
+  // Check if should show weight modal (only on Fridays)
   useEffect(() => {
     if (!isAuthenticated || !user) return;
     
-    // Show modal if user hasn't weighed this week
-    if (!hasWeighedThisWeek()) {
-      setTimeout(() => setShowWeightModal(true), 1000);
+    // Show modal only on Fridays if user hasn't weighed this week
+    if (shouldShowWeightModal()) {
+      setTimeout(() => setShowWeightModal(true), 2000);
     }
-  }, [isAuthenticated, user, hasWeighedThisWeek]);
+  }, [isAuthenticated, user, shouldShowWeightModal]);
 
   const handleSaveWeight = async (weight: number) => {
     const success = await addWeightEntry(weight);

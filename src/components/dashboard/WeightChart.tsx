@@ -23,10 +23,10 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
     return (
       <text 
         x={x + width / 2} 
-        y={y - 5} 
+        y={y - 3} 
         fill="hsl(var(--primary))" 
         textAnchor="middle" 
-        fontSize="12" 
+        fontSize="10" 
         fontWeight="600"
       >
         {value}kg
@@ -54,14 +54,14 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
 
   if (chartData.length === 0) {
     return (
-      <div className="card-gradient p-6 mb-6 text-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">Evolução do Peso</h3>
-        <p className="text-sm text-muted-foreground mb-4">
+      <div className="card-gradient p-4 sm:p-6 mb-6 text-center">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">Evolução do Peso</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-4">
           Registre seu peso todas as sextas-feiras para ver sua evolução!
         </p>
         <button 
           onClick={onWeightNeeded}
-          className="btn-primary text-sm px-4 py-2"
+          className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2"
         >
           Registrar Primeiro Peso
         </button>
@@ -69,41 +69,41 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
     );
   }
   return (
-    <div className="card-gradient p-6 mb-6">
+    <div className="card-gradient p-4 sm:p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Evolução do Peso</h3>
-          <p className="text-sm text-muted-foreground">Últimas {chartData.length} semanas</p>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">Evolução do Peso</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">Mês atual - {chartData.length} registros</p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-primary">{currentWeight}kg</p>
+          <p className="text-xl sm:text-2xl font-bold text-primary">{currentWeight}kg</p>
           {previousWeight > 0 && (
-            <p className={`text-sm ${weightDiff <= 0 ? 'text-success' : 'text-warning'}`}>
+            <p className={`text-xs sm:text-sm ${weightDiff <= 0 ? 'text-success' : 'text-warning'}`}>
               {weightDiff <= 0 ? weightDiff.toFixed(1) : `+${weightDiff.toFixed(1)}`}kg vs anterior
             </p>
           )}
         </div>
       </div>
       
-      <div className="h-40">
+      <div className="h-32 sm:h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 5, left: 5, bottom: 5 }}>
+          <BarChart data={chartData} margin={{ top: 15, right: 5, left: 5, bottom: 5 }}>
             <XAxis 
               dataKey="date" 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
             />
             <YAxis hide />
             <Bar 
               dataKey="weight" 
-              radius={[8, 8, 0, 0]}
+              radius={[6, 6, 0, 0]}
             >
               <LabelList content={renderCustomLabel} />
               {chartData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={`hsl(var(--primary) / ${0.7 + (index * 0.1)})`}
+                  fill={index === chartData.length - 1 ? 'hsl(var(--primary))' : `hsl(var(--primary) / 0.6)`}
                 />
               ))}
             </Bar>

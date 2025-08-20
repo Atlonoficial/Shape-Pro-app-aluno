@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useWeightProgress } from "@/hooks/useWeightProgress";
 
 interface AssessmentData {
   // Medidas básicas
@@ -112,6 +113,7 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
   });
   
   const { user } = useAuthContext();
+  const { addWeightFromAssessment } = useWeightProgress(user?.id || '');
 
   const handleInputChange = (field: keyof AssessmentData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -319,6 +321,11 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
       if (error) {
         console.error('Supabase error:', error);
         throw error;
+      }
+
+      // If weight was entered, also add it to the weight progress chart
+      if (formData.weight.trim()) {
+        await addWeightFromAssessment(parseFloat(formData.weight), assessmentDate);
       }
 
       toast.success("Avaliação física registrada com sucesso!");

@@ -5,6 +5,7 @@ interface WeightEntry {
   date: string;
   weight: number;
   weekDay: string;
+  rawDate: string;
 }
 
 export const useWeightProgress = (userId: string) => {
@@ -23,18 +24,25 @@ export const useWeightProgress = (userId: string) => {
       setLoading(true);
       setError(null);
 
+      // Get start and end of current month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
       const { data, error: fetchError } = await supabase
         .from('progress')
         .select('*')
         .eq('user_id', userId)
         .eq('type', 'weight')
+        .gte('date', startOfMonth.toISOString())
+        .lte('date', endOfMonth.toISOString())
         .order('date', { ascending: true });
 
       if (fetchError) {
         throw fetchError;
       }
 
-      // Format data for the chart
+      // Format data for the chart - current month only
       const formattedData = (data || []).map(entry => ({
         date: new Date(entry.date).toLocaleDateString('pt-BR', { 
           day: '2-digit', 
@@ -44,11 +52,8 @@ export const useWeightProgress = (userId: string) => {
         weekDay: new Date(entry.date).toLocaleDateString('pt-BR', { weekday: 'short' }),
         rawDate: entry.date // Keep original date for calculations
       }));
-
-      // Get last 8 weeks of data
-      const recentData = formattedData.slice(-8);
       
-      setWeightData(recentData);
+      setWeightData(formattedData);
     } catch (err) {
       console.error('Error fetching weight progress:', err);
       setError(err instanceof Error ? err.message : 'Erro ao buscar dados de peso');
@@ -98,10 +103,44 @@ export const useWeightProgress = (userId: string) => {
     
     // Check if there's any weight entry from this week
     return weightData.some(entry => {
-      // Get the actual date from the database
-      const entryDate = new Date(entry.date);
+      const entryDate = new Date(entry.rawDate);
       return entryDate >= startOfWeek;
     });
+  };
+
+  const isFridayToday = () => {
+    return new Date().getDay() === 5; // 5 = Friday
+  };
+
+  const shouldShowWeightModal = () => {
+    return isFridayToday() && !hasWeighedThisWeek();
+  };
+
+  const addWeightFromAssessment = async (weight: number, assessmentDate: string) => {
+    if (!userId) return false;
+
+    try {
+      const { error: insertError } = await supabase
+        .from('progress')
+        .insert({
+          user_id: userId,
+          type: 'weight',
+          value: weight,
+          unit: 'kg',
+          date: assessmentDate
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      // Refresh data after adding
+      await fetchWeightProgress();
+      return true;
+    } catch (err) {
+      console.error('Error adding weight from assessment:', err);
+      return false;
+    }
   };
 
   useEffect(() => {
@@ -114,6 +153,9 @@ export const useWeightProgress = (userId: string) => {
     error,
     addWeightEntry,
     hasWeighedThisWeek,
+    isFridayToday,
+    shouldShowWeightModal,
+    addWeightFromAssessment,
     refetch: fetchWeightProgress
   };
 };
