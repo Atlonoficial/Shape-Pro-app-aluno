@@ -16,3 +16,6 @@ jwt_expiry = 3600
 
 [functions.send-push-notification]
 verify_jwt = false
+
+[functions.ai-assistant]
+verify_jwt = true

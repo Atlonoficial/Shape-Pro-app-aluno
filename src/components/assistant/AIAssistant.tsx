@@ -1,36 +1,31 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, Calendar, Award, Target } from "lucide-react";
+import { Send, Bot, Calendar, Award, Target, Plus, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShapeProLogo } from "@/components/ui/ShapeProLogo";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'ai';
-  timestamp: Date;
-}
+import { useAIConversation } from "@/hooks/useAIConversation";
+import { toast } from "sonner";
 
 export const AIAssistant = () => {
   const { user, userProfile } = useAuthContext();
   const userName = (userProfile?.name || 'Usuário').trim().split(/\s+/)[0];
   
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { 
+    messages, 
+    conversations, 
+    currentConversation,
+    loading, 
+    error, 
+    sendMessage, 
+    startNewConversation,
+    loadConversation 
+  } = useAIConversation();
+  
   const [inputText, setInputText] = useState('');
+  const [showConversations, setShowConversations] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Inicializar mensagem com nome do usuário
-  useEffect(() => {
-    const initialMessage: Message = {
-      id: '1',
-      text: `Olá, ${userName}! 👋 Sou seu Coach IA da Shape Pro. Estou aqui para te guiar, vamos começar?`,
-      sender: 'ai',
-      timestamp: new Date()
-    };
-    setMessages([initialMessage]);
-  }, [userName]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,47 +35,18 @@ export const AIAssistant = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || loading) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    const messageText = inputText;
     setInputText('');
 
-    // Simular resposta da IA
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: getAIResponse(inputText),
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
-  };
-
-  const getAIResponse = (input: string): string => {
-    const lowerInput = input.toLowerCase();
-    
-    if (lowerInput.includes('treino') || lowerInput.includes('exercício')) {
-      return `Ótimo, ${userName}! Vejo que você está interessado em treinos. Posso sugerir alguns exercícios baseados em seus objetivos. Qual é seu foco principal: força, cardio ou flexibilidade?`;
+    try {
+      await sendMessage(messageText);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Erro ao enviar mensagem. Tente novamente.');
     }
-    
-    if (lowerInput.includes('dieta') || lowerInput.includes('alimentação')) {
-      return `Excelente pergunta sobre nutrição, ${userName}! Uma alimentação balanceada é fundamental. Posso ajudar você a planejar suas refeições. Qual é seu objetivo: ganho de massa, perda de peso ou manutenção?`;
-    }
-    
-    if (lowerInput.includes('peso') || lowerInput.includes('emagrecer')) {
-      return `Para perda de peso eficaz, ${userName}, recomendo combinar exercícios cardiovasculares com musculação e uma dieta balanceada. Quer que eu crie um plano personalizado para você?`;
-    }
-    
-    return `Entendi, ${userName}! Estou aqui para ajudar com treinos, nutrição, e acompanhar seu progresso. Tem alguma meta específica em mente?`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -140,13 +106,22 @@ export const AIAssistant = () => {
 
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 pb-32 space-y-4">
+        {messages.length === 0 && !loading && (
+          <div className="text-center py-8">
+            <Bot className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              Olá, {userName}! 👋 Sou seu Coach IA da Shape Pro. Estou aqui para te guiar com base nos seus dados reais. Como posso ajudar?
+            </p>
+          </div>
+        )}
+        
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-              {message.sender === 'ai' && (
+            <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
+              {message.role === 'assistant' && (
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
                     <Bot className="w-5 h-5 text-primary-foreground" />
@@ -156,17 +131,17 @@ export const AIAssistant = () => {
               )}
               
               <Card className={`p-3 ${
-                message.sender === 'user' 
+                message.role === 'user' 
                   ? 'bg-primary text-background ml-auto' 
                   : 'bg-card/50 border-border/50'
               }`}>
-                <p className={`text-sm ${
-                  message.sender === 'user' ? 'text-background' : 'text-foreground'
+                <p className={`text-sm whitespace-pre-wrap ${
+                  message.role === 'user' ? 'text-background' : 'text-foreground'
                 }`}>
-                  {message.text}
+                  {message.content}
                 </p>
                 <p className={`text-xs mt-1 ${
-                  message.sender === 'user' 
+                  message.role === 'user' 
                     ? 'text-background/70' 
                     : 'text-muted-foreground'
                 }`}>
@@ -176,6 +151,25 @@ export const AIAssistant = () => {
             </div>
           </div>
         ))}
+        
+        {loading && (
+          <div className="flex justify-start">
+            <div className="max-w-[80%]">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
+                  <Loader2 className="w-5 h-5 text-primary-foreground animate-spin" />
+                </div>
+                <span className="text-sm font-semibold text-primary">Coach Shape Pro</span>
+              </div>
+              <Card className="p-3 bg-card/50 border-border/50">
+                <p className="text-sm text-muted-foreground">
+                  Analisando seus dados e preparando resposta personalizada...
+                </p>
+              </Card>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 
@@ -197,10 +191,14 @@ export const AIAssistant = () => {
           <Button
             size="sm"
             onClick={handleSendMessage}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || loading}
             className="btn-primary h-10 w-10 shrink-0 rounded-xl"
           >
-            <Send className="w-4 h-4" />
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </div>

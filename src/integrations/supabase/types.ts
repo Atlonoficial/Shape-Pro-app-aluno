@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          condition_data: Json | null
+          condition_type: string
+          condition_value: number
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          points_reward: number
+          rarity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          condition_data?: Json | null
+          condition_type: string
+          condition_value?: number
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          points_reward?: number
+          rarity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          condition_data?: Json | null
+          condition_type?: string
+          condition_value?: number
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          points_reward?: number
+          rarity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          thread_id: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          thread_id?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          thread_id?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anamneses: {
         Row: {
           alergias: string[]
@@ -691,6 +801,36 @@ export type Database = {
           sets?: number
           video_url?: string | null
           weight?: number | null
+        }
+        Relationships: []
+      }
+      gamification_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          points_earned: number
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          points_earned?: number
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          points_earned?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -1811,6 +1951,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          points_earned: number
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          points_earned?: number
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          points_earned?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_mfa_settings: {
         Row: {
           backup_codes: string[] | null
@@ -1843,16 +2015,28 @@ export type Database = {
       }
       user_points: {
         Row: {
+          current_streak: number
+          last_activity_date: string | null
+          level: number
+          longest_streak: number
           total_points: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          current_streak?: number
+          last_activity_date?: string | null
+          level?: number
+          longest_streak?: number
           total_points?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          current_streak?: number
+          last_activity_date?: string | null
+          level?: number
+          longest_streak?: number
           total_points?: number
           updated_at?: string
           user_id?: string
@@ -2072,6 +2256,16 @@ export type Database = {
         Args: { p_subscription_id: string }
         Returns: string
       }
+      award_points: {
+        Args: {
+          p_activity_type: string
+          p_description?: string
+          p_metadata?: Json
+          p_points: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       book_appointment: {
         Args:
           | {
@@ -2099,9 +2293,17 @@ export type Database = {
             }
         Returns: string
       }
+      calculate_user_level: {
+        Args: { points: number }
+        Returns: number
+      }
       can_insert_notification: {
         Args: { targets: string[] }
         Returns: boolean
+      }
+      check_and_award_achievements: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       check_rate_limit: {
         Args: {
