@@ -167,10 +167,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
         </p>
       </div>
 
-      {/* Points Widget */}
-      <div className="mb-6">
-        <PointsWidget onClick={onGamificationClick} />
-      </div>
 
       {/* Weight Progress Chart */}
       <WeightChart onWeightNeeded={() => setShowWeightModal(true)} />
@@ -190,6 +186,13 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
         progress={progress} 
         loading={workoutsLoading || progressLoading} 
       />
+
+      {/* Points Widget */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="col-span-2">
+          <PointsWidget onClick={onGamificationClick} compact />
+        </div>
+      </div>
 
       {workouts && workouts.length > 0 && (
         <div className="card-gradient p-6">
