@@ -1,28 +1,45 @@
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import { useWeightProgress } from '@/hooks/useWeightProgress';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 
 interface WeightChartProps {
-  progress?: any[];
-  loading?: boolean;
+  onWeightNeeded?: () => void;
 }
 
-export const WeightChart = ({ progress = [], loading = false }: WeightChartProps) => {
-  // Preparar dados do Firebase para o gráfico
-  const chartData = progress.length > 0 
-    ? progress.slice(-7).map((entry, index) => ({
-        day: new Date(entry.date).toLocaleDateString('pt-BR', { weekday: 'short' }),
-        weight: entry.weight || 0
-      }))
+export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
+  const { user } = useAuthContext();
+  const { weightData, loading } = useWeightProgress(user?.id || '');
+  
+  // Use real data or fallback to demo data
+  const chartData = weightData.length > 0 
+    ? weightData
     : [
-        { day: 'Seg', weight: 78.5 },
-        { day: 'Ter', weight: 78.2 },
-        { day: 'Qua', weight: 78.0 },
-        { day: 'Qui', weight: 77.8 },
-        { day: 'Sex', weight: 77.5 },
+        { date: '15/Jan', weight: 78.5, weekDay: 'Seg' },
+        { date: '22/Jan', weight: 78.2, weekDay: 'Seg' },
+        { date: '29/Jan', weight: 78.0, weekDay: 'Seg' },
+        { date: '05/Fev', weight: 77.8, weekDay: 'Seg' },
       ];
   
-  const currentWeight = progress.length > 0 ? progress[progress.length - 1].weight : 77.5;
-  const previousWeight = progress.length > 1 ? progress[progress.length - 2].weight : 78.5;
+  const currentWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
+  const previousWeight = chartData.length > 1 ? chartData[chartData.length - 2].weight : 0;
   const weightDiff = currentWeight - previousWeight;
+  
+  // Custom label renderer for weight values on top of bars
+  const renderCustomLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    return (
+      <text 
+        x={x + width / 2} 
+        y={y - 5} 
+        fill="hsl(var(--primary))" 
+        textAnchor="middle" 
+        fontSize="12" 
+        fontWeight="600"
+      >
+        {value}kg
+      </text>
+    );
+  };
   
   if (loading) {
     return (
@@ -37,7 +54,24 @@ export const WeightChart = ({ progress = [], loading = false }: WeightChartProps
             <div className="h-4 bg-muted rounded w-24"></div>
           </div>
         </div>
-        <div className="h-32 bg-muted rounded"></div>
+        <div className="h-40 bg-muted rounded"></div>
+      </div>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="card-gradient p-6 mb-6 text-center">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Evolução do Peso</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Registre seu peso todas as sextas-feiras para ver sua evolução!
+        </p>
+        <button 
+          onClick={onWeightNeeded}
+          className="btn-primary text-sm px-4 py-2"
+        >
+          Registrar Primeiro Peso
+        </button>
       </div>
     );
   }
@@ -45,36 +79,42 @@ export const WeightChart = ({ progress = [], loading = false }: WeightChartProps
     <div className="card-gradient p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Progresso do Peso</h3>
-          <p className="text-sm text-muted-foreground">Últimos {chartData.length} dias</p>
+          <h3 className="text-lg font-semibold text-foreground">Evolução do Peso</h3>
+          <p className="text-sm text-muted-foreground">Últimas {chartData.length} semanas</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-primary">{currentWeight}kg</p>
-          <p className={`text-sm ${weightDiff <= 0 ? 'text-success' : 'text-warning'}`}>
-            {weightDiff <= 0 ? weightDiff.toFixed(1) : `+${weightDiff.toFixed(1)}`}kg esta semana
-          </p>
+          {previousWeight > 0 && (
+            <p className={`text-sm ${weightDiff <= 0 ? 'text-success' : 'text-warning'}`}>
+              {weightDiff <= 0 ? weightDiff.toFixed(1) : `+${weightDiff.toFixed(1)}`}kg vs anterior
+            </p>
+          )}
         </div>
       </div>
       
-      <div className="h-32">
+      <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
+          <BarChart data={chartData} margin={{ top: 20, right: 5, left: 5, bottom: 5 }}>
             <XAxis 
-              dataKey="day" 
+              dataKey="date" 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             />
             <YAxis hide />
-            <Line 
-              type="monotone" 
+            <Bar 
               dataKey="weight" 
-              stroke="hsl(var(--primary))" 
-              strokeWidth={3}
-              dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 6 }}
-              activeDot={{ r: 8, fill: 'hsl(var(--primary))' }}
-            />
-          </LineChart>
+              radius={[8, 8, 0, 0]}
+            >
+              <LabelList content={renderCustomLabel} />
+              {chartData.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={`hsl(var(--primary) / ${0.7 + (index * 0.1)})`}
+                />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>

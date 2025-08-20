@@ -2,6 +2,7 @@ import { Bell, Settings, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { WeightChart } from "./WeightChart";
+import { WeightInputModal } from "./WeightInputModal";
 import { CoachAICard } from "./CoachAICard";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
@@ -9,6 +10,7 @@ import { DashboardStats } from "./DashboardStats";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useWorkouts, useNotifications } from "@/hooks/useSupabase";
+import { useWeightProgress } from "@/hooks/useWeightProgress";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -18,6 +20,9 @@ interface DashboardProps {
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const { addWeightEntry } = useWeightProgress(user?.id || '');
+  
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
     ? rawName.split(' ')[0] 
@@ -28,6 +33,35 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  // Check if it's Friday and show weight input modal
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    
+    const today = new Date();
+    const isFriday = today.getDay() === 5; // 5 = Friday
+    
+    // For demo purposes, show modal on any day
+    // In production, you'd check: isFriday && !hasWeighedThisWeek()
+    if (isFriday) {
+      // Check if already weighed this week (simplified check)
+      const weekKey = `${today.getFullYear()}-${Math.floor(today.getDate() / 7)}`;
+      const hasWeighedRecently = localStorage.getItem(`weight-${user.id}-${weekKey}`);
+      if (!hasWeighedRecently) {
+        setTimeout(() => setShowWeightModal(true), 2000); // Show after 2 seconds
+      }
+    }
+  }, [isAuthenticated, user]);
+
+  const handleSaveWeight = async (weight: number) => {
+    const success = await addWeightEntry(weight);
+    if (success && user) {
+      const today = new Date();
+      const weekKey = `${today.getFullYear()}-${Math.floor(today.getDate() / 7)}`;
+      localStorage.setItem(`weight-${user.id}-${weekKey}`, 'true');
+    }
+    return success;
+  };
 
   if (!isAuthenticated) {
     return null; // Enquanto redireciona
@@ -139,7 +173,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       </div>
 
       {/* Weight Progress Chart */}
-      {/* <WeightChart progress={progress} loading={progressLoading} /> */}
+      <WeightChart onWeightNeeded={() => setShowWeightModal(true)} />
 
       {/* Coach AI Card */}
       <CoachAICard onCoachClick={onCoachClick} />
@@ -192,6 +226,13 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
           </button>
         </div>
       )}
+
+      {/* Weight Input Modal */}
+      <WeightInputModal
+        isOpen={showWeightModal}
+        onClose={() => setShowWeightModal(false)}
+        onSave={handleSaveWeight}
+      />
     </div>
   );
 };
