@@ -31,23 +31,23 @@ export const GamificationDashboard = () => {
   const levelInfo = userPoints ? getLevelInfo(userPoints.total_points) : null;
 
   return (
-    <div className="p-4 pb-24 space-y-6 max-w-4xl mx-auto">
+    <div className="p-3 pb-20 space-y-4 w-full max-w-4xl mx-auto">
       {/* Header com Pontos e Nível */}
       <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Gamificação</h1>
-              <p className="text-muted-foreground">Seu progresso e conquistas</p>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Gamificação</h1>
+              <p className="text-sm text-muted-foreground">Seu progresso e conquistas</p>
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2 mb-1">
+            <div className="text-center sm:text-right">
+              <div className="flex items-center justify-center sm:justify-end gap-2 mb-1">
                 <Trophy className="w-5 h-5 text-warning" />
-                <span className="text-2xl font-bold text-foreground">
+                <span className="text-xl sm:text-2xl font-bold text-foreground">
                   {userPoints?.total_points?.toLocaleString("pt-BR") || "0"}
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">pontos totais</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">pontos totais</p>
             </div>
           </div>
 
@@ -74,53 +74,59 @@ export const GamificationDashboard = () => {
       </Card>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="achievements">Conquistas</TabsTrigger>
-          <TabsTrigger value="ranking">Ranking</TabsTrigger>
-          <TabsTrigger value="challenges">Desafios</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 px-1">
+            <span className="hidden sm:inline">Visão Geral</span>
+            <span className="sm:hidden">Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="achievements" className="text-xs sm:text-sm py-2 px-1">
+            <span className="hidden sm:inline">Conquistas</span>
+            <span className="sm:hidden">Metas</span>
+          </TabsTrigger>
+          <TabsTrigger value="ranking" className="text-xs sm:text-sm py-2 px-1">Ranking</TabsTrigger>
+          <TabsTrigger value="challenges" className="text-xs sm:text-sm py-2 px-1">Desafios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           {/* Estatísticas Rápidas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-3 sm:p-4 text-center">
                 <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Trophy className="w-4 h-4 text-primary" />
                 </div>
-                <p className="text-2xl font-bold">{userPoints?.level || 1}</p>
+                <p className="text-xl sm:text-2xl font-bold">{userPoints?.level || 1}</p>
                 <p className="text-xs text-muted-foreground">Nível Atual</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-3 sm:p-4 text-center">
                 <div className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Award className="w-4 h-4 text-secondary" />
                 </div>
-                <p className="text-2xl font-bold">{userAchievements.length}</p>
+                <p className="text-xl sm:text-2xl font-bold">{userAchievements.length}</p>
                 <p className="text-xs text-muted-foreground">Conquistas</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-3 sm:p-4 text-center">
                 <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Flame className="w-4 h-4 text-accent" />
                 </div>
-                <p className="text-2xl font-bold">{userPoints?.current_streak || 0}</p>
+                <p className="text-xl sm:text-2xl font-bold">{userPoints?.current_streak || 0}</p>
                 <p className="text-xs text-muted-foreground">Sequência</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-3 sm:p-4 text-center">
                 <div className="w-8 h-8 bg-muted/40 rounded-full flex items-center justify-center mx-auto mb-2">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <p className="text-2xl font-bold">{userPoints?.longest_streak || 0}</p>
-                <p className="text-xs text-muted-foreground">Melhor</p>
+                <p className="text-xl sm:text-2xl font-bold">{userPoints?.longest_streak || 0}</p>
+                <p className="text-xs text-muted-foreground">Melhor Sequência</p>
               </CardContent>
             </Card>
           </div>
@@ -133,12 +139,12 @@ export const GamificationDashboard = () => {
                 Atividades Recentes
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
+            <CardContent className="p-4">
+              <div className="space-y-3 max-h-48 sm:max-h-64 overflow-y-auto">
                 {activities.length > 0 ? activities.slice(0, 10).map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{activity.description}</p>
+                  <div key={activity.id} className="flex items-start justify-between py-3 border-b border-border/50 last:border-0 gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{activity.description}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(activity.created_at).toLocaleDateString("pt-BR", {
                           day: "2-digit",
@@ -148,14 +154,17 @@ export const GamificationDashboard = () => {
                         })}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="text-xs">
-                      +{activity.points_earned} pts
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      +{activity.points_earned}
                     </Badge>
                   </div>
                 )) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhuma atividade ainda. Comece a usar o app para ganhar pontos!
-                  </p>
+                  <div className="text-center py-6 sm:py-8">
+                    <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma atividade ainda. Comece a usar o app para ganhar pontos!
+                    </p>
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -173,21 +182,21 @@ export const GamificationDashboard = () => {
                     Conquistas Desbloqueadas ({userAchievements.length})
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
                     {userAchievements.map((userAchievement) => (
-                      <div key={userAchievement.id} className="flex items-center gap-3 p-3 border border-border/50 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5">
-                        <div className="w-10 h-10 bg-warning/20 rounded-full flex items-center justify-center">
+                      <div key={userAchievement.id} className="flex items-start gap-3 p-3 border border-border/50 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5">
+                        <div className="w-10 h-10 bg-warning/20 rounded-full flex items-center justify-center shrink-0">
                           <Award className="w-5 h-5 text-warning" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm">{userAchievement.achievement.title}</h4>
-                          <p className="text-xs text-muted-foreground">{userAchievement.achievement.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-muted-foreground line-clamp-2">{userAchievement.achievement.description}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
                             <Badge variant="outline" className="text-xs">
                               {userAchievement.achievement.rarity}
                             </Badge>
-                            <span className="text-xs text-warning">+{userAchievement.points_earned} pts</span>
+                            <span className="text-xs text-warning font-medium">+{userAchievement.points_earned} pts</span>
                           </div>
                         </div>
                       </div>
@@ -205,19 +214,19 @@ export const GamificationDashboard = () => {
                   Conquistas Disponíveis
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <CardContent className="p-4">
+                <div className="space-y-3">
                   {achievements.filter(achievement => 
                     !userAchievements.some(ua => ua.achievement_id === achievement.id)
                   ).map((achievement) => (
-                    <div key={achievement.id} className="flex items-center gap-3 p-3 border border-border/50 rounded-lg opacity-60">
-                      <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center">
+                    <div key={achievement.id} className="flex items-start gap-3 p-3 border border-border/50 rounded-lg opacity-70">
+                      <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center shrink-0">
                         <Trophy className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm">{achievement.title}</h4>
-                        <p className="text-xs text-muted-foreground">{achievement.description}</p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-muted-foreground line-clamp-2">{achievement.description}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-xs">
                             {achievement.rarity}
                           </Badge>
@@ -278,9 +287,12 @@ export const GamificationDashboard = () => {
                   </div>
                 ))}
                 {rankings.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    Ranking ainda não disponível
-                  </p>
+                  <div className="text-center py-6 sm:py-8">
+                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Ranking ainda não disponível
+                    </p>
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -329,7 +341,7 @@ export const GamificationDashboard = () => {
                     {!challenge.participation && (
                       <button
                         onClick={() => joinChallenge(challenge.id)}
-                        className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                        className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors touch-manipulation"
                       >
                         Aceitar Desafio
                       </button>
@@ -340,9 +352,9 @@ export const GamificationDashboard = () => {
             ))}
             {challenges.length === 0 && (
               <Card>
-                <CardContent className="p-8 text-center">
+                <CardContent className="p-6 sm:p-8 text-center">
                   <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Nenhum desafio ativo no momento</p>
+                  <p className="text-sm text-muted-foreground">Nenhum desafio ativo no momento</p>
                 </CardContent>
               </Card>
             )}
