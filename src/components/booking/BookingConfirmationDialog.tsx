@@ -103,7 +103,7 @@ export function BookingConfirmationDialog({
         title: formData.title,
         objective: formData.objective,
         notes: formData.notes,
-        location_id: formData.location_id,
+        location_id: formData.location_id === 'no-location' ? '' : formData.location_id,
       });
       
       // Reset form apenas se sucesso
@@ -212,7 +212,7 @@ export function BookingConfirmationDialog({
                 } />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="no-location">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-3 w-3 opacity-50" />
                     <span>Não especificar local</span>

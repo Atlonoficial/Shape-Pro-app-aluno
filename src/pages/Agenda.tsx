@@ -195,7 +195,7 @@ export default function Agenda() {
         studentTitle: bookingData.title,
         studentObjectives: bookingData.objective,
         studentNotes: bookingData.notes,
-        locationId: bookingData.location_id || null,
+        locationId: !bookingData.location_id || bookingData.location_id === '' ? null : bookingData.location_id,
       });
 
       if (result) {
