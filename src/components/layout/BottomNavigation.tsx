@@ -5,7 +5,7 @@ const navItems = [
   { id: 'home', icon: Home, label: 'Início' },
   { id: 'workouts', icon: Dumbbell, label: 'Treinos' },
   { id: 'nutrition', icon: Apple, label: 'Dieta' },
-  { id: 'gamification', icon: Trophy, label: 'Pontos' },
+  { id: 'members', icon: Users, label: 'Membros' },
   { id: 'profile', icon: User, label: 'Perfil' },
 ];
 

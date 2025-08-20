@@ -17,15 +17,35 @@ export const Members = () => {
   const [activeTab, setActiveTab] = useState<'courses' | 'students'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [courses, setCourses] = useState<any[]>([
+    {
+      id: '1',
+      title: 'Dieta Inteligente',
+      description: 'Módulo 2',
+      thumbnail: '/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png'
+    },
+    {
+      id: '2',
+      title: 'Metabolismo Feminino',
+      description: 'Módulo 1',
+      thumbnail: '/lovable-uploads/44934fca-7868-4c3b-ac23-e51f6e1619f0.png'
+    },
+    {
+      id: '3',
+      title: 'Treino Funcional',
+      description: 'Módulo 3',
+      thumbnail: '/lovable-uploads/65cd0e38-8355-4d41-8be9-a292750e3daa.png'
+    },
+    {
+      id: '4',
+      title: 'Nutrição Esportiva',
+      description: 'Módulo 1',
+      thumbnail: '/lovable-uploads/285eda96-c32f-4481-bbd8-9ab4550756b9.png'
+    }
+  ]);
+  const [loading, setLoading] = useState(false);
 
   const isTeacher = userProfile?.user_type === 'teacher';
-
-  useEffect(() => {
-    // Simplified - no Firebase dependency
-    setLoading(false);
-  }, [student?.teacher_id]);
 
   if (selectedModule) {
     return (
@@ -119,12 +139,12 @@ export const Members = () => {
               <p className="text-muted-foreground">Nenhum curso disponível no momento</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {courses.map((course) => (
                 <div 
                   key={course.id}
                   onClick={() => setSelectedModule(course.id)}
-                  className="relative card-gradient overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer"
+                  className="relative rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                 >
                   <div 
                     className="aspect-square bg-cover bg-center relative"
@@ -132,10 +152,10 @@ export const Members = () => {
                       backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
                     }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <h4 className="text-sm font-semibold text-white mb-1">{course.title}</h4>
-                      <p className="text-xs text-white/70">{course.description}</p>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{course.title}</h4>
+                      <p className="text-[10px] text-white/80 leading-tight">{course.description}</p>
                     </div>
                   </div>
                 </div>
