@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Pause, Play, Timer, SkipForward } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { VideoPlayer } from "./VideoPlayer";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { showPointsToast } from "@/components/gamification/PointsToast";
 
 interface Exercise {
   id: number;
@@ -27,6 +30,7 @@ interface WorkoutSessionProps {
 }
 
 export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProps) => {
+  const { user } = useAuth();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -76,9 +80,38 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     setIsRunning(false);
+    await saveWorkoutSession();
     onFinish();
+  };
+
+  const saveWorkoutSession = async () => {
+    try {
+      if (!user?.id) return;
+
+      const { data, error } = await supabase
+        .from('workout_sessions')
+        .insert({
+          start_time: new Date().toISOString(),
+          total_duration: time,
+          exercises: JSON.parse(JSON.stringify(workout.exercises)),
+          notes: `Treino: ${workout.name}`,
+        });
+
+      if (error) {
+        console.error('Error saving workout session:', error);
+      } else {
+        // Mostrar toast de pontos ganhos
+        showPointsToast({
+          points: 75,
+          activity: "Treino Concluído!",
+          description: `${workout.name} - ${formatTime(time)}`
+        });
+      }
+    } catch (error) {
+      console.error('Error saving workout session:', error);
+    }
   };
 
   const currentExercise = workout.exercises[currentExerciseIndex];

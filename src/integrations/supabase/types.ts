@@ -2601,6 +2601,10 @@ export type Database = {
             }
         Returns: string
       }
+      trigger_cleanup_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_monthly_rankings: {
         Args: Record<PropertyKey, never>
         Returns: undefined

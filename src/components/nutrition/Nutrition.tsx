@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, Flame } from "lucide-react";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { NutritionCard } from "./NutritionCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { useMyNutrition } from "@/hooks/useMyNutrition";
 import { useAuth } from "@/hooks/useAuth";
+import { showPointsToast } from "@/components/gamification/PointsToast";
+import { useGamification } from "@/hooks/useGamification";
 
 export const Nutrition = () => {
   const { user } = useAuth();
@@ -15,6 +17,24 @@ export const Nutrition = () => {
     dailyStats, 
     logMeal 
   } = useMyNutrition();
+  const { userPoints } = useGamification();
+  const [previousMealCount, setPreviousMealCount] = useState(0);
+
+  // Detectar quando uma refeição é completada para mostrar pontos
+  useEffect(() => {
+    const currentMealCount = todaysMeals.filter(log => log.consumed).length;
+    
+    if (currentMealCount > previousMealCount) {
+      // Nova refeição foi logada, mostrar toast de pontos
+      showPointsToast({
+        points: 25,
+        activity: "Refeição Registrada!",
+        description: "Continue mantendo uma alimentação saudável"
+      });
+    }
+    
+    setPreviousMealCount(currentMealCount);
+  }, [todaysMeals, previousMealCount]);
   
   const handleMealToggle = async (mealId: string, nutritionPlanId: string) => {
     if (!user?.id || !activePlan) return;
@@ -70,6 +90,14 @@ export const Nutrition = () => {
           <div>
             <h3 className="font-semibold text-foreground">Meta Diária</h3>
             <p className="text-sm text-muted-foreground">Progresso de hoje</p>
+            {userPoints && (
+              <div className="flex items-center gap-1 mt-1">
+                <Flame className="w-4 h-4 text-warning" />
+                <span className="text-xs text-warning font-medium">
+                  {userPoints.current_streak || 0} dias consecutivos
+                </span>
+              </div>
+            )}
           </div>
           <ProgressRing 
             progress={percentage.calories} 
