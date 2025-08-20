@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
 import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
+import { AnnouncementBanner } from "@/components/dashboard/AnnouncementBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useCourses } from "@/hooks/useCourses";
@@ -112,27 +113,32 @@ export const Members = () => {
               <p className="text-muted-foreground">Nenhum curso disponível no momento</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {courses.map((course) => (
-                <div 
-                  key={course.id}
-                  onClick={() => setSelectedModule(course.id)}
-                  className="relative rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
-                >
+            <div>
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {courses.map((course) => (
                   <div 
-                    className="aspect-square bg-cover bg-center relative"
-                    style={{ 
-                      backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
-                    }}
+                    key={course.id}
+                    onClick={() => setSelectedModule(course.id)}
+                    className="relative rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{course.title}</h4>
-                      <p className="text-[10px] text-white/80 leading-tight">{course.category || 'Curso'}</p>
+                    <div 
+                      className="aspect-square bg-cover bg-center relative"
+                      style={{ 
+                        backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <div className="absolute bottom-2 left-2 right-2">
+                        <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{course.title}</h4>
+                        <p className="text-[10px] text-white/80 leading-tight">{course.category || 'Curso'}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              
+              {/* Banner System */}
+              <AnnouncementBanner />
             </div>
           )}
         </div>
