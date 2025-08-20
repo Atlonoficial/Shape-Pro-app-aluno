@@ -194,24 +194,30 @@ export function BookingConfirmationDialog({
 
           {/* Local do Treino */}
           <div className="space-y-2">
-            <Label htmlFor="location">Local do Treino</Label>
+            <Label htmlFor="location">Local do Treino (opcional)</Label>
             <Select
               value={formData.location_id}
               onValueChange={(value: string) =>
                 setFormData(prev => ({ ...prev, location_id: value }))
               }
-              disabled={locationsLoading || locations.length === 0}
+              disabled={locationsLoading}
             >
               <SelectTrigger>
                 <SelectValue placeholder={
                   locationsLoading 
                     ? "Carregando locais..." 
                     : locations.length === 0 
-                      ? "Nenhum local disponível"
-                      : "Selecione o local do treino"
+                      ? "Nenhum local cadastrado"
+                      : "Selecione o local ou deixe em branco"
                 } />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3 opacity-50" />
+                    <span>Não especificar local</span>
+                  </div>
+                </SelectItem>
                 {locations.map((location) => (
                   <SelectItem key={location.id} value={location.id}>
                     <div className="flex items-center gap-2">
