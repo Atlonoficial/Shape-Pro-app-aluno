@@ -10,15 +10,8 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
   const { user } = useAuthContext();
   const { weightData, loading } = useWeightProgress(user?.id || '');
   
-  // Use real data or fallback to demo data
-  const chartData = weightData.length > 0 
-    ? weightData
-    : [
-        { date: '15/Jan', weight: 78.5, weekDay: 'Seg' },
-        { date: '22/Jan', weight: 78.2, weekDay: 'Seg' },
-        { date: '29/Jan', weight: 78.0, weekDay: 'Seg' },
-        { date: '05/Fev', weight: 77.8, weekDay: 'Seg' },
-      ];
+  // Use only real data
+  const chartData = weightData;
   
   const currentWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
   const previousWeight = chartData.length > 1 ? chartData[chartData.length - 2].weight : 0;

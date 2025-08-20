@@ -21,7 +21,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
-  const { addWeightEntry } = useWeightProgress(user?.id || '');
+  const { addWeightEntry, hasWeighedThisWeek } = useWeightProgress(user?.id || '');
   
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
@@ -34,32 +34,18 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Check if it's Friday and show weight input modal
+  // Check if should show weight modal
   useEffect(() => {
     if (!isAuthenticated || !user) return;
     
-    const today = new Date();
-    const isFriday = today.getDay() === 5; // 5 = Friday
-    
-    // For demo purposes, show modal on any day
-    // In production, you'd check: isFriday && !hasWeighedThisWeek()
-    if (isFriday) {
-      // Check if already weighed this week (simplified check)
-      const weekKey = `${today.getFullYear()}-${Math.floor(today.getDate() / 7)}`;
-      const hasWeighedRecently = localStorage.getItem(`weight-${user.id}-${weekKey}`);
-      if (!hasWeighedRecently) {
-        setTimeout(() => setShowWeightModal(true), 2000); // Show after 2 seconds
-      }
+    // Show modal if user hasn't weighed this week
+    if (!hasWeighedThisWeek()) {
+      setTimeout(() => setShowWeightModal(true), 1000);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, hasWeighedThisWeek]);
 
   const handleSaveWeight = async (weight: number) => {
     const success = await addWeightEntry(weight);
-    if (success && user) {
-      const today = new Date();
-      const weekKey = `${today.getFullYear()}-${Math.floor(today.getDate() / 7)}`;
-      localStorage.setItem(`weight-${user.id}-${weekKey}`, 'true');
-    }
     return success;
   };
 

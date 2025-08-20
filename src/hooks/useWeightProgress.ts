@@ -41,7 +41,8 @@ export const useWeightProgress = (userId: string) => {
           month: 'short' 
         }),
         weight: Number(entry.value),
-        weekDay: new Date(entry.date).toLocaleDateString('pt-BR', { weekday: 'short' })
+        weekDay: new Date(entry.date).toLocaleDateString('pt-BR', { weekday: 'short' }),
+        rawDate: entry.date // Keep original date for calculations
       }));
 
       // Get last 8 weeks of data
@@ -88,19 +89,19 @@ export const useWeightProgress = (userId: string) => {
   };
 
   const hasWeighedThisWeek = () => {
-    if (weightData.length === 0) return false;
+    if (!userId || weightData.length === 0) return false;
     
     const today = new Date();
-    const currentWeekStart = new Date(today);
-    currentWeekStart.setDate(today.getDate() - today.getDay()); // Start of week
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
     
-    const lastEntry = weightData[weightData.length - 1];
-    if (!lastEntry) return false;
-    
-    // Parse the formatted date back to check if it's from this week
-    const entryDate = new Date();
-    // This is a simplified check - in production you'd want more precise date parsing
-    return true; // For now, assume they haven't weighed this week to show the modal
+    // Check if there's any weight entry from this week
+    return weightData.some(entry => {
+      // Get the actual date from the database
+      const entryDate = new Date(entry.date);
+      return entryDate >= startOfWeek;
+    });
   };
 
   useEffect(() => {
