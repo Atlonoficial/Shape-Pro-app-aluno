@@ -24,34 +24,40 @@ export const useWeightProgress = (userId: string) => {
       setLoading(true);
       setError(null);
 
-      // Get start and end of current month
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      console.log('🔍 Fetching weight progress for user:', userId);
 
+      // Use SQL date functions to filter by current month (more reliable)
       const { data, error: fetchError } = await supabase
         .from('progress')
         .select('*')
         .eq('user_id', userId)
         .eq('type', 'weight')
-        .gte('date', startOfMonth.toISOString())
-        .lte('date', endOfMonth.toISOString())
+        .gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+        .lt('date', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0])
         .order('date', { ascending: true });
 
       if (fetchError) {
+        console.error('❌ Error fetching weight data:', fetchError);
         throw fetchError;
       }
 
+      console.log('📊 Raw weight data from DB:', data);
+
       // Format data for the chart - current month only
-      const formattedData = (data || []).map(entry => ({
-        date: new Date(entry.date).toLocaleDateString('pt-BR', { 
-          day: '2-digit', 
-          month: 'short' 
-        }),
-        weight: Number(entry.value),
-        weekDay: new Date(entry.date).toLocaleDateString('pt-BR', { weekday: 'short' }),
-        rawDate: entry.date // Keep original date for calculations
-      }));
+      const formattedData = (data || []).map(entry => {
+        const entryDate = new Date(entry.date);
+        return {
+          date: entryDate.toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: 'short' 
+          }),
+          weight: Number(entry.value),
+          weekDay: entryDate.toLocaleDateString('pt-BR', { weekday: 'short' }),
+          rawDate: entry.date // Keep original date for calculations
+        };
+      });
+
+      console.log('📈 Formatted chart data:', formattedData);
       
       setWeightData(formattedData);
     } catch (err) {
@@ -69,7 +75,9 @@ export const useWeightProgress = (userId: string) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const { error: insertError } = await supabase
+      console.log('💾 Adding weight entry:', { userId, weight, date: today });
+
+      const { data, error: insertError } = await supabase
         .from('progress')
         .insert({
           user_id: userId,
@@ -77,11 +85,16 @@ export const useWeightProgress = (userId: string) => {
           value: weight,
           unit: 'kg',
           date: today
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
+        console.error('❌ Error inserting weight:', insertError);
         throw insertError;
       }
+
+      console.log('✅ Weight entry added successfully:', data);
 
       // Refresh data after adding
       await fetchWeightProgress();
@@ -120,7 +133,9 @@ export const useWeightProgress = (userId: string) => {
     if (!userId) return false;
 
     try {
-      const { error: insertError } = await supabase
+      console.log('💾 Adding weight from assessment:', { userId, weight, date: assessmentDate });
+
+      const { data, error: insertError } = await supabase
         .from('progress')
         .insert({
           user_id: userId,
@@ -128,11 +143,16 @@ export const useWeightProgress = (userId: string) => {
           value: weight,
           unit: 'kg',
           date: assessmentDate
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
+        console.error('❌ Error inserting weight from assessment:', insertError);
         throw insertError;
       }
+
+      console.log('✅ Weight entry from assessment added successfully:', data);
 
       // Refresh data after adding
       await fetchWeightProgress();

@@ -45,7 +45,14 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   }, [isAuthenticated, user, shouldShowWeightModal]);
 
   const handleSaveWeight = async (weight: number) => {
+    console.log('💾 Dashboard: Saving weight:', weight);
     const success = await addWeightEntry(weight);
+    console.log('✅ Dashboard: Weight save result:', success);
+    
+    if (success) {
+      setShowWeightModal(false);
+    }
+    
     return success;
   };
 

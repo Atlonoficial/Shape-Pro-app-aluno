@@ -8,7 +8,9 @@ interface WeightChartProps {
 
 export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
   const { user } = useAuthContext();
-  const { weightData, loading } = useWeightProgress(user?.id || '');
+  const { weightData, loading, error } = useWeightProgress(user?.id || '');
+  
+  console.log('📊 WeightChart render - data:', weightData, 'loading:', loading, 'error:', error);
   
   // Use only real data
   const chartData = weightData;
