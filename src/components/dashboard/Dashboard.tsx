@@ -1,4 +1,4 @@
-import { Bell, Settings, Calendar } from "lucide-react";
+import { Bell, Settings, Calendar, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { WeightChart } from "./WeightChart";
@@ -7,6 +7,7 @@ import { CoachAICard } from "./CoachAICard";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
+import { MetricCard } from "@/components/ui/MetricCard";
 import { PointsWidget } from "@/components/gamification/PointsWidget";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
@@ -190,6 +191,13 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
       {/* Points Widget */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <PointsWidget onClick={onGamificationClick} compact />
+        <MetricCard
+          title="Iniciante"
+          value="0"
+          subtitle="pts"
+          icon={<Trophy size={20} />}
+          trend="neutral"
+        />
       </div>
 
       {workouts && workouts.length > 0 && (
