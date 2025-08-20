@@ -89,17 +89,24 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
       
       <div className="h-32 sm:h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 15, right: 5, left: 5, bottom: 5 }}>
+          <BarChart 
+            data={chartData} 
+            margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
+            maxBarSize={window.innerWidth < 640 ? 32 : 40}
+            barCategoryGap="20%"
+          >
             <XAxis 
               dataKey="date" 
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              interval={0}
             />
             <YAxis hide />
             <Bar 
               dataKey="weight" 
               radius={[6, 6, 0, 0]}
+              minPointSize={2}
             >
               <LabelList content={renderCustomLabel} />
               {chartData.map((entry, index) => (
