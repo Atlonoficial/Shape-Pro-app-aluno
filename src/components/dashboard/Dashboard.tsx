@@ -188,17 +188,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
         loading={workoutsLoading || progressLoading} 
       />
 
-      {/* Points Widget */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <PointsWidget onClick={onGamificationClick} compact />
-        <MetricCard
-          title="Iniciante"
-          value="0"
-          subtitle="pts"
-          icon={<Trophy size={20} />}
-          trend="neutral"
-        />
-      </div>
 
       {workouts && workouts.length > 0 && (
         <div className="card-gradient p-6">

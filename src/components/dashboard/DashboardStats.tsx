@@ -1,5 +1,6 @@
 import { MetricCard } from "../ui/MetricCard";
-import { Flame, Target, Zap } from "lucide-react";
+import { Flame, Target, Zap, Trophy } from "lucide-react";
+import { useGamification } from "@/hooks/useGamification";
 
 interface DashboardStatsProps {
   workouts: any[];
@@ -8,6 +9,8 @@ interface DashboardStatsProps {
 }
 
 export const DashboardStats = ({ workouts, progress, loading }: DashboardStatsProps) => {
+  const { userPoints, rankings } = useGamification();
+  
   if (loading) {
     return (
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -45,6 +48,10 @@ export const DashboardStats = ({ workouts, progress, loading }: DashboardStatsPr
     return workoutDate.toDateString() === today.toDateString();
   }).reduce((sum, w) => sum + (w.xpEarned || 0), 0);
 
+  // Get user ranking position
+  const userRanking = rankings.find(ranking => ranking.user_id === userPoints?.user_id);
+  const rankingPosition = userRanking?.position || rankings.length + 1;
+
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <MetricCard
@@ -63,13 +70,20 @@ export const DashboardStats = ({ workouts, progress, loading }: DashboardStatsPr
         trend={thisMonthWorkouts > 0 ? "up" : "neutral"}
       />
       
-      
       <MetricCard
         title="Pontos XP"
         value={totalXP.toString()}
         subtitle={`+${todayXP} hoje`}
         icon={<Zap size={20} />}
         trend={todayXP > 0 ? "up" : "neutral"}
+      />
+
+      <MetricCard
+        title="Ranking"
+        value={`#${rankingPosition}`}
+        subtitle="Posição mensal"
+        icon={<Trophy size={20} />}
+        trend={rankingPosition <= 3 ? "up" : "neutral"}
       />
     </div>
   );
