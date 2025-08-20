@@ -2073,17 +2073,30 @@ export type Database = {
         Returns: string
       }
       book_appointment: {
-        Args: {
-          p_description?: string
-          p_duration?: number
-          p_scheduled_time: string
-          p_student_notes?: string
-          p_student_objectives?: string
-          p_student_title?: string
-          p_teacher_id: string
-          p_title?: string
-          p_type?: string
-        }
+        Args:
+          | {
+              p_description?: string
+              p_duration?: number
+              p_location_id?: string
+              p_scheduled_time: string
+              p_student_notes?: string
+              p_student_objectives?: string
+              p_student_title?: string
+              p_teacher_id: string
+              p_title?: string
+              p_type?: string
+            }
+          | {
+              p_description?: string
+              p_duration?: number
+              p_scheduled_time: string
+              p_student_notes?: string
+              p_student_objectives?: string
+              p_student_title?: string
+              p_teacher_id: string
+              p_title?: string
+              p_type?: string
+            }
         Returns: string
       }
       can_insert_notification: {
