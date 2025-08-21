@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Instagram, Facebook, Phone } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Phone, Youtube } from "lucide-react";
 import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 import { useNavigate } from "react-router-dom";
 
@@ -28,7 +28,7 @@ export const TeacherCard = () => {
     );
   }
 
-  if (!teacher) {
+  if (!teacher || teacher.show_profile_to_students === false) {
     return null;
   }
 
@@ -49,8 +49,17 @@ export const TeacherCard = () => {
     }
   };
 
+  const handleYouTubeClick = () => {
+    if (teacher.youtube_url) {
+      window.open(teacher.youtube_url, '_blank');
+    }
+  };
+
   const handleWhatsAppClick = () => {
-    if (teacher.whatsapp_number) {
+    // Prioriza whatsapp_url sobre whatsapp_number
+    if (teacher.whatsapp_url) {
+      window.open(teacher.whatsapp_url, '_blank');
+    } else if (teacher.whatsapp_number) {
       const message = encodeURIComponent('Olá! Vim através do app Shape Pro.');
       window.open(`https://wa.me/${teacher.whatsapp_number.replace(/\D/g, '')}?text=${message}`, '_blank');
     }
@@ -71,6 +80,9 @@ export const TeacherCard = () => {
             
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-foreground truncate">{teacher.name}</h4>
+              {teacher.professional_title && (
+                <p className="text-sm text-primary font-medium">{teacher.professional_title}</p>
+              )}
               {teacher.bio && (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{teacher.bio}</p>
               )}
@@ -116,8 +128,19 @@ export const TeacherCard = () => {
                   <Facebook className="h-4 w-4" />
                 </Button>
               )}
+
+              {teacher.youtube_url && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleYouTubeClick}
+                  className="h-8 w-8 p-0 hover:bg-red-600/10 hover:text-red-600"
+                >
+                  <Youtube className="h-4 w-4" />
+                </Button>
+              )}
               
-              {teacher.whatsapp_number && (
+              {(teacher.whatsapp_url || teacher.whatsapp_number) && (
                 <Button
                   variant="ghost"
                   size="sm"
