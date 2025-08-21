@@ -100,54 +100,98 @@ export const Rewards = () => {
   };
 
   return (
-    <div className="px-3 sm:px-6 py-4 pb-24 min-h-screen w-full max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Loja de Recompensas</h1>
-        <div className="flex items-center gap-2 bg-warning/10 px-3 py-2 rounded-full border border-warning/20">
-          <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
-          <span className="font-semibold text-sm sm:text-base text-warning">{points.toLocaleString("pt-BR")} pts</span>
+    <div className="px-4 sm:px-6 py-6 pb-24 min-h-screen w-full max-w-6xl mx-auto">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Loja de Recompensas
+          </h1>
+          <p className="text-muted-foreground text-sm">Troque seus pontos por recompensas incríveis</p>
+        </div>
+        <div className="flex items-center gap-2 bg-gradient-to-r from-warning/10 to-primary/10 px-4 py-3 rounded-xl border border-warning/30 shadow-sm">
+          <Trophy className="w-5 h-5 text-warning" />
+          <span className="font-bold text-lg text-warning">{points.toLocaleString("pt-BR")}</span>
+          <span className="text-sm text-muted-foreground">pontos</span>
         </div>
       </div>
 
       {loading ? (
-        <Card className="bg-card/50 backdrop-blur-sm border border-border/30 shadow-sm">
-          <CardContent className="p-6 sm:p-8 text-center text-muted-foreground">
-            <div className="animate-pulse">Carregando recompensas...</div>
+        <Card className="shape-card-modern">
+          <CardContent className="p-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
+              <p className="text-muted-foreground">Carregando recompensas...</p>
+            </div>
           </CardContent>
         </Card>
       ) : items.length === 0 ? (
-        <Card className="bg-card/50 backdrop-blur-sm border border-border/30 shadow-sm">
-          <CardContent className="p-6 sm:p-8 text-center">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+        <Card className="shape-card-modern">
+          <CardContent className="p-8 text-center">
+            <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
+              <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center">
+                <Gift className="w-8 h-8 text-white" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-foreground">Nenhuma recompensa disponível</h3>
+                <p className="text-sm text-muted-foreground">Seu professor ainda não adicionou recompensas à loja. Continue acumulando pontos!</p>
+              </div>
             </div>
-            <h3 className="font-semibold text-foreground mb-2">Nenhuma recompensa disponível</h3>
-            <p className="text-sm text-muted-foreground">Seu professor ainda não adicionou recompensas à loja.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {items.map((item) => (
-            <Card key={item.id} className="bg-card/50 backdrop-blur-sm border border-border/30 shadow-sm hover:shadow-md hover:bg-card/70 transition-all duration-200">
-              <CardContent className="p-4 sm:p-5 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight">{item.title}</h3>
-                  <div className="flex items-center gap-1 bg-warning/10 px-2 py-1 rounded-full border border-warning/20 shrink-0">
-                    <Trophy className="w-3 h-3 text-warning" />
-                    <span className="text-xs font-medium text-warning">{item.points_cost}</span>
+            <Card key={item.id} className="shape-card-modern group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <CardContent className="p-5 flex flex-col h-full">
+                {/* Header com título e preço */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h3 className="font-semibold text-foreground text-base leading-tight flex-1 min-w-0 break-words">
+                    {item.title}
+                  </h3>
+                  <div className="flex items-center gap-1 bg-gradient-to-r from-warning/20 to-primary/20 px-3 py-1.5 rounded-full border border-warning/30 shrink-0">
+                    <Trophy className="w-3.5 h-3.5 text-warning" />
+                    <span className="text-sm font-bold text-warning whitespace-nowrap">
+                      {item.points_cost.toLocaleString("pt-BR")}
+                    </span>
                   </div>
                 </div>
+
+                {/* Descrição */}
                 {item.description && (
-                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">{item.description}</p>
+                  <div className="flex-1 mb-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed break-words">
+                      {item.description.length > 80 
+                        ? `${item.description.substring(0, 80)}...` 
+                        : item.description
+                      }
+                    </p>
+                  </div>
                 )}
-                <Button
-                  size="sm"
-                  className="mt-auto w-full text-xs sm:text-sm"
-                  disabled={redeeming === item.id || points < item.points_cost}
-                  onClick={() => redeem(item.id)}
-                >
-                  {points < item.points_cost ? "Pontos insuficientes" : redeeming === item.id ? "Resgatando..." : "Resgatar"}
-                </Button>
+
+                {/* Botão de ação */}
+                <div className="mt-auto pt-2">
+                  <Button
+                    className="w-full text-sm font-medium min-h-[40px] transition-all duration-200"
+                    variant={points < item.points_cost ? "outline" : "default"}
+                    disabled={redeeming === item.id || points < item.points_cost}
+                    onClick={() => redeem(item.id)}
+                  >
+                    {redeeming === item.id ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        <span>Resgatando...</span>
+                      </div>
+                    ) : points < item.points_cost ? (
+                      <span>Pontos insuficientes</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Gift className="w-4 h-4" />
+                        <span>Resgatar</span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
