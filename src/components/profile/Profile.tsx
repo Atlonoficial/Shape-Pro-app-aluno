@@ -168,7 +168,7 @@ export const Profile = () => {
   const triggerFileSelect = () => fileInputRef.current?.click();
 
   const goToRewards = () => {
-    navigate({ pathname: "/", search: "?tab=rewards" });
+    navigate("/recompensas");
   };
 
   const goToGamification = () => {
