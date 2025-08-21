@@ -288,6 +288,78 @@ export type Database = {
         }
         Relationships: []
       }
+      banner_analytics: {
+        Row: {
+          banner_id: string
+          clicks: number
+          conversions: number
+          created_at: string
+          date: string
+          id: string
+          impressions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banner_id: string
+          clicks?: number
+          conversions?: number
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banner_id?: string
+          clicks?: number
+          conversions?: number
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      banner_interactions: {
+        Row: {
+          banner_id: string
+          created_at: string
+          id: string
+          interaction_type: string
+          ip_address: string | null
+          metadata: Json | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          banner_id: string
+          created_at?: string
+          id?: string
+          interaction_type: string
+          ip_address?: string | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          banner_id?: string
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           action_text: string | null
@@ -2425,6 +2497,10 @@ export type Database = {
       accept_invitation: {
         Args: { code: string }
         Returns: string
+      }
+      aggregate_banner_interactions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       approve_subscription: {
         Args: { p_subscription_id: string }
