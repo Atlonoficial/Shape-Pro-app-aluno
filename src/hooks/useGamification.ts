@@ -336,7 +336,7 @@ export const useGamification = () => {
     };
   };
 
-  // Inicializar dados
+  // Inicializar dados e configurar subscriptions em tempo real
   useEffect(() => {
     const loadData = async () => {
       if (!user?.id) return;
@@ -356,7 +356,78 @@ export const useGamification = () => {
       }
     };
 
-    loadData();
+    const setupRealtimeSubscriptions = () => {
+      if (!user?.id) return;
+
+      // Subscribe to user points changes
+      const pointsChannel = supabase
+        .channel('gamification_points')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'user_points', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Points updated:', payload);
+            if (payload.new) {
+              setUserPoints(payload.new as UserPoints);
+            }
+          }
+        )
+        .subscribe();
+
+      // Subscribe to new activities
+      const activitiesChannel = supabase
+        .channel('gamification_activities')
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'gamification_activities', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('New activity:', payload);
+            if (payload.new) {
+              const newActivity = payload.new as GamificationActivity;
+              setActivities(prev => [newActivity, ...prev.slice(0, 19)]); // Keep last 20 activities
+              
+              // Show points toast for new activity
+              import("@/components/gamification/PointsToast").then(({ showPointsToast }) => {
+                showPointsToast({
+                  points: newActivity.points_earned,
+                  activity: newActivity.description,
+                  description: newActivity.metadata?.description
+                });
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      // Subscribe to new achievements
+      const achievementsChannel = supabase
+        .channel('gamification_achievements')
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'user_achievements', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('New achievement:', payload);
+            fetchUserAchievements(); // Refresh achievements
+            
+            // Show achievement toast
+            if (payload.new) {
+              toast.success(`🏆 Nova conquista desbloqueada! +${payload.new.points_earned} pontos`, {
+                duration: 5000
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        pointsChannel.unsubscribe();
+        activitiesChannel.unsubscribe();
+        achievementsChannel.unsubscribe();
+      };
+    };
+
+    if (user?.id) {
+      loadData();
+      const unsubscribe = setupRealtimeSubscriptions();
+      return unsubscribe;
+    }
   }, [user?.id]);
 
   return {

@@ -6,10 +6,12 @@ import { Card } from "@/components/ui/card";
 import { ShapeProLogo } from "@/components/ui/ShapeProLogo";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useAIConversation } from "@/hooks/useAIConversation";
+import { useGamificationActions } from "@/hooks/useRealtimeGamification";
 import { toast } from "sonner";
 
 export const AIAssistant = () => {
   const { user, userProfile } = useAuthContext();
+  const { awardAIInteractionPoints } = useGamificationActions();
   const userName = (userProfile?.name || 'Usuário').trim().split(/\s+/)[0];
   
   const { 
@@ -43,6 +45,8 @@ export const AIAssistant = () => {
 
     try {
       await sendMessage(messageText);
+      // Award points for AI interaction
+      await awardAIInteractionPoints();
     } catch (err) {
       console.error('Error sending message:', err);
       toast.error('Erro ao enviar mensagem. Tente novamente.');

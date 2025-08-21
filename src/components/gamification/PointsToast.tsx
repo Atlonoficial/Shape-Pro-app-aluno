@@ -16,6 +16,8 @@ export const showPointsToast = ({
   level, 
   isLevelUp 
 }: PointsToastProps) => {
+  // Don't show toast for 0 points
+  if (points <= 0) return;
   const getIcon = () => {
     if (isLevelUp) return Award;
     if (points >= 100) return Trophy;

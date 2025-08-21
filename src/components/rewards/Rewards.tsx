@@ -24,6 +24,7 @@ export const Rewards = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        // RLS policy now automatically filters rewards by teacher
         const [{ data: itemsData, error: itemsErr }, { data: pointsData, error: pointsErr }] = await Promise.all([
           supabase.from("rewards_items").select("id,title,description,points_cost,image_url").eq("is_active", true).order("created_at", { ascending: false }),
           supabase.from("user_points").select("total_points").eq("user_id", user?.id ?? "").maybeSingle()
@@ -39,7 +40,46 @@ export const Rewards = () => {
         setLoading(false);
       }
     };
-    if (user?.id) fetchAll();
+
+    const setupRealtimeSubscriptions = () => {
+      if (!user?.id) return;
+
+      // Subscribe to real-time updates for user points
+      const pointsChannel = supabase
+        .channel('user_points_changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'user_points', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            if (payload.new && typeof payload.new === 'object' && 'total_points' in payload.new) {
+              setPoints(payload.new.total_points);
+            }
+          }
+        )
+        .subscribe();
+
+      // Subscribe to real-time updates for rewards items
+      const rewardsChannel = supabase
+        .channel('rewards_changes')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'rewards_items' },
+          () => {
+            // Refetch rewards when they change
+            fetchAll();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        pointsChannel.unsubscribe();
+        rewardsChannel.unsubscribe();
+      };
+    };
+
+    if (user?.id) {
+      fetchAll();
+      const unsubscribe = setupRealtimeSubscriptions();
+      return unsubscribe;
+    }
   }, [user?.id]);
 
   const redeem = async (id: string) => {
@@ -49,13 +89,8 @@ export const Rewards = () => {
       const { error } = await supabase.rpc("redeem_reward", { _reward_id: id });
       if (error) throw error;
       toast.success("Resgate solicitado com sucesso!");
-      // Refresh points and items
-      const [{ data: pointsData }, { data: itemsData }] = await Promise.all([
-        supabase.from("user_points").select("total_points").eq("user_id", user.id).maybeSingle(),
-        supabase.from("rewards_items").select("id,title,description,points_cost,image_url").eq("is_active", true)
-      ]);
-      setPoints(pointsData?.total_points ?? 0);
-      setItems(itemsData || []);
+      // Points and items will be updated automatically via real-time subscriptions
+      // No need to manually refresh here
     } catch (e: any) {
       const msg = e?.message || "Erro ao resgatar";
       toast.error(msg);

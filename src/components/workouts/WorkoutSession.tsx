@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { VideoPlayer } from "./VideoPlayer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { showPointsToast } from "@/components/gamification/PointsToast";
+import { useGamificationActions } from "@/hooks/useRealtimeGamification";
+import { toast } from "sonner";
 
 interface Exercise {
   id: number;
@@ -31,6 +32,7 @@ interface WorkoutSessionProps {
 
 export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProps) => {
   const { user } = useAuth();
+  const { awardWorkoutPoints } = useGamificationActions();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -94,24 +96,25 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
         .from('workout_sessions')
         .insert({
           user_id: user.id,
+          name: workout.name,
           start_time: new Date().toISOString(),
-          total_duration: time,
-          exercises: JSON.parse(JSON.stringify(workout.exercises)),
-          notes: `Treino: ${workout.name}`,
+          duration: time,
+          completed: true,
+          exercises_completed: currentExerciseIndex + 1,
+          total_exercises: workout.exercises.length
         });
 
       if (error) {
         console.error('Error saving workout session:', error);
+        toast.error('Erro ao salvar treino');
       } else {
-        // Mostrar toast de pontos ganhos
-        showPointsToast({
-          points: 75,
-          activity: "Treino Concluído!",
-          description: `${workout.name} - ${formatTime(time)}`
-        });
+        // Award points through the gamification system
+        await awardWorkoutPoints(workout.name);
+        toast.success('Treino concluído com sucesso! 🎉');
       }
     } catch (error) {
       console.error('Error saving workout session:', error);
+      toast.error('Erro ao salvar treino');
     }
   };
 

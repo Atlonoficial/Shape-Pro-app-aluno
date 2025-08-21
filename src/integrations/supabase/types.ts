@@ -2583,6 +2583,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      clean_test_banner_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_rate_limit_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2652,6 +2656,10 @@ export type Database = {
         Args: { _reward_id: string }
         Returns: string
       }
+      seed_banner_test_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sync_student_membership: {
         Args: { p_student_user_id: string; p_teacher_id: string }
         Returns: string
@@ -2693,6 +2701,10 @@ export type Database = {
       }
       update_session_activity: {
         Args: { p_session_token: string }
+        Returns: undefined
+      }
+      update_user_streak: {
+        Args: { p_user_id: string }
         Returns: undefined
       }
       validate_input: {
