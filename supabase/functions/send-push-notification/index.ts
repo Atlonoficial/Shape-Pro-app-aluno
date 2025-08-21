@@ -4,7 +4,20 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
+
+const securityHeaders = {
+  ...corsHeaders,
+  'Content-Type': 'application/json',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+};
+
+// Rate limiting storage
+const rateLimitMap = new Map();
 
 interface NotificationPayload {
   title: string
@@ -25,12 +38,53 @@ serve(async (req) => {
   }
 
   try {
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    
+    // Rate limiting: 20 requests per minute per IP
+    const now = Date.now();
+    const windowStart = now - 60000; // 1 minute window
+    const clientRequests = rateLimitMap.get(clientIP) || [];
+    const validRequests = clientRequests.filter((time: number) => time > windowStart);
+    
+    if (validRequests.length >= 20) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+        status: 429,
+        headers: securityHeaders,
+      });
+    }
+    
+    validRequests.push(now);
+    rateLimitMap.set(clientIP, validRequests);
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { title, message, target_users, data, scheduled_for, deep_link, image_url, action_text, action_url }: NotificationPayload = await req.json()
+    const body = await req.json();
+    const { title, message, target_users, data, scheduled_for, deep_link, image_url, action_text, action_url }: NotificationPayload = body;
+    
+    // Input validation
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Invalid title' }), {
+        status: 400,
+        headers: securityHeaders,
+      });
+    }
+    
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Invalid message' }), {
+        status: 400,
+        headers: securityHeaders,
+      });
+    }
+    
+    if (title.length > 200 || message.length > 1000) {
+      return new Response(JSON.stringify({ error: 'Title or message too long' }), {
+        status: 400,
+        headers: securityHeaders,
+      });
+    }
 
     console.log('OneSignal: Processing notification request', { title, target_users })
 
@@ -150,7 +204,7 @@ serve(async (req) => {
         recipients: oneSignalResult.recipients || playerIds.length
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: securityHeaders,
         status: 200,
       }
     )
@@ -164,7 +218,7 @@ serve(async (req) => {
         error: error.message
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: securityHeaders,
         status: 400,
       }
     )

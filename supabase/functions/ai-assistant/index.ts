@@ -7,6 +7,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const securityHeaders = {
+  ...corsHeaders,
+  'Content-Type': 'application/json',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+};
+
+// Rate limiting storage
+const rateLimitMap = new Map();
+
 interface StudentContextData {
   profile: any;
   student: any;
@@ -26,7 +39,49 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId } = await req.json();
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    
+    // Rate limiting: 10 requests per minute per IP
+    const now = Date.now();
+    const windowStart = now - 60000; // 1 minute window
+    const clientRequests = rateLimitMap.get(clientIP) || [];
+    const validRequests = clientRequests.filter((time: number) => time > windowStart);
+    
+    if (validRequests.length >= 10) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+        status: 429,
+        headers: securityHeaders,
+      });
+    }
+    
+    validRequests.push(now);
+    rateLimitMap.set(clientIP, validRequests);
+
+    // Input validation
+    const body = await req.json();
+    const { message, conversationId } = body;
+    
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Invalid message' }), {
+        status: 400,
+        headers: securityHeaders,
+      });
+    }
+    
+    if (message.length > 2000) {
+      return new Response(JSON.stringify({ error: 'Message too long' }), {
+        status: 400,
+        headers: securityHeaders,
+      });
+    }
+    
+    if (conversationId && (typeof conversationId !== 'string' || !/^[a-f0-9-]{36}$/.test(conversationId))) {
+      return new Response(JSON.stringify({ error: 'Invalid conversation ID' }), {
+        status: 400,
+        headers: securityHeaders,
+      });
+    }
     
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     const assistantId = Deno.env.get('OPENAI_ASSISTANT_ID');
@@ -225,7 +280,7 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       conversationId: conversation.id,
       threadId: threadId
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: securityHeaders,
     });
 
   } catch (error) {
@@ -234,7 +289,7 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       error: error.message || 'Internal server error' 
     }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: securityHeaders,
     });
   }
 });
