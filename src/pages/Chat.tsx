@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversation } from '@/hooks/useConversation';
-import { useRealtimeChat } from '@/hooks/useRealtimeChat';
+import { useEnhancedPresence } from '@/hooks/useEnhancedPresence';
+import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { ChatHeader } from '@/components/chat/ChatHeader';
@@ -11,6 +12,9 @@ import { Loader2 } from 'lucide-react';
 export default function Chat() {
   const { user, userProfile } = useAuth();
   const [isTyping, setIsTyping] = useState(false);
+  
+  // Inicializar notificações de chat
+  useChatNotifications();
   
   const {
     conversation,
@@ -25,7 +29,7 @@ export default function Chat() {
     onlineUsers,
     typingUsers,
     sendTypingIndicator
-  } = useRealtimeChat(conversation?.id);
+  } = useEnhancedPresence(conversation?.id || '');
 
   useEffect(() => {
     if (conversation && messages.length > 0) {

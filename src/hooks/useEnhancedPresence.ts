@@ -65,38 +65,39 @@ export const useEnhancedPresence = (channelName: string) => {
       .channel(`presence:${channelName}`)
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const allPresences = Object.values(state).flat() as PresenceState[];
+        const allPresences = Object.values(state).flat() as any[];
         
         // Filtrar usuários online (heartbeat nos últimos 30 segundos)
         const now = new Date();
         const thirtySecondsAgo = new Date(now.getTime() - 30000);
         
         const online = allPresences
-          .filter(p => {
-            if (!p.last_heartbeat) return false;
+          .filter((p: any) => {
+            if (!p.last_heartbeat || !p.user_id) return false;
             const lastSeen = new Date(p.last_heartbeat);
             return lastSeen > thirtySecondsAgo;
           })
-          .map(p => p.user_id)
-          .filter(id => id !== user.id);
+          .map((p: any) => p.user_id)
+          .filter((id: string) => id !== user.id);
 
         const typing = allPresences
-          .filter(p => p.typing && p.user_id !== user.id)
-          .map(p => p.user_id);
+          .filter((p: any) => p.typing && p.user_id && p.user_id !== user.id)
+          .map((p: any) => p.user_id);
 
         setOnlineUsers(online);
         setTypingUsers(typing);
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
-        const users = (newPresences as PresenceState[])
-          .filter(p => p.user_id !== user.id)
-          .map(p => p.user_id);
+        const users = (newPresences as any[])
+          .filter((p: any) => p.user_id && p.user_id !== user.id)
+          .map((p: any) => p.user_id);
         
         setOnlineUsers(prev => [...new Set([...prev, ...users])]);
       })
       .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        const users = (leftPresences as PresenceState[])
-          .map(p => p.user_id);
+        const users = (leftPresences as any[])
+          .map((p: any) => p.user_id)
+          .filter(Boolean);
         
         setOnlineUsers(prev => prev.filter(id => !users.includes(id)));
         setTypingUsers(prev => prev.filter(id => !users.includes(id)));
