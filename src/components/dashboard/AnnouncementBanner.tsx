@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useBanners } from "@/hooks/useBanners";
-import { useBannerAnalytics } from "@/hooks/useBannerAnalytics";
+import { useBannerTracking } from "@/hooks/useBannerTracking";
 
 export const AnnouncementBanner = () => {
   const { user } = useAuth();
@@ -10,13 +10,8 @@ export const AnnouncementBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Analytics tracking
-  const { trackImpression, trackExpansion, trackClick, trackNavigation, trackConversion } = useBannerAnalytics();
-  
-  // Refs para controlar tracking
-  const impressionTracked = useRef<Set<string>>(new Set());
-  const viewStartTime = useRef<number>(Date.now());
-  const expandTrackingRef = useRef<boolean>(false);
+  // Simplified tracking - apenas 2 métricas
+  const { trackDetailView, trackRedirectClick } = useBannerTracking();
 
   const current = banners[currentIndex];
 
@@ -28,35 +23,6 @@ export const AnnouncementBanner = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [banners.length, isExpanded]);
-
-  // Track impressions quando banner é exibido
-  useEffect(() => {
-    if (current?.id && user?.id && !impressionTracked.current.has(current.id)) {
-      impressionTracked.current.add(current.id);
-      viewStartTime.current = Date.now();
-      
-      // Track impression após 1 segundo de visualização
-      const timer = setTimeout(() => {
-        const viewDuration = Date.now() - viewStartTime.current;
-        trackImpression(current.id, viewDuration);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [current?.id, user?.id, trackImpression]);
-
-  // Track mudanças de slide automaticas
-  useEffect(() => {
-    if (current?.id && banners.length > 1) {
-      const timer = setTimeout(() => {
-        if (!isExpanded) {
-          trackNavigation(current.id, currentIndex, 'next');
-        }
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentIndex, current?.id, isExpanded, banners.length, trackNavigation]);
 
   const gradient = useMemo(() => {
     const type = current?.type || 'campanha';
@@ -70,33 +36,30 @@ export const AnnouncementBanner = () => {
   const linkUrl = current?.action_url;
   const tagType = current?.type || 'campanha';
 
-  const handleClick = () => {
+  // MÉTRICA 2: Redirect Click - Clique no botão de ação
+  const handleRedirectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (linkUrl && current?.id) {
-      // Track click e conversão
-      trackClick(current.id, linkUrl);
-      trackConversion(current.id, linkUrl);
-      window.open(linkUrl, '_blank');
+      trackRedirectClick(current.id, linkUrl);
+      // Pequeno delay para garantir que o tracking seja enviado
+      setTimeout(() => {
+        window.open(linkUrl, '_blank');
+      }, 100);
     }
   };
 
+  // MÉTRICA 1: Detail View - Clique no card do banner
   const handleBannerClick = () => {
-    if (!isExpanded && current?.id) {
-      // Track expansion
-      if (!expandTrackingRef.current) {
-        trackExpansion(current.id, true);
-        expandTrackingRef.current = true;
-      }
+    if (current?.id) {
+      trackDetailView(current.id);
       
-      setIsExpanded(true);
-      // Auto-hide after 4 seconds
-      setTimeout(() => {
-        setIsExpanded(false);
-        // Track collapse
-        if (current?.id) {
-          trackExpansion(current.id, false);
-          expandTrackingRef.current = false;
-        }
-      }, 4000);
+      if (!isExpanded) {
+        setIsExpanded(true);
+        // Auto-hide after 4 seconds
+        setTimeout(() => {
+          setIsExpanded(false);
+        }, 4000);
+      }
     }
   };
 
@@ -170,10 +133,7 @@ export const AnnouncementBanner = () => {
                 
                 {linkUrl && (
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClick();
-                    }} 
+                    onClick={handleRedirectClick}
                     className="self-start text-sm bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors flex items-center gap-2 backdrop-blur-sm border border-white/20"
                   >
                     <span>{actionLabel}</span>
@@ -200,9 +160,6 @@ export const AnnouncementBanner = () => {
                 e.stopPropagation();
                 const newIndex = (currentIndex - 1 + banners.length) % banners.length;
                 setCurrentIndex(newIndex);
-                if (current?.id) {
-                  trackNavigation(current.id, newIndex, 'prev');
-                }
               }}
               className="w-6 h-6 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center transition-colors"
             >
@@ -216,9 +173,6 @@ export const AnnouncementBanner = () => {
                 e.stopPropagation();
                 const newIndex = (currentIndex + 1) % banners.length;
                 setCurrentIndex(newIndex);
-                if (current?.id) {
-                  trackNavigation(current.id, newIndex, 'next');
-                }
               }}
               className="w-6 h-6 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center transition-colors"
             >
@@ -237,9 +191,6 @@ export const AnnouncementBanner = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 setCurrentIndex(index);
-                if (current?.id) {
-                  trackNavigation(current.id, index, 'direct');
-                }
               }}
               className={`w-2 h-2 rounded-full transition-colors ${
                 index === currentIndex ? 'bg-primary' : 'bg-muted-foreground/30'

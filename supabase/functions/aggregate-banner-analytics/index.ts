@@ -63,39 +63,23 @@ serve(async (req) => {
           banner_id: interaction.banner_id,
           user_id: interaction.user_id,
           date: aggregationDate,
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          expansions: 0,
-          navigations: 0,
-          total_view_duration: 0,
+          detail_views: 0,
+          redirect_clicks: 0,
           session_count: new Set()
         });
       }
       
       const agg = aggregationMap.get(key);
       
-      // Count interactions by type
+      // Count interactions by type - apenas detail_view e redirect_click
       switch (interaction.interaction_type) {
-        case 'view':
-          agg.impressions++;
-          // Sum view duration from metadata
-          if (interaction.metadata?.view_duration) {
-            agg.total_view_duration += interaction.metadata.view_duration;
-          }
+        case 'detail_view':
+          agg.detail_views++;
           break;
-        case 'click':
-          agg.clicks++;
+        case 'redirect_click':
+          agg.redirect_clicks++;
           break;
-        case 'conversion':
-          agg.conversions++;
-          break;
-        case 'expand':
-          agg.expansions++;
-          break;
-        case 'navigate':
-          agg.navigations++;
-          break;
+        // Ignorar outros tipos de interação
       }
       
       // Track unique sessions
@@ -109,19 +93,9 @@ serve(async (req) => {
       banner_id: agg.banner_id,
       user_id: agg.user_id,
       date: agg.date,
-      impressions: agg.impressions,
-      clicks: agg.clicks,
-      conversions: agg.conversions,
-      // Store additional metrics in metadata
-      metadata: {
-        expansions: agg.expansions,
-        navigations: agg.navigations,
-        total_view_duration: agg.total_view_duration,
-        average_view_duration: agg.impressions > 0 ? Math.round(agg.total_view_duration / agg.impressions) : 0,
-        unique_sessions: agg.session_count.size,
-        ctr: agg.impressions > 0 ? Number((agg.clicks / agg.impressions * 100).toFixed(2)) : 0,
-        conversion_rate: agg.clicks > 0 ? Number((agg.conversions / agg.clicks * 100).toFixed(2)) : 0
-      }
+      impressions: agg.detail_views,  // detail_views → impressions
+      clicks: agg.redirect_clicks,    // redirect_clicks → clicks
+      conversions: 0                  // sem conversions no modelo simplificado
     }));
 
     console.log(`Prepared ${aggregatedRecords.length} aggregated records`);

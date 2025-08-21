@@ -2671,6 +2671,10 @@ export type Database = {
         Args: { p_banner_id: string }
         Returns: undefined
       }
+      aggregate_banner_metrics_simple: {
+        Args: { p_banner_id: string; p_date?: string }
+        Returns: undefined
+      }
       aggregate_daily_banner_metrics: {
         Args: { target_date?: string }
         Returns: Json
