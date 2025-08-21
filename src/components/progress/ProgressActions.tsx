@@ -49,7 +49,17 @@ export const useProgressActions = () => {
     }
   }, [user?.id, awardProgressPoints]);
 
+  const recordWeight = useCallback(async (weight: number, notes?: string) => {
+    return await recordProgress({
+      type: 'weight',
+      value: weight,
+      unit: 'kg',
+      notes: notes || 'Peso registrado'
+    });
+  }, [recordProgress]);
+
   return {
-    recordProgress
+    recordProgress,
+    recordWeight
   };
 };
