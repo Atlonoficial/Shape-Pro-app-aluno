@@ -34,6 +34,7 @@ import { AuthVerify } from "./pages/AuthVerify";
 import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,11 @@ const App = () => (
               <Route path="/metas" element={<Metas />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/recompensas" element={<Recompensas />} />
+              <Route path="/chat" element={
+                <AuthGuard>
+                  <Chat />
+                </AuthGuard>
+              } />
               <Route path="/auth/verify" element={<AuthVerify />} />
               <Route path="/auth/verified" element={<AuthVerified />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
