@@ -1674,12 +1674,16 @@ export type Database = {
           name: string
           notification_preferences: Json | null
           onesignal_player_id: string | null
+          professional_title: string | null
           profile_complete: boolean | null
           push_enabled: boolean | null
+          show_profile_to_students: boolean | null
           specialties: string[] | null
           updated_at: string | null
           user_type: string | null
           whatsapp_number: string | null
+          whatsapp_url: string | null
+          youtube_url: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1692,12 +1696,16 @@ export type Database = {
           name: string
           notification_preferences?: Json | null
           onesignal_player_id?: string | null
+          professional_title?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
+          show_profile_to_students?: boolean | null
           specialties?: string[] | null
           updated_at?: string | null
           user_type?: string | null
           whatsapp_number?: string | null
+          whatsapp_url?: string | null
+          youtube_url?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1710,12 +1718,16 @@ export type Database = {
           name?: string
           notification_preferences?: Json | null
           onesignal_player_id?: string | null
+          professional_title?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
+          show_profile_to_students?: boolean | null
           specialties?: string[] | null
           updated_at?: string | null
           user_type?: string | null
           whatsapp_number?: string | null
+          whatsapp_url?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }
@@ -2654,6 +2666,10 @@ export type Database = {
       aggregate_banner_interactions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      aggregate_daily_banner_metrics: {
+        Args: { target_date?: string }
+        Returns: Json
       }
       approve_subscription: {
         Args: { p_subscription_id: string }

@@ -24,6 +24,7 @@ export const useBannerAnalytics = () => {
     
     try {
       setIsTracking(true);
+      console.log('[BannerAnalytics] Tracking interaction:', data.interaction_type, 'for banner:', data.banner_id);
       
       // Capturar dados contextuais
       const metadata = {
@@ -34,27 +35,47 @@ export const useBannerAnalytics = () => {
         },
         scroll_position: window.scrollY,
         timestamp: new Date().toISOString(),
-        user_agent: navigator.userAgent.substring(0, 200), // Limitar tamanho
+        user_agent: navigator.userAgent.substring(0, 200),
         url: window.location.href
       };
 
+      const insertData = {
+        banner_id: data.banner_id,
+        user_id: user.id,
+        interaction_type: data.interaction_type,
+        session_id: `${user.id}-${Date.now()}`,
+        ip_address: null,
+        user_agent: navigator.userAgent.substring(0, 200),
+        metadata
+      };
+
+      console.log('[BannerAnalytics] Inserting data:', insertData);
+
       const { error } = await supabase
         .from('banner_interactions')
-        .insert({
-          banner_id: data.banner_id,
-          user_id: user.id,
-          interaction_type: data.interaction_type,
-          session_id: `${user.id}-${Date.now()}`, // Session ID simples
-          ip_address: null, // Será capturado pelo servidor se necessário
-          user_agent: navigator.userAgent.substring(0, 200),
-          metadata
-        });
+        .insert(insertData);
 
       if (error) {
-        console.error('Error tracking banner interaction:', error);
+        console.error('[BannerAnalytics] Database error:', error);
+        
+        // Tentar novamente após um delay se for erro de conexão
+        if (error.code === 'PGRST301' || error.message.includes('network')) {
+          setTimeout(() => {
+            console.log('[BannerAnalytics] Retrying interaction tracking...');
+            trackInteraction(data);
+          }, 2000);
+        }
+      } else {
+        console.log('[BannerAnalytics] Successfully tracked interaction');
       }
     } catch (error) {
-      console.error('Error tracking banner interaction:', error);
+      console.error('[BannerAnalytics] Unexpected error:', error);
+      
+      // Implementar retry para erros inesperados
+      setTimeout(() => {
+        console.log('[BannerAnalytics] Retrying after unexpected error...');
+        trackInteraction(data);
+      }, 3000);
     } finally {
       setIsTracking(false);
     }
