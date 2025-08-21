@@ -1,8 +1,11 @@
 import { useCallback } from "react";
 import { useGamificationActions } from "@/hooks/useRealtimeGamification";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
 
 export const useProgressActions = () => {
+  const { user } = useAuthContext();
   const { awardProgressPoints } = useGamificationActions();
 
   const recordProgress = useCallback(async (progressData: {
@@ -10,9 +13,32 @@ export const useProgressActions = () => {
     value: number;
     unit: string;
     notes?: string;
+    workout_id?: string;
+    meal_id?: string;
   }) => {
+    if (!user?.id) return false;
+
     try {
-      // Award points for progress update directly
+      const { data, error } = await supabase
+        .from('progress')
+        .insert({
+          user_id: user.id,
+          type: progressData.type,
+          value: progressData.value,
+          unit: progressData.unit,
+          notes: progressData.notes,
+          workout_id: progressData.workout_id,
+          meal_id: progressData.meal_id,
+          date: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error recording progress:', error);
+        toast.error('Erro ao registrar progresso');
+        return false;
+      }
+
+      // Award points for progress update
       await awardProgressPoints(progressData.type);
       toast.success('Progresso registrado com sucesso! 🎯');
       return true;
@@ -21,19 +47,9 @@ export const useProgressActions = () => {
       toast.error('Erro ao registrar progresso');
       return false;
     }
-  }, [awardProgressPoints]);
-
-  const recordWeight = useCallback(async (weight: number, notes?: string) => {
-    return recordProgress({
-      type: 'weight',
-      value: weight,
-      unit: 'kg',
-      notes
-    });
-  }, [recordProgress]);
+  }, [user?.id, awardProgressPoints]);
 
   return {
-    recordProgress,
-    recordWeight
+    recordProgress
   };
 };
