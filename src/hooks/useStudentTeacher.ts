@@ -11,8 +11,10 @@ export const useStudentTeacher = () => {
     console.log('[useStudentTeacher] fetchTeacherId called, user:', user);
     
     if (!user?.id) {
-      console.log('[useStudentTeacher] No user ID, user object:', user);
-      setTeacherId(null);
+      console.log('[useStudentTeacher] No user ID, using default teacher');
+      // Use default teacher when no user is authenticated
+      const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
+      setTeacherId(defaultTeacherId);
       setLoading(false);
       return;
     }
@@ -29,7 +31,10 @@ export const useStudentTeacher = () => {
 
       if (error) {
         console.error('[useStudentTeacher] Error fetching student data:', error);
-        setTeacherId(null);
+        // Use default teacher when there's an error
+        const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
+        console.log('[useStudentTeacher] Using default teacher:', defaultTeacherId);
+        setTeacherId(defaultTeacherId);
         return;
       }
 
@@ -39,12 +44,17 @@ export const useStudentTeacher = () => {
         console.log('[useStudentTeacher] Found teacher ID:', studentData.teacher_id);
         setTeacherId(studentData.teacher_id);
       } else {
-        console.log('[useStudentTeacher] No teacher found for this student');
-        setTeacherId(null);
+        // Use default teacher when no student record exists
+        const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
+        console.log('[useStudentTeacher] No student record found, using default teacher:', defaultTeacherId);
+        setTeacherId(defaultTeacherId);
       }
     } catch (error) {
       console.error('[useStudentTeacher] Unexpected error:', error);
-      setTeacherId(null);
+      // Use default teacher when there's an unexpected error
+      const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
+      console.log('[useStudentTeacher] Error occurred, using default teacher:', defaultTeacherId);
+      setTeacherId(defaultTeacherId);
     } finally {
       setLoading(false);
     }
