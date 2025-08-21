@@ -37,7 +37,7 @@ export const useTeacherProfile = () => {
         .select('id, name, email, avatar_url, bio, instagram_url, facebook_url, whatsapp_number, specialties')
         .eq('id', teacherId)
         .eq('user_type', 'teacher')
-        .single();
+        .maybeSingle();
 
       console.log('[useTeacherProfile] Query result:', { data, error });
 
