@@ -252,6 +252,9 @@ export const Profile = () => {
         </Card>
       </div>
 
+      {/* Teacher Profile */}
+      <TeacherCard />
+
       {/* Rewards CTA */}
       <Card className="mb-6">
         <CardContent className="p-5">
@@ -274,9 +277,6 @@ export const Profile = () => {
       <div className="mb-6">
         <PointsWidget onClick={goToGamification} />
       </div>
-
-      {/* Teacher Profile */}
-      <TeacherCard />
 
       {/* Meus Dados */}
       <h2 className="text-lg font-semibold mb-3 mt-6">Meus Dados</h2>
