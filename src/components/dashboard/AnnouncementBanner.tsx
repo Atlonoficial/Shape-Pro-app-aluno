@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useBanners } from "@/hooks/useBanners";
 
@@ -7,15 +7,16 @@ export const AnnouncementBanner = () => {
   const { user } = useAuth();
   const { banners, loading } = useBanners(user?.id);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Rotaciona automaticamente
+  // Rotaciona automaticamente apenas se não estiver expandido
   useEffect(() => {
-    if (!banners.length) return;
+    if (!banners.length || isExpanded) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [banners.length]);
+  }, [banners.length, isExpanded]);
 
   const current = banners[currentIndex];
 
@@ -33,6 +34,16 @@ export const AnnouncementBanner = () => {
 
   const handleClick = () => {
     if (linkUrl) window.open(linkUrl, '_blank');
+  };
+
+  const handleBannerClick = () => {
+    if (!isExpanded) {
+      setIsExpanded(true);
+      // Auto-hide after 4 seconds
+      setTimeout(() => {
+        setIsExpanded(false);
+      }, 4000);
+    }
   };
 
   if (loading) {
@@ -56,7 +67,10 @@ export const AnnouncementBanner = () => {
 
   return (
     <div className="relative mb-6 overflow-hidden rounded-xl border border-border/50">
-      <div className={`bg-gradient-to-r ${gradient} p-4`}>
+      <div 
+        className={`bg-gradient-to-r ${gradient} p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02]`}
+        onClick={handleBannerClick}
+      >
         {/* 16:9 aspect ratio banner with image background */}
         <div className="relative aspect-video rounded-lg overflow-hidden">
           <img
@@ -70,69 +84,105 @@ export const AnnouncementBanner = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
           
           {/* Content overlay */}
-          <div className="absolute inset-0 p-4 flex flex-col justify-end">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                tagType === 'produto' ? 'bg-primary/30 text-white border border-primary/50' : 'bg-accent/30 text-white border border-accent/50'
-              }`}>
-                {tagType === 'produto' ? '🛍️ Produto' : '📢 Campanha'}
-              </span>
-            </div>
-            
-            <h3 className="text-lg font-bold text-white mb-1 line-clamp-2">
-              {current?.title}
-            </h3>
-            
-            {(current?.description || current?.message) && (
-              <p className="text-sm text-white/90 mb-3 line-clamp-2">
-                {current.description || current.message}
-              </p>
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            {/* Collapsed State - Only show expand indicator */}
+            {!isExpanded && (
+              <div className="text-center text-white">
+                <ChevronDown size={32} className="mx-auto animate-pulse" />
+                <p className="text-sm mt-2 opacity-80">Clique para ver detalhes</p>
+              </div>
             )}
             
-            {linkUrl && (
-              <button 
-                onClick={handleClick} 
-                className="self-start text-sm bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors flex items-center gap-2 backdrop-blur-sm border border-white/20"
-              >
-                <span>{actionLabel}</span>
-                <ExternalLink size={14} />
-              </button>
+            {/* Expanded State - Show all content */}
+            {isExpanded && (
+              <div className="w-full animate-in slide-in-from-bottom duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    tagType === 'produto' ? 'bg-primary/30 text-white border border-primary/50' : 'bg-accent/30 text-white border border-accent/50'
+                  }`}>
+                    📢 Campanha
+                  </span>
+                </div>
+                
+                <h3 className="text-lg font-bold text-white mb-1 line-clamp-2">
+                  {current?.title}
+                </h3>
+                
+                {(current?.description || current?.message) && (
+                  <p className="text-sm text-white/90 mb-3 line-clamp-2">
+                    {current.description || current.message}
+                  </p>
+                )}
+                
+                {linkUrl && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClick();
+                    }} 
+                    className="self-start text-sm bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors flex items-center gap-2 backdrop-blur-sm border border-white/20"
+                  >
+                    <span>{actionLabel}</span>
+                    <ExternalLink size={14} />
+                  </button>
+                )}
+                
+                {/* Collapse indicator */}
+                <div className="flex justify-center mt-3">
+                  <ChevronUp size={20} className="text-white/60 animate-pulse" />
+                </div>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Controles */}
-      <div className="absolute top-1/2 left-2 -translate-y-1/2">
-        <button
-          onClick={() => setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length)}
-          className="w-6 h-6 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center transition-colors"
-        >
-          <ChevronLeft size={12} />
-        </button>
-      </div>
+      {/* Controles - apenas visíveis quando expandido e há múltiplos banners */}
+      {isExpanded && banners.length > 1 && (
+        <>
+          <div className="absolute top-1/2 left-2 -translate-y-1/2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+              }}
+              className="w-6 h-6 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center transition-colors"
+            >
+              <ChevronLeft size={12} />
+            </button>
+          </div>
 
-      <div className="absolute top-1/2 right-2 -translate-y-1/2">
-        <button
-          onClick={() => setCurrentIndex((prev) => (prev + 1) % banners.length)}
-          className="w-6 h-6 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center transition-colors"
-        >
-          <ChevronRight size={12} />
-        </button>
-      </div>
+          <div className="absolute top-1/2 right-2 -translate-y-1/2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex((prev) => (prev + 1) % banners.length);
+              }}
+              className="w-6 h-6 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center transition-colors"
+            >
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        </>
+      )}
 
-      {/* Indicadores */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-        {banners.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-2 h-2 rounded-full transition-colors ${
-              index === currentIndex ? 'bg-primary' : 'bg-muted-foreground/30'
-            }`}
-          />
-        ))}
-      </div>
+      {/* Indicadores - apenas visíveis quando expandido e há múltiplos banners */}
+      {isExpanded && banners.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex(index);
+              }}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentIndex ? 'bg-primary' : 'bg-muted-foreground/30'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

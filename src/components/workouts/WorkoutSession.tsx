@@ -93,6 +93,7 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
       const { data, error } = await supabase
         .from('workout_sessions')
         .insert({
+          user_id: user.id,
           start_time: new Date().toISOString(),
           total_duration: time,
           exercises: JSON.parse(JSON.stringify(workout.exercises)),

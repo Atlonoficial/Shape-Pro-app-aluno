@@ -175,11 +175,11 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
       {/* Coach AI Card */}
       <CoachAICard onCoachClick={onCoachClick} />
 
-      {/* Announcement Banner */}
-      <AnnouncementBanner />
-
       {/* Quick Actions */}
       <QuickActions />
+
+      {/* Announcement Banner - Positioned between agenda/meta and stats */}
+      <AnnouncementBanner />
 
       {/* Stats Overview */}
       <DashboardStats 
