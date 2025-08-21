@@ -61,5 +61,5 @@ export const useProgressActions = () => {
   return {
     recordProgress,
     recordWeight
-  };
+  } as const;
 };
