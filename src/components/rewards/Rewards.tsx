@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Gift } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -100,101 +99,116 @@ export const Rewards = () => {
   };
 
   return (
-    <div className="px-4 sm:px-6 py-6 pb-24 min-h-screen w-full max-w-6xl mx-auto">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Loja de Recompensas
-          </h1>
-          <p className="text-muted-foreground text-sm">Troque seus pontos por recompensas incríveis</p>
-        </div>
-        <div className="flex items-center gap-2 bg-gradient-to-r from-warning/10 to-primary/10 px-4 py-3 rounded-xl border border-warning/30 shadow-sm">
-          <Trophy className="w-5 h-5 text-warning" />
-          <span className="font-bold text-lg text-warning">{points.toLocaleString("pt-BR")}</span>
-          <span className="text-sm text-muted-foreground">pontos</span>
+    <div className="p-4 pt-8 pb-24">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Recompensas</h1>
+        <p className="text-muted-foreground">Troque seus pontos por prêmios incríveis</p>
+      </div>
+
+      {/* Points Display */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-border/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-foreground">Seus Pontos</h3>
+            <p className="text-sm text-muted-foreground">Disponíveis para troca</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-primary" />
+            <span className="text-2xl font-bold text-foreground">{points}</span>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <Card className="shape-card-modern">
-          <CardContent className="p-8 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
-              <p className="text-muted-foreground">Carregando recompensas...</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
+            <p className="text-muted-foreground">Carregando recompensas...</p>
+          </div>
+        </div>
       ) : items.length === 0 ? (
-        <Card className="shape-card-modern">
-          <CardContent className="p-8 text-center">
-            <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
-              <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center">
-                <Gift className="w-8 h-8 text-white" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-foreground">Nenhuma recompensa disponível</h3>
-                <p className="text-sm text-muted-foreground">Seu professor ainda não adicionou recompensas à loja. Continue acumulando pontos!</p>
-              </div>
+        <div className="text-center py-12">
+          <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
+            <div className="w-16 h-16 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
+              <Gift className="w-8 h-8 text-primary" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">Nenhuma recompensa disponível</h3>
+              <p className="text-sm text-muted-foreground">Continue acumulando pontos! Novas recompensas em breve.</p>
+            </div>
+          </div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {items.map((item) => (
-            <Card key={item.id} className="shape-card-modern group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <CardContent className="p-5 flex flex-col h-full">
-                {/* Header com título e preço */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="font-semibold text-foreground text-base leading-tight flex-1 min-w-0 break-words">
-                    {item.title}
-                  </h3>
-                  <div className="flex items-center gap-1 bg-gradient-to-r from-warning/20 to-primary/20 px-3 py-1.5 rounded-full border border-warning/30 shrink-0">
-                    <Trophy className="w-3.5 h-3.5 text-warning" />
-                    <span className="text-sm font-bold text-warning whitespace-nowrap">
-                      {item.points_cost.toLocaleString("pt-BR")}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Descrição */}
-                {item.description && (
-                  <div className="flex-1 mb-4">
-                    <p className="text-sm text-muted-foreground leading-relaxed break-words">
-                      {item.description.length > 80 
-                        ? `${item.description.substring(0, 80)}...` 
-                        : item.description
-                      }
-                    </p>
-                  </div>
-                )}
-
-                {/* Botão de ação */}
-                <div className="mt-auto pt-2">
-                  <Button
-                    className="w-full text-sm font-medium min-h-[40px] transition-all duration-200"
-                    variant={points < item.points_cost ? "outline" : "default"}
-                    disabled={redeeming === item.id || points < item.points_cost}
-                    onClick={() => redeem(item.id)}
-                  >
-                    {redeeming === item.id ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                        <span>Resgatando...</span>
-                      </div>
-                    ) : points < item.points_cost ? (
-                      <span>Pontos insuficientes</span>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Gift className="w-4 h-4" />
-                        <span>Resgatar</span>
-                      </div>
+        <div className="space-y-4">
+          <h3 className="font-semibold text-foreground">Recompensas Disponíveis</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item) => {
+              const canAfford = points >= item.points_cost;
+              const isRedeeming = redeeming === item.id;
+              
+              return (
+                <div
+                  key={item.id}
+                  className="bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30"
+                >
+                  {/* Reward Image */}
+                  {item.image_url && (
+                    <div className="mb-4 rounded-xl overflow-hidden bg-muted/30 aspect-video">
+                      <img
+                        src={item.image_url}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Reward Content */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-foreground text-base leading-tight break-words">
+                      {item.title}
+                    </h3>
+                    
+                    {item.description && (
+                      <p className="text-sm text-muted-foreground leading-relaxed break-words">
+                        {item.description}
+                      </p>
                     )}
-                  </Button>
+                    
+                    {/* Price and Button */}
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-lg font-bold text-primary">
+                        {item.points_cost} pts
+                      </span>
+                      
+                      <Button
+                        onClick={() => redeem(item.id)}
+                        disabled={!canAfford || isRedeeming}
+                        variant={canAfford ? "default" : "outline"}
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        {isRedeeming ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Resgatando...
+                          </>
+                        ) : !canAfford ? (
+                          'Insuficiente'
+                        ) : (
+                          <>
+                            <Gift className="w-4 h-4" />
+                            Resgatar
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

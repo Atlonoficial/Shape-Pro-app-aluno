@@ -175,6 +175,10 @@
   }
 
   /* Layout Components */
+  .tab-container {
+    @apply min-h-screen bg-background w-full max-w-4xl mx-auto relative;
+  }
+
   .mobile-container {
     @apply max-w-sm mx-auto min-h-screen bg-gradient-dark relative;
   }
@@ -199,11 +203,11 @@
 
   /* Navigation with Shape Pro styling */
   .nav-item {
-    @apply flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 hover:bg-muted/60 active:scale-95;
+    @apply flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:bg-muted/60 active:scale-95;
   }
 
   .nav-item.active {
-    @apply bg-primary/15 text-primary shadow-[0_0_16px_hsl(43_96%_56%/0.3)];
+    @apply bg-primary/15 text-primary shadow-[0_0_12px_hsl(43_96%_56%/0.25)];
   }
 
   /* Shape Pro Badges */

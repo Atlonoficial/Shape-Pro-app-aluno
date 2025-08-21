@@ -7,7 +7,7 @@ interface MobileContainerProps {
 
 export const MobileContainer = ({ children, className = "" }: MobileContainerProps) => {
   return (
-    <div className={`mobile-container ${className}`}>
+    <div className={`tab-container ${className}`}>
       {children}
     </div>
   );
