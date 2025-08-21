@@ -100,42 +100,49 @@ export const Rewards = () => {
   };
 
   return (
-    <div className="p-4 pt-8 pb-24 min-h-[60vh] max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-foreground">Loja de Recompensas</h1>
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-warning" />
-          <span className="font-semibold">{points.toLocaleString("pt-BR")} pts</span>
+    <div className="px-3 sm:px-6 py-4 pb-24 min-h-screen w-full max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Loja de Recompensas</h1>
+        <div className="flex items-center gap-2 bg-warning/10 px-3 py-2 rounded-full border border-warning/20">
+          <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
+          <span className="font-semibold text-sm sm:text-base text-warning">{points.toLocaleString("pt-BR")} pts</span>
         </div>
       </div>
 
       {loading ? (
-        <Card className="bg-card/60 border-border/50">
-          <CardContent className="p-8 text-center text-muted-foreground">Carregando...</CardContent>
+        <Card className="bg-card/50 backdrop-blur-sm border border-border/30 shadow-sm">
+          <CardContent className="p-6 sm:p-8 text-center text-muted-foreground">
+            <div className="animate-pulse">Carregando recompensas...</div>
+          </CardContent>
         </Card>
       ) : items.length === 0 ? (
-        <Card className="bg-card/60 border-border/50">
-          <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Gift className="w-8 h-8 text-primary" />
+        <Card className="bg-card/50 backdrop-blur-sm border border-border/30 shadow-sm">
+          <CardContent className="p-6 sm:p-8 text-center">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             </div>
-            <p className="text-muted-foreground">Nenhum item disponível no momento.</p>
+            <h3 className="font-semibold text-foreground mb-2">Nenhuma recompensa disponível</h3>
+            <p className="text-sm text-muted-foreground">Seu professor ainda não adicionou recompensas à loja.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {items.map((item) => (
-            <Card key={item.id} className="bg-card/60 border-border/50">
-              <CardContent className="p-5 flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-semibold text-foreground">{item.title}</h3>
-                  <span className="text-sm text-warning font-medium">{item.points_cost} pts</span>
+            <Card key={item.id} className="bg-card/50 backdrop-blur-sm border border-border/30 shadow-sm hover:shadow-md hover:bg-card/70 transition-all duration-200">
+              <CardContent className="p-4 sm:p-5 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight">{item.title}</h3>
+                  <div className="flex items-center gap-1 bg-warning/10 px-2 py-1 rounded-full border border-warning/20 shrink-0">
+                    <Trophy className="w-3 h-3 text-warning" />
+                    <span className="text-xs font-medium text-warning">{item.points_cost}</span>
+                  </div>
                 </div>
                 {item.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">{item.description}</p>
                 )}
                 <Button
-                  className="mt-2"
+                  size="sm"
+                  className="mt-auto w-full text-xs sm:text-sm"
                   disabled={redeeming === item.id || points < item.points_cost}
                   onClick={() => redeem(item.id)}
                 >
