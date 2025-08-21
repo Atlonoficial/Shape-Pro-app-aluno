@@ -2287,6 +2287,86 @@ export type Database = {
           },
         ]
       }
+      user_goals: {
+        Row: {
+          category: string
+          challenge_id: string | null
+          completed_at: string | null
+          created_at: string
+          current_value: number | null
+          description: string | null
+          id: string
+          is_challenge_based: boolean | null
+          metadata: Json | null
+          points_reward: number | null
+          progress_percentage: number | null
+          start_date: string
+          status: string
+          target_date: string | null
+          target_type: string
+          target_unit: string | null
+          target_value: number
+          teacher_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          challenge_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          is_challenge_based?: boolean | null
+          metadata?: Json | null
+          points_reward?: number | null
+          progress_percentage?: number | null
+          start_date?: string
+          status?: string
+          target_date?: string | null
+          target_type?: string
+          target_unit?: string | null
+          target_value: number
+          teacher_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          challenge_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          is_challenge_based?: boolean | null
+          metadata?: Json | null
+          points_reward?: number | null
+          progress_percentage?: number | null
+          start_date?: string
+          status?: string
+          target_date?: string | null
+          target_type?: string
+          target_unit?: string | null
+          target_value?: number
+          teacher_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_goals_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_mfa_settings: {
         Row: {
           backup_codes: string[] | null
@@ -2745,6 +2825,10 @@ export type Database = {
       }
       trigger_cleanup_rate_limits: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_goal_progress: {
+        Args: { p_category: string; p_user_id: string; p_value: number }
         Returns: undefined
       }
       update_monthly_rankings: {

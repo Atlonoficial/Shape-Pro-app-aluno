@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useGamificationActions } from "@/hooks/useRealtimeGamification";
+import { useGoalActions } from "@/hooks/useGoalActions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 export const useProgressActions = () => {
   const { user } = useAuthContext();
   const { awardProgressPoints } = useGamificationActions();
+  const { updateGoalsProgress } = useGoalActions();
 
   const recordProgress = useCallback(async (progressData: {
     type: string;
@@ -38,6 +40,19 @@ export const useProgressActions = () => {
         return false;
       }
 
+      // Atualizar progresso nas metas baseado no tipo
+      const categoryMap: Record<string, string> = {
+        'weight': 'peso',
+        'workout': 'frequencia',
+        'cardio': 'cardio',
+        'strength': 'forca'
+      };
+      
+      const goalCategory = categoryMap[progressData.type];
+      if (goalCategory) {
+        await updateGoalsProgress(goalCategory, progressData.value);
+      }
+
       // Award points for progress update
       await awardProgressPoints(progressData.type);
       toast.success('Progresso registrado com sucesso! 🎯');
@@ -47,7 +62,7 @@ export const useProgressActions = () => {
       toast.error('Erro ao registrar progresso');
       return false;
     }
-  }, [user?.id, awardProgressPoints]);
+  }, [user?.id, awardProgressPoints, updateGoalsProgress]);
 
   const recordWeight = useCallback(async (weight: number, notes?: string) => {
     return await recordProgress({
