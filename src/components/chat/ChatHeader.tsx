@@ -1,8 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Phone, Video, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Conversation {
   id: string;
@@ -30,10 +32,34 @@ export const ChatHeader = ({
 }: ChatHeaderProps) => {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+  const [teacherName, setTeacherName] = useState<string>('Professor');
   
   const isStudent = userProfile?.user_type === 'student';
-  const chatPartner = isStudent ? 'Professor' : 'Aluno';
+  const chatPartner = isStudent ? teacherName : 'Aluno';
   const chatPartnerId = isStudent ? conversation?.teacher_id : conversation?.student_id;
+
+  // Buscar nome real do professor
+  useEffect(() => {
+    const fetchTeacherName = async () => {
+      if (!conversation?.teacher_id) return;
+      
+      try {
+        const { data, error } = await supabase.rpc('get_teacher_name', {
+          teacher_id_param: conversation.teacher_id
+        });
+        
+        if (data && !error) {
+          setTeacherName(data);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar nome do professor:', error);
+      }
+    };
+
+    if (isStudent && conversation?.teacher_id) {
+      fetchTeacherName();
+    }
+  }, [conversation?.teacher_id, isStudent]);
   
   const isOnline = chatPartnerId ? onlineUsers.includes(chatPartnerId) : false;
   const isTyping = chatPartnerId ? typingUsers.includes(chatPartnerId) : false;
@@ -88,25 +114,22 @@ export const ChatHeader = ({
         </div>
       </div>
       
-      {/* Ações */}
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-foreground"
-          disabled
-        >
-          <Phone size={18} />
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-foreground"
-          disabled
-        >
-          <Video size={18} />
-        </Button>
+      {/* Status do Professor */}
+      <div className="flex items-center gap-2">
+        {isStudent && (
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${
+            isOnline ? 'border-success/20 bg-success/10' : 'border-muted'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              isOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground'
+            }`} />
+            <span className={`text-xs font-medium ${
+              isTyping ? 'text-primary' : isOnline ? 'text-success' : 'text-muted-foreground'
+            }`}>
+              {getStatusText()}
+            </span>
+          </div>
+        )}
         
         <Button
           variant="ghost"

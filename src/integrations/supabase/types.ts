@@ -2667,6 +2667,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      aggregate_banner_metrics_realtime: {
+        Args: { p_banner_id: string }
+        Returns: undefined
+      }
       aggregate_daily_banner_metrics: {
         Args: { target_date?: string }
         Returns: Json
@@ -2750,6 +2754,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_chat_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_rate_limit_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2761,6 +2769,38 @@ export type Database = {
       generate_backup_codes: {
         Args: Record<PropertyKey, never>
         Returns: string[]
+      }
+      get_banner_metrics_direct: {
+        Args: {
+          p_banner_id: string
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: {
+          banner_id: string
+          ctr: number
+          total_clicks: number
+          total_conversions: number
+          total_impressions: number
+          unique_users: number
+        }[]
+      }
+      get_teacher_conversations: {
+        Args: { teacher_id_param: string }
+        Returns: {
+          conversation_id: string
+          is_active: boolean
+          last_message: string
+          last_message_at: string
+          student_email: string
+          student_id: string
+          student_name: string
+          unread_count: number
+        }[]
+      }
+      get_teacher_name: {
+        Args: { teacher_id_param: string }
+        Returns: string
       }
       get_user_entitlements: {
         Args: { p_teacher_id: string; p_user_id: string }
