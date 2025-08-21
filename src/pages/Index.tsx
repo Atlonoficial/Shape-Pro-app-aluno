@@ -31,14 +31,10 @@ const Index = () => {
     setActiveTab('workouts');
   };
 
-  const handleGamificationClick = () => {
-    setActiveTab('gamification');
-  };
-
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} onGamificationClick={handleGamificationClick} />;
+        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} />;
       case 'workouts':
         return <Workouts />;
       case 'nutrition':
@@ -54,7 +50,7 @@ const Index = () => {
       case 'profile':
         return <Profile />;
       default:
-        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} onGamificationClick={handleGamificationClick} />;
+        return <Dashboard onCoachClick={handleCoachClick} onWorkoutClick={handleWorkoutClick} />;
     }
   };
 

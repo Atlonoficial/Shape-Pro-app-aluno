@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Trophy, Camera, Calendar, Activity, Target, CalendarDays, CreditCard, ClipboardList, Stethoscope, Images, Ruler, Shield, Cog, TrophyIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { PointsWidget } from "@/components/gamification/PointsWidget";
 
 export const Profile = () => {
   const { user, userProfile } = useAuthContext();
@@ -263,6 +264,11 @@ export const Profile = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Points Widget - Moved from Dashboard */}
+      <div className="mb-6">
+        <PointsWidget />
+      </div>
 
       {/* Meus Dados */}
       <h2 className="text-lg font-semibold mb-3 mt-6">Meus Dados</h2>

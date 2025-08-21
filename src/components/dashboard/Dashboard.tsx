@@ -8,7 +8,6 @@ import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
 import { MetricCard } from "@/components/ui/MetricCard";
-import { PointsWidget } from "@/components/gamification/PointsWidget";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useWorkouts, useNotifications } from "@/hooks/useSupabase";
@@ -17,10 +16,9 @@ import { useWeightProgress } from "@/hooks/useWeightProgress";
 interface DashboardProps {
   onCoachClick?: () => void;
   onWorkoutClick?: () => void;
-  onGamificationClick?: () => void;
 }
 
-export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }: DashboardProps) => {
+export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
@@ -187,11 +185,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick, onGamificationClick }:
         progress={progress} 
         loading={workoutsLoading || progressLoading} 
       />
-
-      {/* Points Widget */}
-      <div className="mb-6">
-        <PointsWidget onClick={onGamificationClick} />
-      </div>
 
 
       {workouts && workouts.length > 0 && (
