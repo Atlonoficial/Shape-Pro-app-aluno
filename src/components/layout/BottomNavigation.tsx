@@ -1,11 +1,10 @@
 
-import { Home, Dumbbell, Apple, User, Users, Trophy } from "lucide-react";
+import { Home, Dumbbell, Apple, User, Users } from "lucide-react";
 
 const navItems = [
   { id: 'home', icon: Home, label: 'Início' },
   { id: 'workouts', icon: Dumbbell, label: 'Treinos' },
   { id: 'nutrition', icon: Apple, label: 'Dieta' },
-  { id: 'rewards', icon: Trophy, label: 'Recompensas' },
   { id: 'members', icon: Users, label: 'Membros' },
   { id: 'profile', icon: User, label: 'Perfil' },
 ];
