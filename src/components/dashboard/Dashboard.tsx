@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useWorkouts, useNotifications } from "@/hooks/useSupabase";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
+import { useProgressActions } from "@/components/progress/ProgressActions";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -20,6 +21,7 @@ interface DashboardProps {
 
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
+  const { recordWeight } = useProgressActions();
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const { addWeightEntry, shouldShowWeightModal } = useWeightProgress(user?.id || '');
@@ -47,11 +49,15 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
   const handleSaveWeight = async (weight: number) => {
     console.log('💾 Dashboard: Saving weight:', weight);
-    const success = await addWeightEntry(weight);
+    
+    // Use the new gamification-integrated weight recording
+    const success = await recordWeight(weight, 'Peso registrado via dashboard');
     console.log('✅ Dashboard: Weight save result:', success);
     
     if (success) {
       setShowWeightModal(false);
+      // Also save to the weight progress system for chart compatibility
+      await addWeightEntry(weight);
     }
     
     return success;

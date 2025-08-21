@@ -1775,6 +1775,42 @@ export type Database = {
         }
         Relationships: []
       }
+      progress_records: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          photo_url: string | null
+          type: string
+          unit: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          type: string
+          unit: string
+          updated_at?: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          type?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       rate_limit_log: {
         Row: {
           created_at: string
