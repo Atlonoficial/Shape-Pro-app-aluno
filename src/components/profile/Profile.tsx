@@ -171,6 +171,10 @@ export const Profile = () => {
     navigate({ pathname: "/", search: "?tab=rewards" });
   };
 
+  const goToGamification = () => {
+    navigate({ pathname: "/", search: "?tab=gamification" });
+  };
+
   return (
     <div className="p-4 pt-8 pb-24 max-w-4xl mx-auto">
       {/* Header */}
@@ -267,7 +271,7 @@ export const Profile = () => {
 
       {/* Points Widget - Moved from Dashboard */}
       <div className="mb-6">
-        <PointsWidget />
+        <PointsWidget onClick={goToGamification} />
       </div>
 
       {/* Meus Dados */}
