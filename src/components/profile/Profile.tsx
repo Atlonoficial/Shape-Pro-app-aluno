@@ -10,6 +10,7 @@ import { Trophy, Camera, Calendar, Activity, Target, CalendarDays, CreditCard, C
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PointsWidget } from "@/components/gamification/PointsWidget";
+import { TeacherCard } from "./TeacherCard";
 
 export const Profile = () => {
   const { user, userProfile } = useAuthContext();
@@ -273,6 +274,9 @@ export const Profile = () => {
       <div className="mb-6">
         <PointsWidget onClick={goToGamification} />
       </div>
+
+      {/* Teacher Profile */}
+      <TeacherCard />
 
       {/* Meus Dados */}
       <h2 className="text-lg font-semibold mb-3 mt-6">Meus Dados</h2>

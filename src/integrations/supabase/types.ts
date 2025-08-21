@@ -1665,42 +1665,57 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string | null
           email: string
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
           name: string
           notification_preferences: Json | null
           onesignal_player_id: string | null
           profile_complete: boolean | null
           push_enabled: boolean | null
+          specialties: string[] | null
           updated_at: string | null
           user_type: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           email: string
+          facebook_url?: string | null
           id: string
+          instagram_url?: string | null
           name: string
           notification_preferences?: Json | null
           onesignal_player_id?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
+          specialties?: string[] | null
           updated_at?: string | null
           user_type?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           email?: string
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           name?: string
           notification_preferences?: Json | null
           onesignal_player_id?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
+          specialties?: string[] | null
           updated_at?: string | null
           user_type?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
