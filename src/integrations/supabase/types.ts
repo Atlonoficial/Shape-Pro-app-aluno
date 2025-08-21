@@ -613,7 +613,7 @@ export type Database = {
           last_accessed: string | null
           module_progress: Json | null
           overall_progress: number | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           certificate_issued?: boolean | null
@@ -624,7 +624,7 @@ export type Database = {
           last_accessed?: string | null
           module_progress?: Json | null
           overall_progress?: number | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           certificate_issued?: boolean | null
@@ -635,7 +635,7 @@ export type Database = {
           last_accessed?: string | null
           module_progress?: Json | null
           overall_progress?: number | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1061,7 +1061,7 @@ export type Database = {
           nutrition_plan_id: string | null
           photo_url: string | null
           rating: number | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           actual_time?: string | null
@@ -1076,7 +1076,7 @@ export type Database = {
           nutrition_plan_id?: string | null
           photo_url?: string | null
           rating?: number | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           actual_time?: string | null
@@ -1091,7 +1091,7 @@ export type Database = {
           nutrition_plan_id?: string | null
           photo_url?: string | null
           rating?: number | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1697,7 +1697,7 @@ export type Database = {
           notes: string | null
           type: string
           unit: string
-          user_id: string | null
+          user_id: string
           value: number
           workout_id: string | null
         }
@@ -1709,7 +1709,7 @@ export type Database = {
           notes?: string | null
           type: string
           unit: string
-          user_id?: string | null
+          user_id: string
           value: number
           workout_id?: string | null
         }
@@ -1721,7 +1721,7 @@ export type Database = {
           notes?: string | null
           type?: string
           unit?: string
-          user_id?: string | null
+          user_id?: string
           value?: number
           workout_id?: string | null
         }
@@ -1778,21 +1778,27 @@ export type Database = {
       rate_limit_log: {
         Row: {
           created_at: string
+          endpoint: string
           id: string
-          operation_type: string
-          user_id: string | null
+          ip_address: unknown
+          request_count: number
+          window_start: string
         }
         Insert: {
           created_at?: string
+          endpoint: string
           id?: string
-          operation_type: string
-          user_id?: string | null
+          ip_address: unknown
+          request_count?: number
+          window_start?: string
         }
         Update: {
           created_at?: string
+          endpoint?: string
           id?: string
-          operation_type?: string
-          user_id?: string | null
+          ip_address?: unknown
+          request_count?: number
+          window_start?: string
         }
         Relationships: []
       }
@@ -2024,7 +2030,7 @@ export type Database = {
           subscription_end: string | null
           subscription_tier: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -2035,7 +2041,7 @@ export type Database = {
           subscription_end?: string | null
           subscription_tier?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -2046,7 +2052,7 @@ export type Database = {
           subscription_end?: string | null
           subscription_tier?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -2387,7 +2393,7 @@ export type Database = {
           rating: number | null
           start_time: string
           total_duration: number | null
-          user_id: string | null
+          user_id: string
           workout_id: string | null
         }
         Insert: {
@@ -2400,7 +2406,7 @@ export type Database = {
           rating?: number | null
           start_time: string
           total_duration?: number | null
-          user_id?: string | null
+          user_id: string
           workout_id?: string | null
         }
         Update: {
@@ -2413,7 +2419,7 @@ export type Database = {
           rating?: number | null
           start_time?: string
           total_duration?: number | null
-          user_id?: string | null
+          user_id?: string
           workout_id?: string | null
         }
         Relationships: [
