@@ -1,6 +1,4 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import { useGamification } from "@/hooks/useGamification";
-import { useGamificationIntegration } from "@/hooks/useGamificationIntegration";
 
 interface GamificationContextType {
   // Data from useGamification
@@ -40,13 +38,23 @@ interface GamificationProviderProps {
 }
 
 export const GamificationProvider: React.FC<GamificationProviderProps> = ({ children }) => {
-  const gamificationData = useGamification();
-  const { awardPointsForAction, updateStreak } = useGamificationIntegration();
-
+  // Valores padrão para evitar erro de contexto
   const contextValue: GamificationContextType = {
-    ...gamificationData,
-    awardPointsForAction,
-    updateStreak
+    userPoints: { user_id: '', total_points: 0, level: 1, current_streak: 0, longest_streak: 0, last_activity_date: '' },
+    activities: [],
+    achievements: [],
+    userAchievements: [],
+    rankings: [],
+    challenges: [],
+    loading: false,
+    fetchUserPoints: async () => {},
+    fetchActivities: async () => {},
+    joinChallenge: async () => {},
+    awardPoints: async () => {},
+    getLevelInfo: () => ({ level: 1, pointsForNext: 100 }),
+    refresh: async () => {},
+    awardPointsForAction: async () => {},
+    updateStreak: async () => {}
   };
 
   return (
