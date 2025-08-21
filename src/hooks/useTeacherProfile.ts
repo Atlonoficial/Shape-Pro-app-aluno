@@ -15,9 +15,11 @@ export interface TeacherProfile {
 }
 
 export const useTeacherProfile = () => {
-  const { teacherId } = useStudentTeacher();
+  const { teacherId, loading: teacherIdLoading } = useStudentTeacher();
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(false);
+
+  console.log('[useTeacherProfile] Render - teacherId:', teacherId, 'teacherIdLoading:', teacherIdLoading);
 
   const fetchTeacherProfile = async () => {
     console.log('[useTeacherProfile] fetchTeacherProfile called, teacherId:', teacherId);
@@ -60,12 +62,13 @@ export const useTeacherProfile = () => {
   };
 
   useEffect(() => {
+    console.log('[useTeacherProfile] useEffect triggered - teacherId:', teacherId, 'teacherIdLoading:', teacherIdLoading);
     fetchTeacherProfile();
   }, [teacherId]);
 
   return {
     teacher,
-    loading,
+    loading: loading || teacherIdLoading,
     refreshTeacher: fetchTeacherProfile,
   };
 };

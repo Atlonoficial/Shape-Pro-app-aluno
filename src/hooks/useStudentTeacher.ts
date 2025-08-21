@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 
 export const useStudentTeacher = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchTeacherId = async () => {
+    console.log('[useStudentTeacher] fetchTeacherId called, user:', user);
+    
     if (!user?.id) {
-      console.log('[useStudentTeacher] No user ID');
+      console.log('[useStudentTeacher] No user ID, user object:', user);
       setTeacherId(null);
       setLoading(false);
       return;
@@ -49,6 +51,7 @@ export const useStudentTeacher = () => {
   };
 
   useEffect(() => {
+    console.log('[useStudentTeacher] useEffect triggered, user?.id:', user?.id);
     fetchTeacherId();
   }, [user?.id]);
 
