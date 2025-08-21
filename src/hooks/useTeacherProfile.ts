@@ -8,14 +8,10 @@ export interface TeacherProfile {
   email: string;
   avatar_url?: string;
   bio?: string;
-  professional_title?: string;
   instagram_url?: string;
   facebook_url?: string;
-  youtube_url?: string;
   whatsapp_number?: string;
-  whatsapp_url?: string;
   specialties?: string[];
-  show_profile_to_students?: boolean;
 }
 
 export const useTeacherProfile = () => {
@@ -40,7 +36,17 @@ export const useTeacherProfile = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, email, avatar_url, bio, professional_title, instagram_url, facebook_url, youtube_url, whatsapp_number, whatsapp_url, specialties, show_profile_to_students')
+        .select(`
+          id, 
+          name, 
+          email, 
+          avatar_url, 
+          bio, 
+          instagram_url, 
+          facebook_url, 
+          whatsapp_number,
+          specialties
+        `)
         .eq('id', teacherId)
         .eq('user_type', 'teacher')
         .maybeSingle();
@@ -57,6 +63,7 @@ export const useTeacherProfile = () => {
         setTeacher(data);
       } else {
         console.log('[useTeacherProfile] No teacher data returned');
+        setTeacher(null);
       }
     } catch (error) {
       console.error('[useTeacherProfile] Unexpected error:', error);
