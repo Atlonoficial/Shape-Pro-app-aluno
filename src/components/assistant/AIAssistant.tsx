@@ -85,7 +85,7 @@ export const AIAssistant = () => {
 
         {/* Shape Pro Logo - Responsiva */}
         <div className="mb-4 sm:mb-6">
-          <ShapeProLogo className="h-8 sm:h-12 w-auto mx-auto" />
+          <ShapeProLogo className="h-10 sm:h-16 md:h-20 w-auto mx-auto" />
         </div>
 
         {/* Saudação personalizada */}
@@ -166,17 +166,17 @@ export const AIAssistant = () => {
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed bottom-20 left-0 right-0 p-3 bg-gradient-to-t from-background via-background/95 to-transparent">
-        <div className="flex items-center gap-2 bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-2 w-full max-w-lg mx-auto shadow-lg">
+      <div className="fixed bottom-16 sm:bottom-20 left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-background via-background/95 to-transparent">
+        <div className="flex items-end gap-1.5 sm:gap-2 bg-card/80 backdrop-blur-md border border-border/50 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 w-full max-w-full sm:max-w-lg mx-auto shadow-lg">
           <div className="flex-1 min-w-0">
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Digite sua mensagem para o Coach Shape Pro..."
-              className="w-full px-3 py-2.5 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm leading-5"
+              placeholder="Digite sua mensagem..."
+              className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm leading-5"
               rows={1}
-              style={{ minHeight: '40px', maxHeight: '120px' }}
+              style={{ minHeight: '36px', maxHeight: '100px' }}
             />
           </div>
           
@@ -184,12 +184,12 @@ export const AIAssistant = () => {
             size="sm"
             onClick={handleSendMessage}
             disabled={!inputText.trim() || loading}
-            className="btn-primary h-10 w-10 shrink-0 rounded-xl"
+            className="btn-primary h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-lg sm:rounded-xl"
           >
             {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
           </Button>
         </div>
