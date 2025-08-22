@@ -10,8 +10,8 @@ export const AnnouncementBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Simplified tracking - apenas 2 métricas
-  const { trackDetailView, trackRedirectClick } = useBannerTracking();
+  // Updated tracking with new types
+  const { trackView, trackClick } = useBannerTracking();
 
   const current = banners[currentIndex];
 
@@ -36,11 +36,11 @@ export const AnnouncementBanner = () => {
   const linkUrl = current?.action_url;
   const tagType = current?.type || 'campanha';
 
-  // MÉTRICA 2: Redirect Click - Clique no botão de ação
+  // MÉTRICA 2: Click - Clique no botão de ação
   const handleRedirectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (linkUrl && current?.id) {
-      trackRedirectClick(current.id, linkUrl);
+      trackClick(current.id, { actionUrl: linkUrl });
       // Pequeno delay para garantir que o tracking seja enviado
       setTimeout(() => {
         window.open(linkUrl, '_blank');
@@ -48,10 +48,10 @@ export const AnnouncementBanner = () => {
     }
   };
 
-  // MÉTRICA 1: Detail View - Clique no card do banner
+  // MÉTRICA 1: View - Clique no card do banner
   const handleBannerClick = () => {
     if (current?.id) {
-      trackDetailView(current.id);
+      trackView(current.id, { placement: 'dashboard' });
       
       if (!isExpanded) {
         setIsExpanded(true);

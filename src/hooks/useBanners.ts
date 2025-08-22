@@ -29,11 +29,24 @@ export const useBanners = (userId?: string) => {
 
     const fetchBanners = async () => {
       try {
+        // Buscar dados do estudante para encontrar o teacher_id
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('teacher_id')
+          .eq('user_id', userId)
+          .single()
+
+        if (!studentData?.teacher_id) {
+          setLoading(false);
+          return;
+        }
+
+        // Buscar banners ativos do professor
         const { data, error } = await supabase
           .from('banners')
           .select('*')
+          .eq('created_by', studentData.teacher_id)
           .eq('is_active', true)
-          .or(`target_users.cs.{${userId}},target_users.eq.{}`)
           .lte('start_date', new Date().toISOString())
           .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
           .order('priority', { ascending: false })
