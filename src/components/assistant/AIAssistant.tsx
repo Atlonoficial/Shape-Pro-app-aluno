@@ -85,7 +85,7 @@ export const AIAssistant = () => {
 
         {/* Shape Pro Logo - Responsiva */}
         <div className="mb-4 sm:mb-6">
-          <ShapeProLogo className="h-10 sm:h-16 md:h-20 w-auto mx-auto" />
+          <ShapeProLogo className="h-16 sm:h-24 md:h-32 w-auto mx-auto" />
         </div>
 
         {/* Saudação personalizada */}
