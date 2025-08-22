@@ -88,7 +88,7 @@ export const useGamificationActions = () => {
   }, [awardPointsForAction]);
 
   const awardProgressPoints = useCallback((progressType?: string) => {
-    return awardPointsForAction("progress_updated", `Progresso atualizado${progressType ? `: ${progressType}` : ""}`);
+    return awardPointsForAction("progress_logged", `Progresso atualizado${progressType ? `: ${progressType}` : ""}`);
   }, [awardPointsForAction]);
 
   const awardAIInteractionPoints = useCallback(() => {
