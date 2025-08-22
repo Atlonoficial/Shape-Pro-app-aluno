@@ -70,10 +70,10 @@ export const AIAssistant = () => {
   return (
     <div className="flex flex-col h-screen relative bg-gradient-dark">
       {/* Header com Logo Shape Pro */}
-      <div className="p-6 pt-8 text-center bg-gradient-to-b from-card/90 to-transparent border-b border-border/20">
+      <div className="p-3 sm:p-4 pt-6 sm:pt-8 text-center bg-gradient-to-b from-card/90 to-transparent border-b border-border/20">
         {/* Data */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
+        <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
             {new Date().toLocaleDateString('pt-BR', { 
               day: 'numeric', 
@@ -83,28 +83,16 @@ export const AIAssistant = () => {
           </span>
         </div>
 
-        {/* Shape Pro Logo */}
-        <div className="mb-6">
-          <ShapeProLogo className="h-12 w-auto" />
+        {/* Shape Pro Logo - Responsiva */}
+        <div className="mb-4 sm:mb-6">
+          <ShapeProLogo className="h-8 sm:h-12 w-auto mx-auto" />
         </div>
 
         {/* Saudação personalizada */}
-        <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-foreground">
+        <div>
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground">
             Olá, <span className="text-gradient-primary">{userName}!</span>
           </h1>
-          
-          {/* Badges de conquistas */}
-          <div className="flex items-center justify-center gap-3">
-            <div className="badge-premium flex items-center gap-1">
-              <Target className="w-3 h-3" />
-              Ritmo Shape
-            </div>
-            <div className="badge-member flex items-center gap-1">
-              <Award className="w-3 h-3" />
-              Consistência Pro
-            </div>
-          </div>
         </div>
       </div>
 
