@@ -44,6 +44,9 @@ export const useConversation = (userId?: string) => {
   const channelRef = useRef<any>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout>();
   const localMessagesCache = useRef<ChatMessage[]>([]);
+  // Set para controlar IDs únicos e evitar duplicação
+  const messageIdsRef = useRef<Set<string>>(new Set());
+  const debounceTimerRef = useRef<NodeJS.Timeout>();
 
   // Função para criar ou buscar conversação com retry
   const findOrCreateConversation = useCallback(async (retryCount = 0) => {
@@ -135,22 +138,64 @@ export const useConversation = (userId?: string) => {
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('Nova mensagem:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            const newMessage = payload.new as ChatMessage;
-            
-            // Remover mensagem local se existir (para substituir por versão do servidor)
-            setMessages(prev => {
-              const filtered = prev.filter(msg => msg.local_id !== newMessage.id);
-              return [...filtered, { ...newMessage, status: 'sent' }];
-            });
-            
-            // Atualizar cache local
-            localMessagesCache.current = localMessagesCache.current.map(msg => 
-              msg.local_id === newMessage.id ? { ...newMessage, status: 'sent' } : msg
-            );
+          // Debounce para evitar processamento múltiplo
+          if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
           }
+          
+          debounceTimerRef.current = setTimeout(() => {
+            console.log('Nova mensagem:', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              const newMessage = payload.new as ChatMessage;
+              
+              // Verificar se já processamos esta mensagem
+              if (messageIdsRef.current.has(newMessage.id)) {
+                console.log('Mensagem já existe, ignorando duplicação:', newMessage.id);
+                return;
+              }
+              
+              setMessages(prev => {
+                // Procurar mensagem local correspondente pelo conteúdo e timestamp aproximado
+                const localMsgIndex = prev.findIndex(msg => 
+                  msg.status === 'sending' && 
+                  msg.message === newMessage.message &&
+                  msg.sender_id === newMessage.sender_id &&
+                  Math.abs(new Date(msg.created_at || 0).getTime() - new Date(newMessage.created_at || 0).getTime()) < 10000 // 10 segundos de diferença
+                );
+                
+                let updatedMessages = [...prev];
+                
+                // Se encontrou mensagem local correspondente, substituir
+                if (localMsgIndex >= 0) {
+                  updatedMessages[localMsgIndex] = { ...newMessage, status: 'sent' };
+                } else {
+                  // Verificar se mensagem já existe pelo ID
+                  const existsById = updatedMessages.some(msg => msg.id === newMessage.id);
+                  if (!existsById) {
+                    updatedMessages.push({ ...newMessage, status: 'sent' });
+                  }
+                }
+                
+                // Adicionar ao set de IDs processados
+                messageIdsRef.current.add(newMessage.id);
+                
+                // Ordenar por data de criação
+                return updatedMessages.sort((a, b) => 
+                  new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+                );
+              });
+              
+              // Atualizar cache local
+              localMessagesCache.current = localMessagesCache.current.map(msg => 
+                msg.status === 'sending' && 
+                msg.message === newMessage.message &&
+                msg.sender_id === newMessage.sender_id
+                  ? { ...newMessage, status: 'sent' }
+                  : msg
+              );
+            }
+          }, 100); // 100ms de debounce
         }
       )
       .subscribe((status) => {
@@ -175,6 +220,10 @@ export const useConversation = (userId?: string) => {
           ...msg, 
           status: 'sent' as const 
         }));
+        
+        // Limpar set de IDs e adicionar mensagens existentes
+        messageIdsRef.current.clear();
+        messagesWithStatus.forEach(msg => messageIdsRef.current.add(msg.id));
         
         setMessages(messagesWithStatus);
         localMessagesCache.current = messagesWithStatus;
@@ -217,6 +266,19 @@ export const useConversation = (userId?: string) => {
       status: 'sending'
     };
 
+    // Verificar se já existe mensagem similar (evitar duplicação por múltiplos cliques)
+    const existingSimilar = messages.find(msg => 
+      msg.message === content && 
+      msg.sender_id === userId &&
+      (msg.status === 'sending' || msg.status === 'sent') &&
+      Math.abs(new Date(msg.created_at || 0).getTime() - Date.now()) < 2000 // 2 segundos
+    );
+
+    if (existingSimilar) {
+      console.log('Mensagem similar já existe, ignorando');
+      return;
+    }
+
     // Adicionar mensagem local imediatamente
     setMessages(prev => [...prev, tempMessage]);
     localMessagesCache.current = [...localMessagesCache.current, tempMessage];
@@ -247,12 +309,8 @@ export const useConversation = (userId?: string) => {
           })
           .eq('id', conversation.id);
 
-        // Atualizar mensagem local com dados do servidor
-        setMessages(prev => prev.map(msg => 
-          msg.local_id === localId 
-            ? { ...data, status: 'sent' as const }
-            : msg
-        ));
+        // Não atualizar aqui - deixar o Realtime fazer isso
+        // A mensagem será substituída quando chegar via Realtime
 
       } catch (err) {
         console.error(`Erro ao enviar mensagem (tentativa ${retryCount + 1}):`, err);
@@ -327,6 +385,9 @@ export const useConversation = (userId?: string) => {
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);

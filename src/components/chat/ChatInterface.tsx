@@ -145,7 +145,7 @@ export const ChatInterface = ({
               <div className="space-y-3">
                 {dayMessages.map((message, index) => (
                   <MessageBubble
-                    key={message.local_id || message.id}
+                    key={`${message.id}-${message.created_at}`}
                     message={message}
                     isOwn={message.sender_id === currentUserId}
                     showAvatar={
