@@ -1,12 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { NotificationBadge } from "@/components/ui/notification-badge";
 import { MessageCircle, Instagram, Facebook, Phone } from "lucide-react";
 import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNavigate } from "react-router-dom";
 
 export const TeacherCard = () => {
   const { teacher, loading } = useTeacherProfile();
+  const unreadCount = useUnreadMessages();
   const navigate = useNavigate();
 
   if (loading) {
@@ -132,10 +135,11 @@ export const TeacherCard = () => {
             <Button
               onClick={handleChatClick}
               size="sm"
-              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground relative"
             >
               <MessageCircle className="h-4 w-4" />
               Chat
+              <NotificationBadge count={unreadCount} />
             </Button>
           </div>
         </CardContent>

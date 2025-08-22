@@ -10,10 +10,14 @@ import { Profile } from "@/components/profile/Profile";
 import { Members } from "@/components/members/Members";
 import { AIAssistant } from "@/components/assistant/AIAssistant";
 import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
+  
+  // Ativar notificações de chat em toda a aplicação
+  useChatNotifications();
 
   useEffect(() => {
     const tab = searchParams.get('tab');
