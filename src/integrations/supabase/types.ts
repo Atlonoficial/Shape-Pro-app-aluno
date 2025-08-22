@@ -523,6 +523,7 @@ export type Database = {
           conversation_id: string | null
           created_at: string | null
           deleted_at: string | null
+          delivered_at: string | null
           edited_at: string | null
           id: string
           is_read: boolean | null
@@ -538,6 +539,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
+          delivered_at?: string | null
           edited_at?: string | null
           id?: string
           is_read?: boolean | null
@@ -553,6 +555,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
+          delivered_at?: string | null
           edited_at?: string | null
           id?: string
           is_read?: boolean | null
@@ -2454,6 +2457,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_presence: {
+        Row: {
+          created_at: string
+          is_online: boolean
+          is_typing_in_conversation: string | null
+          last_seen: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_online?: boolean
+          is_typing_in_conversation?: string | null
+          last_seen?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_online?: boolean
+          is_typing_in_conversation?: string | null
+          last_seen?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2766,6 +2796,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      clear_conversation_messages: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
       ensure_student_record: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2859,6 +2893,10 @@ export type Database = {
         Args: { access_type: string; record_id: string; table_name: string }
         Returns: undefined
       }
+      mark_conversation_messages_as_read: {
+        Args: { p_conversation_id: string; p_user_id: string }
+        Returns: undefined
+      }
       redeem_reward: {
         Args: { _reward_id: string }
         Returns: string
@@ -2912,6 +2950,13 @@ export type Database = {
       }
       update_session_activity: {
         Args: { p_session_token: string }
+        Returns: undefined
+      }
+      update_user_presence: {
+        Args: {
+          is_online_param?: boolean
+          typing_in_conversation_param?: string
+        }
         Returns: undefined
       }
       update_user_streak: {

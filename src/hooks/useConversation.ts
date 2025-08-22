@@ -30,6 +30,7 @@ interface ChatMessage {
   attachments?: any;
   status?: 'sending' | 'sent' | 'failed';
   local_id?: string;
+  delivered_at?: string;
 }
 
 export const useConversation = (userId?: string) => {
@@ -353,21 +354,45 @@ export const useConversation = (userId?: string) => {
 
   // Marcar como lidas
   const markAsRead = useCallback(async () => {
-    if (!conversation || !userId) return;
-
+    if (!conversation?.id) return;
+    
     try {
-      const isStudent = userProfile?.user_type === 'student';
-      const updateField = isStudent ? 'unread_count_student' : 'unread_count_teacher';
-
-      await supabase
-        .from('conversations')
-        .update({ [updateField]: 0 })
-        .eq('id', conversation.id);
-
-    } catch (err) {
-      console.error('Erro ao marcar como lida:', err);
+      const { error } = await supabase.rpc('mark_conversation_messages_as_read', {
+        p_conversation_id: conversation.id,
+        p_user_id: userId
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
     }
-  }, [conversation, userId, userProfile]);
+  }, [conversation?.id, userId]);
+
+  const markMessageAsRead = useCallback(async (messageId: string) => {
+    if (!conversation?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ 
+          is_read: true,
+          read_at: new Date().toISOString()
+        })
+        .eq('id', messageId)
+        .neq('sender_id', userId);
+      
+      if (error) throw error;
+      
+      // Atualizar estado local das mensagens
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId && msg.sender_id !== userId 
+          ? { ...msg, is_read: true, read_at: new Date().toISOString() }
+          : msg
+      ));
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
+  }, [conversation?.id, userId]);
 
   useEffect(() => {
     findOrCreateConversation();
@@ -404,6 +429,7 @@ export const useConversation = (userId?: string) => {
     connectionStatus,
     sendMessage,
     retryMessage,
-    markAsRead
+    markAsRead,
+    markMessageAsRead
   };
 };

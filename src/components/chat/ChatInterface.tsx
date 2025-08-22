@@ -20,6 +20,7 @@ interface ChatMessage {
   attachments?: any;
   status?: 'sending' | 'sent' | 'failed';
   local_id?: string;
+  delivered_at?: string;
 }
 
 interface ChatInterfaceProps {
@@ -29,6 +30,7 @@ interface ChatInterfaceProps {
   isReconnecting?: boolean;
   onMessagesRead?: () => void;
   onRetryMessage?: (localId: string) => void;
+  onMessageVisible?: (messageId: string) => void;
 }
 
 export const ChatInterface = ({ 
@@ -37,7 +39,8 @@ export const ChatInterface = ({
   connectionStatus,
   isReconnecting = false,
   onMessagesRead,
-  onRetryMessage
+  onRetryMessage,
+  onMessageVisible
 }: ChatInterfaceProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -144,16 +147,17 @@ export const ChatInterface = ({
               {/* Mensagens do dia */}
               <div className="space-y-3">
                 {dayMessages.map((message, index) => (
-                  <MessageBubble
-                    key={`${message.id}-${message.created_at}`}
-                    message={message}
-                    isOwn={message.sender_id === currentUserId}
-                    showAvatar={
-                      index === 0 || 
-                      dayMessages[index - 1]?.sender_id !== message.sender_id
-                    }
-                    onRetry={onRetryMessage}
-                  />
+                    <MessageBubble
+                      key={`${message.id}-${message.created_at}`}
+                      message={message}
+                      isOwn={message.sender_id === currentUserId}
+                      showAvatar={
+                        index === 0 || 
+                        dayMessages[index - 1]?.sender_id !== message.sender_id
+                      }
+                      onRetry={onRetryMessage}
+                      onVisible={onMessageVisible}
+                    />
                 ))}
               </div>
             </div>

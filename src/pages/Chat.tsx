@@ -29,7 +29,8 @@ export default function Chat() {
     connectionStatus,
     sendMessage,
     retryMessage,
-    markAsRead
+    markAsRead,
+    markMessageAsRead
   } = useConversation(user?.id);
 
   const {
@@ -103,6 +104,7 @@ export default function Chat() {
           isReconnecting={reconnecting}
           onMessagesRead={markAsRead}
           onRetryMessage={retryMessage}
+          onMessageVisible={markMessageAsRead}
         />
         
         <MessageInput 

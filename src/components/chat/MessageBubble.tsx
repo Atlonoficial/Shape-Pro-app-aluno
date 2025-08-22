@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Check, CheckCheck, Clock, AlertCircle, RotateCcw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface ChatMessage {
   id: string;
@@ -18,6 +19,7 @@ interface ChatMessage {
   attachments?: any;
   status?: 'sending' | 'sent' | 'failed';
   local_id?: string;
+  delivered_at?: string;
 }
 
 interface MessageBubbleProps {
@@ -25,13 +27,15 @@ interface MessageBubbleProps {
   isOwn: boolean;
   showAvatar?: boolean;
   onRetry?: (localId: string) => void;
+  onVisible?: (messageId: string) => void;
 }
 
 export const MessageBubble = ({ 
   message, 
   isOwn, 
   showAvatar = true,
-  onRetry
+  onRetry,
+  onVisible
 }: MessageBubbleProps) => {
   const formatTime = (dateString?: string) => {
     if (!dateString) return '';
@@ -49,11 +53,19 @@ export const MessageBubble = ({
         return <AlertCircle size={14} className="text-destructive" />;
       case 'sent':
       default:
-        // Status padrão baseado em is_read
-        if (message.is_read) {
+        // Sistema de status estilo WhatsApp
+        if (message.is_read && message.read_at) {
+          // ✓✓ azul - Lida
           return <CheckCheck size={14} className="text-primary" />;
-        } else {
+        } else if (message.delivered_at) {
+          // ✓✓ cinza - Entregue
+          return <CheckCheck size={14} className="text-muted-foreground" />;
+        } else if (message.created_at) {
+          // ✓ cinza - Enviada
           return <Check size={14} className="text-muted-foreground" />;
+        } else {
+          // Enviando
+          return <Clock size={14} className="text-muted-foreground animate-pulse" />;
         }
     }
   };
@@ -73,8 +85,31 @@ export const MessageBubble = ({
     return baseStyle;
   };
 
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Marcar mensagem como visível quando renderizada (não é própria e não foi lida)
+    if (!isOwn && !message.is_read && onVisible && messageRef.current) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              onVisible(message.id);
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.5 }
+      );
+      
+      observer.observe(messageRef.current);
+      
+      return () => observer.disconnect();
+    }
+  }, [isOwn, message.is_read, message.id, onVisible]);
+
   return (
-    <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div ref={messageRef} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
       {showAvatar && !isOwn && (
         <Avatar className="w-8 h-8 flex-shrink-0">
