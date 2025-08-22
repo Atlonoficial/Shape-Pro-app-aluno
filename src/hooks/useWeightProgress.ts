@@ -73,6 +73,13 @@ export const useWeightProgress = (userId: string) => {
     if (!userId) return false;
 
     try {
+      // Verificar se já registrou peso esta semana
+      const alreadyWeighed = await hasWeighedThisWeek();
+      if (alreadyWeighed) {
+        setError('Você já registrou seu peso esta semana. Aguarde até a próxima sexta-feira.');
+        return false;
+      }
+
       const today = new Date().toISOString().split('T')[0];
       
       console.log('💾 Adding weight entry:', { userId, weight, date: today });
@@ -106,27 +113,43 @@ export const useWeightProgress = (userId: string) => {
     }
   };
 
-  const hasWeighedThisWeek = () => {
-    if (!userId || weightData.length === 0) return false;
+  const hasWeighedThisWeek = async () => {
+    if (!userId) return false;
     
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
     
-    // Check if there's any weight entry from this week
-    return weightData.some(entry => {
-      const entryDate = new Date(entry.rawDate);
-      return entryDate >= startOfWeek;
-    });
+    try {
+      const { data, error } = await supabase
+        .from('progress')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'weight')
+        .gte('date', startOfWeek.toISOString().split('T')[0])
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking weekly weight:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (err) {
+      console.error('Error in hasWeighedThisWeek:', err);
+      return false;
+    }
   };
 
   const isFridayToday = () => {
     return new Date().getDay() === 5; // 5 = Friday
   };
 
-  const shouldShowWeightModal = () => {
-    return isFridayToday() && !hasWeighedThisWeek();
+  const shouldShowWeightModal = async () => {
+    if (!isFridayToday()) return false;
+    const alreadyWeighed = await hasWeighedThisWeek();
+    return !alreadyWeighed;
   };
 
   const addWeightFromAssessment = async (weight: number, assessmentDate: string) => {
@@ -163,6 +186,10 @@ export const useWeightProgress = (userId: string) => {
     }
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   useEffect(() => {
     fetchWeightProgress();
   }, [userId]);
@@ -176,6 +203,7 @@ export const useWeightProgress = (userId: string) => {
     isFridayToday,
     shouldShowWeightModal,
     addWeightFromAssessment,
+    clearError,
     refetch: fetchWeightProgress
   };
 };

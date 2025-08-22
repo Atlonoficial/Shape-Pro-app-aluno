@@ -10,9 +10,10 @@ interface WeightInputModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (weight: number) => Promise<boolean>;
+  error?: string | null;
 }
 
-export const WeightInputModal = ({ isOpen, onClose, onSave }: WeightInputModalProps) => {
+export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInputModalProps) => {
   const [weight, setWeight] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -40,9 +41,11 @@ export const WeightInputModal = ({ isOpen, onClose, onSave }: WeightInputModalPr
       setWeight('');
       onClose();
     } else {
+      // Show the specific error from the hook if available
+      const errorMessage = error || "Não foi possível salvar seu peso. Tente novamente.";
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar seu peso. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     }

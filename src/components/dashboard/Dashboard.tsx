@@ -25,7 +25,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { recordWeight } = progressActions;
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
-  const { addWeightEntry, shouldShowWeightModal } = useWeightProgress(user?.id || '');
+  const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
   
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
@@ -43,22 +43,25 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     if (!isAuthenticated || !user) return;
     
     // Show modal only on Fridays if user hasn't weighed this week
-    if (shouldShowWeightModal()) {
-      setTimeout(() => setShowWeightModal(true), 2000);
-    }
+    const checkWeightModal = async () => {
+      const shouldShow = await shouldShowWeightModal();
+      if (shouldShow) {
+        setTimeout(() => setShowWeightModal(true), 2000);
+      }
+    };
+    
+    checkWeightModal();
   }, [isAuthenticated, user, shouldShowWeightModal]);
 
   const handleSaveWeight = async (weight: number) => {
     console.log('💾 Dashboard: Saving weight:', weight);
     
-    // Use the new gamification-integrated weight recording
-    const success = await recordWeight(weight, 'Peso registrado via dashboard');
+    // Use the weight progress system which now includes validation and gamification
+    const success = await addWeightEntry(weight);
     console.log('✅ Dashboard: Weight save result:', success);
     
     if (success) {
       setShowWeightModal(false);
-      // Also save to the weight progress system for chart compatibility
-      await addWeightEntry(weight);
     }
     
     return success;
@@ -233,8 +236,12 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       {/* Weight Input Modal */}
       <WeightInputModal
         isOpen={showWeightModal}
-        onClose={() => setShowWeightModal(false)}
+        onClose={() => {
+          clearError();
+          setShowWeightModal(false);
+        }}
         onSave={handleSaveWeight}
+        error={weightError}
       />
     </div>
   );
