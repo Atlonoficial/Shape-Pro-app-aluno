@@ -74,7 +74,7 @@ export const GamificationDashboard = () => {
       </Card>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-3 h-auto">
           <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 px-1">
             <span className="hidden sm:inline">Visão Geral</span>
             <span className="sm:hidden">Geral</span>
@@ -83,7 +83,6 @@ export const GamificationDashboard = () => {
             <span className="hidden sm:inline">Conquistas</span>
             <span className="sm:hidden">Metas</span>
           </TabsTrigger>
-          <TabsTrigger value="ranking" className="text-xs sm:text-sm py-2 px-1">Ranking</TabsTrigger>
           <TabsTrigger value="challenges" className="text-xs sm:text-sm py-2 px-1">Desafios</TabsTrigger>
         </TabsList>
 
@@ -244,59 +243,6 @@ export const GamificationDashboard = () => {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="ranking" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Ranking Mensal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {rankings.map((ranking, index) => (
-                  <div 
-                    key={ranking.id} 
-                    className={`flex items-center gap-3 p-3 rounded-lg border ${
-                      ranking.user_id === userPoints?.user_id 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border/50'
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      index === 0 ? 'bg-warning text-warning-foreground' :
-                      index === 1 ? 'bg-muted text-muted-foreground' :
-                      index === 2 ? 'bg-secondary text-secondary-foreground' :
-                      'bg-muted/20 text-muted-foreground'
-                    }`}>
-                      {ranking.position}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{ranking.profile?.name || 'Usuário'}</p>
-                      <p className="text-xs text-muted-foreground">{ranking.total_points.toLocaleString("pt-BR")} pontos</p>
-                    </div>
-                    {index < 3 && (
-                      <Trophy className={`w-5 h-5 ${
-                        index === 0 ? 'text-warning' :
-                        index === 1 ? 'text-muted-foreground' :
-                        'text-secondary'
-                      }`} />
-                    )}
-                  </div>
-                ))}
-                {rankings.length === 0 && (
-                  <div className="text-center py-6 sm:py-8">
-                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Ranking ainda não disponível
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="challenges" className="space-y-4">
