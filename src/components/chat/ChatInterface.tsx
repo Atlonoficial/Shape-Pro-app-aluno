@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
+import { ConnectionIndicator } from './ConnectionIndicator';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ConnectionStatus } from '@/hooks/useConnectionStatus';
 
 interface ChatMessage {
   id: string;
@@ -16,18 +18,26 @@ interface ChatMessage {
   created_at?: string;
   reply_to?: string;
   attachments?: any;
+  status?: 'sending' | 'sent' | 'failed';
+  local_id?: string;
 }
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
   currentUserId?: string;
+  connectionStatus: ConnectionStatus;
+  isReconnecting?: boolean;
   onMessagesRead?: () => void;
+  onRetryMessage?: (localId: string) => void;
 }
 
 export const ChatInterface = ({ 
   messages, 
-  currentUserId, 
-  onMessagesRead 
+  currentUserId,
+  connectionStatus,
+  isReconnecting = false,
+  onMessagesRead,
+  onRetryMessage
 }: ChatInterfaceProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -80,23 +90,45 @@ export const ChatInterface = ({
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">💬</span>
+      <div className="flex-1 flex flex-col">
+        {/* Connection Status */}
+        {connectionStatus !== 'connected' && (
+          <div className="flex justify-center p-2 border-b border-border">
+            <ConnectionIndicator 
+              status={connectionStatus} 
+              isReconnecting={isReconnecting}
+            />
           </div>
-          <p className="text-muted-foreground">Nenhuma mensagem ainda</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Comece uma conversa!
-          </p>
+        )}
+        
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">💬</span>
+            </div>
+            <p className="text-muted-foreground">Nenhuma mensagem ainda</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Comece uma conversa!
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 relative">
-      <ScrollArea ref={scrollAreaRef} className="h-full px-4">
+    <div className="flex-1 flex flex-col relative">
+      {/* Connection Status */}
+      {connectionStatus !== 'connected' && (
+        <div className="flex justify-center p-2 border-b border-border bg-muted/50">
+          <ConnectionIndicator 
+            status={connectionStatus} 
+            isReconnecting={isReconnecting}
+          />
+        </div>
+      )}
+      
+      <ScrollArea ref={scrollAreaRef} className="flex-1 px-4">
         <div className="space-y-4 py-4">
           {Object.entries(messageGroups).map(([dateKey, dayMessages]) => (
             <div key={dateKey}>
@@ -113,13 +145,14 @@ export const ChatInterface = ({
               <div className="space-y-3">
                 {dayMessages.map((message, index) => (
                   <MessageBubble
-                    key={message.id}
+                    key={message.local_id || message.id}
                     message={message}
                     isOwn={message.sender_id === currentUserId}
                     showAvatar={
                       index === 0 || 
                       dayMessages[index - 1]?.sender_id !== message.sender_id
                     }
+                    onRetry={onRetryMessage}
                   />
                 ))}
               </div>

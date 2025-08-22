@@ -7,12 +7,14 @@ interface MessageInputProps {
   onSendMessage: (content: string) => void;
   onTyping?: (isTyping: boolean) => void;
   disabled?: boolean;
+  connectionStatus?: 'connected' | 'connecting' | 'disconnected';
 }
 
 export const MessageInput = ({ 
   onSendMessage, 
   onTyping, 
-  disabled = false 
+  disabled = false,
+  connectionStatus = 'connected'
 }: MessageInputProps) => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -20,7 +22,7 @@ export const MessageInput = ({
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleSend = () => {
-    if (!message.trim() || disabled) return;
+    if (!message.trim() || disabled || connectionStatus === 'disconnected') return;
     
     onSendMessage(message.trim());
     setMessage('');
@@ -110,8 +112,16 @@ export const MessageInput = ({
             value={message}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
-            placeholder={disabled ? "Conectando..." : "Digite sua mensagem..."}
-            disabled={disabled}
+            placeholder={
+              disabled 
+                ? "Conectando..." 
+                : connectionStatus === 'disconnected'
+                ? "Sem conexão..."
+                : connectionStatus === 'connecting'
+                ? "Reconectando..."
+                : "Digite sua mensagem..."
+            }
+            disabled={disabled || connectionStatus === 'disconnected'}
             className="min-h-[44px] max-h-[120px] resize-none pr-12 py-3"
             rows={1}
           />
@@ -120,9 +130,9 @@ export const MessageInput = ({
         {/* Botão de envio */}
         <Button
           onClick={handleSend}
-          disabled={!message.trim() || disabled}
+          disabled={!message.trim() || disabled || connectionStatus === 'disconnected'}
           size="icon"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0 disabled:opacity-50"
         >
           <Send size={20} />
         </Button>

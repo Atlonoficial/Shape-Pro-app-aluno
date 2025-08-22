@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { ConnectionIndicator } from './ConnectionIndicator';
+import { ConnectionStatus } from '@/hooks/useConnectionStatus';
 
 interface Conversation {
   id: string;
@@ -23,12 +25,16 @@ interface ChatHeaderProps {
   conversation?: Conversation | null;
   onlineUsers: string[];
   typingUsers: string[];
+  connectionStatus: ConnectionStatus;
+  isReconnecting?: boolean;
 }
 
 export const ChatHeader = ({ 
   conversation, 
   onlineUsers, 
-  typingUsers 
+  typingUsers,
+  connectionStatus,
+  isReconnecting = false
 }: ChatHeaderProps) => {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
@@ -114,9 +120,18 @@ export const ChatHeader = ({
         </div>
       </div>
       
-      {/* Status do Professor */}
+      {/* Status do Professor e Conexão */}
       <div className="flex items-center gap-2">
-        {isStudent && (
+        {/* Status da conexão */}
+        {connectionStatus !== 'connected' && (
+          <ConnectionIndicator 
+            status={connectionStatus} 
+            isReconnecting={isReconnecting}
+            className="mr-2"
+          />
+        )}
+        
+        {isStudent && connectionStatus === 'connected' && (
           <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${
             isOnline ? 'border-success/20 bg-success/10' : 'border-muted'
           }`}>

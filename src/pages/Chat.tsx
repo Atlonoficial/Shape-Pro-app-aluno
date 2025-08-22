@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useConversation } from '@/hooks/useConversation';
 import { useEnhancedPresence } from '@/hooks/useEnhancedPresence';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { ChatHeader } from '@/components/chat/ChatHeader';
@@ -16,12 +17,18 @@ export default function Chat() {
   // Inicializar notificações de chat
   useChatNotifications();
   
+  // Status de conexão
+  const { status: globalConnectionStatus } = useConnectionStatus();
+  
   const {
     conversation,
     messages,
     loading,
     error,
+    reconnecting,
+    connectionStatus,
     sendMessage,
+    retryMessage,
     markAsRead
   } = useConversation(user?.id);
 
@@ -85,18 +92,24 @@ export default function Chat() {
           conversation={conversation}
           onlineUsers={onlineUsers}
           typingUsers={typingUsers}
+          connectionStatus={connectionStatus}
+          isReconnecting={reconnecting}
         />
         
         <ChatInterface 
           messages={messages}
           currentUserId={user?.id}
+          connectionStatus={connectionStatus}
+          isReconnecting={reconnecting}
           onMessagesRead={markAsRead}
+          onRetryMessage={retryMessage}
         />
         
         <MessageInput 
           onSendMessage={handleSendMessage}
           onTyping={handleTyping}
           disabled={!conversation}
+          connectionStatus={connectionStatus}
         />
       </div>
     </MobileContainer>

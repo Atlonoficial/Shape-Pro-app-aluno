@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
 interface Conversation {
   id: string;
@@ -27,6 +28,8 @@ interface ChatMessage {
   created_at?: string;
   reply_to?: string;
   attachments?: any;
+  status?: 'sending' | 'sent' | 'failed';
+  local_id?: string;
 }
 
 export const useConversation = (userId?: string) => {
@@ -35,15 +38,21 @@ export const useConversation = (userId?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
+  
+  const channelRef = useRef<any>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const localMessagesCache = useRef<ChatMessage[]>([]);
 
-  // Função para criar ou buscar conversação
-  const findOrCreateConversation = useCallback(async () => {
+  // Função para criar ou buscar conversação com retry
+  const findOrCreateConversation = useCallback(async (retryCount = 0) => {
     if (!userId || !userProfile) return;
 
     try {
+      setError(null);
       const isStudent = userProfile.user_type === 'student';
       
-      // Se for estudante, buscar o professor
       if (isStudent) {
         const { data: studentData, error: studentError } = await supabase
           .from('students')
@@ -58,11 +67,13 @@ export const useConversation = (userId?: string) => {
         const conversationId = `${studentData.teacher_id}-${userId}`;
         
         // Buscar conversação existente
-        let { data: existingConv } = await supabase
+        let { data: existingConv, error: fetchError } = await supabase
           .from('conversations')
           .select('*')
           .eq('id', conversationId)
-          .single();
+          .maybeSingle();
+
+        if (fetchError) throw fetchError;
 
         // Se não existir, criar nova
         if (!existingConv) {
@@ -82,19 +93,36 @@ export const useConversation = (userId?: string) => {
         }
 
         setConversation(existingConv);
+        setConnectionStatus('connected');
       } else {
-        // Se for professor, listar conversações (implementar depois)
         setError('Interface do professor em desenvolvimento');
       }
     } catch (err) {
-      console.error('Erro ao criar/buscar conversação:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      console.error(`Erro ao criar/buscar conversação (tentativa ${retryCount + 1}):`, err);
+      
+      if (retryCount < 3) {
+        // Retry com backoff exponencial
+        const delay = Math.pow(2, retryCount) * 1000;
+        retryTimeoutRef.current = setTimeout(() => {
+          findOrCreateConversation(retryCount + 1);
+        }, delay);
+        
+        setReconnecting(true);
+        setConnectionStatus('connecting');
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro de conexão');
+        setConnectionStatus('disconnected');
+        toast.error('Erro ao conectar. Tentando reconectar...');
+      }
     } finally {
-      setLoading(false);
+      if (retryCount === 0) {
+        setLoading(false);
+        setReconnecting(false);
+      }
     }
   }, [userId, userProfile]);
 
-  // Buscar mensagens em tempo real
+  // Buscar mensagens em tempo real com reconexão automática
   const fetchMessages = useCallback((conversationId: string) => {
     const channel = supabase
       .channel(`chat:${conversationId}`)
@@ -110,63 +138,160 @@ export const useConversation = (userId?: string) => {
           console.log('Nova mensagem:', payload);
           
           if (payload.eventType === 'INSERT') {
-            setMessages(prev => [...prev, payload.new as ChatMessage]);
+            const newMessage = payload.new as ChatMessage;
+            
+            // Remover mensagem local se existir (para substituir por versão do servidor)
+            setMessages(prev => {
+              const filtered = prev.filter(msg => msg.local_id !== newMessage.id);
+              return [...filtered, { ...newMessage, status: 'sent' }];
+            });
+            
+            // Atualizar cache local
+            localMessagesCache.current = localMessagesCache.current.map(msg => 
+              msg.local_id === newMessage.id ? { ...newMessage, status: 'sent' } : msg
+            );
           }
         }
       )
-      .subscribe();
-
-    // Buscar mensagens existentes
-    supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Erro ao buscar mensagens:', error);
-        } else {
-          setMessages(data || []);
-        }
+      .subscribe((status) => {
+        console.log('Canal status:', status);
+        setConnectionStatus(status === 'SUBSCRIBED' ? 'connected' : 'connecting');
       });
 
+    channelRef.current = channel;
+
+    // Buscar mensagens existentes com retry
+    const loadMessages = async (retryCount = 0) => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        
+        const messagesWithStatus = (data || []).map(msg => ({ 
+          ...msg, 
+          status: 'sent' as const 
+        }));
+        
+        setMessages(messagesWithStatus);
+        localMessagesCache.current = messagesWithStatus;
+        
+      } catch (error) {
+        console.error(`Erro ao buscar mensagens (tentativa ${retryCount + 1}):`, error);
+        
+        if (retryCount < 2) {
+          setTimeout(() => loadMessages(retryCount + 1), 2000);
+        } else {
+          toast.error('Erro ao carregar mensagens');
+        }
+      }
+    };
+
+    loadMessages();
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, []);
 
-  // Enviar mensagem
+  // Enviar mensagem com retry e estado local
   const sendMessage = useCallback(async (content: string) => {
     if (!conversation || !userId) return;
 
-    try {
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          conversation_id: conversation.id,
-          sender_id: userId,
-          message: content,
-          message_type: 'text',
-          sender_type: userProfile?.user_type || 'student'
-        });
+    const localId = `local_${Date.now()}_${Math.random()}`;
+    const tempMessage: ChatMessage = {
+      id: localId,
+      local_id: localId,
+      conversation_id: conversation.id,
+      sender_id: userId,
+      message: content,
+      message_type: 'text',
+      sender_type: userProfile?.user_type || 'student',
+      created_at: new Date().toISOString(),
+      status: 'sending'
+    };
 
-      if (error) throw error;
+    // Adicionar mensagem local imediatamente
+    setMessages(prev => [...prev, tempMessage]);
+    localMessagesCache.current = [...localMessagesCache.current, tempMessage];
 
-      // Atualizar última mensagem da conversação
-      await supabase
-        .from('conversations')
-        .update({
-          last_message: content,
-          last_message_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', conversation.id);
+    const sendAttempt = async (retryCount = 0) => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .insert({
+            conversation_id: conversation.id,
+            sender_id: userId,
+            message: content,
+            message_type: 'text',
+            sender_type: userProfile?.user_type || 'student'
+          })
+          .select()
+          .single();
 
-    } catch (err) {
-      console.error('Erro ao enviar mensagem:', err);
-      throw err;
-    }
+        if (error) throw error;
+
+        // Atualizar última mensagem da conversação
+        await supabase
+          .from('conversations')
+          .update({
+            last_message: content,
+            last_message_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', conversation.id);
+
+        // Atualizar mensagem local com dados do servidor
+        setMessages(prev => prev.map(msg => 
+          msg.local_id === localId 
+            ? { ...data, status: 'sent' as const }
+            : msg
+        ));
+
+      } catch (err) {
+        console.error(`Erro ao enviar mensagem (tentativa ${retryCount + 1}):`, err);
+        
+        if (retryCount < 2) {
+          // Retry após delay
+          setTimeout(() => sendAttempt(retryCount + 1), 2000);
+          
+          // Atualizar status para retry
+          setMessages(prev => prev.map(msg => 
+            msg.local_id === localId 
+              ? { ...msg, status: 'sending' as const }
+              : msg
+          ));
+        } else {
+          // Marcar como falha após 3 tentativas
+          setMessages(prev => prev.map(msg => 
+            msg.local_id === localId 
+              ? { ...msg, status: 'failed' as const }
+              : msg
+          ));
+          
+          toast.error('Falha ao enviar mensagem. Toque para tentar novamente.');
+        }
+      }
+    };
+
+    await sendAttempt();
   }, [conversation, userId, userProfile]);
+
+  // Retry mensagem falhada
+  const retryMessage = useCallback((localId: string) => {
+    const message = messages.find(msg => msg.local_id === localId);
+    if (message && message.status === 'failed') {
+      // Remove a mensagem falhada e reenvia
+      setMessages(prev => prev.filter(msg => msg.local_id !== localId));
+      sendMessage(message.message);
+    }
+  }, [messages, sendMessage]);
 
   // Marcar como lidas
   const markAsRead = useCallback(async () => {
@@ -197,12 +322,27 @@ export const useConversation = (userId?: string) => {
     }
   }, [conversation, fetchMessages]);
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, []);
+
   return {
     conversation,
     messages,
     loading,
     error,
+    reconnecting,
+    connectionStatus,
     sendMessage,
+    retryMessage,
     markAsRead
   };
 };
