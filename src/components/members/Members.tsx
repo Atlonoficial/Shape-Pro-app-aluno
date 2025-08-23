@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Play, Package, Loader2, Users, ClipboardList } from "lucide-react";
+import { Play, Package, Loader2, Users, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModuleDetail } from "./ModuleDetail";
 import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
+import { ProductsShop } from "./ProductsShop";
 import { AnnouncementBanner } from "@/components/dashboard/AnnouncementBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
@@ -16,7 +17,7 @@ export const Members = () => {
   const { user, userProfile } = useAuth();
   const { student } = useStudentProfile();
   const { courses, loading } = useCourses();
-  const [activeTab, setActiveTab] = useState<'courses' | 'students'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'shop' | 'students'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const navigate = useNavigate();
@@ -86,7 +87,19 @@ export const Members = () => {
           }`}
         >
           <Package className="w-4 h-4 mr-2" />
-          {isTeacher ? 'Meus Cursos' : 'Cursos'}
+          {isTeacher ? 'Cursos' : 'Cursos'}
+        </Button>
+        
+        <Button
+          onClick={() => setActiveTab('shop')}
+          className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
+            activeTab === 'shop' 
+              ? 'btn-primary' 
+              : 'btn-secondary'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 mr-2" />
+          {isTeacher ? 'Produtos' : 'Loja'}
         </Button>
         
         {isTeacher && (
@@ -160,6 +173,10 @@ export const Members = () => {
             </div>
           )}
         </div>
+      )}
+
+      {activeTab === 'shop' && (
+        <ProductsShop />
       )}
 
       {activeTab === 'students' && isTeacher && (

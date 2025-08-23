@@ -33,12 +33,24 @@ export const useCourses = () => {
           .select('*')
           .eq('is_published', true);
 
-        // If user is student, show courses they're enrolled in or free courses
         // If user is teacher, show courses they created
+        // If user is student, show courses from their teacher (free or enrolled)
         if (userProfile?.user_type === 'teacher') {
           query = query.eq('instructor', user.id);
         } else {
-          query = query.or(`is_free.eq.true,enrolled_users.cs.{${user.id}}`);
+          // For students, get courses from their teacher
+          const { data: studentData } = await supabase
+            .from('students')
+            .select('teacher_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (studentData?.teacher_id) {
+            query = query.eq('instructor', studentData.teacher_id);
+          } else {
+            // If student has no teacher, show free courses
+            query = query.eq('is_free', true);
+          }
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });
