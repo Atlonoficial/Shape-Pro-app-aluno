@@ -24,9 +24,13 @@ export const useCourses = () => {
   const { user, userProfile } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userProfile) {
+      console.log('useCourses: Waiting for user and profile to load', { user: !!user, userProfile: !!userProfile });
+      return;
+    }
 
     const fetchCourses = async () => {
+      console.log('useCourses: Starting fetch for user type:', userProfile.user_type);
       try {
         let query = supabase
           .from('courses')
@@ -36,33 +40,45 @@ export const useCourses = () => {
         // If user is teacher, show courses they created
         // If user is student, show courses from their teacher (free or enrolled)
         if (userProfile?.user_type === 'teacher') {
+          console.log('useCourses: Fetching teacher courses for user:', user.id);
           query = query.eq('instructor', user.id);
         } else {
           // For students, get courses from their teacher
-          const { data: studentData } = await supabase
+          console.log('useCourses: Fetching student teacher data for user:', user.id);
+          const { data: studentData, error: studentError } = await supabase
             .from('students')
             .select('teacher_id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
+
+          if (studentError) {
+            console.error('useCourses: Error fetching student data:', studentError);
+          }
+
+          console.log('useCourses: Student data:', studentData);
 
           if (studentData?.teacher_id) {
+            console.log('useCourses: Fetching courses from teacher:', studentData.teacher_id);
             query = query.eq('instructor', studentData.teacher_id);
           } else {
             // If student has no teacher, show free courses
+            console.log('useCourses: No teacher found, showing free courses');
             query = query.eq('is_free', true);
           }
         }
 
+        console.log('useCourses: Executing query');
         const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
-          console.error('Error fetching courses:', error);
+          console.error('useCourses: Error fetching courses:', error);
           return;
         }
 
+        console.log('useCourses: Courses fetched successfully:', data?.length || 0);
         setCourses(data || []);
       } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error('useCourses: Unexpected error:', error);
       } finally {
         setLoading(false);
       }
