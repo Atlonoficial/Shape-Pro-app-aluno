@@ -49,63 +49,78 @@ export const ProductsShop = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-7xl mx-auto">
           {products.map((product) => (
             <div
               key={product.id}
-              className="bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl p-3 transition-all duration-300"
+              className="bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl p-3 sm:p-4 lg:p-5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:bg-card/80 flex flex-col h-full"
             >
               {/* Product Image */}
-              {product.image_url && (
-                <div className="mb-3 rounded-xl overflow-hidden bg-muted/30 aspect-square">
+              <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden bg-muted/30 aspect-square flex-shrink-0">
+                {product.image_url ? (
                   <img
                     src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
+                    alt={`Imagem do produto ${product.name}`}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     loading="lazy"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted/80">
+                    <Package className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground/60" />
+                  </div>
+                )}
+              </div>
               
               {/* Product Content */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-foreground leading-tight">
-                  {product.name}
-                </h4>
-                
-                {product.description && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {product.description}
-                  </p>
-                )}
-                
-                {product.category && (
-                  <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                    {product.category}
-                  </span>
-                )}
-                
-                {/* Price and Button */}
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm font-bold text-foreground">
-                    R$ {product.price.toFixed(2)}
-                  </span>
+              <div className="flex-1 flex flex-col space-y-2 sm:space-y-3">
+                <div className="flex-1">
+                  <h4 className="text-sm sm:text-base font-semibold text-foreground leading-tight line-clamp-2 mb-2">
+                    {product.name}
+                  </h4>
                   
+                  {product.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-2">
+                      {product.description}
+                    </p>
+                  )}
+                  
+                  {product.category && (
+                    <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+                      {product.category}
+                    </span>
+                  )}
+                </div>
+                
+                {/* Price, Stock and Button Section */}
+                <div className="space-y-2 mt-auto pt-2 border-t border-border/30">
+                  {/* Price and Stock Row */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-base sm:text-lg font-bold text-foreground">
+                      R$ {product.price.toFixed(2)}
+                    </span>
+                    
+                    {product.stock !== null && (
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        product.stock > 0 
+                          ? 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/30' 
+                          : 'text-destructive bg-destructive/10'
+                      }`}>
+                        {product.stock > 0 ? `${product.stock} unid.` : 'Esgotado'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Action Button Row */}
                   {!isTeacher && (
                     <Button
                       variant="default"
                       size="sm"
-                      className="text-xs px-2 py-1 h-auto"
+                      className="w-full min-h-[40px] text-sm font-medium transition-all duration-300 hover:shadow-md disabled:opacity-50"
+                      disabled={product.stock !== null && product.stock === 0}
                     >
-                      <ShoppingCart className="w-3 h-3 mr-1" />
-                      Comprar
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      {product.stock !== null && product.stock === 0 ? 'Esgotado' : 'Comprar'}
                     </Button>
-                  )}
-                  
-                  {product.stock !== null && (
-                    <span className="text-xs text-muted-foreground">
-                      {product.stock > 0 ? `${product.stock} unid.` : 'Esgotado'}
-                    </span>
                   )}
                 </div>
               </div>

@@ -228,6 +228,21 @@
     @apply hover:scale-105 hover:shadow-glow transition-all duration-300;
   }
 
+  /* Text Truncation Classes */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   /* Shape Pro specific styling */
   .consultoria-online {
     @apply text-warning font-bold tracking-[0.2em] text-sm;
