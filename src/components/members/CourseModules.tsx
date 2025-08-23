@@ -81,95 +81,78 @@ export const CourseModules = ({ courseId, onBack }: CourseModulesProps) => {
 
   return (
     <div className="p-4 pt-8 pb-24">
-      <Button
-        variant="ghost"
-        onClick={onBack}
-        className="mb-4 -ml-2"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Voltar aos Cursos
-      </Button>
-
-      {/* Course Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
-          {course?.thumbnail && (
-            <img
-              src={course.thumbnail}
-              alt={course.title}
-              className="w-16 h-16 rounded-lg object-cover"
-            />
-          )}
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{course?.title}</h1>
-            <p className="text-muted-foreground">{course?.description}</p>
-          </div>
-        </div>
+      {/* Header Simplificado */}
+      <div className="flex items-center justify-between mb-8">
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="p-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        
+        <h1 className="text-2xl font-bold text-foreground text-center flex-1">
+          {course?.title || 'Aulas'}
+        </h1>
+        
+        <div className="w-9" /> {/* Spacer para centralizar o título */}
       </div>
 
-      {/* Modules Grid */}
-      <div>
-        <h3 className="text-lg font-semibold text-foreground mb-4">
-          Módulos do Curso
-        </h3>
-
-        {modules.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Este curso ainda não possui módulos disponíveis.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {modules.map((module: any, index: number) => (
-              <Card
-                key={module.id || index}
-                className="cursor-pointer transition-all duration-200 hover:bg-accent/50 hover:scale-105"
-                onClick={() => setSelectedModule(module)}
-              >
-                <CardContent className="p-0">
-                  {/* Module Cover */}
-                  <div
-                    className="aspect-video bg-cover bg-center relative rounded-t-lg"
-                    style={{
-                      backgroundImage: module.cover 
-                        ? `url(${module.cover})` 
-                        : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-t-lg" />
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <Play className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                        <div className="text-xs text-white/80">
-                          {Array.isArray(module.lessons) ? module.lessons.length : 0} aulas
-                        </div>
-                      </div>
+      {/* Grid de Módulos */}
+      {modules.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              Este curso ainda não possui módulos disponíveis.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {modules.map((module: any, index: number) => (
+            <Card
+              key={module.id || index}
+              className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group overflow-hidden"
+              onClick={() => setSelectedModule(module)}
+            >
+              <CardContent className="p-0">
+                {/* Module Cover - Aspect ratio mais quadrado */}
+                <div
+                  className="aspect-[4/3] bg-cover bg-center relative"
+                  style={{
+                    backgroundImage: module.cover 
+                      ? `url(${module.cover})` 
+                      : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 50%, hsl(var(--secondary)) 100%)'
+                  }}
+                >
+                  {/* Gradiente overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  
+                  {/* Play button centralizado */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                      <Play className="w-5 h-5 text-white ml-0.5" />
                     </div>
                   </div>
-
-                  {/* Module Info */}
-                  <div className="p-4">
-                    <h4 className="font-semibold text-foreground mb-1">
+                  
+                  {/* Informações no bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2">
                       {module.name || module.title}
                     </h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {module.description}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/80">
+                        {Array.isArray(module.lessons) ? module.lessons.length : 0} aulas
+                      </span>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
