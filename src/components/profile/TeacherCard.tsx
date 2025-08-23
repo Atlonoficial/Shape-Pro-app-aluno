@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
-import { MessageCircle, Instagram, Facebook, Phone } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Phone, Youtube } from "lucide-react";
 import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNavigate } from "react-router-dom";
@@ -52,8 +52,17 @@ export const TeacherCard = () => {
     }
   };
 
+  const handleYouTubeClick = () => {
+    if (teacher.youtube_url) {
+      window.open(teacher.youtube_url, '_blank');
+    }
+  };
+
   const handleWhatsAppClick = () => {
-    if (teacher.whatsapp_number) {
+    // Prioriza whatsapp_url sobre whatsapp_number
+    if (teacher.whatsapp_url) {
+      window.open(teacher.whatsapp_url, '_blank');
+    } else if (teacher.whatsapp_number) {
       const message = encodeURIComponent('Olá! Vim através do app Shape Pro.');
       window.open(`https://wa.me/${teacher.whatsapp_number.replace(/\D/g, '')}?text=${message}`, '_blank');
     }
@@ -120,7 +129,18 @@ export const TeacherCard = () => {
                 </Button>
               )}
               
-              {teacher.whatsapp_number && (
+              {teacher.youtube_url && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleYouTubeClick}
+                  className="h-8 w-8 p-0 hover:bg-red-600/10 hover:text-red-600"
+                >
+                  <Youtube className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {(teacher.whatsapp_url || teacher.whatsapp_number) && (
                 <Button
                   variant="ghost"
                   size="sm"
