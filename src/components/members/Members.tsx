@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Play, Package, Loader2, Users, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ModuleDetail } from "./ModuleDetail";
+import { CourseModules } from "./CourseModules";
 import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
 import { ProductsShop } from "./ProductsShop";
@@ -17,17 +17,17 @@ export const Members = () => {
   const { student } = useStudentProfile();
   const { courses, loading } = useCourses();
   const [activeTab, setActiveTab] = useState<'courses' | 'shop' | 'students'>('courses');
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const navigate = useNavigate();
 
   const isTeacher = userProfile?.user_type === 'teacher';
 
-  if (selectedModule) {
+  if (selectedCourse) {
     return (
-      <ModuleDetail 
-        moduleId={selectedModule} 
-        onBack={() => setSelectedModule(null)} 
+      <CourseModules 
+        courseId={selectedCourse} 
+        onBack={() => setSelectedCourse(null)} 
       />
     );
   }
@@ -148,7 +148,7 @@ export const Members = () => {
                 {courses.map((course) => (
                   <div 
                     key={course.id}
-                    onClick={() => setSelectedModule(course.id)}
+                    onClick={() => setSelectedCourse(course.id)}
                     className="relative rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                   >
                     <div 
