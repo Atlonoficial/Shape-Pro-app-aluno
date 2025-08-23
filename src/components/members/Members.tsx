@@ -144,24 +144,24 @@ export const Members = () => {
               )}
             </div>
           ) : (
-            <div>
-              <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="px-1">
+              <div className="flex flex-nowrap gap-4 overflow-x-auto pb-4 scrollbar-hide">
                 {modules.map((module) => (
                   <div 
                     key={module.id}
                     onClick={() => setSelectedModule(module)}
-                    className="relative rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
+                    className="relative w-48 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                   >
                     <div 
-                      className="aspect-square bg-cover bg-center relative"
+                      className="aspect-video bg-cover bg-center relative"
                       style={{ 
                         backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
                       }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      <div className="absolute bottom-2 left-2 right-2">
-                        <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{module.title}</h4>
-                        <p className="text-[10px] text-white/80 leading-tight">{module.lessons_count} aulas</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <h4 className="text-sm font-semibold text-white mb-1 leading-tight">{module.title}</h4>
+                        <p className="text-xs text-white/80 leading-tight">{module.lessons_count} aulas</p>
                       </div>
                     </div>
                   </div>
