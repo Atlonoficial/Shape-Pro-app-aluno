@@ -150,10 +150,10 @@ export const Members = () => {
                   <div 
                     key={module.id}
                     onClick={() => setSelectedModule(module)}
-                    className="relative w-48 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
+                    className="relative w-80 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                   >
                     <div 
-                      className="aspect-video bg-cover bg-center relative"
+                      className="aspect-[2/3] bg-cover bg-center relative"
                       style={{ 
                         backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
                       }}
