@@ -35,6 +35,7 @@ import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
 import Chat from "./pages/Chat";
+import DashboardProfessor from "./pages/DashboardProfessor";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,11 @@ const App = () => (
               <Route path="/chat" element={
                 <AuthGuard>
                   <Chat />
+                </AuthGuard>
+              } />
+              <Route path="/dashboard-professor" element={
+                <AuthGuard>
+                  <DashboardProfessor />
                 </AuthGuard>
               } />
               <Route path="/auth/verify" element={<AuthVerify />} />

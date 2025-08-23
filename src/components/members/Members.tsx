@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useCourses } from "@/hooks/useCourses";
 import { Student } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 
 export const Members = () => {
@@ -18,6 +19,7 @@ export const Members = () => {
   const [activeTab, setActiveTab] = useState<'courses' | 'students'>('courses');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const navigate = useNavigate();
 
   const isTeacher = userProfile?.user_type === 'teacher';
 
@@ -73,7 +75,7 @@ export const Members = () => {
         </Button>
       </div>
 
-      {/* Tab Navigation */}
+        {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
         <Button
           onClick={() => setActiveTab('courses')}
@@ -84,7 +86,7 @@ export const Members = () => {
           }`}
         >
           <Package className="w-4 h-4 mr-2" />
-          Cursos
+          {isTeacher ? 'Meus Cursos' : 'Cursos'}
         </Button>
         
         {isTeacher && (
@@ -105,12 +107,28 @@ export const Members = () => {
       {/* Content */}
       {activeTab === 'courses' && (
         <div>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Cursos Disponíveis</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">
+          {isTeacher ? 'Meus Cursos Publicados' : 'Cursos Disponíveis'}
+        </h3>
           
           {courses.length === 0 ? (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum curso disponível no momento</p>
+              <p className="text-muted-foreground">
+                {isTeacher 
+                  ? 'Você ainda não publicou nenhum curso. Acesse o Dashboard Professor para criar.' 
+                  : 'Nenhum curso disponível no momento'
+                }
+              </p>
+              {isTeacher && (
+                <Button 
+                  onClick={() => navigate('/dashboard-professor')} 
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Ir para Dashboard
+                </Button>
+              )}
             </div>
           ) : (
             <div>
