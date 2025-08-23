@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Play, Package, Loader2, Users, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CourseModules } from "./CourseModules";
+import { ModuleDetail } from "./ModuleDetail";
 import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
 import { ProductsShop } from "./ProductsShop";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { useCourses } from "@/hooks/useCourses";
+import { useAllModules } from "@/hooks/useAllModules";
 import { Student } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
@@ -15,19 +15,20 @@ import { useNavigate } from "react-router-dom";
 export const Members = () => {
   const { user, userProfile } = useAuth();
   const { student } = useStudentProfile();
-  const { courses, loading } = useCourses();
-  const [activeTab, setActiveTab] = useState<'courses' | 'shop' | 'students'>('courses');
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const { modules, loading } = useAllModules();
+  const [activeTab, setActiveTab] = useState<'modules' | 'shop' | 'students'>('modules');
+  const [selectedModule, setSelectedModule] = useState<any>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const navigate = useNavigate();
 
   const isTeacher = userProfile?.user_type === 'teacher';
 
-  if (selectedCourse) {
+  if (selectedModule) {
     return (
-      <CourseModules 
-        courseId={selectedCourse} 
-        onBack={() => setSelectedCourse(null)} 
+      <ModuleDetail 
+        module={selectedModule} 
+        courseTitle={selectedModule.course_title}
+        onBack={() => setSelectedModule(null)} 
       />
     );
   }
@@ -46,7 +47,7 @@ export const Members = () => {
       <div className="p-4 pt-8 pb-24 flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
-          <p className="text-muted-foreground">Carregando cursos...</p>
+          <p className="text-muted-foreground">Carregando módulos...</p>
         </div>
       </div>
     );
@@ -78,15 +79,15 @@ export const Members = () => {
         {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
         <Button
-          onClick={() => setActiveTab('courses')}
+          onClick={() => setActiveTab('modules')}
           className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
-            activeTab === 'courses' 
+            activeTab === 'modules' 
               ? 'btn-primary' 
               : 'btn-secondary'
           }`}
         >
           <Package className="w-4 h-4 mr-2" />
-          {isTeacher ? 'Cursos' : 'Cursos'}
+          Módulos
         </Button>
         
         <Button
@@ -117,19 +118,19 @@ export const Members = () => {
       </div>
 
       {/* Content */}
-      {activeTab === 'courses' && (
+      {activeTab === 'modules' && (
         <div>
         <h3 className="text-lg font-semibold text-foreground mb-4">
-          {isTeacher ? 'Meus Cursos Publicados' : 'Cursos Disponíveis'}
+          {isTeacher ? 'Módulos Publicados' : 'Módulos Disponíveis'}
         </h3>
           
-          {courses.length === 0 ? (
+          {modules.length === 0 ? (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
                 {isTeacher 
-                  ? 'Você ainda não publicou nenhum curso. Acesse o Dashboard Professor para criar.' 
-                  : 'Nenhum curso disponível no momento'
+                  ? 'Você ainda não publicou nenhum módulo. Acesse o Dashboard Professor para criar.' 
+                  : 'Nenhum módulo disponível no momento'
                 }
               </p>
               {isTeacher && (
@@ -145,22 +146,22 @@ export const Members = () => {
           ) : (
             <div>
               <div className="grid grid-cols-2 gap-3 mb-6">
-                {courses.map((course) => (
+                {modules.map((module) => (
                   <div 
-                    key={course.id}
-                    onClick={() => setSelectedCourse(course.id)}
+                    key={module.id}
+                    onClick={() => setSelectedModule(module)}
                     className="relative rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                   >
                     <div 
                       className="aspect-square bg-cover bg-center relative"
                       style={{ 
-                        backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
+                        backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       <div className="absolute bottom-2 left-2 right-2">
-                        <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{course.title}</h4>
-                        <p className="text-[10px] text-white/80 leading-tight">{course.category || 'Curso'}</p>
+                        <h4 className="text-xs font-semibold text-white mb-0.5 leading-tight">{module.title}</h4>
+                        <p className="text-[10px] text-white/80 leading-tight">{module.lessons_count} aulas</p>
                       </div>
                     </div>
                   </div>
