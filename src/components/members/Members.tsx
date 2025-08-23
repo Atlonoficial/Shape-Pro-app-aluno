@@ -150,7 +150,7 @@ export const Members = () => {
                   <div 
                     key={module.id}
                     onClick={() => setSelectedModule(module)}
-                    className="relative w-80 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
+                    className="relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                   >
                     <div 
                       className="aspect-[2/3] bg-cover bg-center relative"
