@@ -5,7 +5,6 @@ import { ModuleDetail } from "./ModuleDetail";
 import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
 import { ProductsShop } from "./ProductsShop";
-import { StudentBannerDisplay } from "@/components/banners/StudentBannerDisplay";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useCourses } from "@/hooks/useCourses";
@@ -167,9 +166,6 @@ export const Members = () => {
                   </div>
                 ))}
               </div>
-              
-              {/* Banner System */}
-              <StudentBannerDisplay placement="members" />
             </div>
           )}
         </div>
