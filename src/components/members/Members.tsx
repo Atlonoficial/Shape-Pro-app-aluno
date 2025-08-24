@@ -180,48 +180,100 @@ export const Members = () => {
                           Premium
                         </Badge>
                       )}
+                      {!course.hasAccess && !course.is_free && (
+                        <Badge variant="destructive" className="text-xs">
+                          <Lock className="w-3 h-3 mr-1" />
+                          Bloqueado
+                        </Badge>
+                      )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {course.modules.length} módulos
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {!course.is_free && !course.hasAccess && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setUnlockCourse(course)}
+                          className="text-xs h-7"
+                        >
+                          Desbloquear
+                        </Button>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {course.modules.length} módulos
+                      </span>
+                    </div>
                   </div>
                   
-                  {/* Course Modules */}
-                  <div className="px-1">
-                    <div className="flex flex-nowrap gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                      {course.modules.map((module) => (
-                        <div 
-                          key={module.id}
-                          onClick={() => handleModuleClick(module, course)}
-                          className={`relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50 ${
-                            !module.hasAccess ? 'opacity-60' : ''
-                          }`}
-                        >
+                  {/* Course Content */}
+                  {course.modules.length > 0 ? (
+                    <div className="px-1">
+                      <div className="flex flex-nowrap gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                        {course.modules.map((module) => (
                           <div 
-                            className="aspect-[2/3] bg-cover bg-center relative"
-                            style={{ 
-                              backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
-                            }}
+                            key={module.id}
+                            onClick={() => handleModuleClick(module, course)}
+                            className={`relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50 ${
+                              !module.hasAccess ? 'opacity-60' : ''
+                            }`}
                           >
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                            
-                            {/* Lock overlay for premium content */}
-                            {!module.hasAccess && (
-                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <Lock className="w-8 h-8 text-white/80" />
+                            <div 
+                              className="aspect-[2/3] bg-cover bg-center relative"
+                              style={{ 
+                                backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
+                              }}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                              
+                              {/* Lock overlay for premium content */}
+                              {!module.hasAccess && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                  <Lock className="w-8 h-8 text-white/80" />
+                                </div>
+                              )}
+                              
+                              <div className="absolute bottom-3 left-3 right-3">
+                                <p className="text-xs text-white/70 mb-1 leading-tight truncate">{module.course_title}</p>
+                                <h4 className="text-sm font-semibold text-white mb-1 leading-tight">{module.title}</h4>
+                                <p className="text-xs text-white/80 leading-tight">{module.lessons_count} aulas</p>
                               </div>
-                            )}
-                            
-                            <div className="absolute bottom-3 left-3 right-3">
-                              <p className="text-xs text-white/70 mb-1 leading-tight truncate">{module.course_title}</p>
-                              <h4 className="text-sm font-semibold text-white mb-1 leading-tight">{module.title}</h4>
-                              <p className="text-xs text-white/80 leading-tight">{module.lessons_count} aulas</p>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div 
+                      className={`relative w-full h-32 rounded-2xl overflow-hidden cursor-pointer bg-card border border-border/50 ${
+                        !course.hasAccess ? 'opacity-60' : ''
+                      }`}
+                      onClick={() => !course.hasAccess ? setUnlockCourse(course) : null}
+                    >
+                      <div 
+                        className="w-full h-full bg-cover bg-center relative flex items-center justify-center"
+                        style={{ 
+                          backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                        
+                        {/* Lock overlay for premium content */}
+                        {!course.hasAccess && (
+                          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
+                            <Lock className="w-10 h-10 text-white/80 mb-2" />
+                            <p className="text-white/80 text-sm font-medium">Curso Premium</p>
+                            <p className="text-white/60 text-xs">Clique para desbloquear</p>
+                          </div>
+                        )}
+                        
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <h4 className="text-lg font-semibold text-white mb-1">{course.title}</h4>
+                          <p className="text-white/80 text-sm">
+                            {course.hasAccess ? 'Em breve: módulos serão adicionados' : `R$ ${course.price || 0}`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseManagement } from "./CourseManagement";
 import { ProductManagement } from "./ProductManagement";
 import { StudentStats } from "./StudentStats";
+import { UnlockRequestsManager } from "./UnlockRequestsManager";
 import { useAuth } from "@/hooks/useAuth";
 
 export const TeacherDashboard = () => {
@@ -48,7 +49,7 @@ export const TeacherDashboard = () => {
 
       {/* Tabs Navigation */}
       <Tabs defaultValue="courses" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="courses" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             Cursos
@@ -60,6 +61,10 @@ export const TeacherDashboard = () => {
           <TabsTrigger value="students" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Alunos
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Solicitações
           </TabsTrigger>
         </TabsList>
 
@@ -73,6 +78,10 @@ export const TeacherDashboard = () => {
 
         <TabsContent value="students" className="mt-4">
           <StudentStats />
+        </TabsContent>
+
+        <TabsContent value="requests" className="mt-4">
+          <UnlockRequestsManager />
         </TabsContent>
       </Tabs>
     </div>
