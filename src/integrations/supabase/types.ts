@@ -3372,6 +3372,16 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: undefined
       }
+      create_meal_rotation: {
+        Args: {
+          p_day_of_week: number
+          p_meal_id: string
+          p_meal_type: string
+          p_nutrition_plan_id: string
+          p_week_number: number
+        }
+        Returns: string
+      }
       ensure_student_record: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3398,6 +3408,22 @@ export type Database = {
       get_current_plan_week: {
         Args: { plan_id: string }
         Returns: number
+      }
+      get_meals_for_today: {
+        Args: { p_user_id: string }
+        Returns: {
+          calories: number
+          carbs: number
+          fat: number
+          foods: Json
+          is_logged: boolean
+          log_id: string
+          meal_id: string
+          meal_name: string
+          meal_time: string
+          meal_type: string
+          protein: number
+        }[]
       }
       get_teacher_chat_stats: {
         Args: { teacher_id_param: string }
