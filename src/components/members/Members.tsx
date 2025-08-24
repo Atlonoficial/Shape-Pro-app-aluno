@@ -204,7 +204,7 @@ export const Members = () => {
                     </div>
                   </div>
                   
-                  {/* Course Content */}
+                  {/* Course Content - Always show modules when available */}
                   {course.modules.length > 0 ? (
                     <div className="px-1">
                       <div className="flex flex-nowrap gap-4 overflow-x-auto pb-4 scrollbar-hide">
@@ -212,9 +212,7 @@ export const Members = () => {
                           <div 
                             key={module.id}
                             onClick={() => handleModuleClick(module, course)}
-                            className={`relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50 ${
-                              !module.hasAccess ? 'opacity-60' : ''
-                            }`}
+                            className="relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                           >
                             <div 
                               className="aspect-[2/3] bg-cover bg-center relative"
@@ -242,36 +240,21 @@ export const Members = () => {
                       </div>
                     </div>
                   ) : (
-                    <div 
-                      className={`relative w-full h-32 rounded-2xl overflow-hidden cursor-pointer bg-card border border-border/50 ${
-                        !course.hasAccess ? 'opacity-60' : ''
-                      }`}
-                      onClick={() => !course.hasAccess ? setUnlockCourse(course) : null}
-                    >
-                      <div 
-                        className="w-full h-full bg-cover bg-center relative flex items-center justify-center"
-                        style={{ 
-                          backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                        
-                        {/* Lock overlay for premium content */}
-                        {!course.hasAccess && (
-                          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
-                            <Lock className="w-10 h-10 text-white/80 mb-2" />
-                            <p className="text-white/80 text-sm font-medium">Curso Premium</p>
-                            <p className="text-white/60 text-xs">Clique para desbloquear</p>
-                          </div>
-                        )}
-                        
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <h4 className="text-lg font-semibold text-white mb-1">{course.title}</h4>
-                          <p className="text-white/80 text-sm">
-                            {course.hasAccess ? 'Em breve: módulos serão adicionados' : `R$ ${course.price || 0}`}
-                          </p>
-                        </div>
-                      </div>
+                    /* Show message when no modules are available */
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground text-sm">
+                        Este curso ainda não possui módulos disponíveis
+                      </p>
+                      {!course.hasAccess && (
+                        <Button
+                          size="sm"
+                          className="mt-4"
+                          onClick={() => setUnlockCourse(course)}
+                        >
+                          Desbloquear Curso - R$ {course.price || 0}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
