@@ -1,7 +1,7 @@
 import { Utensils, Circle } from "lucide-react";
 
 interface Food {
-  id?: number;
+  id?: string | number;
   name: string;
   calories: number;
   proteins?: number;

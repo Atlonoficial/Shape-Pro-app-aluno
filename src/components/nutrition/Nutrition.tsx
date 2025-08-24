@@ -41,7 +41,7 @@ export const Nutrition = () => {
     if (!user?.id || !activePlan) return;
     
     try {
-      await logMeal(mealId, isCompleted);
+      await logMeal(mealId, !isCompleted);
     } catch (error) {
       console.error('Error logging meal:', error);
     }
@@ -160,7 +160,7 @@ export const Nutrition = () => {
                   foods={meal.foods || []}
                   description=""
                   isCompleted={isCompleted}
-                  onClick={() => handleMealToggle(meal.id, !isCompleted)}
+                  onClick={() => handleMealToggle(meal.id, isCompleted)}
                 />
               </div>
             );

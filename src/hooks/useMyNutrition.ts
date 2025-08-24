@@ -23,13 +23,21 @@ export interface MealLog {
 export interface Meal {
   id: string;
   name: string;
-  time: string | null;
+  time: string;
   meal_type: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  foods: any; // JSONB field from database
+  foods: Array<{
+    id?: string;
+    name: string;
+    quantity: number;
+    calories: number;
+    proteins: number;
+    carbs: number;
+    fats: number;
+  }>;
 }
 
 export interface DailyStats {
@@ -67,6 +75,47 @@ export const useMyNutrition = () => {
     percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
   });
 
+  // Função para buscar refeições do plano
+  const fetchPlanMeals = async (mealIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('meals')
+        .select('id, name, time, meal_type, calories, protein, carbs, fat, foods')
+        .in('id', mealIds)
+        .order('time');
+        
+      if (error) {
+        console.error('Erro ao buscar refeições:', error);
+        return;
+      }
+      
+      // Mapear dados para o formato correto
+      const meals: Meal[] = (data || []).map(meal => ({
+        id: meal.id,
+        name: meal.name,
+        time: meal.time || '12:00',
+        meal_type: meal.meal_type,
+        calories: meal.calories || 0,
+        protein: meal.protein || 0,
+        carbs: meal.carbs || 0,
+        fat: meal.fat || 0,
+        foods: Array.isArray(meal.foods) ? meal.foods.map((food: any) => ({
+          id: food.id,
+          name: food.name || 'Alimento',
+          quantity: food.quantity || 100,
+          calories: food.calories || 0,
+          proteins: food.proteins || 0,
+          carbs: food.carbs || 0,
+          fats: food.fats || 0
+        })) : []
+      }));
+      
+      setPlanMeals(meals);
+    } catch (error) {
+      console.error('Erro ao buscar refeições:', error);
+    }
+  };
+
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
@@ -78,7 +127,7 @@ export const useMyNutrition = () => {
     let realtimeChannel: any;
 
     // Buscar planos de nutrição
-    plansUnsubscribe = getNutritionPlansByUser(user.id, (plans) => {
+    plansUnsubscribe = getNutritionPlansByUser(user.id, async (plans) => {
       setNutritionPlans(plans);
       // Selecionar o primeiro plano ativo como plano atual
       const currentPlan = plans.find(plan => 
@@ -87,9 +136,14 @@ export const useMyNutrition = () => {
       ) || plans[0] || null;
       setActivePlan(currentPlan);
       
-      // Buscar refeições do plano ativo
+      // Buscar refeições do plano ativo usando os novos meal_ids
       if (currentPlan && (currentPlan as any).meal_ids) {
-        fetchPlanMeals((currentPlan as any).meal_ids);
+        const mealIds = Array.isArray((currentPlan as any).meal_ids) 
+          ? (currentPlan as any).meal_ids 
+          : [];
+        if (mealIds.length > 0) {
+          await fetchPlanMeals(mealIds);
+        }
       }
       
       setLoading(false);
@@ -132,39 +186,6 @@ export const useMyNutrition = () => {
       }
     };
   }, [user?.id]);
-
-  // Função para buscar refeições do plano
-  const fetchPlanMeals = async (mealIds: string[]) => {
-    try {
-      const { data, error } = await supabase
-        .from('meals')
-        .select('id, name, time, meal_type, calories, protein, carbs, fat, foods')
-        .in('id', mealIds)
-        .order('time');
-        
-      if (error) {
-        console.error('Erro ao buscar refeições:', error);
-        return;
-      }
-      
-      // Mapear dados para o formato correto
-      const meals: Meal[] = (data || []).map(meal => ({
-        id: meal.id,
-        name: meal.name,
-        time: meal.time,
-        meal_type: meal.meal_type,
-        calories: meal.calories || 0,
-        protein: meal.protein || 0,
-        carbs: meal.carbs || 0,
-        fat: meal.fat || 0,
-        foods: meal.foods || []
-      }));
-      
-      setPlanMeals(meals);
-    } catch (error) {
-      console.error('Erro ao buscar refeições:', error);
-    }
-  };
 
   // Calcular estatísticas diárias
   useEffect(() => {
@@ -224,11 +245,15 @@ export const useMyNutrition = () => {
 
       if (existingLog) {
         // Atualizar log existente via supabase
-        const { supabase } = await import('@/integrations/supabase/client');
-        await supabase
+        const { error } = await supabase
           .from('meal_logs')
           .update({ consumed, notes })
           .eq('id', existingLog.id);
+          
+        if (error) {
+          console.error('Erro ao atualizar meal log:', error);
+          throw error;
+        }
       } else {
         // Criar novo log
         await createMealLog({
