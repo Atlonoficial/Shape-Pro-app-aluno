@@ -1,14 +1,20 @@
 import { Utensils, Circle } from "lucide-react";
 
+interface Food {
+  id?: number;
+  name: string;
+  calories: number;
+  proteins?: number;
+  carbs?: number;
+  fats?: number;
+  quantity: number;
+}
+
 interface NutritionCardProps {
   title: string;
   calories: number;
-  time?: string;
-  foods: Array<{
-    name: string;
-    calories: number;
-    quantity: string;
-  }>;
+  time?: string | null;
+  foods: Food[] | any; // JSONB field can be array or object
   description?: string;
   isCompleted?: boolean;
   onClick?: () => void;
@@ -23,6 +29,9 @@ export const NutritionCard = ({
   isCompleted = false,
   onClick 
 }: NutritionCardProps) => {
+  // Parse foods if it's JSONB or ensure it's an array
+  const parsedFoods: Food[] = Array.isArray(foods) ? foods : [];
+  
   return (
     <div 
       className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 mb-4 cursor-pointer hover:bg-surface/70 transition-colors"
@@ -51,17 +60,31 @@ export const NutritionCard = ({
       </div>
 
       <div className="space-y-3">
-        {foods.map((food, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-foreground font-medium">{food.name}</p>
-              <p className="text-muted-foreground text-sm">{food.quantity}</p>
+        {parsedFoods.length > 0 ? (
+          parsedFoods.slice(0, 3).map((food, index) => (
+            <div key={food.id || index} className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-foreground font-medium">{food.name}</p>
+                <p className="text-muted-foreground text-sm">{food.quantity || 100}g</p>
+              </div>
+              <div className="bg-accent/20 px-3 py-1 rounded-full">
+                <span className="text-accent font-medium text-sm">{food.calories} cal</span>
+              </div>
             </div>
-            <div className="bg-accent/20 px-3 py-1 rounded-full">
-              <span className="text-accent font-medium text-sm">{food.calories} cal</span>
-            </div>
+          ))
+        ) : (
+          <div className="text-center py-2">
+            <p className="text-muted-foreground text-sm">Alimentos não especificados</p>
           </div>
-        ))}
+        )}
+        
+        {parsedFoods.length > 3 && (
+          <div className="text-center">
+            <p className="text-muted-foreground text-xs">
+              +{parsedFoods.length - 3} mais alimentos...
+            </p>
+          </div>
+        )}
       </div>
 
       {description && (

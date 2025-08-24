@@ -54,7 +54,7 @@ export const useTeacherNutrition = () => {
           // Buscar plano ativo do aluno
           const { data: nutritionPlans } = await supabase
             .from('nutrition_plans')
-            .select('*')
+            .select('*, meal_ids')
             .contains('assigned_to', [student.user_id])
             .order('created_at', { ascending: false })
             .limit(1);
@@ -75,21 +75,35 @@ export const useTeacherNutrition = () => {
           let dailyCaloriesConsumed = 0;
           let lastMealTime: string | undefined;
 
-          if (activePlan?.meals && Array.isArray(activePlan.meals)) {
-            totalMeals = (activePlan.meals as any[]).length;
-            dailyCaloriesTarget = activePlan.daily_calories || 0;
+          // Usar nova estrutura com meal_ids
+          if (activePlan?.meal_ids && Array.isArray(activePlan.meal_ids)) {
+            // Converter meal_ids para array de strings
+            const mealIds = activePlan.meal_ids.filter((id): id is string => 
+              typeof id === 'string'
+            );
+            
+            if (mealIds.length > 0) {
+              // Buscar dados das refeições
+              const { data: meals } = await supabase
+                .from('meals')
+                .select('id, calories')
+                .in('id', mealIds);
 
-            // Calcular refeições completadas e calorias consumidas
-            (activePlan.meals as any[]).forEach((meal: any) => {
-              const mealLog = mealLogs?.find(log => log.meal_id === meal.id);
-              if (mealLog?.consumed) {
-                completedMeals++;
-                dailyCaloriesConsumed += meal.calories || 0;
-                if (mealLog.actual_time && (!lastMealTime || mealLog.actual_time > lastMealTime)) {
-                  lastMealTime = mealLog.actual_time;
+              totalMeals = meals?.length || 0;
+              dailyCaloriesTarget = activePlan.daily_calories || 0;
+
+              // Calcular refeições completadas e calorias consumidas
+              meals?.forEach((meal) => {
+                const mealLog = mealLogs?.find(log => log.meal_id === meal.id);
+                if (mealLog?.consumed) {
+                  completedMeals++;
+                  dailyCaloriesConsumed += meal.calories || 0;
+                  if (mealLog.actual_time && (!lastMealTime || mealLog.actual_time > lastMealTime)) {
+                    lastMealTime = mealLog.actual_time;
+                  }
                 }
-              }
-            });
+              });
+            }
           }
 
           return {
@@ -118,47 +132,58 @@ export const useTeacherNutrition = () => {
 
     try {
       // Buscar atividades recentes dos alunos (últimas 24 horas)
+      const studentIds = studentsProgress.map(s => s.student_id);
+      
+      if (studentIds.length === 0) return;
+      
       const { data: activities, error } = await supabase
         .from('meal_logs')
         .select(`
-          *,
-          profiles(name, email)
+          id,
+          user_id,
+          meal_id,
+          consumed,
+          actual_time,
+          created_at
         `)
-        .in('user_id', studentsProgress.map(s => s.student_id))
+        .in('user_id', studentIds)
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
 
-      // Buscar planos para obter nomes das refeições
-      const nutritionPlansPromises = studentsProgress.map(async (student) => {
-        const { data } = await supabase
-          .from('nutrition_plans')
-          .select('meals')
-          .contains('assigned_to', [student.student_id])
-          .order('created_at', { ascending: false })
-          .limit(1);
-        return { student_id: student.student_id, plan: data?.[0] };
-      });
+      const recentActivitiesData: RecentMealActivity[] = [];
 
-      const nutritionPlansData = await Promise.all(nutritionPlansPromises);
-
-      const recentActivitiesData: RecentMealActivity[] = (activities || []).map((activity: any) => {
-        const studentPlan = nutritionPlansData.find(p => p.student_id === activity.user_id);
-        const meals = studentPlan?.plan?.meals;
-        const meal = Array.isArray(meals) ? (meals as any[]).find((m: any) => m.id === activity.meal_id) : null;
+      for (const activity of activities || []) {
+        // Buscar nome do aluno
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, email')
+          .eq('id', activity.user_id)
+          .single();
         
-        return {
+        let mealName = 'Refeição';
+        
+        // Buscar nome da refeição
+        const { data: meal } = await supabase
+          .from('meals')
+          .select('name')
+          .eq('id', activity.meal_id)
+          .single();
+        
+        mealName = meal?.name || 'Refeição';
+        
+        recentActivitiesData.push({
           id: activity.id,
           student_id: activity.user_id,
-          student_name: activity.profiles?.name || activity.profiles?.email || 'Aluno',
-          meal_name: meal?.name || 'Refeição',
+          student_name: profile?.name || profile?.email || 'Aluno',
+          meal_name: mealName,
           consumed: activity.consumed,
           actual_time: activity.actual_time || '',
           created_at: activity.created_at
-        };
-      });
+        });
+      }
 
       setRecentActivities(recentActivitiesData);
     } catch (error) {

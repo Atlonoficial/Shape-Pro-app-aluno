@@ -14,6 +14,7 @@ export const Nutrition = () => {
     activePlan, 
     loading, 
     todaysMeals, 
+    planMeals,
     dailyStats, 
     logMeal 
   } = useMyNutrition();
@@ -141,12 +142,12 @@ export const Nutrition = () => {
       {/* Meals */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Refeições de Hoje</h3>
-        {activePlan.meals.length === 0 ? (
+        {planMeals.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Nenhuma refeição programada para hoje.</p>
           </div>
         ) : (
-          activePlan.meals.map((meal) => {
+          planMeals.map((meal) => {
             const mealLog = todaysMeals.find(log => log.meal_id === meal.id);
             const isCompleted = mealLog?.consumed || false;
             
@@ -157,7 +158,7 @@ export const Nutrition = () => {
                   time={meal.time}
                   calories={meal.calories}
                   foods={meal.foods || []}
-                  description={meal.description}
+                  description=""
                   isCompleted={isCompleted}
                   onClick={() => handleMealToggle(meal.id, !isCompleted)}
                 />

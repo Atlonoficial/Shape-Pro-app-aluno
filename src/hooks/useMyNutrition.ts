@@ -20,6 +20,18 @@ export interface MealLog {
   created_at: string;
 }
 
+export interface Meal {
+  id: string;
+  name: string;
+  time: string | null;
+  meal_type: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  foods: any; // JSONB field from database
+}
+
 export interface DailyStats {
   consumed: {
     calories: number;
@@ -48,6 +60,7 @@ export const useMyNutrition = () => {
   const [loading, setLoading] = useState(true);
   const [activePlan, setActivePlan] = useState<NutritionPlan | null>(null);
   const [todaysMeals, setTodaysMeals] = useState<MealLog[]>([]);
+  const [planMeals, setPlanMeals] = useState<Meal[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats>({
     consumed: { calories: 0, protein: 0, carbs: 0, fat: 0 },
     target: { calories: 0, protein: 0, carbs: 0, fat: 0 },
@@ -73,6 +86,12 @@ export const useMyNutrition = () => {
         (!plan.start_date || new Date(plan.start_date) <= new Date())
       ) || plans[0] || null;
       setActivePlan(currentPlan);
+      
+      // Buscar refeições do plano ativo
+      if (currentPlan && (currentPlan as any).meal_ids) {
+        fetchPlanMeals((currentPlan as any).meal_ids);
+      }
+      
       setLoading(false);
     });
 
@@ -114,6 +133,39 @@ export const useMyNutrition = () => {
     };
   }, [user?.id]);
 
+  // Função para buscar refeições do plano
+  const fetchPlanMeals = async (mealIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('meals')
+        .select('id, name, time, meal_type, calories, protein, carbs, fat, foods')
+        .in('id', mealIds)
+        .order('time');
+        
+      if (error) {
+        console.error('Erro ao buscar refeições:', error);
+        return;
+      }
+      
+      // Mapear dados para o formato correto
+      const meals: Meal[] = (data || []).map(meal => ({
+        id: meal.id,
+        name: meal.name,
+        time: meal.time,
+        meal_type: meal.meal_type,
+        calories: meal.calories || 0,
+        protein: meal.protein || 0,
+        carbs: meal.carbs || 0,
+        fat: meal.fat || 0,
+        foods: meal.foods || []
+      }));
+      
+      setPlanMeals(meals);
+    } catch (error) {
+      console.error('Erro ao buscar refeições:', error);
+    }
+  };
+
   // Calcular estatísticas diárias
   useEffect(() => {
     if (!activePlan) {
@@ -137,8 +189,8 @@ export const useMyNutrition = () => {
     
     todaysMeals.forEach(log => {
       if (log.consumed) {
-        // Encontrar a refeição no plano ativo
-        const meal = activePlan.meals?.find((m: any) => m.id === log.meal_id);
+        // Encontrar a refeição nas refeições do plano
+        const meal = planMeals.find(m => m.id === log.meal_id);
         if (meal) {
           consumed.calories += meal.calories || 0;
           consumed.protein += meal.protein || 0;
@@ -156,7 +208,7 @@ export const useMyNutrition = () => {
     };
 
     setDailyStats({ consumed, target, percentage });
-  }, [activePlan, todaysMeals]);
+  }, [activePlan, todaysMeals, planMeals]);
 
   const logMeal = async (mealId: string, consumed: boolean = true, notes?: string) => {
     if (!user?.id || !activePlan) throw new Error('Usuário não autenticado ou plano não encontrado');
@@ -202,6 +254,7 @@ export const useMyNutrition = () => {
     mealLogs,
     activePlan,
     todaysMeals,
+    planMeals,
     dailyStats,
     loading,
     logMeal,
