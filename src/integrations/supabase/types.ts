@@ -1489,10 +1489,12 @@ export type Database = {
           description: string | null
           fat: number
           fiber: number | null
+          foods: Json | null
           id: string
           image_url: string | null
           ingredients: string[] | null
           instructions: string | null
+          meal_type: string | null
           name: string
           portion_amount: number | null
           portion_unit: string | null
@@ -1510,10 +1512,12 @@ export type Database = {
           description?: string | null
           fat: number
           fiber?: number | null
+          foods?: Json | null
           id?: string
           image_url?: string | null
           ingredients?: string[] | null
           instructions?: string | null
+          meal_type?: string | null
           name: string
           portion_amount?: number | null
           portion_unit?: string | null
@@ -1531,10 +1535,12 @@ export type Database = {
           description?: string | null
           fat?: number
           fiber?: number | null
+          foods?: Json | null
           id?: string
           image_url?: string | null
           ingredients?: string[] | null
           instructions?: string | null
+          meal_type?: string | null
           name?: string
           portion_amount?: number | null
           portion_unit?: string | null
@@ -1797,6 +1803,7 @@ export type Database = {
           end_date: string | null
           id: string
           is_template: boolean | null
+          meal_ids: Json | null
           meals: Json | null
           name: string
           rotation_weeks: number | null
@@ -1823,6 +1830,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_template?: boolean | null
+          meal_ids?: Json | null
           meals?: Json | null
           name: string
           rotation_weeks?: number | null
@@ -1849,6 +1857,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_template?: boolean | null
+          meal_ids?: Json | null
           meals?: Json | null
           name?: string
           rotation_weeks?: number | null
