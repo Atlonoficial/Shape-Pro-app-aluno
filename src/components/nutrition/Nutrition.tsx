@@ -36,12 +36,11 @@ export const Nutrition = () => {
     setPreviousMealCount(currentMealCount);
   }, [todaysMeals, previousMealCount]);
   
-  const handleMealToggle = async (mealId: string, nutritionPlanId: string) => {
+  const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
     if (!user?.id || !activePlan) return;
     
     try {
-      const isAlreadyLogged = todaysMeals.some((log: any) => log.meal_id === mealId && log.consumed);
-      await logMeal(mealId, !isAlreadyLogged);
+      await logMeal(mealId, isCompleted);
     } catch (error) {
       console.error('Error logging meal:', error);
     }
@@ -152,21 +151,15 @@ export const Nutrition = () => {
             const isCompleted = mealLog?.consumed || false;
             
             return (
-              <div key={meal.id} onClick={() => handleMealToggle(meal.id, activePlan.id)}>
-                <NutritionCard 
+              <div key={meal.id}>
+                <NutritionCard
                   title={meal.name}
+                  time={meal.time}
                   calories={meal.calories}
-                  foods={meal.ingredients?.map(ingredient => ({
-                    name: ingredient,
-                    calories: Math.round(meal.calories / (meal.ingredients?.length || 1)),
-                    quantity: meal.portion ? `${meal.portion.amount}${meal.portion.unit}` : "1 porção"
-                  })) || [{
-                    name: meal.name,
-                    calories: meal.calories,
-                    quantity: "1 porção"
-                  }]}
-                  description={meal.description || "Refeição nutritiva"}
+                  foods={meal.foods || []}
+                  description={meal.description}
                   isCompleted={isCompleted}
+                  onClick={() => handleMealToggle(meal.id, !isCompleted)}
                 />
               </div>
             );

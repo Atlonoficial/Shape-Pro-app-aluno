@@ -1,12 +1,11 @@
-import { useState } from "react";
-import { BookOpen, Package, Users, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookOpen, ShoppingCart, Users, FileText, Utensils } from "lucide-react";
 import { CourseManagement } from "./CourseManagement";
 import { ProductManagement } from "./ProductManagement";
 import { StudentStats } from "./StudentStats";
 import { UnlockRequestsManager } from "./UnlockRequestsManager";
+import { NutritionDashboard } from "./NutritionDashboard";
 import { useAuth } from "@/hooks/useAuth";
 
 export const TeacherDashboard = () => {
@@ -48,25 +47,29 @@ export const TeacherDashboard = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <Tabs defaultValue="courses" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="courses" className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
-            Cursos
-          </TabsTrigger>
-          <TabsTrigger value="products" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Produtos
-          </TabsTrigger>
-          <TabsTrigger value="students" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Alunos
-          </TabsTrigger>
-          <TabsTrigger value="requests" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Solicitações
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="courses" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="courses" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Cursos
+            </TabsTrigger>
+            <TabsTrigger value="products" className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Produtos
+            </TabsTrigger>
+            <TabsTrigger value="students" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Alunos
+            </TabsTrigger>
+            <TabsTrigger value="nutrition" className="flex items-center gap-2">
+              <Utensils className="h-4 w-4" />
+              Nutrição
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Solicitações
+            </TabsTrigger>
+          </TabsList>
 
         <TabsContent value="courses" className="mt-4">
           <CourseManagement />
@@ -78,6 +81,10 @@ export const TeacherDashboard = () => {
 
         <TabsContent value="students" className="mt-4">
           <StudentStats />
+        </TabsContent>
+
+        <TabsContent value="nutrition" className="mt-4">
+          <NutritionDashboard />
         </TabsContent>
 
         <TabsContent value="requests" className="mt-4">

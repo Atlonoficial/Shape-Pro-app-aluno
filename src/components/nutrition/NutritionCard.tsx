@@ -3,6 +3,7 @@ import { Utensils, Circle } from "lucide-react";
 interface NutritionCardProps {
   title: string;
   calories: number;
+  time?: string;
   foods: Array<{
     name: string;
     calories: number;
@@ -10,24 +11,32 @@ interface NutritionCardProps {
   }>;
   description?: string;
   isCompleted?: boolean;
+  onClick?: () => void;
 }
 
 export const NutritionCard = ({ 
   title, 
   calories, 
+  time,
   foods, 
   description,
-  isCompleted = false 
+  isCompleted = false,
+  onClick 
 }: NutritionCardProps) => {
   return (
-    <div className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 mb-4 cursor-pointer hover:bg-surface/70 transition-colors">
+    <div 
+      className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 mb-4 cursor-pointer hover:bg-surface/70 transition-colors"
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
             <Utensils className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground text-lg">{title}</h3>
+            <h3 className="font-semibold text-foreground text-lg">
+              {title} {time && `- ${time}`}
+            </h3>
             <p className="text-muted-foreground text-sm">{calories} calorias</p>
           </div>
         </div>

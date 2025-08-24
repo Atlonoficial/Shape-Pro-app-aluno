@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { getNutritionPlansByUser, getMealLogsByUserAndDate, createMealLog } from '@/lib/supabase';
 import { NutritionPlan } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface MealLog {
   id: string;
@@ -61,6 +62,7 @@ export const useMyNutrition = () => {
 
     let plansUnsubscribe: (() => void) | undefined;
     let logsUnsubscribe: (() => void) | undefined;
+    let realtimeChannel: any;
 
     // Buscar planos de nutrição
     plansUnsubscribe = getNutritionPlansByUser(user.id, (plans) => {
@@ -81,9 +83,34 @@ export const useMyNutrition = () => {
       setTodaysMeals(logs);
     });
 
+    // Real-time subscription para meal_logs
+    realtimeChannel = supabase
+      .channel('meal_logs_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'meal_logs',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Meal log realtime update:', payload);
+          // Recarregar logs quando houver mudanças
+          getMealLogsByUserAndDate(user.id, today, (logs) => {
+            setMealLogs(logs);
+            setTodaysMeals(logs);
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       if (plansUnsubscribe) plansUnsubscribe();
       if (logsUnsubscribe) logsUnsubscribe();
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
     };
   }, [user?.id]);
 
