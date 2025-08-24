@@ -7,6 +7,7 @@ import { useMyNutrition } from "@/hooks/useMyNutrition";
 import { useAuth } from "@/hooks/useAuth";
 import { showPointsToast } from "@/components/gamification/PointsToast";
 import { useGamification } from "@/hooks/useGamification";
+import { toast } from "sonner";
 
 export const Nutrition = () => {
   const { user } = useAuth();
@@ -40,10 +41,20 @@ export const Nutrition = () => {
   const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
     if (!user?.id || !activePlan) return;
     
+    // Impedir desmarcação - só permite marcar como consumido uma vez por dia
+    if (isCompleted) {
+      toast.error('Refeição já foi registrada hoje! Não é possível desmarcar até amanhã.');
+      return;
+    }
+    
     try {
-      await logMeal(mealId, !isCompleted);
+      const success = await logMeal(mealId, true);
+      if (!success) {
+        toast.error('Erro ao registrar refeição. Tente novamente.');
+      }
     } catch (error) {
       console.error('Error logging meal:', error);
+      toast.error('Erro ao registrar refeição. Tente novamente.');
     }
   };
 

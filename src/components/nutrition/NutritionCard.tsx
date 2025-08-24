@@ -1,4 +1,6 @@
-import { Utensils, Circle } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { CheckCircle2, Clock, Utensils, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Food {
   id?: string | number;
@@ -33,30 +35,40 @@ export const NutritionCard = ({
   const parsedFoods: Food[] = Array.isArray(foods) ? foods : [];
   
   return (
-    <div 
-      className="bg-surface/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 mb-4 cursor-pointer hover:bg-surface/70 transition-colors"
-      onClick={onClick}
+    <Card 
+      className={cn(
+        "p-4 transition-all duration-200",
+        isCompleted 
+          ? "bg-gradient-to-r from-success/20 to-success/10 border-success/50 cursor-not-allowed" 
+          : "bg-card border-border hover:border-accent/50 cursor-pointer hover:shadow-md"
+      )}
+      onClick={isCompleted ? undefined : onClick}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <Utensils className="w-5 h-5 text-white" />
-          </div>
-          <div>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-foreground text-lg">
               {title} {time && `- ${time}`}
             </h3>
-            <p className="text-muted-foreground text-sm">{calories} calorias</p>
+            {isCompleted ? (
+              <CheckCircle2 className="w-5 h-5 text-success" />
+            ) : (
+              <div className="w-5 h-5 border-2 border-muted-foreground/30 rounded-full" />
+            )}
+          </div>
+          
+          <div className="flex items-center gap-1 text-sm text-accent">
+            <Utensils className="w-4 h-4" />
+            <span>{Math.round(calories)} kcal</span>
           </div>
         </div>
-        
-        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-          isCompleted 
-            ? "bg-gradient-to-br from-primary to-secondary border-primary" 
-            : "border-muted-foreground/30"
-        }`}>
-          {isCompleted && <Circle className="w-3 h-3 text-white fill-current" />}
-        </div>
+
+        {isCompleted && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Lock className="w-3 h-3" />
+            <span>Até amanhã</span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -92,6 +104,20 @@ export const NutritionCard = ({
           <p className="text-muted-foreground text-sm">{description}</p>
         </div>
       )}
-    </div>
+
+      <div className={cn(
+        "text-xs font-medium mt-2 flex items-center gap-1",
+        isCompleted ? "text-success" : "text-muted-foreground"
+      )}>
+        {isCompleted ? (
+          <>
+            <CheckCircle2 className="w-3 h-3" />
+            <span>Registrada hoje - disponível amanhã</span>
+          </>
+        ) : (
+          <span>Toque para marcar como consumida</span>
+        )}
+      </div>
+    </Card>
   );
 };

@@ -75,6 +75,16 @@ export const useMyNutrition = () => {
     percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
   });
 
+  // Função para buscar logs de refeições de hoje
+  const fetchTodayMealLogs = () => {
+    if (!user?.id) return;
+    const today = new Date().toISOString().split('T')[0];
+    getMealLogsByUserAndDate(user.id, today, (logs) => {
+      setMealLogs(logs);
+      setTodaysMeals(logs);
+    });
+  };
+
   // Função para buscar refeições do plano
   const fetchPlanMeals = async (mealIds: string[]) => {
     try {
@@ -231,8 +241,11 @@ export const useMyNutrition = () => {
     setDailyStats({ consumed, target, percentage });
   }, [activePlan, todaysMeals, planMeals]);
 
-  const logMeal = async (mealId: string, consumed: boolean = true, notes?: string) => {
-    if (!user?.id || !activePlan) throw new Error('Usuário não autenticado ou plano não encontrado');
+  const logMeal = async (mealId: string, consumed: boolean = true, notes?: string): Promise<boolean> => {
+    if (!user?.id || !activePlan) {
+      console.error('Usuário não autenticado ou plano não encontrado');
+      return false;
+    }
 
     const today = new Date().toISOString().split('T')[0];
     
@@ -243,7 +256,18 @@ export const useMyNutrition = () => {
         log.date.split('T')[0] === today
       );
 
+      // Se já existe um log consumido e está tentando desmarcar, impedir
+      if (existingLog && existingLog.consumed && consumed === false) {
+        console.warn('Cannot uncheck consumed meal - only allowed once per day');
+        return false;
+      }
+
       if (existingLog) {
+        // Se já está consumido e está tentando marcar novamente, retornar sucesso
+        if (existingLog.consumed && consumed) {
+          return true;
+        }
+        
         // Atualizar log existente via supabase
         const { error } = await supabase
           .from('meal_logs')
@@ -252,10 +276,14 @@ export const useMyNutrition = () => {
           
         if (error) {
           console.error('Erro ao atualizar meal log:', error);
-          throw error;
+          return false;
         }
       } else {
-        // Criar novo log
+        // Criar novo log apenas se está marcando como consumido
+        if (!consumed) {
+          return false;
+        }
+        
         await createMealLog({
           user_id: user.id,
           nutrition_plan_id: activePlan.id,
@@ -266,9 +294,13 @@ export const useMyNutrition = () => {
           actual_time: new Date().toTimeString().split(' ')[0]
         });
       }
+      
+      // Refresh the meal logs to update the UI
+      fetchTodayMealLogs();
+      return true;
     } catch (error) {
       console.error('Erro ao registrar refeição:', error);
-      throw error;
+      return false;
     }
   };
 
