@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Download, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Play, Download, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { VideoPlayer } from "@/components/workouts/VideoPlayer";
+import { useModuleLessons } from "@/hooks/useModuleLessons";
 
 interface ModuleDetailProps {
   module: any;
@@ -13,20 +14,20 @@ interface ModuleDetailProps {
 export const ModuleDetail = ({ module, courseTitle, onBack }: ModuleDetailProps) => {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  
+  const { lessons, loading, error } = useModuleLessons(module?.id);
 
   useEffect(() => {
-    // Auto-select first lesson when module is loaded
-    const lessons = Array.isArray(module?.lessons) ? module.lessons : [];
+    // Auto-select first lesson when lessons are loaded
     if (lessons.length > 0 && !selectedLesson) {
       setSelectedLesson(lessons[0]);
     }
-  }, [module, selectedLesson]);
+  }, [lessons, selectedLesson]);
 
   const handleLessonComplete = (lessonId: string) => {
     setCompletedLessons(prev => new Set([...prev, lessonId]));
   };
 
-  const lessons = Array.isArray(module?.lessons) ? module.lessons : [];
   const totalLessons = lessons.length;
   const completedCount = completedLessons.size;
 
@@ -81,7 +82,21 @@ export const ModuleDetail = ({ module, courseTitle, onBack }: ModuleDetailProps)
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-foreground">Aulas do Módulo</h3>
         
-        {lessons.length === 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <p className="text-muted-foreground">Carregando aulas...</p>
+            </CardContent>
+          </Card>
+        ) : error ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-destructive mb-2">Erro ao carregar aulas</p>
+              <p className="text-muted-foreground text-sm">{error}</p>
+            </CardContent>
+          </Card>
+        ) : lessons.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground">
@@ -118,7 +133,7 @@ export const ModuleDetail = ({ module, courseTitle, onBack }: ModuleDetailProps)
                           <p className="font-medium text-foreground">{lesson.title}</p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-3 h-3" />
-                            <span>{lesson.duration || '10 min'}</span>
+                            <span>{lesson.video_duration_minutes ? `${lesson.video_duration_minutes} min` : '10 min'}</span>
                           </div>
                         </div>
                       </div>
