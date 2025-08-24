@@ -1,17 +1,30 @@
 import { Play, Pause } from "lucide-react";
 import { useState } from "react";
+import { YouTubePlayer } from "./YouTubePlayer";
 
 interface VideoPlayerProps {
   exerciseName: string;
+  videoUrl?: string;
   className?: string;
 }
 
-export const VideoPlayer = ({ exerciseName, className = "" }: VideoPlayerProps) => {
+export const VideoPlayer = ({ exerciseName, videoUrl, className = "" }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
+
+  // Se temos uma URL de vídeo, usar o YouTubePlayer
+  if (videoUrl) {
+    return (
+      <YouTubePlayer 
+        videoUrl={videoUrl} 
+        exerciseName={exerciseName} 
+        className={className} 
+      />
+    );
+  }
 
   return (
     <div className={`relative aspect-video bg-surface/30 rounded-xl flex items-center justify-center border border-border/20 overflow-hidden ${className}`}>

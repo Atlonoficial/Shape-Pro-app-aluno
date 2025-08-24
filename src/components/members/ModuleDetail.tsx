@@ -71,6 +71,7 @@ export const ModuleDetail = ({ module, courseTitle, onBack }: ModuleDetailProps)
         <div className="mb-6">
           <VideoPlayer 
             exerciseName={selectedLesson.title}
+            videoUrl={selectedLesson.video_url}
             className="w-full rounded-lg overflow-hidden"
           />
         </div>
