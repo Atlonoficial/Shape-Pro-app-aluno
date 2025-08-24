@@ -1441,6 +1441,44 @@ export type Database = {
           },
         ]
       }
+      meal_rotations: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          id: string
+          meal_id: string | null
+          meal_type: string
+          nutrition_plan_id: string
+          week_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          meal_id?: string | null
+          meal_type: string
+          nutrition_plan_id: string
+          week_number?: number
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          meal_id?: string | null
+          meal_type?: string
+          nutrition_plan_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_rotations_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meals: {
         Row: {
           calories: number
@@ -1747,6 +1785,7 @@ export type Database = {
           assigned_to: string[] | null
           created_at: string | null
           created_by: string | null
+          current_week: number | null
           daily_calories: number | null
           daily_carbs: number | null
           daily_fat: number | null
@@ -1760,9 +1799,11 @@ export type Database = {
           is_template: boolean | null
           meals: Json | null
           name: string
+          rotation_weeks: number | null
           start_date: string | null
           tags: string[] | null
           updated_at: string | null
+          week_start_date: string | null
           weekly_schedule: Json | null
         }
         Insert: {
@@ -1770,6 +1811,7 @@ export type Database = {
           assigned_to?: string[] | null
           created_at?: string | null
           created_by?: string | null
+          current_week?: number | null
           daily_calories?: number | null
           daily_carbs?: number | null
           daily_fat?: number | null
@@ -1783,9 +1825,11 @@ export type Database = {
           is_template?: boolean | null
           meals?: Json | null
           name: string
+          rotation_weeks?: number | null
           start_date?: string | null
           tags?: string[] | null
           updated_at?: string | null
+          week_start_date?: string | null
           weekly_schedule?: Json | null
         }
         Update: {
@@ -1793,6 +1837,7 @@ export type Database = {
           assigned_to?: string[] | null
           created_at?: string | null
           created_by?: string | null
+          current_week?: number | null
           daily_calories?: number | null
           daily_carbs?: number | null
           daily_fat?: number | null
@@ -1806,9 +1851,11 @@ export type Database = {
           is_template?: boolean | null
           meals?: Json | null
           name?: string
+          rotation_weeks?: number | null
           start_date?: string | null
           tags?: string[] | null
           updated_at?: string | null
+          week_start_date?: string | null
           weekly_schedule?: Json | null
         }
         Relationships: []
@@ -3339,6 +3386,10 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_current_plan_week: {
+        Args: { plan_id: string }
+        Returns: number
+      }
       get_teacher_chat_stats: {
         Args: { teacher_id_param: string }
         Returns: Json
@@ -3369,6 +3420,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_teacher: {
+        Args: { user_id: string }
         Returns: boolean
       }
       is_teacher_of: {
