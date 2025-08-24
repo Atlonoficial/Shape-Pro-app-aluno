@@ -2,6 +2,19 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
+export interface CourseWithModules {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  instructor: string;
+  is_free: boolean;
+  price: number | null;
+  hasAccess: boolean;
+  total_lessons: number;
+  modules: ModuleWithCourse[];
+}
+
 export interface ModuleWithCourse {
   id: string;
   title: string;
@@ -12,10 +25,11 @@ export interface ModuleWithCourse {
   course_thumbnail: string;
   order_index: number;
   lessons_count: number;
+  hasAccess: boolean;
 }
 
 export const useAllModules = () => {
-  const [modules, setModules] = useState<ModuleWithCourse[]>([]);
+  const [courses, setCourses] = useState<CourseWithModules[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, userProfile } = useAuth();
 
@@ -30,7 +44,7 @@ export const useAllModules = () => {
       try {
         let coursesQuery = supabase
           .from('courses')
-          .select('id, title, thumbnail')
+          .select('id, title, description, thumbnail, instructor, is_free, price, total_lessons')
           .eq('is_published', true);
 
         // Get courses based on user type
@@ -61,9 +75,17 @@ export const useAllModules = () => {
 
         if (!courses || courses.length === 0) {
           console.log('useAllModules: No courses found');
-          setModules([]);
+          setCourses([]);
           return;
         }
+
+        // Check user purchases for course access
+        const { data: userPurchases } = await supabase
+          .from('user_purchases')
+          .select('course_id')
+          .eq('user_id', user.id);
+
+        const purchasedCourseIds = userPurchases?.map(p => p.course_id) || [];
 
         // Get all modules for these courses
         const courseIds = courses.map(course => course.id);
@@ -89,7 +111,7 @@ export const useAllModules = () => {
         }
 
         if (!modulesData) {
-          setModules([]);
+          setCourses([]);
           return;
         }
 
@@ -111,24 +133,49 @@ export const useAllModules = () => {
           return acc;
         }, {} as Record<string, number>) || {};
 
-        // Combine modules with course data and lesson counts
-        const modulesWithCourse: ModuleWithCourse[] = modulesData.map((module: any) => {
-          const course = courses.find(c => c.id === module.course_id);
-          return {
-            id: module.id,
-            title: module.title,
-            description: module.description || '',
-            cover_image_url: module.cover_image_url || course?.thumbnail || '',
-            course_id: module.course_id,
-            course_title: course?.title || '',
-            course_thumbnail: course?.thumbnail || '',
-            order_index: module.order_index,
-            lessons_count: lessonsCountMap[module.id] || 0
-          };
-        });
+        // Group modules by course and add access information
+        const coursesWithModules: CourseWithModules[] = courses.map((course: any) => {
+          const courseModules = modulesData
+            .filter((module: any) => module.course_id === course.id)
+            .map((module: any) => {
+              const hasAccess = course.is_free || 
+                               purchasedCourseIds.includes(course.id) || 
+                               userProfile?.user_type === 'teacher';
+              
+              return {
+                id: module.id,
+                title: module.title,
+                description: module.description || '',
+                cover_image_url: module.cover_image_url || course.thumbnail || '',
+                course_id: module.course_id,
+                course_title: course.title || '',
+                course_thumbnail: course.thumbnail || '',
+                order_index: module.order_index,
+                lessons_count: lessonsCountMap[module.id] || 0,
+                hasAccess
+              };
+            });
 
-        console.log('useAllModules: Modules fetched successfully:', modulesWithCourse.length);
-        setModules(modulesWithCourse);
+          const hasAccess = course.is_free || 
+                           purchasedCourseIds.includes(course.id) || 
+                           userProfile?.user_type === 'teacher';
+
+          return {
+            id: course.id,
+            title: course.title,
+            description: course.description || '',
+            thumbnail: course.thumbnail || '',
+            instructor: course.instructor,
+            is_free: course.is_free,
+            price: course.price,
+            hasAccess,
+            total_lessons: course.total_lessons || 0,
+            modules: courseModules
+          };
+        }).filter(course => course.modules.length > 0); // Only show courses with modules
+
+        console.log('useAllModules: Courses with modules fetched successfully:', coursesWithModules.length);
+        setCourses(coursesWithModules);
       } catch (error) {
         console.error('useAllModules: Unexpected error:', error);
       } finally {
@@ -139,5 +186,5 @@ export const useAllModules = () => {
     fetchAllModules();
   }, [user, userProfile]);
 
-  return { modules, loading };
+  return { courses, loading };
 };
