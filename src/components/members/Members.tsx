@@ -121,7 +121,21 @@ export const Members = () => {
       {activeTab === 'modules' && (
         <div>
         <h3 className="text-lg font-semibold text-foreground mb-4">
-          {isTeacher ? 'Módulos Publicados' : 'Módulos Disponíveis'}
+          {(() => {
+            if (modules.length === 0) {
+              return isTeacher ? 'Módulos Publicados' : 'Módulos Disponíveis';
+            }
+            
+            // Check if all modules belong to the same course
+            const uniqueCourses = [...new Set(modules.map(m => m.course_id))];
+            const isSingleCourse = uniqueCourses.length === 1;
+            
+            if (isSingleCourse && modules.length > 0) {
+              return `Módulos do Curso: ${modules[0].course_title}`;
+            }
+            
+            return isTeacher ? 'Módulos Publicados' : 'Módulos Disponíveis';
+          })()}
         </h3>
           
           {modules.length === 0 ? (
@@ -158,8 +172,9 @@ export const Members = () => {
                         backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
                       }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       <div className="absolute bottom-3 left-3 right-3">
+                        <p className="text-xs text-white/70 mb-1 leading-tight truncate">{module.course_title}</p>
                         <h4 className="text-sm font-semibold text-white mb-1 leading-tight">{module.title}</h4>
                         <p className="text-xs text-white/80 leading-tight">{module.lessons_count} aulas</p>
                       </div>
