@@ -18,9 +18,6 @@ interface StudentStat {
 export const StudentStats = () => {
   const { user } = useAuth();
   const [studentStats, setStudentStats] = useState<StudentStat[]>([]);
-  const [totalStudents, setTotalStudents] = useState(0);
-  const [activeStudents, setActiveStudents] = useState(0);
-  const [averagePoints, setAveragePoints] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchStudentStats = useCallback(async () => {
@@ -29,62 +26,66 @@ export const StudentStats = () => {
     try {
       setLoading(true);
       
-      // Buscar estudantes com suas estatísticas de gamificação
-      const { data: students, error } = await supabase
+      // Buscar estudantes do professor
+      const { data: students, error: studentsError } = await supabase
         .from('students')
-        .select(`
-          user_id,
-          profiles!inner(
-            name,
-            email
-          ),
-          user_points!left(
-            total_points,
-            level,
-            current_streak,
-            last_activity_date
-          )
-        `)
+        .select('user_id')
         .eq('teacher_id', user.id);
 
-      if (error) {
-        console.error('Error fetching student stats:', error);
+      if (studentsError) {
+        console.error('Error fetching students:', studentsError);
+        return;
+      }
+
+      if (!students || students.length === 0) {
+        setStudentStats([]);
+        return;
+      }
+
+      const userIds = students.map(s => s.user_id);
+
+      // Buscar perfis dos estudantes
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return;
+      }
+
+      // Buscar pontos dos estudantes
+      const { data: userPoints, error: pointsError } = await supabase
+        .from('user_points')
+        .select('user_id, total_points, level, current_streak, last_activity_date')
+        .in('user_id', userIds);
+
+      if (pointsError) {
+        console.error('Error fetching user points:', pointsError);
         return;
       }
 
       // Processar dados dos estudantes
-      const processedStats: StudentStat[] = (students || []).map(student => ({
-        user_id: student.user_id,
-        name: student.profiles?.name || 'Nome não informado',
-        email: student.profiles?.email || '',
-        total_points: student.user_points?.total_points || 0,
-        level: student.user_points?.level || 1,
-        current_streak: student.user_points?.current_streak || 0,
-        last_activity: student.user_points?.last_activity_date || null
-      }));
+      const processedStats: StudentStat[] = userIds.map(userId => {
+        const profile = profiles?.find(p => p.id === userId);
+        const points = userPoints?.find(p => p.user_id === userId);
+        
+        return {
+          user_id: userId,
+          name: profile?.name || 'Nome não informado',
+          email: profile?.email || '',
+          total_points: points?.total_points || 0,
+          level: points?.level || 1,
+          current_streak: points?.current_streak || 0,
+          last_activity: points?.last_activity_date || null
+        };
+      });
 
       // Ordenar por pontos (maior para menor)
       processedStats.sort((a, b) => b.total_points - a.total_points);
       
       setStudentStats(processedStats);
-      setTotalStudents(processedStats.length);
-      
-      // Estudantes ativos (atividade nos últimos 7 dias)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const active = processedStats.filter(student => 
-        student.last_activity && new Date(student.last_activity) >= sevenDaysAgo
-      ).length;
-      
-      setActiveStudents(active);
-      
-      // Pontuação média
-      const avgPoints = processedStats.length > 0 
-        ? Math.round(processedStats.reduce((sum, student) => sum + student.total_points, 0) / processedStats.length)
-        : 0;
-      
-      setAveragePoints(avgPoints);
       
     } catch (error) {
       console.error('Error fetching student stats:', error);
@@ -184,7 +185,7 @@ export const StudentStats = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{averagePoints}</div>
+            <div className="text-2xl font-bold">{avgPoints}</div>
             <p className="text-xs text-muted-foreground">pontos</p>
           </CardContent>
         </Card>
