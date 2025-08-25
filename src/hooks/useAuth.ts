@@ -13,20 +13,19 @@ export const useAuth = () => {
       setUser(user);
       setSession(session);
       
+      console.log('[useAuth] Auth state changed:', { userId: user?.id, email: user?.email });
+      
       if (user) {
         try {
           const profile = await getUserProfile(user.id);
           setUserProfile(profile);
+          console.log('[useAuth] Profile loaded:', profile);
         } catch (error) {
-          console.error('Error fetching user profile:', error);
+          console.error('[useAuth] Error fetching user profile:', error);
           setUserProfile(null);
         }
-        try {
-          await supabase.rpc('ensure_student_record');
-        } catch (e) {
-          console.error('Error ensuring student record:', e);
-        }
       } else {
+        console.log('[useAuth] User logged out');
         setUserProfile(null);
       }
       

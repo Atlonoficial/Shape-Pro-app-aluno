@@ -101,20 +101,23 @@ export const Anamnese = () => {
   };
 
   const handleSave = async () => {
+    console.log("[Anamnese] handleSave called, user:", user);
+    
     if (!user?.id) {
+      console.error("[Anamnese] No user ID found");
       toast({
-        title: "Você precisa estar autenticado",
-        description: "Faça login para salvar sua anamnese.",
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para salvar sua anamnese. Faça login novamente.",
         variant: "destructive",
       });
       return;
     }
 
     setSaving(true);
-    console.log("[Anamnese] saving formData:", formData);
+    console.log("[Anamnese] Saving anamnese:", { userId: user.id, formData });
 
     try {
-      await save({
+      const result = await save({
         doencas: formData.doencas,
         outras_doencas: formData.outrasDoencas || null,
         alergias: formData.alergias,
@@ -125,15 +128,27 @@ export const Anamnese = () => {
         lesoes: formData.lesoes || null,
       });
 
+      console.log("[Anamnese] Save successful:", result);
       toast({
-        title: "Anamnese salva!",
-        description: "Todas as respostas foram compartilhadas com seu professor.",
+        title: "Anamnese salva com sucesso!",
+        description: "Suas informações foram compartilhadas com seu professor.",
       });
     } catch (err: any) {
-      console.error("[Anamnese] save error:", err);
+      console.error("[Anamnese] Save failed:", err);
+      
+      let errorMessage = "Erro interno. Tente novamente mais tarde.";
+      
+      if (err?.message?.includes("autenticado") || err?.message?.includes("autenticação")) {
+        errorMessage = "Erro de autenticação. Faça login novamente.";
+      } else if (err?.message?.includes("permissão") || err?.message?.includes("segurança")) {
+        errorMessage = "Erro de permissão. Verifique se você tem acesso.";
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      
       toast({
-        title: "Erro ao salvar",
-        description: err?.message || "Tente novamente mais tarde.",
+        title: "Erro ao salvar anamnese",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
