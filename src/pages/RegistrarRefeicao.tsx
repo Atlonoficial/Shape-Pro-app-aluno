@@ -6,6 +6,7 @@ import { useMyNutrition } from "@/hooks/useMyNutrition";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { AddCustomMealDialog } from "@/components/nutrition/AddCustomMealDialog";
 
 export const RegistrarRefeicao = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export const RegistrarRefeicao = () => {
   const { activePlan, todaysMeals, dailyStats, loading, logMeal } = useMyNutrition();
   const { toast } = useToast();
   const [loadingMeals, setLoadingMeals] = useState<Set<string>>(new Set());
+  const [showAddMealDialog, setShowAddMealDialog] = useState(false);
 
   const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
     if (!user?.id || !activePlan) return;
@@ -130,12 +132,7 @@ export const RegistrarRefeicao = () => {
           <Button 
             size="sm" 
             className="btn-primary" 
-            onClick={() => {
-              toast({
-                title: "Em breve",
-                description: "Funcionalidade em desenvolvimento.",
-              });
-            }}
+            onClick={() => setShowAddMealDialog(true)}
           >
             <Plus size={16} className="mr-1" />
             Adicionar
@@ -220,6 +217,17 @@ export const RegistrarRefeicao = () => {
           Mantenha-se hidratado! Beba pelo menos 2 litros de água ao longo do dia.
         </p>
       </Card>
+
+      {/* Dialog para adicionar refeição customizada */}
+      <AddCustomMealDialog
+        open={showAddMealDialog}
+        onOpenChange={setShowAddMealDialog}
+        nutritionPlanId={activePlan?.id}
+        onMealAdded={() => {
+          // Força uma atualização dos dados
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };
