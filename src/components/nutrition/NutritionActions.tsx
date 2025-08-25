@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 export const useNutritionActions = () => {
   const { user } = useAuthContext();
-  const { awardMealPoints } = useGamificationActions();
 
   const logMeal = useCallback(async (mealData: {
     meal_id?: string;
@@ -33,8 +32,8 @@ export const useNutritionActions = () => {
         return false;
       }
 
-      // Points will be automatically awarded by the database trigger
-      // But we can show immediate feedback
+      // Points are now automatically awarded by database triggers v2
+      // No manual point calls needed to prevent duplication
       if (mealData.consumed) {
         toast.success('Refeição registrada com sucesso! 🍽️');
       }

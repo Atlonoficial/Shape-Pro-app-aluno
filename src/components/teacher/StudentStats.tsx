@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Users, Trophy, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,27 +16,34 @@ interface StudentStat {
 }
 
 export const StudentStats = () => {
-  const [students, setStudents] = useState<StudentStat[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const [studentStats, setStudentStats] = useState<StudentStat[]>([]);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [activeStudents, setActiveStudents] = useState(0);
+  const [averagePoints, setAveragePoints] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchStudentStats();
-    }
-  }, [user]);
-
-  const fetchStudentStats = async () => {
-    if (!user) return;
+  const fetchStudentStats = useCallback(async () => {
+    if (!user?.id) return;
 
     try {
-      // Buscar estudantes do professor com suas estatísticas
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // Buscar estudantes com suas estatísticas de gamificação
+      const { data: students, error } = await supabase
         .from('students')
         .select(`
           user_id,
-          profiles!inner(name, email),
-          user_points(total_points, level, current_streak, last_activity_date)
+          profiles!inner(
+            name,
+            email
+          ),
+          user_points!left(
+            total_points,
+            level,
+            current_streak,
+            last_activity_date
+          )
         `)
         .eq('teacher_id', user.id);
 
@@ -45,27 +52,89 @@ export const StudentStats = () => {
         return;
       }
 
-      // Mapear os dados para o formato esperado
-      const studentStats = data?.map((student: any) => ({
+      // Processar dados dos estudantes
+      const processedStats: StudentStat[] = (students || []).map(student => ({
         user_id: student.user_id,
-        name: student.profiles?.name || student.profiles?.email || 'Sem nome',
+        name: student.profiles?.name || 'Nome não informado',
         email: student.profiles?.email || '',
-        total_points: student.user_points?.[0]?.total_points || 0,
-        level: student.user_points?.[0]?.level || 1,
-        current_streak: student.user_points?.[0]?.current_streak || 0,
-        last_activity: student.user_points?.[0]?.last_activity_date || null
-      })) || [];
+        total_points: student.user_points?.total_points || 0,
+        level: student.user_points?.level || 1,
+        current_streak: student.user_points?.current_streak || 0,
+        last_activity: student.user_points?.last_activity_date || null
+      }));
 
-      // Ordenar por pontos
-      studentStats.sort((a, b) => b.total_points - a.total_points);
+      // Ordenar por pontos (maior para menor)
+      processedStats.sort((a, b) => b.total_points - a.total_points);
       
-      setStudents(studentStats);
+      setStudentStats(processedStats);
+      setTotalStudents(processedStats.length);
+      
+      // Estudantes ativos (atividade nos últimos 7 dias)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const active = processedStats.filter(student => 
+        student.last_activity && new Date(student.last_activity) >= sevenDaysAgo
+      ).length;
+      
+      setActiveStudents(active);
+      
+      // Pontuação média
+      const avgPoints = processedStats.length > 0 
+        ? Math.round(processedStats.reduce((sum, student) => sum + student.total_points, 0) / processedStats.length)
+        : 0;
+      
+      setAveragePoints(avgPoints);
+      
     } catch (error) {
       console.error('Error fetching student stats:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  // Setup real-time subscriptions for gamification updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const gamificationChannel = supabase
+      .channel('teacher-gamification-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'gamification_activities'
+        },
+        (payload) => {
+          console.log('[Real-time] New gamification activity:', payload);
+          // Refresh stats when student gains points
+          fetchStudentStats();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_points'
+        },
+        (payload) => {
+          console.log('[Real-time] User points updated:', payload);
+          // Refresh stats when student points are updated
+          fetchStudentStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(gamificationChannel);
+    };
+  }, [user?.id, fetchStudentStats]);
+
+  useEffect(() => {
+    fetchStudentStats();
+  }, [fetchStudentStats]);
 
   if (loading) {
     return (
@@ -75,9 +144,9 @@ export const StudentStats = () => {
     );
   }
 
-  const totalStudents = students.length;
-  const activeStudents = students.filter(s => s.total_points > 0).length;
-  const avgPoints = totalStudents > 0 ? Math.round(students.reduce((sum, s) => sum + s.total_points, 0) / totalStudents) : 0;
+  const totalStudents = studentStats.length;
+  const activeStudents = studentStats.filter(s => s.total_points > 0).length;
+  const avgPoints = totalStudents > 0 ? Math.round(studentStats.reduce((sum, s) => sum + s.total_points, 0) / totalStudents) : 0;
 
   return (
     <div className="space-y-4">
@@ -115,7 +184,7 @@ export const StudentStats = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgPoints}</div>
+            <div className="text-2xl font-bold">{averagePoints}</div>
             <p className="text-xs text-muted-foreground">pontos</p>
           </CardContent>
         </Card>
@@ -128,13 +197,13 @@ export const StudentStats = () => {
           <CardDescription>Classificação por pontos de gamificação</CardDescription>
         </CardHeader>
         <CardContent>
-          {students.length === 0 ? (
+          {studentStats.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
               Nenhum aluno encontrado
             </div>
           ) : (
             <div className="space-y-3">
-              {students.map((student, index) => (
+              {studentStats.map((student, index) => (
                 <div 
                   key={student.user_id}
                   className="flex items-center justify-between p-3 rounded-lg border bg-card/50"

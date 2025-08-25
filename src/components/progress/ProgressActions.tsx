@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 export const useProgressActions = () => {
   const { user } = useAuthContext();
-  const { awardProgressPoints } = useGamificationActions();
   const { updateGoalsProgress } = useGoalActions();
 
   const recordProgress = useCallback(async (progressData: {
@@ -53,8 +52,8 @@ export const useProgressActions = () => {
         await updateGoalsProgress(goalCategory, progressData.value);
       }
 
-      // Award points for progress update
-      await awardProgressPoints(progressData.type);
+      // Points are now automatically awarded by database triggers v2
+      // No manual point calls needed to prevent duplication
       toast.success('Progresso registrado com sucesso! 🎯');
       return true;
     } catch (error) {
@@ -62,7 +61,7 @@ export const useProgressActions = () => {
       toast.error('Erro ao registrar progresso');
       return false;
     }
-  }, [user?.id, awardProgressPoints, updateGoalsProgress]);
+  }, [user?.id, updateGoalsProgress]);
 
   const recordWeight = useCallback(async (weight: number, notes?: string) => {
     return await recordProgress({

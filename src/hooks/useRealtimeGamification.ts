@@ -12,62 +12,62 @@ interface RealtimeGamificationHook {
 export const useRealtimeGamification = (): RealtimeGamificationHook => {
   const { user } = useAuthContext();
 
-  // Function to award points for various actions
   const awardPointsForAction = useCallback(async (action: string, description?: string) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.warn('[Gamification] User not authenticated');
+      return;
+    }
 
     try {
-      // Update streak first
-      await supabase.rpc("update_user_streak", { p_user_id: user.id });
-
-      // Award points based on action
-      const { error } = await supabase.rpc("award_points_enhanced", {
+      // USAR NOVA FUNÇÃO V2 QUE PREVINE DUPLICAÇÕES
+      const { error } = await supabase.rpc('award_points_enhanced_v2', {
         p_user_id: user.id,
         p_activity_type: action,
-        p_description: description || `Ação: ${action}`,
-        p_metadata: { timestamp: new Date().toISOString() }
+        p_description: description || `Ação executada: ${action}`,
+        p_metadata: {},
+        p_custom_points: null
       });
 
       if (error) {
-        console.error("Error awarding points:", error);
+        console.error('[Gamification] Error awarding points:', error);
         return;
       }
 
-      console.log(`Points awarded for ${action}:`, description);
+      console.log('[Gamification] Points awarded successfully for action:', action);
     } catch (error) {
-      console.error("Error in awardPointsForAction:", error);
+      console.error('[Gamification] Error awarding points:', error);
     }
   }, [user?.id]);
 
-  // Function to update streak
   const updateStreak = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      const { error } = await supabase.rpc("update_user_streak", { p_user_id: user.id });
-      if (error) {
-        console.error("Error updating streak:", error);
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: existingActivity } = await supabase
+        .from('gamification_activities')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('activity_type', 'daily_checkin')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lt('created_at', `${today}T23:59:59.999Z`)
+        .single();
+
+      if (!existingActivity) {
+        await awardPointsForAction('daily_checkin', 'Check-in diário');
       }
     } catch (error) {
-      console.error("Error in updateStreak:", error);
-    }
-  }, [user?.id]);
-
-  // Auto-award points for daily check-in
-  useEffect(() => {
-    if (user?.id) {
-      // Award daily check-in points when user loads the app
-      const lastCheckIn = localStorage.getItem(`lastCheckIn_${user.id}`);
-      const today = new Date().toDateString();
-      
-      if (lastCheckIn !== today) {
-        setTimeout(() => {
-          awardPointsForAction("daily_checkin", "Check-in diário no app");
-          localStorage.setItem(`lastCheckIn_${user.id}`, today);
-        }, 2000); // Delay to let the app fully load
-      }
+      console.error('[Gamification] Error updating streak:', error);
     }
   }, [user?.id, awardPointsForAction]);
+
+  // Dar pontos de check-in na primeira carga do app
+  useEffect(() => {
+    if (user?.id) {
+      updateStreak();
+    }
+  }, [user?.id, updateStreak]);
 
   return {
     awardPointsForAction,

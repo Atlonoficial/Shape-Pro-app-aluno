@@ -1274,6 +1274,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gamification_activities_backup: {
+        Row: {
+          activity_type: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          metadata: Json | null
+          points_earned: number | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          metadata?: Json | null
+          points_earned?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          metadata?: Json | null
+          points_earned?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       gamification_settings: {
         Row: {
           created_at: string
@@ -3292,6 +3322,16 @@ export type Database = {
         Returns: undefined
       }
       award_points_enhanced: {
+        Args: {
+          p_activity_type: string
+          p_custom_points?: number
+          p_description?: string
+          p_metadata?: Json
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      award_points_enhanced_v2: {
         Args: {
           p_activity_type: string
           p_custom_points?: number
