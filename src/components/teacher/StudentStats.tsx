@@ -146,7 +146,15 @@ export const StudentStats = () => {
   }
 
   const totalStudents = studentStats.length;
-  const activeStudents = studentStats.filter(s => s.total_points > 0).length;
+  
+  // Estudantes ativos (atividade nos últimos 7 dias)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const activeStudents = studentStats.filter(s => 
+    s.last_activity && new Date(s.last_activity) >= sevenDaysAgo
+  ).length;
+  
   const avgPoints = totalStudents > 0 ? Math.round(studentStats.reduce((sum, s) => sum + s.total_points, 0) / totalStudents) : 0;
 
   return (
