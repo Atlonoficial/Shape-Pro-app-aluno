@@ -9,9 +9,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
+import { usePhysicalAssessmentActions } from "./PhysicalAssessmentActions";
 
 interface AssessmentData {
   // Medidas básicas
@@ -114,6 +114,7 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
   
   const { user } = useAuthContext();
   const { addWeightFromAssessment } = useWeightProgress(user?.id || '');
+  const { savePhysicalAssessment } = usePhysicalAssessmentActions();
 
   const handleInputChange = (field: keyof AssessmentData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -122,266 +123,73 @@ export const NewAssessmentDialog = ({ onAssessmentCreated }: NewAssessmentDialog
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('=== DEBUG: Iniciando submissão ===');
-    console.log('User:', user);
-    
-    if (!user?.id) {
-      console.error('Usuário não autenticado');
-      toast.error("Usuário não autenticado");
-      return;
-    }
-
-    // Verificar se pelo menos um campo foi preenchido
-    const hasData = Object.values(formData).some(value => value.trim() !== "");
-    console.log('Has data:', hasData);
-    console.log('Form data:', formData);
-    
-    if (!hasData) {
-      toast.error("Preencha pelo menos uma medida");
-      return;
-    }
-
+    console.log('🏥 === STARTING ASSESSMENT SUBMISSION ===');
     setLoading(true);
 
     try {
-      const currentDate = new Date();
-      const assessmentDate = currentDate.toISOString();
+      const success = await savePhysicalAssessment(formData);
       
-      // Criar array de registros para inserir na tabela progress
-      const progressRecords = [];
-
-      // Medidas básicas
-      if (formData.weight.trim()) {
-        progressRecords.push({
-          user_id: user.id,
-          type: "physical_assessment",
-          value: parseFloat(formData.weight),
-          unit: "kg",
-          date: assessmentDate,
-          notes: "weight"
-        });
-      }
-
-      if (formData.height.trim()) {
-        progressRecords.push({
-          user_id: user.id,
-          type: "physical_assessment", 
-          value: parseFloat(formData.height),
-          unit: "cm",
-          date: assessmentDate,
-          notes: "height"
-        });
-      }
-
-      if (formData.body_fat.trim()) {
-        progressRecords.push({
-          user_id: user.id,
-          type: "physical_assessment",
-          value: parseFloat(formData.body_fat),
-          unit: "%",
-          date: assessmentDate,
-          notes: "body_fat"
-        });
-      }
-
-      if (formData.muscle_mass.trim()) {
-        progressRecords.push({
-          user_id: user.id,
-          type: "physical_assessment",
-          value: parseFloat(formData.muscle_mass),
-          unit: "kg", 
-          date: assessmentDate,
-          notes: "muscle_mass"
-        });
-      }
-
-      // Membros superiores
-      const upperLimbFields = {
-        relaxed_right_arm: "Braço relaxado direito",
-        relaxed_left_arm: "Braço relaxado esquerdo", 
-        contracted_right_arm: "Braço contraído direito",
-        contracted_left_arm: "Braço contraído esquerdo",
-        right_forearm: "Antebraço direito",
-        left_forearm: "Antebraço esquerdo"
-      };
-
-      Object.entries(upperLimbFields).forEach(([key, label]) => {
-        const value = formData[key as keyof AssessmentData];
-        if (value.trim()) {
-          progressRecords.push({
-            user_id: user.id,
-            type: "physical_assessment",
-            value: parseFloat(value),
-            unit: "cm",
-            date: assessmentDate,
-            notes: label
-          });
+      if (success) {
+        // If weight was entered, also add it to the weight progress chart
+        if (formData.weight?.trim() && user?.id) {
+          const assessmentDate = new Date().toISOString();
+          console.log('📊 Adding weight to progress chart...');
+          await addWeightFromAssessment(parseFloat(formData.weight), assessmentDate);
         }
-      });
-
-      // Tronco
-      const torsoFields = {
-        neck: "Pescoço",
-        shoulder: "Ombro",
-        chest: "Peitoral", 
-        waist: "Cintura",
-        abdomen: "Abdômen",
-        hip: "Quadril"
-      };
-
-      Object.entries(torsoFields).forEach(([key, label]) => {
-        const value = formData[key as keyof AssessmentData];
-        if (value.trim()) {
-          progressRecords.push({
-            user_id: user.id,
-            type: "physical_assessment",
-            value: parseFloat(value),
-            unit: "cm",
-            date: assessmentDate,
-            notes: label
-          });
-        }
-      });
-
-      // Membros inferiores
-      const lowerLimbFields = {
-        right_calf: "Panturrilha direita",
-        left_calf: "Panturrilha esquerda",
-        right_thigh: "Coxa direita", 
-        left_thigh: "Coxa esquerda",
-        right_proximal_thigh: "Coxa proximal direita",
-        left_proximal_thigh: "Coxa proximal esquerda"
-      };
-
-      Object.entries(lowerLimbFields).forEach(([key, label]) => {
-        const value = formData[key as keyof AssessmentData];
-        if (value.trim()) {
-          progressRecords.push({
-            user_id: user.id,
-            type: "physical_assessment",
-            value: parseFloat(value),
-            unit: "cm",
-            date: assessmentDate,
-            notes: label
-          });
-        }
-      });
-
-      // Protocolo de dobras cutâneas
-      if (formData.skinfold_protocol.trim()) {
-        progressRecords.push({
-          user_id: user.id,
-          type: "physical_assessment",
-          value: 1, // Valor simbólico
-          unit: "protocolo",
-          date: assessmentDate,
-          notes: `Protocolo: ${formData.skinfold_protocol}`
+        
+        // Reset form and close dialog
+        setFormData({
+          // Medidas básicas
+          weight: "",
+          height: "",
+          body_fat: "",
+          muscle_mass: "",
+          
+          // Membros superiores
+          relaxed_right_arm: "",
+          relaxed_left_arm: "",
+          contracted_right_arm: "",
+          contracted_left_arm: "",
+          right_forearm: "",
+          left_forearm: "",
+          
+          // Tronco
+          neck: "",
+          shoulder: "",
+          chest: "",
+          waist: "",
+          abdomen: "",
+          hip: "",
+          
+          // Membros inferiores  
+          right_calf: "",
+          left_calf: "",
+          right_thigh: "",
+          left_thigh: "",
+          right_proximal_thigh: "",
+          left_proximal_thigh: "",
+          
+          // Protocolo de dobras cutâneas
+          skinfold_protocol: "",
+          
+          // Dobras cutâneas específicas
+          tricipital: "",
+          bicipital: "",
+          subescapular: "",
+          axilar_media: "",
+          peitoral: "",
+          abdominal: "",
+          supra_iliaca: "",
+          coxa: "",
+          panturrilha_medial: ""
         });
+        
+        setOpen(false);
+        onAssessmentCreated();
       }
-
-      // Dobras cutâneas específicas
-      const skinfoldFields = {
-        tricipital: "Dobra tricipital",
-        bicipital: "Dobra bicipital",
-        subescapular: "Dobra subescapular",
-        axilar_media: "Dobra axilar média",
-        peitoral: "Dobra peitoral",
-        abdominal: "Dobra abdominal",
-        supra_iliaca: "Dobra supra ilíaca",
-        coxa: "Dobra da coxa",
-        panturrilha_medial: "Dobra panturrilha medial"
-      };
-
-      Object.entries(skinfoldFields).forEach(([key, label]) => {
-        const value = formData[key as keyof AssessmentData];
-        if (value.trim()) {
-          progressRecords.push({
-            user_id: user.id,
-            type: "physical_assessment",
-            value: parseFloat(value),
-            unit: "mm",
-            date: assessmentDate,
-            notes: label
-          });
-        }
-      });
-
-      // Log dos dados para debug
-      console.log('User ID:', user.id);
-      console.log('Progress records to insert:', progressRecords);
-      
-      // Inserir todos os registros de uma vez
-      const { error, data } = await supabase
-        .from("progress")
-        .insert(progressRecords)
-        .select();
-
-      console.log('Insert result:', { error, data });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
-      // If weight was entered, also add it to the weight progress chart
-      if (formData.weight.trim()) {
-        await addWeightFromAssessment(parseFloat(formData.weight), assessmentDate);
-      }
-
-      toast.success("Avaliação física registrada com sucesso!");
-      
-      // Reset form and close dialog
-      setFormData({
-        // Medidas básicas
-        weight: "",
-        height: "",
-        body_fat: "",
-        muscle_mass: "",
-        
-        // Membros superiores
-        relaxed_right_arm: "",
-        relaxed_left_arm: "",
-        contracted_right_arm: "",
-        contracted_left_arm: "",
-        right_forearm: "",
-        left_forearm: "",
-        
-        // Tronco
-        neck: "",
-        shoulder: "",
-        chest: "",
-        waist: "",
-        abdomen: "",
-        hip: "",
-        
-        // Membros inferiores  
-        right_calf: "",
-        left_calf: "",
-        right_thigh: "",
-        left_thigh: "",
-        right_proximal_thigh: "",
-        left_proximal_thigh: "",
-        
-        // Protocolo de dobras cutâneas
-        skinfold_protocol: "",
-        
-        // Dobras cutâneas específicas
-        tricipital: "",
-        bicipital: "",
-        subescapular: "",
-        axilar_media: "",
-        peitoral: "",
-        abdominal: "",
-        supra_iliaca: "",
-        coxa: "",
-        panturrilha_medial: ""
-      });
-      setOpen(false);
-      onAssessmentCreated();
-
     } catch (error) {
-      console.error("Erro ao salvar avaliação:", error);
-      toast.error("Erro ao registrar avaliação física");
+      console.error("❌ Unexpected error in handleSubmit:", error);
+      toast.error("Erro inesperado. Tente novamente.");
     } finally {
       setLoading(false);
     }
