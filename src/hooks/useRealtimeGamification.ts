@@ -45,8 +45,8 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       }
 
       // Verificar se a função retornou indicação de duplicação
-      if (data && data.duplicate) {
-        console.log('[Gamification] Duplicate action detected by server:', data.message);
+      if (data && typeof data === 'object' && 'duplicate' in data && data.duplicate) {
+        console.log('[Gamification] Duplicate action detected by server:', (data as any).message);
         return;
       }
 
