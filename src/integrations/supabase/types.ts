@@ -1993,63 +1993,199 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          checkout_url: string | null
+          created_at: string | null
+          currency: string | null
+          expires_at: string | null
+          gateway_payment_id: string | null
+          gateway_response: Json | null
+          gateway_transaction_id: string | null
+          gateway_type: string
+          id: string
+          metadata: Json | null
+          paid_at: string | null
+          payment_method: string | null
+          service_pricing_id: string | null
+          status: string | null
+          student_id: string
+          teacher_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          checkout_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          expires_at?: string | null
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          gateway_transaction_id?: string | null
+          gateway_type: string
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_method?: string | null
+          service_pricing_id?: string | null
+          status?: string | null
+          student_id: string
+          teacher_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          checkout_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          expires_at?: string | null
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          gateway_transaction_id?: string | null
+          gateway_type?: string
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_method?: string | null
+          service_pricing_id?: string | null
+          status?: string | null
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_service_pricing_id_fkey"
+            columns: ["service_pricing_id"]
+            isOneToOne: false
+            referencedRelation: "service_pricing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_webhooks: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          gateway_type: string
+          id: string
+          payment_id: string | null
+          processed: boolean | null
+          webhook_data: Json
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          gateway_type: string
+          id?: string
+          payment_id?: string | null
+          processed?: boolean | null
+          webhook_data: Json
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          gateway_type?: string
+          id?: string
+          payment_id?: string | null
+          processed?: boolean | null
+          webhook_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_webhooks_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
+          auto_approved: boolean | null
           created_at: string | null
           currency: string | null
           description: string
           due_date: string | null
+          gateway_metadata: Json | null
+          gateway_status: string | null
+          gateway_transaction_id: string | null
+          gateway_type: string | null
           id: string
           invoice_number: string | null
           invoice_url: string | null
           notes: string | null
           paid_at: string | null
           payment_method: string | null
+          product_id: string | null
+          product_type: string | null
           related_item_id: string | null
           status: string | null
+          teacher_id: string | null
           transaction_id: string | null
           type: string | null
           updated_at: string | null
           user_id: string | null
+          webhook_received_at: string | null
         }
         Insert: {
           amount: number
+          auto_approved?: boolean | null
           created_at?: string | null
           currency?: string | null
           description: string
           due_date?: string | null
+          gateway_metadata?: Json | null
+          gateway_status?: string | null
+          gateway_transaction_id?: string | null
+          gateway_type?: string | null
           id?: string
           invoice_number?: string | null
           invoice_url?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          product_id?: string | null
+          product_type?: string | null
           related_item_id?: string | null
           status?: string | null
+          teacher_id?: string | null
           transaction_id?: string | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
+          webhook_received_at?: string | null
         }
         Update: {
           amount?: number
+          auto_approved?: boolean | null
           created_at?: string | null
           currency?: string | null
           description?: string
           due_date?: string | null
+          gateway_metadata?: Json | null
+          gateway_status?: string | null
+          gateway_transaction_id?: string | null
+          gateway_type?: string | null
           id?: string
           invoice_number?: string | null
           invoice_url?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          product_id?: string | null
+          product_type?: string | null
           related_item_id?: string | null
           status?: string | null
+          teacher_id?: string | null
           transaction_id?: string | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
+          webhook_received_at?: string | null
         }
         Relationships: []
       }
@@ -2537,6 +2673,48 @@ export type Database = {
         }
         Relationships: []
       }
+      service_pricing: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          service_id: string | null
+          service_type: string
+          teacher_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          service_id?: string | null
+          service_type: string
+          teacher_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          service_id?: string | null
+          service_type?: string
+          teacher_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       student_invitations: {
         Row: {
           accepted_at: string | null
@@ -2741,6 +2919,48 @@ export type Database = {
           teacher_id?: string
           updated_at?: string
           visibility_days?: number
+        }
+        Relationships: []
+      }
+      teacher_payment_settings: {
+        Row: {
+          bank_details: Json | null
+          commission_rate: number | null
+          created_at: string
+          credentials: Json
+          gateway_type: string
+          id: string
+          is_active: boolean
+          pix_key: string | null
+          teacher_id: string
+          updated_at: string
+          webhook_config: Json | null
+        }
+        Insert: {
+          bank_details?: Json | null
+          commission_rate?: number | null
+          created_at?: string
+          credentials?: Json
+          gateway_type: string
+          id?: string
+          is_active?: boolean
+          pix_key?: string | null
+          teacher_id: string
+          updated_at?: string
+          webhook_config?: Json | null
+        }
+        Update: {
+          bank_details?: Json | null
+          commission_rate?: number | null
+          created_at?: string
+          credentials?: Json
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          pix_key?: string | null
+          teacher_id?: string
+          updated_at?: string
+          webhook_config?: Json | null
         }
         Relationships: []
       }
@@ -3340,6 +3560,16 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      award_points_enhanced_v3: {
+        Args: {
+          p_activity_type: string
+          p_custom_points?: number
+          p_description?: string
+          p_metadata?: Json
+          p_user_id: string
+        }
+        Returns: Json
       }
       book_appointment: {
         Args:

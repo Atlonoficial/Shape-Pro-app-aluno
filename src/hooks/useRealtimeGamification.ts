@@ -30,8 +30,8 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     try {
       console.log('[Gamification] Awarding points for action:', action, 'metadata:', metadata);
       
-      // USAR NOVA FUNÇÃO V2 QUE PREVINE DUPLICAÇÕES
-      const { error } = await supabase.rpc('award_points_enhanced_v2', {
+      // USAR NOVA FUNÇÃO V3 QUE PREVINE DUPLICAÇÕES
+      const { data, error } = await supabase.rpc('award_points_enhanced_v3', {
         p_user_id: user.id,
         p_activity_type: action,
         p_description: description || `Ação executada: ${action}`,
@@ -44,7 +44,13 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
         return;
       }
 
-      console.log('[Gamification] Points awarded successfully for action:', action);
+      // Verificar se a função retornou indicação de duplicação
+      if (data && data.duplicate) {
+        console.log('[Gamification] Duplicate action detected by server:', data.message);
+        return;
+      }
+
+      console.log('[Gamification] Points awarded successfully for action:', action, 'Result:', data);
     } catch (error) {
       console.error('[Gamification] Error awarding points:', error);
     }
