@@ -108,8 +108,8 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
         console.error('Error saving workout session:', error);
         toast.error('Erro ao salvar treino');
       } else {
-        // Award points through the gamification system
-        await awardWorkoutPoints(workout.name);
+        // Points are automatically awarded by database triggers - no manual call needed
+        // This prevents duplicate points from being awarded
         toast.success('Treino concluído com sucesso! 🎉');
       }
     } catch (error) {

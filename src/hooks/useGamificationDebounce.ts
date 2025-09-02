@@ -1,0 +1,56 @@
+import { useCallback, useRef } from "react";
+
+/**
+ * Hook para prevenir chamadas duplicadas de gamificação
+ * Implementa debounce e cache para evitar pontos duplicados
+ */
+export const useGamificationDebounce = () => {
+  const recentActions = useRef<Map<string, number>>(new Map());
+  const DEBOUNCE_TIME = 5000; // 5 seconds
+
+  const isDuplicateAction = useCallback((actionKey: string): boolean => {
+    const now = Date.now();
+    const lastActionTime = recentActions.current.get(actionKey);
+    
+    if (lastActionTime && (now - lastActionTime) < DEBOUNCE_TIME) {
+      console.warn(`[Gamification] Duplicate action prevented: ${actionKey}`);
+      return true;
+    }
+    
+    recentActions.current.set(actionKey, now);
+    
+    // Limpar ações antigas
+    for (const [key, time] of recentActions.current.entries()) {
+      if ((now - time) > DEBOUNCE_TIME * 2) {
+        recentActions.current.delete(key);
+      }
+    }
+    
+    return false;
+  }, []);
+
+  const generateActionKey = useCallback((type: string, userId: string, metadata?: any): string => {
+    const baseKey = `${type}_${userId}`;
+    
+    // Para alguns tipos, adicionar identificadores únicos
+    if (type === 'meal_logged' && metadata?.meal_id) {
+      return `${baseKey}_${metadata.meal_id}_${metadata.date}`;
+    }
+    
+    if (type === 'progress_logged' && metadata?.progress_type) {
+      return `${baseKey}_${metadata.progress_type}_${Date.now()}`;
+    }
+    
+    if (type === 'daily_checkin') {
+      const today = new Date().toISOString().split('T')[0];
+      return `${baseKey}_${today}`;
+    }
+    
+    return `${baseKey}_${Date.now()}`;
+  }, []);
+
+  return {
+    isDuplicateAction,
+    generateActionKey
+  };
+};

@@ -1,16 +1,15 @@
 import { useCallback } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { useGamificationActions } from "@/hooks/useRealtimeGamification";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /**
  * Hook para integrar progresso do usuário com atualização automática de metas
  * Este hook conecta ações do sistema com as metas do usuário
+ * CORREÇÃO: Removidas chamadas manuais de pontos para evitar duplicação
  */
 export const useGoalActions = () => {
   const { user } = useAuthContext();
-  const { awardProgressPoints } = useGamificationActions();
 
   // Função para atualizar progresso de metas baseado em categoria
   const updateGoalsProgress = useCallback(async (category: string, value: number) => {
@@ -40,41 +39,41 @@ export const useGoalActions = () => {
   const updateWeightProgress = useCallback(async (weight: number) => {
     const success = await updateGoalsProgress('peso', weight);
     if (success) {
-      await awardProgressPoints('Peso atualizado');
+      // Points automatically awarded by triggers - no manual call needed
       toast.success('Progresso de peso atualizado nas suas metas! 📈');
     }
     return success;
-  }, [updateGoalsProgress, awardProgressPoints]);
+  }, [updateGoalsProgress]);
 
   // Atualizar progresso de treino (frequência)
   const updateWorkoutProgress = useCallback(async () => {
     const success = await updateGoalsProgress('frequencia', 1);
     if (success) {
-      await awardProgressPoints('Treino completado');
+      // Points automatically awarded by triggers - no manual call needed
       toast.success('Progresso de treino atualizado nas suas metas! 💪');
     }
     return success;
-  }, [updateGoalsProgress, awardProgressPoints]);
+  }, [updateGoalsProgress]);
 
   // Atualizar progresso de cardio
   const updateCardioProgress = useCallback(async (distance: number) => {
     const success = await updateGoalsProgress('cardio', distance);
     if (success) {
-      await awardProgressPoints('Cardio completado');
+      // Points automatically awarded by triggers - no manual call needed
       toast.success('Progresso de cardio atualizado nas suas metas! 🏃‍♂️');
     }
     return success;
-  }, [updateGoalsProgress, awardProgressPoints]);
+  }, [updateGoalsProgress]);
 
   // Atualizar progresso de força
   const updateStrengthProgress = useCallback(async (weight: number) => {
     const success = await updateGoalsProgress('forca', weight);
     if (success) {
-      await awardProgressPoints('Exercício de força completado');
+      // Points automatically awarded by triggers - no manual call needed
       toast.success('Progresso de força atualizado nas suas metas! 🏋️‍♂️');
     }
     return success;
-  }, [updateGoalsProgress, awardProgressPoints]);
+  }, [updateGoalsProgress]);
 
   return {
     updateGoalsProgress,

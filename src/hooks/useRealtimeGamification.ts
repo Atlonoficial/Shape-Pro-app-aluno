@@ -3,6 +3,7 @@ import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { showPointsToast } from "@/components/gamification/PointsToast";
+import { useGamificationDebounce } from "@/hooks/useGamificationDebounce";
 
 interface RealtimeGamificationHook {
   awardPointsForAction: (action: string, description?: string) => Promise<void>;
@@ -11,20 +12,30 @@ interface RealtimeGamificationHook {
 
 export const useRealtimeGamification = (): RealtimeGamificationHook => {
   const { user } = useAuthContext();
+  const { isDuplicateAction, generateActionKey } = useGamificationDebounce();
 
-  const awardPointsForAction = useCallback(async (action: string, description?: string) => {
+  const awardPointsForAction = useCallback(async (action: string, description?: string, metadata: any = {}) => {
     if (!user?.id) {
       console.warn('[Gamification] User not authenticated');
       return;
     }
 
+    // Verificar se é uma ação duplicada
+    const actionKey = generateActionKey(action, user.id, metadata);
+    if (isDuplicateAction(actionKey)) {
+      console.log('[Gamification] Duplicate action prevented:', action);
+      return;
+    }
+
     try {
+      console.log('[Gamification] Awarding points for action:', action, 'metadata:', metadata);
+      
       // USAR NOVA FUNÇÃO V2 QUE PREVINE DUPLICAÇÕES
       const { error } = await supabase.rpc('award_points_enhanced_v2', {
         p_user_id: user.id,
         p_activity_type: action,
         p_description: description || `Ação executada: ${action}`,
-        p_metadata: {},
+        p_metadata: metadata,
         p_custom_points: null
       });
 
@@ -37,7 +48,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     } catch (error) {
       console.error('[Gamification] Error awarding points:', error);
     }
-  }, [user?.id]);
+  }, [user?.id, isDuplicateAction, generateActionKey]);
 
   const updateStreak = useCallback(async () => {
     if (!user?.id) return;
@@ -45,17 +56,26 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const { data: existingActivity } = await supabase
+      // Verificar se já existe check-in hoje com timestamp preciso para evitar duplicação
+      const { data: existingActivity, error: checkError } = await supabase
         .from('gamification_activities')
         .select('id')
         .eq('user_id', user.id)
         .eq('activity_type', 'daily_checkin')
         .gte('created_at', `${today}T00:00:00.000Z`)
         .lt('created_at', `${today}T23:59:59.999Z`)
-        .single();
+        .maybeSingle(); // Use maybeSingle em vez de single para evitar erro quando não encontra
+
+      if (checkError) {
+        console.error('[Gamification] Error checking existing checkin:', checkError);
+        return;
+      }
 
       if (!existingActivity) {
+        console.log('[Gamification] No checkin today, awarding points');
         await awardPointsForAction('daily_checkin', 'Check-in diário');
+      } else {
+        console.log('[Gamification] Checkin already exists today, skipping');
       }
     } catch (error) {
       console.error('[Gamification] Error updating streak:', error);
