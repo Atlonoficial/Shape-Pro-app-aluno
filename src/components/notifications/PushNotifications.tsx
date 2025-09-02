@@ -95,9 +95,18 @@ export const PushNotifications = () => {
     try {
       if (!user?.id) return;
       
-      // TODO: Update when Supabase types are regenerated after migration
-      console.log('OneSignal: Player ID received:', playerId);
-      console.log('OneSignal: Will update profile with player ID when types are available');
+      console.log('OneSignal: Updating player ID in Supabase:', playerId);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ onesignal_player_id: playerId })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('OneSignal: Error updating player ID:', error);
+      } else {
+        console.log('OneSignal: Player ID successfully saved to Supabase');
+      }
       
     } catch (error) {
       console.error('OneSignal: Error updating player ID in Supabase:', error);
