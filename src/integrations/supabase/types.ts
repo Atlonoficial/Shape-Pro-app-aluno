@@ -1650,6 +1650,56 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_automation_rules: {
+        Row: {
+          condition: Json | null
+          created_at: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed: string | null
+          name: string
+          teacher_id: string
+          template_id: string | null
+          trigger: string
+          updated_at: string | null
+        }
+        Insert: {
+          condition?: Json | null
+          created_at?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed?: string | null
+          name: string
+          teacher_id: string
+          template_id?: string | null
+          trigger: string
+          updated_at?: string | null
+        }
+        Update: {
+          condition?: Json | null
+          created_at?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed?: string | null
+          name?: string
+          teacher_id?: string
+          template_id?: string | null
+          trigger?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_automation_rules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_logs: {
         Row: {
           created_at: string | null
@@ -1698,12 +1748,52 @@ export type Database = {
           },
         ]
       }
+      notification_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          message: string
+          teacher_id: string
+          title: string
+          updated_at: string | null
+          usage_count: number | null
+          variables: string[] | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message: string
+          teacher_id: string
+          title: string
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string
+          teacher_id?: string
+          title?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_required: boolean | null
           action_text: string | null
           action_url: string | null
           created_at: string | null
+          created_by: string | null
           data: Json | null
           deep_link: string | null
           expires_at: string | null
@@ -1723,6 +1813,7 @@ export type Database = {
           action_text?: string | null
           action_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           data?: Json | null
           deep_link?: string | null
           expires_at?: string | null
@@ -1742,6 +1833,7 @@ export type Database = {
           action_text?: string | null
           action_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           data?: Json | null
           deep_link?: string | null
           expires_at?: string | null
@@ -2760,14 +2852,19 @@ export type Database = {
       students: {
         Row: {
           active_plan: string | null
+          birth_date: string | null
           body_fat: number | null
           created_at: string | null
+          goal_achieved_this_month: boolean | null
           goals: string[] | null
           height: number | null
           id: string
           language: string | null
+          last_activity: string | null
+          last_workout: string | null
           measurements_updated_at: string | null
           membership_expiry: string | null
+          membership_months: number | null
           membership_status: string | null
           mode: string | null
           muscle_mass: number | null
@@ -2776,18 +2873,24 @@ export type Database = {
           timezone: string | null
           updated_at: string | null
           user_id: string
+          weekly_frequency: number | null
           weight: number | null
         }
         Insert: {
           active_plan?: string | null
+          birth_date?: string | null
           body_fat?: number | null
           created_at?: string | null
+          goal_achieved_this_month?: boolean | null
           goals?: string[] | null
           height?: number | null
           id?: string
           language?: string | null
+          last_activity?: string | null
+          last_workout?: string | null
           measurements_updated_at?: string | null
           membership_expiry?: string | null
+          membership_months?: number | null
           membership_status?: string | null
           mode?: string | null
           muscle_mass?: number | null
@@ -2796,18 +2899,24 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           user_id: string
+          weekly_frequency?: number | null
           weight?: number | null
         }
         Update: {
           active_plan?: string | null
+          birth_date?: string | null
           body_fat?: number | null
           created_at?: string | null
+          goal_achieved_this_month?: boolean | null
           goals?: string[] | null
           height?: number | null
           id?: string
           language?: string | null
+          last_activity?: string | null
+          last_workout?: string | null
           measurements_updated_at?: string | null
           membership_expiry?: string | null
+          membership_months?: number | null
           membership_status?: string | null
           mode?: string | null
           muscle_mass?: number | null
@@ -2816,6 +2925,7 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           user_id?: string
+          weekly_frequency?: number | null
           weight?: number | null
         }
         Relationships: []
@@ -3603,7 +3713,7 @@ export type Database = {
         Returns: number
       }
       can_insert_notification: {
-        Args: { targets: string[] }
+        Args: { p_target_users?: string[]; p_user_id: string }
         Returns: boolean
       }
       check_and_award_achievements: {
