@@ -20,9 +20,6 @@ export const Members = () => {
   const { student } = useStudentProfile();
   const { courses, loading } = useAllModules();
   const { getRequestStatus } = useUnlockRequests();
-
-  // Debug log for courses
-  console.log('🎯 Members: Courses received:', courses.length, courses.map(c => ({ title: c.title, modules: c.modules.length })));
   const [activeTab, setActiveTab] = useState<'modules' | 'shop' | 'students'>('modules');
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
