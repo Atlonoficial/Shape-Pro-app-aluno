@@ -30,7 +30,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     try {
       console.log('[Gamification] Awarding points for action:', action, 'metadata:', metadata);
       
-      // USAR NOVA FUNÇÃO V3 QUE PREVINE DUPLICAÇÕES
+      // USAR FUNÇÃO V3 EXISTENTE QUE PREVINE DUPLICAÇÕES
       const { data, error } = await supabase.rpc('award_points_enhanced_v3', {
         p_user_id: user.id,
         p_activity_type: action,

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
+import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
 import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
@@ -47,8 +48,9 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <GamificationProvider>
-              <PushNotificationsWrapper />
-              <Routes>
+              <GamificationIntegrator>
+                <PushNotificationsWrapper />
+                <Routes>
               <Route path="/" element={<Index />} />
               {/* <Route path="/login" element={<Login />} /> */}
               {/* <Route path="/aluno/dashboard" element={<AlunoDashboard />} /> */}
@@ -89,8 +91,9 @@ const App = () => (
               <Route path="/auth/verify" element={<AuthVerify />} />
               <Route path="/auth/verified" element={<AuthVerified />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-              </Routes>
+                <Route path="*" element={<NotFound />} />
+                </Routes>
+              </GamificationIntegrator>
             </GamificationProvider>
           </AuthProvider>
         </BrowserRouter>

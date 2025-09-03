@@ -22,7 +22,7 @@ interface DashboardProps {
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
   const progressActions = useProgressActions();
-  const { recordWeight } = progressActions;
+  const { logWeight } = progressActions;
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
