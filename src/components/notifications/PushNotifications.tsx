@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { initOneSignalWeb } from '@/lib/oneSignalWeb';
 
 declare global {
   interface Window {
@@ -16,12 +17,15 @@ export const PushNotifications = () => {
   const { user } = useAuthContext();
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) {
-      console.log('OneSignal: Not on native platform, skipping initialization');
-      return;
+    if (Capacitor.isNativePlatform()) {
+      console.log('OneSignal: Initializing for native platform');
+      initializeOneSignal();
+    } else {
+      console.log('OneSignal: Initializing for web platform');
+      if (user?.id) {
+        initOneSignalWeb(user.id);
+      }
     }
-
-    initializeOneSignal();
   }, [user]);
 
   const initializeOneSignal = async () => {
@@ -33,8 +37,8 @@ export const PushNotifications = () => {
 
       const OneSignal = window.plugins.OneSignal;
       
-      // Initialize with App ID from environment/secrets
-      const appId = process.env.ONESIGNAL_APP_ID || 'your-onesignal-app-id';
+      // Initialize with App ID
+      const appId = '1af0b3d5-8b2a-4c75-9e6f-3a4b5c6d7e8f';
       
       OneSignal.setAppId(appId);
       

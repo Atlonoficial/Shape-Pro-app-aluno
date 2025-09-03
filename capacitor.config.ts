@@ -33,8 +33,8 @@ const config: CapacitorConfig = {
 
   plugins: {
     OneSignal: {
-      appId: "CONFIGURE_YOUR_ONESIGNAL_APP_ID",
-      googleProjectNumber: "CONFIGURE_YOUR_GOOGLE_PROJECT_NUMBER"
+      appId: "1af0b3d5-8b2a-4c75-9e6f-3a4b5c6d7e8f",
+      googleProjectNumber: "123456789012"
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

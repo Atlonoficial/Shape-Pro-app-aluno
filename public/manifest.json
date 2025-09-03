@@ -7,6 +7,7 @@
   "background_color": "#000000",
   "theme_color": "#F59E0B",
   "orientation": "portrait-primary",
+  "gcm_sender_id": "123456789012",
   "scope": "/",
   "lang": "pt-BR",
   "categories": ["fitness", "health", "lifestyle", "sports"],
