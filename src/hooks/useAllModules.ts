@@ -35,12 +35,12 @@ export const useAllModules = () => {
 
   useEffect(() => {
     if (!user || !userProfile) {
-      console.log('useAllModules: Waiting for user and profile to load');
+      console.log('🔍 useAllModules: Waiting for user and profile to load');
       return;
     }
 
     const fetchAllModules = async () => {
-        console.log('useAllModules: Starting fetch for user type:', userProfile.user_type);
+        console.log('🚀 useAllModules: Starting fetch for user type:', userProfile.user_type);
         try {
           let coursesQuery = supabase
             .from('courses')
@@ -75,10 +75,10 @@ export const useAllModules = () => {
             return;
           }
 
-          console.log('useAllModules: Fetched courses:', courses?.length, courses);
+          console.log('📚 useAllModules: Fetched courses:', courses?.length, courses);
 
           if (!courses || courses.length === 0) {
-            console.log('useAllModules: No courses found');
+            console.log('❌ useAllModules: No courses found');
             setCourses([]);
             return;
           }
@@ -116,7 +116,7 @@ export const useAllModules = () => {
           console.error('useAllModules: Error fetching modules:', modulesError);
         }
 
-        console.log('useAllModules: Modules data:', modulesData?.length, modulesData);
+        console.log('📦 useAllModules: Modules data:', modulesData?.length, modulesData);
 
         // Get lesson counts for each module
         const moduleIds = modulesData.map((module: any) => module.id);
@@ -176,11 +176,11 @@ export const useAllModules = () => {
             modules: courseModules
           };
 
-          console.log('useAllModules: Course processed:', course.title, 'modules:', courseModules.length, 'hasAccess:', hasAccess);
+          console.log('✅ useAllModules: Course processed:', course.title, 'modules:', courseModules.length, 'hasAccess:', hasAccess);
           return courseWithModules;
         }); // Show ALL courses, not just ones with modules
 
-        console.log('useAllModules: All courses processed successfully:', coursesWithModules.length);
+        console.log('🎉 useAllModules: All courses processed successfully:', coursesWithModules.length, 'courses with modules:', coursesWithModules.filter(c => c.modules.length > 0).length);
         setCourses(coursesWithModules);
       } catch (error) {
         console.error('useAllModules: Unexpected error:', error);
