@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell, MessageSquare } from "lucide-react";
+import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell, MessageSquare, CreditCard } from "lucide-react";
 import { CourseManagement } from "./CourseManagement";
 import { ProductManagement } from "./ProductManagement";
 import { StudentStats } from "./StudentStats";
@@ -8,6 +8,7 @@ import { UnlockRequestsManager } from "./UnlockRequestsManager";
 import { NutritionDashboard } from "./NutritionDashboard";
 import { NotificationManager } from "./NotificationManager";
 import { FeedbackManager } from "./FeedbackManager";
+import { PaymentGatewayConfig } from "./PaymentGatewayConfig";
 import { useAuth } from "@/hooks/useAuth";
 
 export const TeacherDashboard = () => {
@@ -48,9 +49,9 @@ export const TeacherDashboard = () => {
         </Card>
       </div>
 
-      {/* Tabs Navigation */}
+       {/* Tabs Navigation */}
         <Tabs defaultValue="courses" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-8 mb-6">
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Cursos
@@ -78,6 +79,10 @@ export const TeacherDashboard = () => {
             <TabsTrigger value="feedbacks" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Feedbacks
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Pagamentos
             </TabsTrigger>
           </TabsList>
 
@@ -107,6 +112,10 @@ export const TeacherDashboard = () => {
 
         <TabsContent value="feedbacks" className="mt-4">
           <FeedbackManager />
+        </TabsContent>
+        
+        <TabsContent value="payments" className="mt-4">
+          <PaymentGatewayConfig />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Lock, Crown, CheckCircle, Clock, X } from 'lucide-react';
+import { Lock, Crown, CheckCircle, Clock, X, ShoppingCart } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUnlockRequests } from '@/hooks/useUnlockRequests';
+import { useTeacherPaymentSettings } from '@/hooks/useTeacherPaymentSettings';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Course {
   id: string;
@@ -23,7 +25,11 @@ interface UnlockCourseDialogProps {
 
 export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCourseDialogProps) => {
   const [isRequesting, setIsRequesting] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { createUnlockRequest } = useUnlockRequests();
+  
+  // Fetch teacher's payment settings to check if they have a gateway configured
+  const { settings: teacherPaymentSettings, hasActiveGateway } = useTeacherPaymentSettings();
 
   if (!course) return null;
 
@@ -37,6 +43,35 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
       setTimeout(() => {
         onClose();
       }, 1500);
+    }
+  };
+
+  const handlePurchaseCourse = async () => {
+    if (!hasActiveGateway || !course.price) return;
+    
+    setIsProcessingPayment(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          course_id: course.id,
+          teacher_id: course.instructor,
+          amount: course.price,
+          course_title: course.title
+        }
+      });
+
+      if (error) throw error;
+
+      // Redirect to payment gateway
+      if (data?.checkout_url) {
+        window.open(data.checkout_url, '_blank');
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -146,21 +181,55 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button 
-              onClick={onClose}
-              variant="outline" 
-              className="flex-1"
-            >
-              Fechar
-            </Button>
-            <Button 
-              onClick={requestStatus === 'approved' ? onClose : handleUnlockRequest}
-              disabled={statusContent.buttonDisabled || isRequesting}
-              className="flex-1"
-            >
-              {isRequesting ? "Enviando..." : statusContent.buttonText}
-            </Button>
+          <div className="space-y-3">
+            {/* Purchase Button (if gateway configured and course has price) */}
+            {hasActiveGateway && course.price && requestStatus === 'none' && (
+              <Button 
+                onClick={handlePurchaseCourse}
+                disabled={isProcessingPayment}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                {isProcessingPayment ? (
+                  "Processando..."
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Comprar Curso - R$ {course.price.toFixed(2)}
+                  </>
+                )}
+              </Button>
+            )}
+            
+            {/* Manual Request / Other Actions */}
+            <div className="flex gap-3">
+              <Button 
+                onClick={onClose}
+                variant="outline" 
+                className="flex-1"
+              >
+                Fechar
+              </Button>
+              {requestStatus !== 'approved' && (
+                <Button 
+                  onClick={handleUnlockRequest}
+                  disabled={statusContent.buttonDisabled || isRequesting}
+                  variant={hasActiveGateway && course.price ? "outline" : "default"}
+                  className="flex-1"
+                >
+                  {isRequesting ? "Enviando..." : (
+                    hasActiveGateway && course.price ? "Solicitar Acesso" : statusContent.buttonText
+                  )}
+                </Button>
+              )}
+              {requestStatus === 'approved' && (
+                <Button 
+                  onClick={onClose}
+                  className="flex-1"
+                >
+                  Acessar Curso
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
