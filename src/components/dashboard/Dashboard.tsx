@@ -13,6 +13,8 @@ import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useWorkouts, useNotifications } from "@/hooks/useSupabase";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
 import { useProgressActions } from "@/components/progress/ProgressActions";
+import { useWeeklyFeedback } from "@/hooks/useWeeklyFeedback";
+import { WeeklyFeedbackModal } from "@/components/feedback/WeeklyFeedbackModal";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -26,6 +28,9 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
+  
+  // Weekly feedback hook
+  const { shouldShowModal: shouldShowFeedbackModal, setShouldShowModal: setShouldShowFeedbackModal, submitWeeklyFeedback, loading: feedbackLoading } = useWeeklyFeedback();
   
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
@@ -52,6 +57,17 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     
     checkWeightModal();
   }, [isAuthenticated, user, shouldShowWeightModal]);
+
+  // Check if should show feedback modal (after weight modal logic)
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    
+    // Show feedback modal with delay if needed (after weight modal would show)
+    if (shouldShowFeedbackModal) {
+      const delay = shouldShowWeightModal ? 4000 : 2000; // Wait longer if weight modal is also showing
+      setTimeout(() => setShouldShowFeedbackModal(true), delay);
+    }
+  }, [isAuthenticated, user, shouldShowFeedbackModal, shouldShowWeightModal]);
 
   const handleSaveWeight = async (weight: number) => {
     console.log('💾 Dashboard: Saving weight:', weight);
@@ -242,6 +258,14 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         }}
         onSave={handleSaveWeight}
         error={weightError}
+      />
+
+      {/* Weekly Feedback Modal */}
+      <WeeklyFeedbackModal
+        isOpen={shouldShowFeedbackModal}
+        onClose={() => setShouldShowFeedbackModal(false)}
+        onSubmit={submitWeeklyFeedback}
+        loading={feedbackLoading}
       />
     </div>
   );

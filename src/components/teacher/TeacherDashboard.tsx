@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell } from "lucide-react";
+import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell, MessageSquare } from "lucide-react";
 import { CourseManagement } from "./CourseManagement";
 import { ProductManagement } from "./ProductManagement";
 import { StudentStats } from "./StudentStats";
 import { UnlockRequestsManager } from "./UnlockRequestsManager";
 import { NutritionDashboard } from "./NutritionDashboard";
 import { NotificationManager } from "./NotificationManager";
+import { FeedbackManager } from "./FeedbackManager";
 import { useAuth } from "@/hooks/useAuth";
 
 export const TeacherDashboard = () => {
@@ -49,7 +50,7 @@ export const TeacherDashboard = () => {
 
       {/* Tabs Navigation */}
         <Tabs defaultValue="courses" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Cursos
@@ -73,6 +74,10 @@ export const TeacherDashboard = () => {
             <TabsTrigger value="requests" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Solicitações
+            </TabsTrigger>
+            <TabsTrigger value="feedbacks" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Feedbacks
             </TabsTrigger>
           </TabsList>
 
@@ -98,6 +103,10 @@ export const TeacherDashboard = () => {
 
         <TabsContent value="requests" className="mt-4">
           <UnlockRequestsManager />
+        </TabsContent>
+
+        <TabsContent value="feedbacks" className="mt-4">
+          <FeedbackManager />
         </TabsContent>
       </Tabs>
     </div>
