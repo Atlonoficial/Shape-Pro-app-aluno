@@ -154,25 +154,56 @@ export const PushNotifications = () => {
     }
   };
 
-  const updatePlayerIdInSupabase = async (playerId: string) => {
-    try {
-      if (!user?.id) return;
-      
-      console.log('OneSignal: Updating player ID in Supabase:', playerId);
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({ onesignal_player_id: playerId })
-        .eq('id', user.id);
-      
-      if (error) {
-        console.error('OneSignal: Error updating player ID:', error);
-      } else {
-        console.log('OneSignal: Player ID successfully saved to Supabase');
+  const updatePlayerIdInSupabase = async (playerId: string, maxRetries = 3) => {
+    if (!user?.id) {
+      console.error('OneSignal Native: No user ID available');
+      return;
+    }
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`OneSignal Native: Updating player ID in Supabase (attempt ${attempt}):`, playerId);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ onesignal_player_id: playerId })
+          .eq('id', user.id)
+          .select();
+        
+        if (error) {
+          console.error(`OneSignal Native: Error updating player ID (attempt ${attempt}):`, error);
+          if (attempt === maxRetries) {
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        
+        console.log('OneSignal Native: Player ID successfully saved to Supabase:', data);
+        
+        // Verificar se foi salvo corretamente
+        const { data: verifyData } = await supabase
+          .from('profiles')
+          .select('onesignal_player_id')
+          .eq('id', user.id)
+          .single();
+        
+        if (verifyData?.onesignal_player_id === playerId) {
+          console.log('OneSignal Native: Player ID verification successful');
+        } else {
+          console.warn('OneSignal Native: Player ID verification failed');
+        }
+        
+        return;
+        
+      } catch (error) {
+        console.error(`OneSignal Native: Error updating player ID in Supabase (attempt ${attempt}):`, error);
+        if (attempt === maxRetries) {
+          console.error('OneSignal Native: Failed to save Player ID after', maxRetries, 'attempts');
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
-      
-    } catch (error) {
-      console.error('OneSignal: Error updating player ID in Supabase:', error);
     }
   };
 

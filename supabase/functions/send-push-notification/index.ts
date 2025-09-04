@@ -98,45 +98,56 @@ serve(async (req) => {
 
     // If no target users specified, this is a broadcast to all users
     let playerIds: string[] = []
+    let totalUsersChecked = 0
     
     if (target_users && target_users.length > 0) {
       // Get OneSignal player IDs for specific users
+      console.log('OneSignal: Targeting specific users:', target_users.length)
+      
       const { data: profiles, error: profilesError } = await supabaseClient
         .from('profiles')
-        .select('onesignal_player_id')
+        .select('id, onesignal_player_id, name, email')
         .in('id', target_users)
-        .not('onesignal_player_id', 'is', null)
 
       if (profilesError) {
         console.error('OneSignal: Error fetching user profiles:', profilesError)
         throw profilesError
       }
 
-      playerIds = profiles
-        ?.map(p => p.onesignal_player_id)
+      console.log('OneSignal: Profile data retrieved:', profiles)
+      
+      totalUsersChecked = profiles?.length || 0
+      const usersWithPlayerIds = profiles?.filter(p => p.onesignal_player_id) || []
+      const usersWithoutPlayerIds = profiles?.filter(p => !p.onesignal_player_id) || []
+      
+      playerIds = usersWithPlayerIds
+        .map(p => p.onesignal_player_id)
         .filter(Boolean) || []
       
-      console.log('OneSignal: Found player IDs:', playerIds.length)
+      console.log(`OneSignal: Found ${playerIds.length}/${totalUsersChecked} valid player IDs`)
+      console.log('OneSignal: Users with Player IDs:', usersWithPlayerIds.map(u => ({ id: u.id, name: u.name })))
+      console.log('OneSignal: Users without Player IDs:', usersWithoutPlayerIds.map(u => ({ id: u.id, name: u.name })))
+      
     } else {
-      // Broadcast to all students of the requesting teacher (if teacher)
-      const { data: teacherStudents, error: studentsError } = await supabaseClient
-        .from('students')
-        .select(`
-          user_id,
-          profiles!inner (
-            onesignal_player_id
-          )
-        `)
-        .not('profiles.onesignal_player_id', 'is', null)
+      // Broadcast to all students (global broadcast)
+      console.log('OneSignal: Broadcasting to all students')
+      
+      const { data: allStudents, error: studentsError } = await supabaseClient
+        .from('profiles')
+        .select('id, onesignal_player_id, name, user_type')
+        .eq('user_type', 'student')
 
       if (studentsError) {
-        console.warn('OneSignal: Error fetching teacher students:', studentsError)
-      } else if (teacherStudents) {
-        playerIds = teacherStudents
-          .map(s => s.profiles?.onesignal_player_id)
+        console.warn('OneSignal: Error fetching students:', studentsError)
+      } else if (allStudents) {
+        totalUsersChecked = allStudents.length
+        const studentsWithPlayerIds = allStudents.filter(s => s.onesignal_player_id)
+        
+        playerIds = studentsWithPlayerIds
+          .map(s => s.onesignal_player_id)
           .filter(Boolean) || []
         
-        console.log('OneSignal: Broadcasting to teacher students:', playerIds.length)
+        console.log(`OneSignal: Broadcasting to ${playerIds.length}/${totalUsersChecked} students with Player IDs`)
       }
     }
 

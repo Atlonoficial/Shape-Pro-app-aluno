@@ -2,6 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MobileContainer } from "@/components/layout/MobileContainer";
 import { TeacherDashboard } from "@/components/teacher/TeacherDashboard";
+import { NotificationManager } from "@/components/teacher/NotificationManager";
+import { NotificationStatus } from "@/components/notifications/NotificationStatus";
 import { Button } from "@/components/ui/button";
 
 const DashboardProfessor = () => {
@@ -25,7 +27,10 @@ const DashboardProfessor = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
-          <TeacherDashboard />
+        <NotificationManager />
+        <div className="mt-6">
+          <NotificationStatus />
+        </div>
         </div>
       </div>
     </MobileContainer>
