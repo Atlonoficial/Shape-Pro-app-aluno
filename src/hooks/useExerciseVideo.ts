@@ -47,6 +47,22 @@ export const useExerciseVideo = (exerciseName: string) => {
             searchTerms = ['abdominal', 'crunch'];
           } else if (normalizedName.includes('voo reverso') || normalizedName.includes('máquina de voo')) {
             searchTerms = ['voo', 'fly', 'peitoral'];
+          } else if (normalizedName.includes('supino')) {
+            searchTerms = ['supino', 'press', 'bench'];
+          } else if (normalizedName.includes('agachamento')) {
+            searchTerms = ['agachamento', 'squat'];
+          } else if (normalizedName.includes('flexão')) {
+            searchTerms = ['flexão', 'push'];
+          } else if (normalizedName.includes('rosca')) {
+            searchTerms = ['rosca', 'curl'];
+          } else if (normalizedName.includes('remada')) {
+            searchTerms = ['remada', 'row'];
+          } else if (normalizedName.includes('desenvolvimento')) {
+            searchTerms = ['desenvolvimento', 'press', 'shoulder'];
+          } else if (normalizedName.includes('prancha')) {
+            searchTerms = ['prancha', 'plank'];
+          } else if (normalizedName.includes('burpee')) {
+            searchTerms = ['burpee', 'burpees'];
           } else {
             // Busca genérica por similaridade
             searchTerms = [exerciseName];

@@ -68,7 +68,14 @@ export const VideoPlayer = ({ exerciseName, videoUrl, className = "" }: VideoPla
         {/* Overlay com informações */}
         <div className="absolute top-3 left-3 right-3 z-10">
           <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
-            <p className="text-white font-medium text-sm truncate">{exerciseName}</p>
+            <p className="text-white font-medium text-sm truncate">
+              {exercise?.name || exerciseName}
+            </p>
+            {exercise?.name && exercise.name !== exerciseName && (
+              <p className="text-white/70 text-xs truncate">
+                Treino: {exerciseName}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -91,8 +98,12 @@ export const VideoPlayer = ({ exerciseName, videoUrl, className = "" }: VideoPla
                 <Play className="w-6 h-6 text-background ml-1" />
               )}
             </button>
-            <p className="text-foreground font-medium text-sm">{exerciseName}</p>
-            <p className="text-muted-foreground text-xs">Preview do exercício</p>
+            <p className="text-foreground font-medium text-sm">
+              {exercise?.name || exerciseName}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              {exercise?.name ? 'Vídeo disponível' : 'Preview do exercício'}
+            </p>
           </div>
         </div>
       </div>

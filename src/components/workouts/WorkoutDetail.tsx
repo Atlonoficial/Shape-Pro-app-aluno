@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft, Clock, Flame, Dumbbell, Play, ChevronDown } from "lucide-react";
+import { ArrowLeft, Clock, Flame, Dumbbell, Play, ChevronDown, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "./VideoPlayer";
+import { useExerciseVideo } from "@/hooks/useExerciseVideo";
 
 interface Exercise {
   id: number;
@@ -28,6 +29,55 @@ interface WorkoutDetailProps {
   onStartWorkout: () => void;
   onExerciseSelect?: (exercise: Exercise) => void;
 }
+
+// Componente para exibir nome do exercício com informações da base de dados
+const ExerciseNameDisplay = ({ exerciseName }: { exerciseName: string }) => {
+  const { exercise, loading } = useExerciseVideo(exerciseName);
+  
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1">
+        <h3 className="font-bold text-foreground mb-1 text-lg">
+          {exercise?.name || exerciseName}
+        </h3>
+        {exercise?.name && exercise.name !== exerciseName && (
+          <p className="text-xs text-muted-foreground">
+            Treino: {exerciseName}
+          </p>
+        )}
+      </div>
+      {exercise?.video_url && (
+        <div title="Vídeo disponível">
+          <CheckCircle2 className="w-4 h-4 text-green-500" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente para exibir informações completas do exercício
+const ExerciseInfoDisplay = ({ exerciseName }: { exerciseName: string }) => {
+  const { exercise, loading } = useExerciseVideo(exerciseName);
+  
+  if (loading || !exercise) return null;
+  
+  return (
+    <div className="space-y-2">
+      {exercise.instructions && (
+        <div className="bg-primary/10 rounded-lg p-3 border border-primary/20">
+          <p className="text-xs text-primary/80 mb-1 font-medium">Instruções</p>
+          <p className="text-sm text-foreground">{exercise.instructions}</p>
+        </div>
+      )}
+      {exercise.description && exercise.description !== exercise.instructions && (
+        <div className="bg-surface/30 rounded-lg p-3 border border-border/20">
+          <p className="text-xs text-muted-foreground mb-1">Descrição Técnica</p>
+          <p className="text-sm text-foreground">{exercise.description}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelect }: WorkoutDetailProps) => {
   const [selectedExercisePreview, setSelectedExercisePreview] = useState<number | null>(null);
@@ -106,8 +156,8 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                 }}
               >
                 <div className="flex-1">
-                  <h3 className="font-bold text-foreground mb-1 text-lg">{exercise.name}</h3>
-                  <p className="text-muted-foreground text-sm font-medium">{exercise.type}</p>
+                  <ExerciseNameDisplay exerciseName={exercise.name} />
+                  <p className="text-muted-foreground text-sm font-medium mt-1">{exercise.type}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button 
@@ -132,6 +182,8 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
               {/* Exercise details expandible */}
               {expandedExercise === exercise.id && (
                 <div className="mt-4 pt-4 border-t border-border/20 space-y-3">
+                  <ExerciseInfoDisplay exerciseName={exercise.name} />
+                  
                   {exercise.sets && exercise.reps && (
                     <div className="flex items-center gap-2">
                       <Flame className="w-4 h-4 text-accent" />
