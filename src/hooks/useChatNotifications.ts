@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { toast } from 'sonner';
 
 export const useChatNotifications = () => {
   const { user, userProfile } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userProfile) return;
 
-    // Escutar novas mensagens de chat
+    console.log('Chat Notifications: Setting up real-time chat message listener');
+
+    // Escutar novas mensagens de chat apenas para contar não lidas
+    // As notificações push serão enviadas pelo professor via OneSignal
     const channel = supabase
       .channel('chat-notifications')
       .on(
@@ -22,9 +24,11 @@ export const useChatNotifications = () => {
         async (payload) => {
           const newMessage = payload.new as any;
           
-          // Não mostrar notificação para próprias mensagens
+          // Não processar próprias mensagens
           if (newMessage.sender_id === user.id) return;
 
+          console.log('Chat Notifications: New message received:', newMessage);
+          
           try {
             // Buscar dados da conversa para determinar se é para este usuário
             const { data: conversation } = await supabase
@@ -41,42 +45,23 @@ export const useChatNotifications = () => {
 
             if (!isParticipant) return;
 
-            // Buscar nome do remetente
-            const { data: sender } = await supabase
-              .from('profiles')
-              .select('name, email')
-              .eq('id', newMessage.sender_id)
-              .single();
-
-            const senderName = sender?.name || sender?.email || 'Alguém';
-            
-            // Mostrar notificação
-            toast(senderName, {
-              description: newMessage.message.length > 100 
-                ? newMessage.message.substring(0, 100) + '...'
-                : newMessage.message,
-              action: {
-                label: "Ver",
-                onClick: () => {
-                  // Se estiver no app, navegar para o chat
-                  if (window.location.pathname !== '/chat') {
-                    window.location.href = '/chat';
-                  }
-                }
-              }
-            });
+            // As notificações push do OneSignal vão cuidar das notificações visuais
+            // Este hook serve apenas para sincronização em tempo real de dados
+            console.log('Chat Notifications: Message processed for user participation');
 
           } catch (error) {
-            console.error('Erro ao processar notificação de chat:', error);
+            console.error('Chat Notifications: Error processing message:', error);
           }
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Chat Notifications: Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [user, userProfile]);
 
+  // Este hook não retorna nada, apenas configura listeners
   return null;
 };

@@ -4,6 +4,7 @@ import { useAuthContext } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { initOneSignalWeb } from '@/lib/oneSignalWeb';
+import { useNavigate } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -13,8 +14,24 @@ declare global {
   }
 }
 
+// Get OneSignal App ID from environment or use fallback
+const getOneSignalAppId = async (): Promise<string> => {
+  try {
+    const { data } = await supabase.functions.invoke('get-onesignal-config');
+    if (data?.appId) {
+      return data.appId;
+    }
+  } catch (error) {
+    console.warn('Could not fetch OneSignal config:', error);
+  }
+  
+  // Fallback para o ID padrão de desenvolvimento
+  return '1af0b3d5-8b2a-4c75-9e6f-3a4b5c6d7e8f';
+};
+
 export const PushNotifications = () => {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -38,7 +55,8 @@ export const PushNotifications = () => {
       const OneSignal = window.plugins.OneSignal;
       
       // Initialize with App ID
-      const appId = '1af0b3d5-8b2a-4c75-9e6f-3a4b5c6d7e8f';
+      const appId = await getOneSignalAppId();
+      console.log('OneSignal Native: Using App ID:', appId.substring(0, 8) + '...');
       
       OneSignal.setAppId(appId);
       
@@ -56,6 +74,10 @@ export const PushNotifications = () => {
         // Show toast for in-app notifications
         toast(notification.title, {
           description: notification.body,
+          action: {
+            label: 'Ver',
+            onClick: () => handleNotificationAction(notification.additionalData)
+          }
         });
         
         // Complete with notification to show it
@@ -69,11 +91,7 @@ export const PushNotifications = () => {
         const { notification } = result;
         const { additionalData } = notification;
         
-        // Handle deep linking based on notification data
-        if (additionalData?.route) {
-          // You can implement navigation here
-          console.log('Navigate to:', additionalData.route);
-        }
+        handleNotificationAction(additionalData);
       });
 
       // Get the player ID and save to Supabase
@@ -92,6 +110,47 @@ export const PushNotifications = () => {
 
     } catch (error) {
       console.error('OneSignal: Error initializing:', error);
+    }
+  };
+
+  const handleNotificationAction = (additionalData: any) => {
+    if (!additionalData) return;
+
+    const { route, deep_link, type } = additionalData;
+    
+    // Navegar baseado no tipo de notificação
+    if (route) {
+      navigate(route);
+    } else if (deep_link) {
+      window.location.href = deep_link;
+    } else if (type) {
+      // Navegação baseada no tipo
+      switch (type) {
+        case 'teacher_announcement':
+          navigate('/');
+          break;
+        case 'new_lesson':
+          navigate('/?tab=members');
+          break;
+        case 'workout_reminder':
+          navigate('/?tab=workouts');
+          break;
+        case 'nutrition_reminder':
+          navigate('/?tab=nutrition');
+          break;
+        case 'appointment_reminder':
+          navigate('/agenda');
+          break;
+        case 'chat_message':
+          navigate('/chat');
+          break;
+        default:
+          navigate('/');
+          break;
+      }
+    } else {
+      // Fallback para home
+      navigate('/');
     }
   };
 

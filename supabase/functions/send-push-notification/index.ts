@@ -117,6 +117,27 @@ serve(async (req) => {
         .filter(Boolean) || []
       
       console.log('OneSignal: Found player IDs:', playerIds.length)
+    } else {
+      // Broadcast to all students of the requesting teacher (if teacher)
+      const { data: teacherStudents, error: studentsError } = await supabaseClient
+        .from('students')
+        .select(`
+          user_id,
+          profiles!inner (
+            onesignal_player_id
+          )
+        `)
+        .not('profiles.onesignal_player_id', 'is', null)
+
+      if (studentsError) {
+        console.warn('OneSignal: Error fetching teacher students:', studentsError)
+      } else if (teacherStudents) {
+        playerIds = teacherStudents
+          .map(s => s.profiles?.onesignal_player_id)
+          .filter(Boolean) || []
+        
+        console.log('OneSignal: Broadcasting to teacher students:', playerIds.length)
+      }
     }
 
     // Prepare OneSignal notification payload

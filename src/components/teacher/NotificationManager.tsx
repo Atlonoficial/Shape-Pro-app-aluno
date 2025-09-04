@@ -52,17 +52,32 @@ export const NotificationManager = () => {
     {
       title: 'Nova Aula Disponível',
       message: 'Uma nova aula foi adicionada ao seu curso. Confira agora!',
-      icon: <Bell className="h-4 w-4" />
+      icon: <Bell className="h-4 w-4" />,
+      type: 'new_lesson'
     },
     {
       title: 'Lembrete de Treino',
       message: 'Não esqueça do seu treino de hoje. Vamos alcançar seus objetivos!',
-      icon: <Calendar className="h-4 w-4" />
+      icon: <Calendar className="h-4 w-4" />,
+      type: 'workout_reminder'
     },
     {
       title: 'Parabéns pelo Progresso!',
       message: 'Você está no caminho certo! Continue assim.',
-      icon: <CheckCircle className="h-4 w-4" />
+      icon: <CheckCircle className="h-4 w-4" />,
+      type: 'progress_congratulations'
+    },
+    {
+      title: 'Lembrete de Nutrição',
+      message: 'Lembre-se de registrar suas refeições de hoje.',
+      icon: <Bell className="h-4 w-4" />,
+      type: 'nutrition_reminder'
+    },
+    {
+      title: 'Agendamento Confirmado',
+      message: 'Sua consulta de amanhã foi confirmada. Te esperamos!',
+      icon: <CheckCircle className="h-4 w-4" />,
+      type: 'appointment_confirmed'
     }
   ];
 
