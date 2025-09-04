@@ -106,8 +106,8 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                 }}
               >
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">{exercise.name}</h3>
-                  <p className="text-muted-foreground text-sm">{exercise.type}</p>
+                  <h3 className="font-bold text-foreground mb-1 text-lg">{exercise.name}</h3>
+                  <p className="text-muted-foreground text-sm font-medium">{exercise.type}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button 
