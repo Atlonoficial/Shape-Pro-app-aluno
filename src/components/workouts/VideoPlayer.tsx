@@ -1,6 +1,7 @@
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { YouTubePlayer } from "./YouTubePlayer";
+import { useExerciseVideo } from "@/hooks/useExerciseVideo";
 
 interface VideoPlayerProps {
   exerciseName: string;
@@ -10,19 +11,67 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ exerciseName, videoUrl, className = "" }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const { exercise, loading, error, videoUrl: exerciseVideoUrl } = useExerciseVideo(exerciseName);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
 
-  // Se temos uma URL de vídeo, usar o YouTubePlayer
-  if (videoUrl) {
+  // Se há carregamento, mostrar loader
+  if (loading) {
     return (
-      <YouTubePlayer 
-        videoUrl={videoUrl} 
-        exerciseName={exerciseName} 
-        className={className} 
-      />
+      <div className={`relative aspect-video bg-surface/30 rounded-xl flex items-center justify-center border border-border/20 overflow-hidden ${className}`}>
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          <span className="text-sm text-foreground">Carregando vídeo...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Priorizar videoUrl fornecido, senão usar o do exercício encontrado
+  const finalVideoUrl = videoUrl || exerciseVideoUrl;
+
+  // Se temos uma URL de vídeo, usar o YouTubePlayer para YouTube ou reproduzir GIF/vídeo direto
+  if (finalVideoUrl) {
+    // Verificar se é YouTube
+    if (finalVideoUrl.includes('youtube.com') || finalVideoUrl.includes('youtu.be')) {
+      return (
+        <YouTubePlayer 
+          videoUrl={finalVideoUrl} 
+          exerciseName={exerciseName} 
+          className={className} 
+        />
+      );
+    }
+    
+    // Para outros tipos de vídeo (GIF, MP4, etc.)
+    return (
+      <div className={`relative aspect-video bg-black rounded-xl overflow-hidden border border-border/20 ${className}`}>
+        {finalVideoUrl.endsWith('.gif') ? (
+          <img
+            src={finalVideoUrl}
+            alt={exerciseName}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <video
+            src={finalVideoUrl}
+            controls
+            autoPlay={false}
+            loop
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        
+        {/* Overlay com informações */}
+        <div className="absolute top-3 left-3 right-3 z-10">
+          <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
+            <p className="text-white font-medium text-sm truncate">{exerciseName}</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
