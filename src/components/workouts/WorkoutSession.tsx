@@ -92,16 +92,21 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
     try {
       if (!user?.id) return;
 
+      const endTime = new Date();
+      const startTime = new Date(endTime.getTime() - (time * 1000));
+
       const { data, error } = await supabase
         .from('workout_sessions')
         .insert({
           user_id: user.id,
-          name: workout.name,
-          start_time: new Date().toISOString(),
-          duration: time,
-          completed: true,
-          exercises_completed: currentExerciseIndex + 1,
-          total_exercises: workout.exercises.length
+          workout_id: workout.id.toString(),
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          total_duration: Math.floor(time / 60), // converter segundos para minutos
+          exercises: {
+            completed: currentExerciseIndex + 1,
+            total: workout.exercises.length
+          } as any
         });
 
       if (error) {
