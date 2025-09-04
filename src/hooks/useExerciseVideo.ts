@@ -26,6 +26,8 @@ export const useExerciseVideo = (exerciseName: string) => {
       setError(null);
       
       try {
+        console.log('Buscando exercício:', exerciseName);
+        
         // Buscar exercício pelo nome exato primeiro
         let { data, error } = await supabase
           .from('exercises')
@@ -37,17 +39,41 @@ export const useExerciseVideo = (exerciseName: string) => {
 
         // Se não encontrou pelo nome exato, buscar por similaridade
         if (!data || data.length === 0) {
-          const { data: similarData, error: similarError } = await supabase
-            .from('exercises')
-            .select('id, name, video_url, image_url, instructions, description')
-            .ilike('name', `%${exerciseName}%`)
-            .limit(1);
+          // Tentar busca por palavras-chave principais
+          const normalizedName = exerciseName.toLowerCase();
+          
+          let searchTerms = [];
+          if (normalizedName.includes('abdominal') || normalizedName === 'abdominais') {
+            searchTerms = ['abdominal', 'crunch'];
+          } else if (normalizedName.includes('voo reverso') || normalizedName.includes('máquina de voo')) {
+            searchTerms = ['voo', 'fly', 'peitoral'];
+          } else {
+            // Busca genérica por similaridade
+            searchTerms = [exerciseName];
+          }
 
-          if (similarError) throw similarError;
-          data = similarData;
+          for (const term of searchTerms) {
+            const { data: similarData, error: similarError } = await supabase
+              .from('exercises')
+              .select('id, name, video_url, image_url, instructions, description')
+              .ilike('name', `%${term}%`)
+              .limit(1);
+
+            if (similarError) throw similarError;
+            
+            if (similarData && similarData.length > 0) {
+              data = similarData;
+              console.log('Exercício encontrado:', similarData[0].name, 'para busca:', exerciseName);
+              break;
+            }
+          }
         }
 
         setExercise(data && data.length > 0 ? data[0] : null);
+        
+        if (!data || data.length === 0) {
+          console.warn('Nenhum exercício encontrado para:', exerciseName);
+        }
       } catch (err) {
         console.error('Erro ao buscar exercício:', err);
         setError('Erro ao carregar vídeo do exercício');
