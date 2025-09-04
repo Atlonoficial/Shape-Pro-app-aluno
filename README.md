@@ -1,73 +1,46 @@
-# Welcome to your Lovable project
+# Shape Pro - Personal Training App 🏋️‍♂️
 
-## Project info
+> **Aplicativo completo de personal training pronto para as lojas oficiais**
 
-**URL**: https://lovable.dev/projects/d46ecb0f-56a1-441d-a5d5-bac293c0288a
+## 🚀 **STATUS: PRODUÇÃO READY**
 
-## How can I edit this code?
+### ✅ **Stack Limpo e Otimizado:**
+- **Frontend:** React + TypeScript + Tailwind CSS
+- **Backend:** Supabase (sem Firebase!)
+- **Mobile:** Capacitor (iOS + Android)
+- **Notificações:** OneSignal
 
-There are several ways of editing your application.
+### 🎯 **Próximos Passos:**
+1. **OneSignal:** Substituir credenciais no `capacitor.config.ts`
+2. **Android:** Gerar keystore e build AAB
+3. **iOS:** Configurar Apple Developer e build
+4. **Publicar:** Upload nas lojas oficiais
 
-**Use Lovable**
+## 📋 **Guias de Produção:**
+- 📖 `PRODUCTION-SETUP-GUIDE.md` - Configuração completa
+- ✅ `FINAL-PRODUCTION-CHECKLIST.md` - Checklist passo a passo
+- 🤖 `scripts/android-release-build.md` - Build Android
+- 🍎 `scripts/ios-release-build.md` - Build iOS
+- 🎨 `STORE-ASSETS-CHECKLIST.md` - Assets das lojas
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d46ecb0f-56a1-441d-a5d5-bac293c0288a) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## 🚀 **Comandos Essenciais:**
+```bash
+npm install && npm run build
+npx cap sync android  # Para Android
+npx cap sync ios       # Para iOS
+npx cap open android   # Abrir Android Studio
+npx cap open ios       # Abrir Xcode
 ```
 
-**Edit a file directly in GitHub**
+## 🔔 **Configuração OneSignal (CRÍTICO):**
+Atualizar em `capacitor.config.ts`:
+```typescript
+OneSignal: {
+  appId: "SEU_ONESIGNAL_APP_ID_REAL",
+  googleProjectNumber: "SEU_GOOGLE_PROJECT_NUMBER_REAL"
+}
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/d46ecb0f-56a1-441d-a5d5-bac293c0288a) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+**🏆 Shape Pro - Pronto para transformar vidas através da tecnologia!**
