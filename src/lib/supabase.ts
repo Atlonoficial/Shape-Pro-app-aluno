@@ -125,7 +125,7 @@ export const signUpUser = async (email: string, password: string, name: string, 
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/verified`,
+      emailRedirectTo: `${window.location.origin}/auth/confirm`,
       data: {
         name,
         user_type: userType
@@ -154,7 +154,7 @@ export const signOutUser = async () => {
 
 export const resetPasswordForEmail = async (email: string) => {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: `${window.location.origin}/auth/recovery`,
   });
   if (error) throw error;
 };

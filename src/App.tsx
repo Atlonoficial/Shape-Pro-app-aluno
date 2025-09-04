@@ -18,6 +18,12 @@ import Index from "./pages/Index";
 // import { FotosProgresso } from "./pages/FotosProgresso";
 // import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
 import NotFound from "./pages/NotFound";
+import { AuthConfirm } from "./pages/auth/AuthConfirm";
+import { AuthRecovery } from "./pages/auth/AuthRecovery";
+import { AuthInvite } from "./pages/auth/AuthInvite";
+import { AuthMagicLink } from "./pages/auth/AuthMagicLink";
+import { AuthChangeEmail } from "./pages/auth/AuthChangeEmail";
+import { AuthError } from "./pages/auth/AuthError";
 import { Anamnese } from "./pages/Anamnese";
 import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
@@ -52,46 +58,35 @@ const App = () => (
                 <PushNotificationsWrapper />
                 <Routes>
               <Route path="/" element={<Index />} />
-              {/* <Route path="/login" element={<Login />} /> */}
-              {/* <Route path="/aluno/dashboard" element={<AlunoDashboard />} /> */}
-              {/* <Route path="/aluno/chat/:id" element={<AlunoChat />} /> */}
-              {/* <Route path="/cadastro-completo" element={<CadastroCompleto />} /> */}
-              {/* <Route path="/exames-medicos" element={<ExamesMedicos />} /> */}
-              {/* <Route path="/fotos-progresso" element={<FotosProgresso />} /> */}
-              {/* <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} /> */}
-              <Route path="/cadastro-completo" element={<CadastroCompleto />} />
-              <Route path="/anamnese" element={<Anamnese />} />
-              <Route path="/exames-medicos" element={<ExamesMedicos />} />
-              <Route path="/fotos-progresso" element={<FotosProgresso />} />
-              <Route path="/avaliacoes-fisicas" element={<AvaliacoesFisicas />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-              <Route path="/conta-seguranca" element={<ContaSeguranca />} />
-              <Route path="/assinaturas-planos" element={<AssinaturasPlanos />} />
+              <Route path="/cadastro-completo" element={<AuthGuard><CadastroCompleto /></AuthGuard>} />
+              <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
+              <Route path="/exames-medicos" element={<AuthGuard><ExamesMedicos /></AuthGuard>} />
+              <Route path="/fotos-progresso" element={<AuthGuard><FotosProgresso /></AuthGuard>} />
+              <Route path="/avaliacoes-fisicas" element={<AuthGuard><AvaliacoesFisicas /></AuthGuard>} />
+              <Route path="/configuracoes" element={<AuthGuard><Configuracoes /></AuthGuard>} />
+              <Route path="/conta-seguranca" element={<AuthGuard><ContaSeguranca /></AuthGuard>} />
+              <Route path="/assinaturas-planos" element={<AuthGuard><AssinaturasPlanos /></AuthGuard>} />
               <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-              <Route path="/iniciar-treino" element={<IniciarTreino />} />
-              <Route path="/registrar-refeicao" element={<RegistrarRefeicao />} />
-              <Route path="/agenda" element={
-                <AuthGuard>
-                  <Agenda />
-                </AuthGuard>
-              } />
-              <Route path="/metas" element={<Metas />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/recompensas" element={<Recompensas />} />
-              <Route path="/chat" element={
-                <AuthGuard>
-                  <Chat />
-                </AuthGuard>
-              } />
-              <Route path="/dashboard-professor" element={
-                <AuthGuard>
-                  <DashboardProfessor />
-                </AuthGuard>
-              } />
+              <Route path="/iniciar-treino" element={<AuthGuard><IniciarTreino /></AuthGuard>} />
+              <Route path="/registrar-refeicao" element={<AuthGuard><RegistrarRefeicao /></AuthGuard>} />
+              <Route path="/agenda" element={<AuthGuard><Agenda /></AuthGuard>} />
+              <Route path="/metas" element={<AuthGuard><Metas /></AuthGuard>} />
+              <Route path="/recompensas" element={<AuthGuard><Recompensas /></AuthGuard>} />
+              <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
+              <Route path="/dashboard-professor" element={<AuthGuard><DashboardProfessor /></AuthGuard>} />
+              
+              {/* Authentication Routes */}
+              <Route path="/auth/confirm" element={<AuthConfirm />} />
+              <Route path="/auth/recovery" element={<AuthRecovery />} />
+              <Route path="/auth/invite" element={<AuthInvite />} />
+              <Route path="/auth/magic-link" element={<AuthMagicLink />} />
+              <Route path="/auth/change-email" element={<AuthChangeEmail />} />
+              <Route path="/auth/error" element={<AuthError />} />
               <Route path="/auth/verify" element={<AuthVerify />} />
               <Route path="/auth/verified" element={<AuthVerified />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              
+              <Route path="*" element={<NotFound />} />
                 </Routes>
               </GamificationIntegrator>
             </GamificationProvider>
