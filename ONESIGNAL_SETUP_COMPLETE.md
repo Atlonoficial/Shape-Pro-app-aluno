@@ -54,7 +54,7 @@ O sistema de notificações push OneSignal foi completamente implementado e inte
 - Criar novo app para "Shape Pro"
 - Obter **App ID** e **REST API Key**
 - Configurar **Web Push** (certificados)
-- Configurar **Android** (Firebase FCM)
+- Configurar **Android** (Google Cloud FCM)
 - Configurar **iOS** (Apple Push Certificates)
 
 #### **2. Supabase Secrets**
@@ -75,15 +75,15 @@ Atualizar `capacitor.config.ts` com credenciais reais:
 plugins: {
   OneSignal: {
     appId: "SEU_APP_ID_REAL", // Substituir
-    googleProjectNumber: "SEU_FIREBASE_PROJECT_NUMBER" // Substituir
+    googleProjectNumber: "SEU_GOOGLE_PROJECT_NUMBER" // Substituir
   }
 }
 ```
 
-#### **4. Firebase Setup (Android)**
-- Baixar `google-services.json` do Firebase Console
-- Colocar em `android/app/google-services.json`
-- Configurar FCM no OneSignal Dashboard
+#### **4. Google Cloud Setup (Android)**
+- Configurar Google Cloud Console para FCM
+- Obter Google Project Number 
+- Configurar FCM Server Key no OneSignal Dashboard
 
 #### **5. Apple Setup (iOS)**
 - Gerar certificados .p12 ou .p8 no Apple Developer
@@ -117,7 +117,7 @@ plugins: {
 1. **Configurar credenciais reais** no OneSignal Dashboard
 2. **Atualizar secrets** no Supabase
 3. **Testar em dispositivos físicos**
-4. **Configurar Firebase** para Android
+4. **Configurar Google Cloud Console** para Android
 5. **Configurar Apple certificates** para iOS
 6. **Deploy para produção**
 
