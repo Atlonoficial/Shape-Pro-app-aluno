@@ -7,8 +7,8 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   backgroundColor: '#000000',
   
-  // PRODUÇÃO: Remover server config para build de produção
-  // Durante desenvolvimento, pode descomentar a linha abaixo:
+  // PRODUÇÃO: Server config removido para build de produção
+  // Para desenvolvimento local: descomente a linha abaixo
   // server: { url: 'https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com?forceHideBadge=true', cleartext: true }
 
   ios: {
@@ -31,12 +31,13 @@ const config: CapacitorConfig = {
 
   plugins: {
     OneSignal: {
-      // PRODUÇÃO: Substituir pelas credenciais reais do OneSignal
-      // 1. Criar app no dashboard OneSignal (https://app.onesignal.com)
-      // 2. Obter App ID do OneSignal
-      // 3. Obter Google Project Number do Google Cloud Console (não Firebase)
-      appId: "ONESIGNAL_APP_ID_AQUI", // Substituir pelo App ID real do OneSignal
-      googleProjectNumber: "GOOGLE_PROJECT_NUMBER_AQUI" // Substituir pelo Project Number do Google Cloud
+      // PRODUÇÃO: Configurar credenciais reais antes do build
+      // 1. Acesse: https://app.onesignal.com e crie um novo app
+      // 2. Configure Android: obter Server Key do Google Cloud Console 
+      // 3. Configure iOS: upload do certificado .p12
+      // 4. Substitua os valores abaixo pelos reais:
+      appId: "YOUR_ONESIGNAL_APP_ID", // App ID do OneSignal Dashboard
+      googleProjectNumber: "YOUR_GOOGLE_PROJECT_NUMBER" // Project Number do Google Cloud Console
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
