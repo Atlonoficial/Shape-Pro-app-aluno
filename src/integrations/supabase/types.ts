@@ -1213,10 +1213,13 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          metadata: Json | null
           rating: number
           related_item_id: string | null
+          responded_at: string | null
           student_id: string
           teacher_id: string
+          teacher_response: string | null
           type: string
           updated_at: string
         }
@@ -1224,10 +1227,13 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          metadata?: Json | null
           rating: number
           related_item_id?: string | null
+          responded_at?: string | null
           student_id: string
           teacher_id: string
+          teacher_response?: string | null
           type: string
           updated_at?: string
         }
@@ -1235,10 +1241,13 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          metadata?: Json | null
           rating?: number
           related_item_id?: string | null
+          responded_at?: string | null
           student_id?: string
           teacher_id?: string
+          teacher_response?: string | null
           type?: string
           updated_at?: string
         }

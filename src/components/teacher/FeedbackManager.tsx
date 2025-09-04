@@ -57,11 +57,7 @@ export const FeedbackManager = () => {
           related_item_id,
           metadata,
           teacher_response,
-          responded_at,
-          profiles!feedbacks_student_id_fkey (
-            name,
-            email
-          )
+          responded_at
         `)
         .eq('teacher_id', user.id)
         .eq('type', 'weekly_feedback')
@@ -69,10 +65,22 @@ export const FeedbackManager = () => {
 
       if (error) throw error;
 
+      // Get student profiles separately
+      const studentIds = [...new Set((data || []).map(f => f.student_id))];
+      const { data: studentsData } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', studentIds);
+
+      const studentsMap = (studentsData || []).reduce((acc, student) => {
+        acc[student.id] = student;
+        return acc;
+      }, {} as Record<string, any>);
+
       const feedbacksWithStudentInfo = (data || []).map(feedback => ({
         ...feedback,
-        student_name: feedback.profiles?.name || 'Aluno',
-        student_email: feedback.profiles?.email || ''
+        student_name: studentsMap[feedback.student_id]?.name || 'Aluno',
+        student_email: studentsMap[feedback.student_id]?.email || ''
       }));
 
       setFeedbacks(feedbacksWithStudentInfo);
