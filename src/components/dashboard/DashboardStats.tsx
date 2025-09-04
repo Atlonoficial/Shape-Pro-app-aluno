@@ -25,7 +25,7 @@ export const DashboardStats = ({ workouts, progress, loading }: DashboardStatsPr
     );
   }
 
-  // Calcular estatísticas reais dos dados do Firebase
+  // Calculate real statistics from Supabase data
   
   const thisMonthWorkouts = workouts.filter(w => {
     const workoutDate = new Date(w.completedAt || w.createdAt);

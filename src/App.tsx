@@ -9,14 +9,7 @@ import { GamificationIntegrator } from "@/components/gamification/GamificationIn
 import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
-// Removed Firebase-dependent pages
-// import Login from "./pages/login";
-// import AlunoDashboard from "./pages/aluno/dashboard";
-// import AlunoChat from "./pages/aluno/chat/[id]";
-// import { CadastroCompleto } from "./pages/CadastroCompleto";
-// import { ExamesMedicos } from "./pages/ExamesMedicos";
-// import { FotosProgresso } from "./pages/FotosProgresso";
-// import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
+// Core application imports ready for production
 import NotFound from "./pages/NotFound";
 import { AuthConfirm } from "./pages/auth/AuthConfirm";
 import { AuthRecovery } from "./pages/auth/AuthRecovery";

@@ -87,7 +87,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     return null; // Enquanto redireciona
   }
   
-  // Puxar dados reais do Firebase
+  // Fetch real data from Supabase
   const { workouts, loading: workoutsLoading } = useWorkouts(user?.id || '');
   // const { progress, loading: progressLoading } = useProgress(user?.id || '');
   const progress: any[] = [];
