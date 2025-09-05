@@ -67,9 +67,6 @@ const config: CapacitorConfig = {
     },
     Camera: {
       permissions: ["camera", "photos"]
-    },
-    Storage: {
-      group: "ShapeProGroup"
     }
   }
 };
