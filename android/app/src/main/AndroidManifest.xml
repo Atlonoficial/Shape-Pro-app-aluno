@@ -49,10 +49,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- OneSignal Configuration -->
-        <meta-data android:name="onesignal_app_id" android:value="your-onesignal-app-id" />
-        <meta-data android:name="onesignal_google_project_number"
-                   android:value="str:your-google-project-number" />
+        <!-- OneSignal meta-data removido - inicialização será feita via código -->
 
     </application>
 

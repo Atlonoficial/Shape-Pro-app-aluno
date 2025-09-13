@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
 import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
-import { PushNotificationsWrapper } from "@/components/notifications/PushNotificationsWrapper";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 // Core application imports ready for production
@@ -48,7 +47,6 @@ const App = () => (
           <AuthProvider>
             <GamificationProvider>
               <GamificationIntegrator>
-                <PushNotificationsWrapper />
                 <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/cadastro-completo" element={<AuthGuard><CadastroCompleto /></AuthGuard>} />

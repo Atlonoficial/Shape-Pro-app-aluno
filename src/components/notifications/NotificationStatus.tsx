@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bell, CheckCircle, Settings, Smartphone, Globe } from "lucide-react";
-import { PlayerIdStatus } from '@/components/notifications/PlayerIdStatus';
 
 export const NotificationStatus = () => {
   return (
@@ -19,11 +18,6 @@ export const NotificationStatus = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           
-          {/* Player ID Status Component */}
-          <div className="mb-4">
-            <PlayerIdStatus />
-          </div>
-
           {/* Status Geral */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200">
             <div className="flex items-center gap-2">
