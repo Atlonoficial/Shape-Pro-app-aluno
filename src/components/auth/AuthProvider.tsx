@@ -40,8 +40,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (auth.isAuthenticated && auth.user?.id) {
       console.log('AuthProvider: Initializing OneSignal for user:', auth.user.id);
       initPush(auth.user.id);
+    } else if (!auth.isAuthenticated && !auth.loading) {
+      // Limpar configurações OneSignal no logout
+      const { clearExternalUserId, disablePush } = require('@/lib/push');
+      clearExternalUserId();
+      console.log('AuthProvider: OneSignal cleared for logout');
     }
-  }, [auth.isAuthenticated, auth.user?.id]);
+  }, [auth.isAuthenticated, auth.user?.id, auth.loading]);
 
   if (auth.loading) {
     return <LoadingScreen />;

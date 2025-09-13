@@ -6,36 +6,62 @@ declare global {
     plugins: {
       OneSignal: any;
     };
+    device?: {
+      platform: string;
+    };
   }
 }
+
+let isInitialized = false;
+let currentExternalUserId: string | null = null;
 
 export async function initPush(externalUserId?: string) {
   const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
   if (!APP_ID) {
-    console.warn('OneSignal: APP_ID not configured');
+    if (import.meta.env.DEV) {
+      console.warn('OneSignal: APP_ID not configured');
+    }
     return;
   }
 
   document.addEventListener('deviceready', async () => {
     try {
       if (!window.plugins?.OneSignal) {
-        console.log('OneSignal: Plugin not available');
+        if (import.meta.env.DEV) {
+          console.log('OneSignal: Plugin not available');
+        }
         return;
       }
 
       const OneSignal = window.plugins.OneSignal;
-      console.log('OneSignal Native: Initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
+      if (import.meta.env.DEV) {
+        console.log('OneSignal Native: Initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
+      }
       
       OneSignal.setAppId(APP_ID);
 
-      // iOS: solicita permissão
+      // iOS: solicitar permissão explicitamente
+      if (window.device?.platform === 'iOS') {
+        OneSignal.Notifications?.requestPermission?.(true, (accepted: boolean) => {
+          if (import.meta.env.DEV) {
+            console.log('OneSignal iOS: Permission explicitly requested:', accepted ? 'granted' : 'denied');
+          }
+        });
+      }
+
+      // Fallback para método anterior
       OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-        console.log('OneSignal Native: Push permission:', accepted ? 'granted' : 'denied');
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Native: Push permission:', accepted ? 'granted' : 'denied');
+        }
       });
 
       // Definir external user ID se disponível
       if (externalUserId) {
-        console.log('OneSignal Native: Setting external user ID:', externalUserId);
+        currentExternalUserId = externalUserId;
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Native: Setting external user ID:', externalUserId);
+        }
         OneSignal.setExternalUserId(String(externalUserId));
       }
 
@@ -43,21 +69,27 @@ export async function initPush(externalUserId?: string) {
       OneSignal.getDeviceState((state: any) => {
         const playerId = state?.userId;
         if (playerId && externalUserId) {
-          console.log('OneSignal Native: Got Player ID:', playerId);
+          if (import.meta.env.DEV) {
+            console.log('OneSignal Native: Got Player ID:', playerId);
+          }
           updatePlayerIdInSupabase(playerId, externalUserId);
         }
       });
 
       // Handler para notificações em foreground
       OneSignal.setNotificationWillShowInForegroundHandler((notificationReceivedEvent: any) => {
-        console.log('OneSignal Native: Notification received in foreground:', notificationReceivedEvent);
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Native: Notification received in foreground:', notificationReceivedEvent);
+        }
         const notification = notificationReceivedEvent.getNotification();
         notificationReceivedEvent.complete(notification);
       });
 
       // Handler para quando notificação é tocada
       OneSignal.setNotificationOpenedHandler((result: any) => {
-        console.log('OneSignal Native: Notification opened:', result);
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Native: Notification opened:', result);
+        }
         const { notification } = result;
         handleNotificationAction(notification.additionalData);
       });
@@ -65,10 +97,14 @@ export async function initPush(externalUserId?: string) {
       // Listener para mudanças de subscription
       OneSignal.addSubscriptionObserver((event: any) => {
         if (event.to.userId && externalUserId) {
-          console.log('OneSignal Native: Subscription changed, updating Player ID');
+          if (import.meta.env.DEV) {
+            console.log('OneSignal Native: Subscription changed, updating Player ID');
+          }
           updatePlayerIdInSupabase(event.to.userId, externalUserId);
         }
       });
+
+      isInitialized = true;
 
     } catch (error) {
       console.error('OneSignal Native: Initialization error:', error);
@@ -76,11 +112,79 @@ export async function initPush(externalUserId?: string) {
   }, { once: true });
 }
 
+// Utilitárias para controle de push
+export function enablePush(): void {
+  if (!isInitialized || !window.plugins?.OneSignal) return;
+  
+  try {
+    const OneSignal = window.plugins.OneSignal;
+    OneSignal.setPushSubscription?.(true);
+    if (import.meta.env.DEV) {
+      console.log('OneSignal Native: Push enabled');
+    }
+  } catch (error) {
+    console.error('OneSignal Native: Error enabling push:', error);
+  }
+}
+
+export function disablePush(): void {
+  if (!isInitialized || !window.plugins?.OneSignal) return;
+  
+  try {
+    const OneSignal = window.plugins.OneSignal;
+    OneSignal.setPushSubscription?.(false);
+    if (import.meta.env.DEV) {
+      console.log('OneSignal Native: Push disabled');
+    }
+  } catch (error) {
+    console.error('OneSignal Native: Error disabling push:', error);
+  }
+}
+
+export function clearExternalUserId(): void {
+  if (!isInitialized || !window.plugins?.OneSignal) return;
+  
+  try {
+    const OneSignal = window.plugins.OneSignal;
+    OneSignal.removeExternalUserId?.();
+    currentExternalUserId = null;
+    if (import.meta.env.DEV) {
+      console.log('OneSignal Native: External user ID cleared');
+    }
+  } catch (error) {
+    console.error('OneSignal Native: Error clearing external user ID:', error);
+  }
+}
+
+export function getDeviceState(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if (!isInitialized || !window.plugins?.OneSignal) {
+      reject(new Error('OneSignal not initialized'));
+      return;
+    }
+    
+    try {
+      const OneSignal = window.plugins.OneSignal;
+      OneSignal.getDeviceState((state: any) => {
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Native: Device state:', state);
+        }
+        resolve(state);
+      });
+    } catch (error) {
+      console.error('OneSignal Native: Error getting device state:', error);
+      reject(error);
+    }
+  });
+}
+
 // Atualizar Player ID no Supabase
 async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`OneSignal Native: Updating player ID in Supabase (attempt ${attempt}):`, playerId);
+      if (import.meta.env.DEV) {
+        console.log(`OneSignal Native: Updating player ID in Supabase (attempt ${attempt}):`, playerId);
+      }
       
       const { data, error } = await supabase
         .from('profiles')
@@ -97,7 +201,9 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
         continue;
       }
       
-      console.log('OneSignal Native: Player ID successfully saved to Supabase:', data);
+      if (import.meta.env.DEV) {
+        console.log('OneSignal Native: Player ID successfully saved to Supabase:', data);
+      }
       return;
       
     } catch (error) {

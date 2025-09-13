@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.atlon.shapepro',
-  appName: 'ShapePro',
+  appName: 'Shape Pro',
   webDir: 'dist',
   bundledWebRuntime: false,
   backgroundColor: '#000000',
@@ -20,8 +20,8 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: false,
-    appendUserAgent: 'ShapePro/1.0',
-    overrideUserAgent: 'ShapePro/1.0 Mobile App',
+    appendUserAgent: 'Shape Pro/1.0',
+    overrideUserAgent: 'Shape Pro/1.0 Mobile App',
     hideLogs: true,
   },
 
