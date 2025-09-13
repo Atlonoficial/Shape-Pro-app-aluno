@@ -4,7 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/lib/supabase';
 import { LoadingScreen } from './LoadingScreen';
 import { AuthScreen } from './AuthScreen';
-import { initPush } from '@/lib/push';
+import { initPush, clearExternalUserId } from '@/lib/push';
 
 interface AuthContextType {
   user: User | null;
@@ -42,7 +42,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       initPush(auth.user.id);
     } else if (!auth.isAuthenticated && !auth.loading) {
       // Limpar configurações OneSignal no logout
-      const { clearExternalUserId, disablePush } = require('@/lib/push');
       clearExternalUserId();
       console.log('AuthProvider: OneSignal cleared for logout');
     }
