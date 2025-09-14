@@ -1,6 +1,6 @@
 {
-	"appId": "com.atlon.shapepro",
-	"appName": "ShapePro",
+	"appId": "com.atlontech.shapepro.aluno",
+	"appName": "Shape Pro",
 	"webDir": "dist",
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
@@ -16,8 +16,8 @@
 		"allowMixedContent": true,
 		"captureInput": true,
 		"webContentsDebuggingEnabled": false,
-		"appendUserAgent": "ShapePro/1.0",
-		"overrideUserAgent": "ShapePro/1.0 Mobile App",
+		"appendUserAgent": "Shape Pro/1.0",
+		"overrideUserAgent": "Shape Pro/1.0 Mobile App",
 		"hideLogs": true
 	},
 	"plugins": {
