@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>pt_BR</string>
+	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Shape Pro</string>
+        <string>Shape Pro</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.lovable.d46ecb0f56a1441da5d5bac293c0288a</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -22,10 +22,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSMainNibFile</key>
-	<string></string>
-	<key>NSMainStoryboardFile</key>
-	<string>Main</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -49,62 +45,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	
-	<!-- Shape Pro Specific Configurations -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
-	
-	<!-- Camera and Photo Library Permissions -->
-	<key>NSCameraUsageDescription</key>
-	<string>Shape Pro precisa acessar a câmera para capturar fotos de progresso físico e exercícios.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Shape Pro precisa acessar suas fotos para carregar imagens de progresso e perfil.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Shape Pro precisa salvar suas fotos de progresso físico na galeria.</string>
-	
-	<!-- Location Permissions (for fitness tracking) -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Shape Pro pode usar sua localização para encontrar academias próximas e treinos ao ar livre.</string>
-	
-	<!-- Microphone for video exercises -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Shape Pro pode usar o microfone para gravar notas de voz durante os treinos.</string>
-	
-	<!-- Health Kit Permissions -->
-	<key>NSHealthShareUsageDescription</key>
-	<string>Shape Pro pode ler dados de saúde para melhor acompanhamento do seu progresso.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Shape Pro pode atualizar dados de saúde com informações dos seus treinos.</string>
-	
-	<!-- Push Notifications -->
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-		<string>background-processing</string>
-	</array>
-	
-	<!-- App Store Requirements -->
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	
-	<!-- Support for all device types -->
-	<key>UIDeviceFamily</key>
-	<array>
-		<integer>1</integer>
-		<integer>2</integer>
-	</array>
-	
-	<!-- Status bar style -->
-	<key>UIStatusBarStyle</key>
-	<string>UIStatusBarStyleDefault</string>
-	
-	<!-- Prevent backup to iCloud for sensitive data -->
-	<key>NSSupportsAutomaticTermination</key>
-	<false/>
-	<key>NSSupportsSuddenTermination</key>
-	<false/>
 </dict>
 </plist>
