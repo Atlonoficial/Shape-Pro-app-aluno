@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.atlon.shapepro',
+  appId: 'com.atlontech.shapepro.aluno',
   appName: 'Shape Pro',
   webDir: 'dist',
   bundledWebRuntime: false,
