@@ -1,24 +1,19 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+﻿# Android/Gradle
+android/.gradle/
+android/app/build/
+android/build/
+**/.cxx/
 
+# Web assets copiados pelo "cap sync"
+android/app/src/main/assets/public/
+android/app/src/main/assets/public/**
+
+ios/App/App/public/
+ios/App/App/public/**
+
+# Saída do Vite
+dist/
+
+# Outros
+google-services.json.bak
 node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
