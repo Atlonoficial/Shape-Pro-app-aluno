@@ -3670,16 +3670,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      award_points_enhanced_v2: {
-        Args: {
-          p_activity_type: string
-          p_custom_points?: number
-          p_description?: string
-          p_metadata?: Json
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       award_points_enhanced_v3: {
         Args: {
           p_activity_type: string
