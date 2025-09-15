@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { signInUser, signUpUser, resetPasswordForEmail } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthScreen = () => {
@@ -15,7 +16,9 @@ export const AuthScreen = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -71,27 +74,96 @@ export const AuthScreen = () => {
     }
   };
 
+  const checkEmailExists = async (emailToCheck: string) => {
+    if (!emailToCheck || !emailToCheck.includes('@')) {
+      setEmailExists(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', emailToCheck.toLowerCase().trim())
+        .single();
+
+      setEmailExists(!!data && !error);
+    } catch (error) {
+      setEmailExists(false);
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!email) {
       toast({
         title: "Informe seu email",
-        description: "Digite seu email e tente novamente.",
+        description: "Digite seu email para receber o link de recuperação.",
         variant: "destructive",
       });
       return;
     }
-    try {
-      await resetPasswordForEmail(email);
+
+    if (!email.includes('@') || email.length < 5) {
       toast({
-        title: "Email de redefinição enviado",
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao enviar email",
-        description: error.message || "Tente novamente mais tarde.",
+        title: "Email inválido",
+        description: "Digite um email válido para continuar.",
         variant: "destructive",
       });
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      // Verificar se o email existe no sistema
+      await checkEmailExists(email);
+      
+      if (emailExists === false) {
+        toast({
+          title: "Email não encontrado",
+          description: "Este email não está cadastrado no sistema.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Tentar enviar o email de reset
+      await resetPasswordForEmail(email);
+      
+      toast({
+        title: "Email enviado com sucesso!",
+        description: "Verifique sua caixa de entrada e spam. O link é válido por 1 hora.",
+      });
+
+      // Opcional: Mostrar informações adicionais sobre onde verificar
+      setTimeout(() => {
+        toast({
+          title: "💡 Dica importante",
+          description: "Se não receber o email, verifique a pasta de spam ou lixo eletrônico.",
+        });
+      }, 3000);
+
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      
+      // Mensagens de erro mais específicas
+      let errorMessage = "Tente novamente mais tarde.";
+      
+      if (error.message?.includes('network')) {
+        errorMessage = "Verifique sua conexão com a internet.";
+      } else if (error.message?.includes('rate limit')) {
+        errorMessage = "Muitas tentativas. Aguarde alguns minutos.";
+      } else if (error.message?.includes('invalid')) {
+        errorMessage = "Email inválido ou não encontrado.";
+      }
+
+      toast({
+        title: "Erro ao enviar email",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -125,14 +197,29 @@ export const AuthScreen = () => {
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          // Verificar email com debounce simples
+                          setTimeout(() => checkEmailExists(e.target.value), 1000);
+                        }}
+                        required
+                      />
+                      {emailExists !== null && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {emailExists ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
@@ -161,8 +248,25 @@ export const AuthScreen = () => {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button type="button" variant="link" size="sm" onClick={handleResetPassword}>
-                      Esqueceu a senha?
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      size="sm" 
+                      onClick={handleResetPassword}
+                      disabled={resetLoading}
+                      className="flex items-center gap-2"
+                    >
+                      {resetLoading ? (
+                        <>
+                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-3 w-3" />
+                          Esqueceu a senha?
+                        </>
+                      )}
                     </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>

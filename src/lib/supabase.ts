@@ -153,10 +153,42 @@ export const signOutUser = async () => {
 };
 
 export const resetPasswordForEmail = async (email: string) => {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/recovery`,
-  });
-  if (error) throw error;
+  console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
+  
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/recovery`,
+    });
+    
+    if (error) {
+      console.error('[resetPasswordForEmail] Erro do Supabase:', error);
+      throw error;
+    }
+    
+    console.log('[resetPasswordForEmail] Reset iniciado com sucesso:', data);
+    return data;
+  } catch (error: any) {
+    console.error('[resetPasswordForEmail] Erro capturado:', {
+      message: error.message,
+      code: error.code,
+      status: error.status
+    });
+    
+    // Melhorar mensagens de erro específicas
+    if (error.message?.includes('rate')) {
+      throw new Error('Muitas tentativas de reset. Aguarde alguns minutos antes de tentar novamente.');
+    }
+    
+    if (error.message?.includes('invalid') || error.message?.includes('not found')) {
+      throw new Error('Email não encontrado no sistema.');
+    }
+    
+    if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      throw new Error('Erro de conexão. Verifique sua internet.');
+    }
+    
+    throw error;
+  }
 };
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
