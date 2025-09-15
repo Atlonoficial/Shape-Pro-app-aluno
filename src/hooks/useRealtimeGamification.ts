@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -88,9 +88,13 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     }
   }, [user?.id, awardPointsForAction]);
 
-  // Dar pontos de check-in na primeira carga do app
+  // Controle de primeira inicialização para evitar duplicações
+  const hasInitialized = useRef(false);
+  
+  // Dar pontos de check-in apenas na primeira carga do app
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !hasInitialized.current) {
+      hasInitialized.current = true;
       updateStreak();
     }
   }, [user?.id, updateStreak]);

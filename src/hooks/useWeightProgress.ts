@@ -147,9 +147,49 @@ export const useWeightProgress = (userId: string) => {
   };
 
   const shouldShowWeightModal = async () => {
-    if (!isFridayToday()) return false;
+    // Verificar se já registrou peso esta semana
     const alreadyWeighed = await hasWeighedThisWeek();
-    return !alreadyWeighed;
+    if (alreadyWeighed) return false;
+    
+    // Se hoje é sexta-feira, mostrar modal
+    if (isFridayToday()) return true;
+    
+    // Se passou de sexta-feira sem registrar, mostrar na próxima entrada
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = domingo, 6 = sábado
+    const lastFriday = new Date(today);
+    
+    if (dayOfWeek === 0) { // Domingo
+      lastFriday.setDate(today.getDate() - 2);
+    } else if (dayOfWeek === 6) { // Sábado  
+      lastFriday.setDate(today.getDate() - 1);
+    } else { // Segunda a quinta
+      const daysAfterFriday = dayOfWeek === 1 ? 3 : dayOfWeek === 2 ? 4 : dayOfWeek === 3 ? 5 : 6;
+      lastFriday.setDate(today.getDate() - daysAfterFriday);
+    }
+    
+    // Verificar se há registro de peso desde a última sexta-feira
+    try {
+      const lastFridayStr = lastFriday.toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('progress')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'weight')
+        .gte('date', lastFridayStr)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking weight since Friday:', error);
+        return false;
+      }
+
+      // Se não há registro desde sexta-feira, mostrar modal
+      return !data || data.length === 0;
+    } catch (err) {
+      console.error('Error in shouldShowWeightModal:', err);
+      return false;
+    }
   };
 
   const addWeightFromAssessment = async (weight: number, assessmentDate: string) => {

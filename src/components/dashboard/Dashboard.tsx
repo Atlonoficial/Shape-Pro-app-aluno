@@ -11,6 +11,7 @@ import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useWorkouts } from "@/hooks/useSupabase";
+import { GamificationDebug } from "@/components/debug/GamificationDebug";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
 import { useProgressActions } from "@/components/progress/ProgressActions";
@@ -214,6 +215,9 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         onSubmit={submitWeeklyFeedback}
         loading={feedbackLoading}
       />
+      
+      {/* Debug component - only shows in development */}
+      <GamificationDebug />
     </div>
   );
 };

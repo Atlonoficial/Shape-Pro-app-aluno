@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 /**
  * Hook que automaticamente dá pontos quando o usuário registra progresso
+ * Integrado com sistema de gamificação mais robusto
  */
 export const useProgressActions = () => {
   const { awardProgressPoints } = useGamificationActions();
@@ -12,8 +13,8 @@ export const useProgressActions = () => {
       // Aqui você faria o registro do progresso no banco de dados
       console.log(`Registering progress: ${type} = ${value} ${unit}`);
       
-      // Dar pontos automaticamente
-      await awardProgressPoints();
+      // Dar pontos automaticamente com metadata mais detalhada
+      await awardProgressPoints(type);
       
       toast.success("Progresso registrado! Você ganhou pontos!");
     } catch (error) {

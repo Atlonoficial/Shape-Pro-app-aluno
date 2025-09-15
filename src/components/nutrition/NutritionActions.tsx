@@ -3,11 +3,12 @@ import { toast } from "sonner";
 
 /**
  * Hook que automaticamente dá pontos quando o usuário registra refeições
+ * Integrado com sistema de gamificação mais robusto
  */
 export const useNutritionActions = () => {
   const { awardMealPoints } = useGamificationActions();
 
-  const logMeal = async (mealName: string, calories?: number) => {
+  const logMeal = async (mealName: string, calories?: number, mealId?: string) => {
     try {
       // Aqui você faria o registro da refeição no banco de dados
       console.log(`Logging meal: ${mealName}${calories ? ` (${calories} cal)` : ''}`);
@@ -22,10 +23,14 @@ export const useNutritionActions = () => {
     }
   };
 
-  const logBreakfast = (name: string, calories?: number) => logMeal(`Café da manhã: ${name}`, calories);
-  const logLunch = (name: string, calories?: number) => logMeal(`Almoço: ${name}`, calories);
-  const logDinner = (name: string, calories?: number) => logMeal(`Jantar: ${name}`, calories);
-  const logSnack = (name: string, calories?: number) => logMeal(`Lanche: ${name}`, calories);
+  const logBreakfast = (name: string, calories?: number, mealId?: string) => 
+    logMeal(`Café da manhã: ${name}`, calories, mealId);
+  const logLunch = (name: string, calories?: number, mealId?: string) => 
+    logMeal(`Almoço: ${name}`, calories, mealId);
+  const logDinner = (name: string, calories?: number, mealId?: string) => 
+    logMeal(`Jantar: ${name}`, calories, mealId);
+  const logSnack = (name: string, calories?: number, mealId?: string) => 
+    logMeal(`Lanche: ${name}`, calories, mealId);
 
   return {
     logMeal,

@@ -8,14 +8,9 @@ import { useRealtimeGamification } from "@/hooks/useRealtimeGamification";
  */
 export const GamificationIntegrator = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthContext();
-  const { updateStreak } = useRealtimeGamification();
-
-  // Update streak when app loads
-  useEffect(() => {
-    if (user?.id) {
-      updateStreak();
-    }
-  }, [user?.id, updateStreak]);
+  
+  // Removido updateStreak daqui para evitar duplicação
+  // O gamification já é inicializado no useRealtimeGamification hook
 
   return <>{children}</>;
 };
