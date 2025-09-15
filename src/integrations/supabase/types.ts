@@ -3818,6 +3818,17 @@ export type Database = {
         Args: { teacher_id_param: string }
         Returns: Json
       }
+      get_teacher_chat_stats_optimized: {
+        Args: { teacher_id_param: string }
+        Returns: {
+          active_students_count: number
+          conversations_with_student_messages: number
+          conversations_with_teacher_messages: number
+          response_rate: number
+          total_conversations_count: number
+          unread_teacher_messages: number
+        }[]
+      }
       get_teacher_conversations: {
         Args: { teacher_id_param: string }
         Returns: {
