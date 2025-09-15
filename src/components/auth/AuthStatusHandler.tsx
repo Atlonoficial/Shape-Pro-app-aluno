@@ -23,7 +23,7 @@ export const AuthStatusHandler = ({
 }: AuthStatusHandlerProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [countdown, setCountdown] = useState(redirectDelay / 1000);
+  const [countdown, setCountdown] = useState(Math.ceil(redirectDelay / 1000));
 
   useEffect(() => {
     if (status === 'success') {
@@ -32,18 +32,25 @@ export const AuthStatusHandler = ({
         description: successMessage,
       });
 
+      // Auto redirect após delay configurado
+      const timeoutId = setTimeout(() => {
+        navigate(redirectPath);
+      }, redirectDelay);
+
       const interval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
-            navigate(redirectPath);
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
 
-      return () => clearInterval(interval);
+      return () => {
+        clearTimeout(timeoutId);
+        clearInterval(interval);
+      };
     }
 
     if (status === 'error') {
@@ -53,7 +60,7 @@ export const AuthStatusHandler = ({
         variant: "destructive",
       });
     }
-  }, [status, successMessage, errorMessage, redirectPath, navigate, toast]);
+  }, [status, successMessage, errorMessage, redirectPath, navigate, toast, redirectDelay]);
 
   const renderContent = () => {
     switch (status) {

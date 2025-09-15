@@ -125,8 +125,9 @@ export const AuthRecovery = () => {
       <AuthLayout title="Senha Atualizada">
         <AuthStatusHandler
           status="success"
-          successMessage="Sua senha foi atualizada com sucesso!"
+          successMessage="Senha atualizada! Redirecionando..."
           redirectPath={redirectPath}
+          redirectDelay={2}
         />
       </AuthLayout>
     );

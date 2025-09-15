@@ -26,7 +26,7 @@ import { IniciarTreino } from "./pages/IniciarTreino";
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
 import Agenda from "./pages/Agenda";
 import { Metas } from "./pages/Metas";
-import { ResetPassword } from "./pages/ResetPassword";
+
 import { ExamesMedicos } from "./pages/ExamesMedicos";
 import { FotosProgresso } from "./pages/FotosProgresso";
 import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
@@ -93,7 +93,7 @@ const App = () => (
                 <Route path="/auth/error" element={<AuthError />} />
                 <Route path="/auth/verify" element={<AuthVerify />} />
                 <Route path="/auth/verified" element={<AuthVerified />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                
                 
                 <Route path="*" element={<NotFound />} />
                   </Routes>
