@@ -3739,6 +3739,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_presence: {
         Args: Record<PropertyKey, never>
         Returns: undefined
