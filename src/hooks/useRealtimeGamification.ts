@@ -88,14 +88,20 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     }
   }, [user?.id, awardPointsForAction]);
 
-  // Controle de primeira inicialização para evitar duplicações
-  const hasInitialized = useRef(false);
-  
-  // Dar pontos de check-in apenas na primeira carga do app
+  // Controle de inicialização para evitar duplicações usando sessionStorage
   useEffect(() => {
-    if (user?.id && !hasInitialized.current) {
-      hasInitialized.current = true;
-      updateStreak();
+    if (user?.id) {
+      // Usar sessionStorage para evitar múltiplas inicializações na mesma sessão
+      const sessionKey = `gamification_initialized_${user.id}_${new Date().toISOString().split('T')[0]}`;
+      const alreadyInitialized = sessionStorage.getItem(sessionKey);
+      
+      if (!alreadyInitialized) {
+        console.log('[Gamification] First initialization for user today:', user.id);
+        updateStreak();
+        sessionStorage.setItem(sessionKey, 'true');
+      } else {
+        console.log('[Gamification] Already initialized for user today:', user.id);
+      }
     }
   }, [user?.id, updateStreak]);
 

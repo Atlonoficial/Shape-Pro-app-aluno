@@ -8,9 +8,14 @@ import { useRealtimeGamification } from "@/hooks/useRealtimeGamification";
  */
 export const GamificationIntegrator = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthContext();
-  
-  // Removido updateStreak daqui para evitar duplicação
-  // O gamification já é inicializado no useRealtimeGamification hook
+
+  // Gamificação é inicializada automaticamente pelo useRealtimeGamification
+  // Não há necessidade de duplicar a inicialização aqui
+  useEffect(() => {
+    if (user?.id) {
+      console.log('[GamificationIntegrator] User authenticated, gamification will auto-initialize:', user.id);
+    }
+  }, [user?.id]);
 
   return <>{children}</>;
 };

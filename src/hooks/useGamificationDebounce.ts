@@ -32,18 +32,26 @@ export const useGamificationDebounce = () => {
   const generateActionKey = useCallback((type: string, userId: string, metadata?: any): string => {
     const baseKey = `${type}_${userId}`;
     
-    // Para alguns tipos, adicionar identificadores únicos
+    // Para alguns tipos, adicionar identificadores únicos mais rigorosos
     if (type === 'meal_logged' && metadata?.meal_id) {
-      return `${baseKey}_${metadata.meal_id}_${metadata.date}`;
+      const date = metadata.date || new Date().toISOString().split('T')[0];
+      return `${baseKey}_${metadata.meal_id}_${date}`;
     }
     
     if (type === 'progress_logged' && metadata?.progress_type) {
-      return `${baseKey}_${metadata.progress_type}_${Date.now()}`;
+      // Para progresso, usar apenas tipo + data para evitar spam
+      const today = new Date().toISOString().split('T')[0];
+      return `${baseKey}_${metadata.progress_type}_${today}`;
     }
     
     if (type === 'daily_checkin') {
       const today = new Date().toISOString().split('T')[0];
       return `${baseKey}_${today}`;
+    }
+    
+    if (type === 'training_completed') {
+      // Para treinos, permitir múltiplos por dia mas com debounce
+      return `${baseKey}_${Math.floor(Date.now() / (5 * 60 * 1000))}`;
     }
     
     return `${baseKey}_${Date.now()}`;
