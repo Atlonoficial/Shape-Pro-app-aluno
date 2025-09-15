@@ -10,7 +10,8 @@ import { DashboardStats } from "./DashboardStats";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { useWorkouts, useNotifications } from "@/hooks/useSupabase";
+import { useWorkouts } from "@/hooks/useSupabase";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
 import { useProgressActions } from "@/components/progress/ProgressActions";
 import { useWeeklyFeedback } from "@/hooks/useWeeklyFeedback";
@@ -92,7 +93,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   // const { progress, loading: progressLoading } = useProgress(user?.id || '');
   const progress: any[] = [];
   const progressLoading = false;
-  const { notifications, loading: notificationsLoading } = useNotifications(user?.id || '');
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -117,60 +117,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
           {currentDate}
         </div>
         
-        <div className="relative">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="w-10 h-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center hover:bg-primary/20 transition-colors">
-                <Bell size={20} className="text-primary" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full text-xs flex items-center justify-center text-white">
-                  1
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-              <div className="p-4 border-b border-border">
-                <h3 className="text-lg font-semibold text-foreground">Notificações</h3>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                <div className="p-4 border-b border-border hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">Novo treino disponível!</p>
-                      <p className="text-xs text-muted-foreground mt-1">Seu treino de peito e tríceps está pronto para hoje.</p>
-                      <span className="text-xs text-muted-foreground">Há 2 horas</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 border-b border-border hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-muted rounded-full mt-2 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">Meta de peso atingida!</p>
-                      <p className="text-xs text-muted-foreground mt-1">Parabéns! Você atingiu sua meta semanal de peso.</p>
-                      <span className="text-xs text-muted-foreground">Ontem</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-muted rounded-full mt-2 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">Lembrete de refeição</p>
-                      <p className="text-xs text-muted-foreground mt-1">Não se esqueça de registrar sua refeição pós-treino.</p>
-                      <span className="text-xs text-muted-foreground">2 dias atrás</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 border-t border-border">
-                <button className="text-xs text-primary hover:text-primary/80 transition-colors w-full text-center">
-                  Ver todas as notificações
-                </button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+        {user && <NotificationCenter userId={user.id} />}
       </div>
 
       {/* Profile Section */}

@@ -430,6 +430,28 @@ export const markNotificationAsRead = async (notificationId: string) => {
   if (error) throw error;
 };
 
+export const markAllNotificationsAsRead = async (userId: string) => {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ 
+      is_read: true, 
+      read_at: new Date().toISOString() 
+    })
+    .contains('target_users', [userId])
+    .eq('is_read', false);
+
+  if (error) throw error;
+};
+
+export const clearAllNotifications = async (userId: string) => {
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .contains('target_users', [userId]);
+
+  if (error) throw error;
+};
+
 // Chat functions
 export const getChatMessages = (conversationId: string, callback: (messages: ChatMessage[]) => void) => {
   const channel = supabase
