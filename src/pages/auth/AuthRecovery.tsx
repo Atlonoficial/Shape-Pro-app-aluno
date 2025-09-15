@@ -27,18 +27,32 @@ export const AuthRecovery = () => {
   useEffect(() => {
     const processRecovery = async () => {
       try {
+        // Parse both search params and URL fragments
         const actionData = parseAuthParams(searchParams);
         
         if (actionData.error) {
           throw new Error(actionData.error_description || actionData.error);
         }
 
-        // For recovery, we need to process the token first
-        await processAuthAction(actionData);
-        
-        const path = await getRedirectPath();
-        setRedirectPath(path);
-        setStatus('form');
+        // Check if user is already authenticated (from fragment token)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('User authenticated via recovery token');
+          const path = await getRedirectPath();
+          setRedirectPath(path);
+          setStatus('form');
+          return;
+        }
+
+        // If not authenticated and we have a token, process it
+        if (actionData.token_hash) {
+          await processAuthAction(actionData);
+          const path = await getRedirectPath();
+          setRedirectPath(path);
+          setStatus('form');
+        } else {
+          throw new Error('Token de recuperação não encontrado');
+        }
       } catch (error: any) {
         console.error('Recovery error:', error);
         setErrorMessage(error.message || 'Token de recuperação inválido ou expirado');

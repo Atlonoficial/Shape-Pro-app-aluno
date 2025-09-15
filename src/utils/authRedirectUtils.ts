@@ -11,7 +11,8 @@ export interface AuthActionData {
 }
 
 export const parseAuthParams = (searchParams: URLSearchParams): AuthActionData => {
-  return {
+  // First try to get from search params (query)
+  let authData: AuthActionData = {
     type: searchParams.get('type') || '',
     token_hash: searchParams.get('token_hash') || undefined,
     email: searchParams.get('email') || undefined,
@@ -20,6 +21,23 @@ export const parseAuthParams = (searchParams: URLSearchParams): AuthActionData =
     error_code: searchParams.get('error_code') || undefined,
     error_description: searchParams.get('error_description') || undefined,
   };
+
+  // If no type found in search params, check URL fragment (hash)
+  if (!authData.type && window.location.hash) {
+    const fragmentParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    authData = {
+      type: fragmentParams.get('type') || 'recovery', // Default to recovery for fragment tokens
+      token_hash: fragmentParams.get('access_token') || fragmentParams.get('token_hash') || undefined,
+      email: fragmentParams.get('email') || undefined,
+      redirect_to: fragmentParams.get('redirect_to') || undefined,
+      error: fragmentParams.get('error') || undefined,
+      error_code: fragmentParams.get('error_code') || undefined,
+      error_description: fragmentParams.get('error_description') || undefined,
+    };
+  }
+
+  return authData;
 };
 
 export const getRedirectPath = async (userType?: 'student' | 'teacher'): Promise<string> => {
@@ -73,9 +91,9 @@ export const processAuthAction = async (actionData: AuthActionData) => {
 
     case 'recovery':
     case 'password_recovery':
-      // For password recovery, we need to exchange the token
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(token_hash);
-      if (exchangeError) throw exchangeError;
+      // For password recovery from fragment, the token is already an access_token
+      // We don't need to exchange it, Supabase will handle it automatically
+      console.log('Processing recovery token from URL fragment');
       break;
 
     case 'email_change':
