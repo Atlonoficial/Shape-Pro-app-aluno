@@ -112,31 +112,23 @@ export const useStravaIntegration = () => {
       });
 
       if (error) {
-        throw error;
+        console.error('Error getting auth URL:', error);
+        toast.error('Não foi possível obter URL de autorização do Strava');
+        return;
       }
 
-      // Abrir popup de autorização
-      const popup = window.open(
-        data.authUrl,
-        'strava-auth',
-        'width=600,height=700,scrollbars=yes,resizable=yes'
-      );
+      if (!data?.authUrl) {
+        toast.error('URL de autorização não recebida');
+        return;
+      }
 
-      // Monitorar fechamento do popup
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          setConnecting(false);
-          // Recarregar conexão após autorização
-          setTimeout(() => {
-            fetchConnection();
-          }, 1000);
-        }
-      }, 1000);
+      // Redirect to Strava authorization (instead of popup)
+      window.location.href = data.authUrl;
 
     } catch (error) {
-      console.error('Error connecting to Strava:', error);
-      toast.error('Erro ao conectar com Strava');
+      console.error('Connect Strava error:', error);
+      toast.error('Falha ao conectar com Strava');
+    } finally {
       setConnecting(false);
     }
   };

@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Strava auth request:', { method: req.method, url: req.url });
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -19,6 +21,7 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       throw new Error('No authorization header');
     }
 
@@ -27,14 +30,20 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
+      console.error('Authentication error:', authError);
       throw new Error('Invalid authentication');
     }
 
-    const { action, code, state } = await req.json();
+    console.log('Authenticated user:', user.id);
+
+    const requestBody = await req.json();
+    console.log('Request body:', requestBody);
+    
+    const { action, code, state } = requestBody;
 
     if (action === 'get_auth_url') {
       const clientId = Deno.env.get('STRAVA_CLIENT_ID');
-      const redirectUri = `${new URL(req.url).origin}/functions/v1/strava-auth`;
+      const redirectUri = `https://bqbopkqzkavhmenjlhab.supabase.co/strava-callback`;
       
       const authUrl = `https://www.strava.com/oauth/authorize?` +
         `client_id=${clientId}&` +

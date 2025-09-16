@@ -36,6 +36,7 @@ import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
 import Chat from "./pages/Chat";
 import DashboardProfessor from "./pages/DashboardProfessor";
+import StravaCallback from "./pages/StravaCallback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +94,7 @@ const App = () => (
                 <Route path="/auth/error" element={<AuthError />} />
                 <Route path="/auth/verify" element={<AuthVerify />} />
                 <Route path="/auth/verified" element={<AuthVerified />} />
+                <Route path="/strava-callback" element={<StravaCallback />} />
                 
                 
                 <Route path="*" element={<NotFound />} />

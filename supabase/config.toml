@@ -19,3 +19,9 @@ verify_jwt = false
 
 [functions.ai-assistant]
 verify_jwt = true
+
+[functions.strava-auth]
+verify_jwt = true
+
+[functions.strava-sync]
+verify_jwt = true
