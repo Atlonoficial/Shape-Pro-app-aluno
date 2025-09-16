@@ -1370,6 +1370,50 @@ export type Database = {
         }
         Relationships: []
       }
+      health_metrics: {
+        Row: {
+          connection_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          recorded_at: string
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          recorded_at: string
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          recorded_at?: string
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_metrics_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "wearable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_progress: {
         Row: {
           completed_at: string | null
@@ -2454,9 +2498,12 @@ export type Database = {
           name: string
           notification_preferences: Json | null
           onesignal_player_id: string | null
+          phone: string | null
           professional_title: string | null
           profile_complete: boolean | null
           push_enabled: boolean | null
+          role: string | null
+          role_set_once: boolean | null
           show_profile_to_students: boolean | null
           specialties: string[] | null
           updated_at: string | null
@@ -2476,9 +2523,12 @@ export type Database = {
           name: string
           notification_preferences?: Json | null
           onesignal_player_id?: string | null
+          phone?: string | null
           professional_title?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
+          role?: string | null
+          role_set_once?: boolean | null
           show_profile_to_students?: boolean | null
           specialties?: string[] | null
           updated_at?: string | null
@@ -2498,9 +2548,12 @@ export type Database = {
           name?: string
           notification_preferences?: Json | null
           onesignal_player_id?: string | null
+          phone?: string | null
           professional_title?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
+          role?: string | null
+          role_set_once?: boolean | null
           show_profile_to_students?: boolean | null
           specialties?: string[] | null
           updated_at?: string | null
@@ -2937,7 +2990,15 @@ export type Database = {
           weekly_frequency?: number | null
           weight?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_students_user_id_profiles"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscribers: {
         Row: {
@@ -3508,6 +3569,119 @@ export type Database = {
         }
         Relationships: []
       }
+      wearable_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          metadata: Json | null
+          provider: string
+          provider_user_id: string
+          refresh_token: string | null
+          sync_error: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider: string
+          provider_user_id: string
+          refresh_token?: string | null
+          sync_error?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider?: string
+          provider_user_id?: string
+          refresh_token?: string | null
+          sync_error?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_activities: {
+        Row: {
+          activity_type: string
+          avg_heart_rate: number | null
+          calories_burned: number | null
+          connection_id: string
+          created_at: string
+          description: string | null
+          distance_meters: number | null
+          duration_seconds: number | null
+          elevation_gain: number | null
+          id: string
+          max_heart_rate: number | null
+          metadata: Json | null
+          name: string
+          provider_activity_id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          avg_heart_rate?: number | null
+          calories_burned?: number | null
+          connection_id: string
+          created_at?: string
+          description?: string | null
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          elevation_gain?: number | null
+          id?: string
+          max_heart_rate?: number | null
+          metadata?: Json | null
+          name: string
+          provider_activity_id: string
+          started_at: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          avg_heart_rate?: number | null
+          calories_burned?: number | null
+          connection_id?: string
+          created_at?: string
+          description?: string | null
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          elevation_gain?: number | null
+          id?: string
+          max_heart_rate?: number | null
+          metadata?: Json | null
+          name?: string
+          provider_activity_id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_activities_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "wearable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_sessions: {
         Row: {
           calories_burned: number | null
@@ -3623,7 +3797,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      teacher_payment_metrics: {
+        Row: {
+          failed_count: number | null
+          last_updated: string | null
+          month: string | null
+          paid_count: number | null
+          pending_count: number | null
+          teacher_id: string | null
+          total_revenue: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invitation: {
@@ -3836,6 +4021,20 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_teacher_data_optimized: {
+        Args: { p_teacher_id: string }
+        Returns: Json
+      }
+      get_teacher_metrics: {
+        Args: { p_teacher_id?: string }
+        Returns: {
+          failed_count: number
+          month: string
+          paid_count: number
+          pending_count: number
+          total_revenue: number
+        }[]
+      }
       get_teacher_name: {
         Args: { teacher_id_param: string }
         Returns: string
@@ -3974,6 +4173,10 @@ export type Database = {
       update_user_streak: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      user_has_course_access: {
+        Args: { p_course_id: string; p_user_id?: string }
+        Returns: boolean
       }
       validate_input: {
         Args: { allow_html?: boolean; input_text: string; max_length?: number }
