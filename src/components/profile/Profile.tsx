@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { updateUserProfile } from "@/lib/supabase";
+import { updateUserProfile, getUserProfile } from "@/lib/supabase";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,13 @@ export const Profile = () => {
   const [examCount, setExamCount] = useState<number>(0);
   const [photoCount, setPhotoCount] = useState<number>(0);
   const [assessmentCount, setAssessmentCount] = useState<number>(0);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Sincroniza avatar local quando o perfil carregar/atualizar
-  useEffect(() => {
-    setAvatarUrl(userProfile?.avatar_url || null);
-  }, [userProfile?.avatar_url]);
+  // Avatar URL with cache busting for real-time updates
+  const avatarUrl = userProfile?.avatar_url ? 
+    `${userProfile.avatar_url}?t=${Date.now()}` : 
+    userProfile?.avatar_url;
 
   const memberSince = useMemo(() => {
     const created = userProfile?.created_at ? new Date(userProfile.created_at) : null;
@@ -135,12 +134,18 @@ export const Profile = () => {
     if (!file || !user?.id) return;
     setUploading(true);
     try {
-      const path = `${user.id}/avatar.jpg`;
+      // Use unique filename with timestamp for cache busting
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      const path = `${user.id}/${fileName}`;
 
       // Upload para bucket público "avatars"
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { contentType: file.type, upsert: true });
+        .upload(path, file, { 
+          contentType: file.type, 
+          upsert: true 
+        });
       if (uploadError) throw uploadError;
 
       // Public URL
@@ -149,9 +154,27 @@ export const Profile = () => {
         .getPublicUrl(path);
       const publicUrl = publicUrlData.publicUrl;
 
-      // Atualiza perfil e estado local para refletir imediatamente
-      await updateUserProfile(user.id, { avatar_url: publicUrl });
-      setAvatarUrl(publicUrl);
+      // Atualiza perfil na database
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+        
+      if (updateError) throw updateError;
+
+      // Force refresh user profile to trigger real-time sync
+      try {
+        const updatedProfile = await getUserProfile(user.id);
+        if (updatedProfile) {
+          console.log('Profile updated successfully, real-time will sync');
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing profile:', refreshError);
+      }
+
       toast.success("Foto de perfil atualizada!");
     } catch (error) {
       console.error("Error uploading avatar:", error);

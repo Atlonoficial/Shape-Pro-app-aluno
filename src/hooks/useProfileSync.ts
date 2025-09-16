@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
+import { getUserProfile } from "@/lib/supabase";
 
 export const useProfileSync = () => {
   const { user } = useAuthContext();
@@ -68,7 +69,19 @@ export const useProfileSync = () => {
       await queryClient.invalidateQueries({ queryKey: ['user_profile'] });
       await queryClient.invalidateQueries({ queryKey: ['student_profile'] });
       
-      // Refetch immediately
+      // Clear React Query cache completely for profile data
+      queryClient.removeQueries({ queryKey: ['profile'] });
+      queryClient.removeQueries({ queryKey: ['user_profile'] });
+      
+      // Fetch fresh profile data
+      const freshProfile = await getUserProfile(user.id);
+      if (freshProfile) {
+        // Update all relevant query caches
+        queryClient.setQueryData(['profile', user.id], freshProfile);
+        queryClient.setQueryData(['user_profile'], freshProfile);
+      }
+      
+      // Force immediate refetch
       await queryClient.refetchQueries({ queryKey: ['profile', user.id] });
       await queryClient.refetchQueries({ queryKey: ['student', user.id] });
     } catch (error) {

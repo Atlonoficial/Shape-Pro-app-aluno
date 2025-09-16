@@ -32,8 +32,39 @@ export const useAuth = () => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Real-time subscription for profile changes
+    let profileChannel: any = null;
+    if (user?.id) {
+      profileChannel = supabase
+        .channel('profile_realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`
+          },
+          async (payload) => {
+            console.log('[useAuth] Profile updated in real-time:', payload);
+            try {
+              const updatedProfile = await getUserProfile(user.id);
+              setUserProfile(updatedProfile);
+            } catch (error) {
+              console.error('[useAuth] Error syncing profile:', error);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (profileChannel) {
+        supabase.removeChannel(profileChannel);
+      }
+    };
+  }, [user?.id]);
 
   return {
     user,
