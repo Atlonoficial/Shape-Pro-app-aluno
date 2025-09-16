@@ -11,6 +11,11 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PointsWidget } from "@/components/gamification/PointsWidget";
 import { TeacherCard } from "./TeacherCard";
+import { DynamicBadge } from "@/components/ui/DynamicBadge";
+import { useViewedItems } from "@/hooks/useViewedItems";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { useAnamneseCompletion } from "@/hooks/useAnamneseCompletion";
+import { useProfileSync } from "@/hooks/useProfileSync";
 
 export const Profile = () => {
   const { user, userProfile } = useAuthContext();
@@ -23,6 +28,12 @@ export const Profile = () => {
   const [assessmentCount, setAssessmentCount] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { forceSync } = useProfileSync();
+  
+  // Hooks para badges dinâmicas
+  const { markAsViewed } = useViewedItems(user?.id);
+  const profileCompletion = useProfileCompletion();
+  const anamneseCompletion = useAnamneseCompletion();
 
   // Avatar URL with cache busting for real-time updates
   const avatarUrl = userProfile?.avatar_url ? 
@@ -191,6 +202,13 @@ export const Profile = () => {
 
   const triggerFileSelect = () => fileInputRef.current?.click();
 
+  const handleCardClick = (path: string, category?: 'profile' | 'anamnese' | 'exams' | 'photos' | 'assessments') => {
+    if (category) {
+      markAsViewed(path, category);
+    }
+    navigate(path);
+  };
+
   const goToRewards = () => {
     navigate("/recompensas");
   };
@@ -324,7 +342,7 @@ export const Profile = () => {
       {/* Meus Dados */}
       <h2 className="text-lg font-semibold mb-3 mt-6">Meus Dados</h2>
       <div className="space-y-3">
-        <Card role="button" onClick={() => navigate("/cadastro-completo")} className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => handleCardClick("/cadastro-completo", 'profile')} className="hover:bg-muted/40 transition-colors relative">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <Target className="w-5 h-5 text-primary" />
@@ -333,7 +351,10 @@ export const Profile = () => {
               <p className="font-medium">Cadastro Completo</p>
               <p className="text-sm text-muted-foreground">Complete suas informações pessoais</p>
             </div>
-            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">75%</span>
+            <DynamicBadge 
+              percentage={profileCompletion === 0 ? undefined : profileCompletion.percentage}
+              show={profileCompletion !== 0 && !profileCompletion.isComplete}
+            />
           </CardContent>
         </Card>
       </div>
@@ -341,7 +362,7 @@ export const Profile = () => {
       {/* Dados e Configurações */}
       <h2 className="text-lg font-semibold mb-3 mt-6">Dados e Configurações</h2>
       <div className="space-y-3">
-        <Card role="button" onClick={() => navigate("/anamnese")} className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => handleCardClick("/anamnese", 'anamnese')} className="hover:bg-muted/40 transition-colors relative">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <ClipboardList className="w-5 h-5 text-primary" />
@@ -350,7 +371,11 @@ export const Profile = () => {
               <p className="font-medium">Anamnese</p>
               <p className="text-sm text-muted-foreground">Histórico médico e questionário de saúde</p>
             </div>
-            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">90%</span>
+            <DynamicBadge 
+              percentage={anamneseCompletion.hasAnamnese ? anamneseCompletion.percentage : undefined}
+              status={!anamneseCompletion.hasAnamnese ? 'new' : undefined}
+              show={!anamneseCompletion.isComplete}
+            />
           </CardContent>
         </Card>
 
@@ -366,7 +391,7 @@ export const Profile = () => {
           </CardContent>
         </Card>
 
-        <Card role="button" onClick={() => navigate("/exames-medicos")} className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => handleCardClick("/exames-medicos", 'exams')} className="hover:bg-muted/40 transition-colors relative">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <Stethoscope className="w-5 h-5 text-primary" />
@@ -375,11 +400,14 @@ export const Profile = () => {
               <p className="font-medium">Exames Médicos</p>
               <p className="text-sm text-muted-foreground">Últimos resultados</p>
             </div>
-            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">2</span>
+            <DynamicBadge 
+              count={examCount}
+              show={examCount > 0}
+            />
           </CardContent>
         </Card>
 
-        <Card role="button" onClick={() => navigate("/fotos-progresso")} className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => handleCardClick("/fotos-progresso", 'photos')} className="hover:bg-muted/40 transition-colors relative">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <Images className="w-5 h-5 text-primary" />
@@ -388,11 +416,14 @@ export const Profile = () => {
               <p className="font-medium">Fotos de Progresso</p>
               <p className="text-sm text-muted-foreground">Evolução visual</p>
             </div>
-            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">8</span>
+            <DynamicBadge 
+              count={photoCount}
+              show={photoCount > 0}
+            />
           </CardContent>
         </Card>
 
-        <Card role="button" onClick={() => navigate("/avaliacoes-fisicas")} className="hover:bg-muted/40 transition-colors">
+        <Card role="button" onClick={() => handleCardClick("/avaliacoes-fisicas", 'assessments')} className="hover:bg-muted/40 transition-colors relative">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <Ruler className="w-5 h-5 text-primary" />
@@ -401,7 +432,10 @@ export const Profile = () => {
               <p className="font-medium">Avaliações Físicas</p>
               <p className="text-sm text-muted-foreground">Medidas e composição</p>
             </div>
-            <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full font-medium">3</span>
+            <DynamicBadge 
+              count={assessmentCount}
+              show={assessmentCount > 0}
+            />
           </CardContent>
         </Card>
 
