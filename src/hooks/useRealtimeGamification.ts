@@ -6,7 +6,7 @@ import { showPointsToast } from "@/components/gamification/PointsToast";
 import { useGamificationDebounce } from "@/hooks/useGamificationDebounce";
 
 interface RealtimeGamificationHook {
-  awardPointsForAction: (action: string, description?: string) => Promise<void>;
+  awardPointsForAction: (action: string, description?: string, metadata?: any) => Promise<void>;
   updateStreak: () => Promise<void>;
 }
 

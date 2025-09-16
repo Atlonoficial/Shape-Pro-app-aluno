@@ -7,6 +7,7 @@ import { CoachAICard } from "./CoachAICard";
 import { AnnouncementBanner } from "./AnnouncementBanner";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
+import { StravaIntegrationCard } from "./StravaIntegrationCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
@@ -144,8 +145,11 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       {/* Weight Progress Chart */}
       <WeightChart onWeightNeeded={() => setShowWeightModal(true)} />
 
-      {/* Coach AI Card */}
-      <CoachAICard onCoachClick={onCoachClick} />
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <CoachAICard onCoachClick={onCoachClick} />
+        <StravaIntegrationCard />
+      </div>
 
       {/* Quick Actions */}
       <QuickActions />

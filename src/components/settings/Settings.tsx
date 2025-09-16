@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { HelpCenter } from "./HelpCenter";
 import { AboutApp } from "./AboutApp";
 import { TermsOfService } from "./TermsOfService";
+import { StravaIntegrationSettings } from "./StravaIntegrationSettings";
 
 const settingsCategories = [
   {
@@ -84,6 +85,9 @@ export const Settings = () => {
 
       {/* Settings Categories */}
       <div className="space-y-6">
+        {/* Strava Integration */}
+        <StravaIntegrationSettings />
+        
         {settingsCategories.map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h3 className="text-lg font-semibold text-foreground mb-3">{category.title}</h3>
