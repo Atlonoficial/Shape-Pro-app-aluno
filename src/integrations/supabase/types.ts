@@ -4104,6 +4104,10 @@ export type Database = {
         Args: { _reward_id: string }
         Returns: string
       }
+      sanitize_chat_input: {
+        Args: { input_text: string }
+        Returns: boolean
+      }
       seed_banner_test_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
