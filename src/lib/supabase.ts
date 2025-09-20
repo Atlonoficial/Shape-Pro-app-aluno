@@ -9,6 +9,7 @@ export interface UserProfile {
   user_type: 'student' | 'teacher';
   profile_complete: boolean;
   avatar_url?: string;
+  phone?: string;
   created_at?: string;
   updated_at?: string;
 }

@@ -13,6 +13,7 @@ export const useProfileCompletion = () => {
       userProfile.name,
       userProfile.email,
       userProfile.avatar_url,
+      userProfile.phone,
       student?.weight,
       student?.height,
       student?.goals?.length ? student.goals.join('') : null,
