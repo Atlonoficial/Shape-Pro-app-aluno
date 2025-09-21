@@ -60,7 +60,7 @@ export const FeedbackManager = () => {
           responded_at
         `)
         .eq('teacher_id', user.id)
-        .eq('type', 'weekly_feedback')
+        .in('type', ['weekly_feedback', 'periodic_feedback'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;

@@ -261,6 +261,68 @@ export type Database = {
           },
         ]
       }
+      atlon_assistant_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          teacher_id: string
+          thread_id: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          teacher_id: string
+          thread_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          teacher_id?: string
+          thread_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      atlon_assistant_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlon_assistant_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "atlon_assistant_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           access_type: string
@@ -1515,14 +1577,58 @@ export type Database = {
             referencedRelation: "meals"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "meal_logs_nutrition_plan_id_fkey"
-            columns: ["nutrition_plan_id"]
-            isOneToOne: false
-            referencedRelation: "nutrition_plans"
-            referencedColumns: ["id"]
-          },
         ]
+      }
+      meal_plans: {
+        Row: {
+          assigned_students: string[]
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_days: number | null
+          id: string
+          meals_data: Json
+          name: string
+          status: string
+          total_calories: number | null
+          total_carbs: number | null
+          total_fat: number | null
+          total_protein: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_students?: string[]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          meals_data?: Json
+          name: string
+          status?: string
+          total_calories?: number | null
+          total_carbs?: number | null
+          total_fat?: number | null
+          total_protein?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_students?: string[]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          meals_data?: Json
+          name?: string
+          status?: string
+          total_calories?: number | null
+          total_carbs?: number | null
+          total_fat?: number | null
+          total_protein?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       meal_rotations: {
         Row: {
@@ -1957,90 +2063,6 @@ export type Database = {
           total_fat?: number | null
           total_protein?: number | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      nutrition_plans: {
-        Row: {
-          adherence_rate: number | null
-          assigned_to: string[] | null
-          created_at: string | null
-          created_by: string | null
-          current_week: number | null
-          daily_calories: number | null
-          daily_carbs: number | null
-          daily_fat: number | null
-          daily_fiber: number | null
-          daily_protein: number | null
-          daily_water: number | null
-          description: string | null
-          duration: number | null
-          end_date: string | null
-          id: string
-          is_template: boolean | null
-          meal_ids: Json | null
-          meals: Json | null
-          name: string
-          rotation_weeks: number | null
-          start_date: string | null
-          tags: string[] | null
-          updated_at: string | null
-          week_start_date: string | null
-          weekly_schedule: Json | null
-        }
-        Insert: {
-          adherence_rate?: number | null
-          assigned_to?: string[] | null
-          created_at?: string | null
-          created_by?: string | null
-          current_week?: number | null
-          daily_calories?: number | null
-          daily_carbs?: number | null
-          daily_fat?: number | null
-          daily_fiber?: number | null
-          daily_protein?: number | null
-          daily_water?: number | null
-          description?: string | null
-          duration?: number | null
-          end_date?: string | null
-          id?: string
-          is_template?: boolean | null
-          meal_ids?: Json | null
-          meals?: Json | null
-          name: string
-          rotation_weeks?: number | null
-          start_date?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-          week_start_date?: string | null
-          weekly_schedule?: Json | null
-        }
-        Update: {
-          adherence_rate?: number | null
-          assigned_to?: string[] | null
-          created_at?: string | null
-          created_by?: string | null
-          current_week?: number | null
-          daily_calories?: number | null
-          daily_carbs?: number | null
-          daily_fat?: number | null
-          daily_fiber?: number | null
-          daily_protein?: number | null
-          daily_water?: number | null
-          description?: string | null
-          duration?: number | null
-          end_date?: string | null
-          id?: string
-          is_template?: boolean | null
-          meal_ids?: Json | null
-          meals?: Json | null
-          name?: string
-          rotation_weeks?: number | null
-          start_date?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-          week_start_date?: string | null
-          weekly_schedule?: Json | null
         }
         Relationships: []
       }
@@ -2788,6 +2810,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          device_info: Json | null
+          id: string
+          ip_address: unknown | null
+          success: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          device_info?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          device_info?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_activity_log: {
         Row: {
           activity_description: string
@@ -3101,6 +3156,47 @@ export type Database = {
           visibility_days?: number
         }
         Relationships: []
+      }
+      teacher_feedback_settings: {
+        Row: {
+          created_at: string
+          custom_questions: Json
+          feedback_days: number[]
+          feedback_frequency: string
+          id: string
+          is_active: boolean
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_questions?: Json
+          feedback_days?: number[]
+          feedback_frequency?: string
+          id?: string
+          is_active?: boolean
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_questions?: Json
+          feedback_days?: number[]
+          feedback_frequency?: string
+          id?: string
+          is_active?: boolean
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_feedback_settings_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_payment_settings: {
         Row: {
@@ -3682,6 +3778,60 @@ export type Database = {
           },
         ]
       }
+      workout_plans: {
+        Row: {
+          assigned_students: string[] | null
+          created_at: string
+          created_by: string
+          description: string | null
+          difficulty: string | null
+          duration_weeks: number | null
+          exercises_data: Json
+          id: string
+          is_template: boolean | null
+          name: string
+          notes: string | null
+          sessions_per_week: number | null
+          status: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_students?: string[] | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          difficulty?: string | null
+          duration_weeks?: number | null
+          exercises_data?: Json
+          id?: string
+          is_template?: boolean | null
+          name: string
+          notes?: string | null
+          sessions_per_week?: number | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_students?: string[] | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          difficulty?: string | null
+          duration_weeks?: number | null
+          exercises_data?: Json
+          id?: string
+          is_template?: boolean | null
+          name?: string
+          notes?: string | null
+          sessions_per_week?: number | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       workout_sessions: {
         Row: {
           calories_burned: number | null
@@ -3735,10 +3885,13 @@ export type Database = {
       workouts: {
         Row: {
           assigned_to: string[] | null
+          auto_expire: boolean | null
           created_at: string | null
           created_by: string | null
           description: string | null
           difficulty: string | null
+          duration_days: number | null
+          end_date: string | null
           estimated_calories: number | null
           estimated_duration: number | null
           exercises: Json
@@ -3746,19 +3899,26 @@ export type Database = {
           image_url: string | null
           is_template: boolean | null
           last_completed: string | null
+          last_synced_at: string | null
           muscle_groups: string[] | null
           name: string
           sessions: number | null
+          start_date: string | null
+          status: string | null
+          sync_status: string | null
           tags: string[] | null
           template_category: string | null
           updated_at: string | null
         }
         Insert: {
           assigned_to?: string[] | null
+          auto_expire?: boolean | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           difficulty?: string | null
+          duration_days?: number | null
+          end_date?: string | null
           estimated_calories?: number | null
           estimated_duration?: number | null
           exercises?: Json
@@ -3766,19 +3926,26 @@ export type Database = {
           image_url?: string | null
           is_template?: boolean | null
           last_completed?: string | null
+          last_synced_at?: string | null
           muscle_groups?: string[] | null
           name: string
           sessions?: number | null
+          start_date?: string | null
+          status?: string | null
+          sync_status?: string | null
           tags?: string[] | null
           template_category?: string | null
           updated_at?: string | null
         }
         Update: {
           assigned_to?: string[] | null
+          auto_expire?: boolean | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           difficulty?: string | null
+          duration_days?: number | null
+          end_date?: string | null
           estimated_calories?: number | null
           estimated_duration?: number | null
           exercises?: Json
@@ -3786,9 +3953,13 @@ export type Database = {
           image_url?: string | null
           is_template?: boolean | null
           last_completed?: string | null
+          last_synced_at?: string | null
           muscle_groups?: string[] | null
           name?: string
           sessions?: number | null
+          start_date?: string | null
+          status?: string | null
+          sync_status?: string | null
           tags?: string[] | null
           template_category?: string | null
           updated_at?: string | null
@@ -3891,6 +4062,15 @@ export type Database = {
               p_type?: string
             }
         Returns: string
+      }
+      calculate_meal_plan_totals: {
+        Args: { meals_data_param: Json }
+        Returns: {
+          total_calories: number
+          total_carbs: number
+          total_fat: number
+          total_protein: number
+        }[]
       }
       calculate_user_level: {
         Args: { points: number }

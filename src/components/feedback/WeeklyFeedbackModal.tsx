@@ -5,45 +5,101 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, MessageSquare, Dumbbell, Apple, HelpCircle } from 'lucide-react';
-import { WeeklyFeedbackData } from '@/hooks/useWeeklyFeedback';
+
+export interface WeeklyFeedbackData {
+  training_rating: number;
+  diet_rating: number;
+  general_feedback: string;
+  training_feedback?: string;
+  diet_feedback?: string;
+  questions?: string;
+  custom_responses?: { [key: string]: any };
+}
 
 interface WeeklyFeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: WeeklyFeedbackData) => Promise<boolean>;
   loading?: boolean;
+  customQuestions?: Array<{
+    id: string;
+    text: string;
+    type: 'text' | 'rating' | 'multiple_choice';
+    options?: string[];
+    required: boolean;
+  }>;
+  feedbackFrequency?: string;
 }
 
-export const WeeklyFeedbackModal = ({ isOpen, onClose, onSubmit, loading }: WeeklyFeedbackModalProps) => {
-  const [formData, setFormData] = useState<WeeklyFeedbackData>({
+export const WeeklyFeedbackModal = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  loading = false, 
+  customQuestions = [], 
+  feedbackFrequency = 'semanal' 
+}: WeeklyFeedbackModalProps) => {
+  const [feedbackData, setFeedbackData] = useState<WeeklyFeedbackData>({
     training_rating: 0,
     diet_rating: 0,
-    general_feedback: '',
-    training_feedback: '',
-    diet_feedback: '',
-    questions: ''
+    general_feedback: "",
+    training_feedback: "",
+    diet_feedback: "",
+    questions: "",
+    custom_responses: {}
   });
 
   const handleSubmit = async () => {
-    if (formData.training_rating === 0 || formData.diet_rating === 0 || !formData.general_feedback.trim()) {
-      return;
-    }
-
-    const success = await onSubmit(formData);
+    if (!isValid) return;
+    
+    const success = await onSubmit(feedbackData);
     if (success) {
-      setFormData({
+      setFeedbackData({
         training_rating: 0,
         diet_rating: 0,
-        general_feedback: '',
-        training_feedback: '',
-        diet_feedback: '',
-        questions: ''
+        general_feedback: "",
+        training_feedback: "",
+        diet_feedback: "",
+        questions: "",
+        custom_responses: {}
       });
       onClose();
     }
   };
 
-  const StarRating = ({ value, onChange, label }: { value: number; onChange: (rating: number) => void; label: string }) => (
+  const handleCustomResponse = (questionId: string, value: any) => {
+    setFeedbackData(prev => ({
+      ...prev,
+      custom_responses: {
+        ...prev.custom_responses,
+        [questionId]: value
+      }
+    }));
+  };
+
+  const checkCustomQuestionValidity = () => {
+    for (const question of customQuestions) {
+      if (question.required) {
+        const response = feedbackData.custom_responses?.[question.id];
+        if (!response || (typeof response === 'string' && response.trim().length === 0)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const isValid = feedbackData.training_rating > 0 && 
+                  feedbackData.diet_rating > 0 && 
+                  feedbackData.general_feedback.trim().length > 0 &&
+                  checkCustomQuestionValidity();
+
+  const StarRating = ({ label, value, onChange, questionId }: {
+    questionId?: string;
+    label: string;
+    value: number;
+    onChange: (rating: number) => void;
+  }) => (
     <div className="space-y-2">
       <Label className="text-sm font-medium">{label}</Label>
       <div className="flex gap-1">
@@ -64,18 +120,13 @@ export const WeeklyFeedbackModal = ({ isOpen, onClose, onSubmit, loading }: Week
     </div>
   );
 
-  const isValid = formData.training_rating > 0 && formData.diet_rating > 0 && formData.general_feedback.trim().length > 0;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            Feedback Semanal
-          </DialogTitle>
+          <DialogTitle>Feedback {feedbackFrequency}</DialogTitle>
           <DialogDescription>
-            Como foi sua semana? Conte para seu professor sobre seus treinos e dieta.
+            Como foi seu período? Compartilhe seu feedback sobre treinos e dieta.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,16 +139,16 @@ export const WeeklyFeedbackModal = ({ isOpen, onClose, onSubmit, loading }: Week
                 <h4 className="font-medium">Treinos</h4>
               </div>
               <StarRating
-                value={formData.training_rating}
-                onChange={(rating) => setFormData(prev => ({ ...prev, training_rating: rating }))}
-                label="Como foram seus treinos esta semana?"
+                value={feedbackData.training_rating}
+                onChange={(rating) => setFeedbackData(prev => ({ ...prev, training_rating: rating }))}
+                label="Como foram seus treinos neste período?"
               />
               <div className="mt-3">
                 <Label className="text-sm">Comentários sobre treinos (opcional)</Label>
                 <Textarea
                   placeholder="Como se sentiu nos treinos, dificuldades, melhorias..."
-                  value={formData.training_feedback}
-                  onChange={(e) => setFormData(prev => ({ ...prev, training_feedback: e.target.value }))}
+                  value={feedbackData.training_feedback}
+                  onChange={(e) => setFeedbackData(prev => ({ ...prev, training_feedback: e.target.value }))}
                   className="mt-1 min-h-[60px]"
                 />
               </div>
@@ -112,16 +163,16 @@ export const WeeklyFeedbackModal = ({ isOpen, onClose, onSubmit, loading }: Week
                 <h4 className="font-medium">Alimentação</h4>
               </div>
               <StarRating
-                value={formData.diet_rating}
-                onChange={(rating) => setFormData(prev => ({ ...prev, diet_rating: rating }))}
-                label="Como foi sua alimentação esta semana?"
+                value={feedbackData.diet_rating}
+                onChange={(rating) => setFeedbackData(prev => ({ ...prev, diet_rating: rating }))}
+                label="Como foi sua alimentação neste período?"
               />
               <div className="mt-3">
                 <Label className="text-sm">Comentários sobre alimentação (opcional)</Label>
                 <Textarea
                   placeholder="Dificuldades com a dieta, mudanças, preferências..."
-                  value={formData.diet_feedback}
-                  onChange={(e) => setFormData(prev => ({ ...prev, diet_feedback: e.target.value }))}
+                  value={feedbackData.diet_feedback}
+                  onChange={(e) => setFeedbackData(prev => ({ ...prev, diet_feedback: e.target.value }))}
                   className="mt-1 min-h-[60px]"
                 />
               </div>
@@ -135,25 +186,74 @@ export const WeeklyFeedbackModal = ({ isOpen, onClose, onSubmit, loading }: Week
               Feedback Geral *
             </Label>
             <Textarea
-              placeholder="Como se sentiu durante a semana? Há algo que gostaria de comentar ou melhorar?"
-              value={formData.general_feedback}
-              onChange={(e) => setFormData(prev => ({ ...prev, general_feedback: e.target.value }))}
+              placeholder="Como se sentiu durante este período? Há algo que gostaria de comentar ou melhorar?"
+              value={feedbackData.general_feedback}
+              onChange={(e) => setFeedbackData(prev => ({ ...prev, general_feedback: e.target.value }))}
               className="min-h-[80px]"
               required
             />
           </div>
 
-          {/* Questions */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
-              Dúvidas ou Perguntas (opcional)
-            </Label>
+          {/* Perguntas personalizadas */}
+          {customQuestions.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="font-medium">Perguntas Adicionais</h3>
+              {customQuestions.map((question) => (
+                <div key={question.id} className="space-y-2">
+                  <Label htmlFor={question.id}>
+                    {question.text} {question.required && <span className="text-red-500">*</span>}
+                  </Label>
+                  
+                  {question.type === 'text' && (
+                    <Textarea
+                      id={question.id}
+                      placeholder="Digite sua resposta..."
+                      value={feedbackData.custom_responses?.[question.id] || ''}
+                      onChange={(e) => handleCustomResponse(question.id, e.target.value)}
+                      className="min-h-[80px]"
+                    />
+                  )}
+                  
+                  {question.type === 'rating' && (
+                    <StarRating
+                      questionId={question.id}
+                      label=""
+                      value={feedbackData.custom_responses?.[question.id] || 0}
+                      onChange={(value) => handleCustomResponse(question.id, value)}
+                    />
+                  )}
+                  
+                  {question.type === 'multiple_choice' && question.options && (
+                    <div className="space-y-2">
+                      {question.options.map((option, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`${question.id}_${index}`}
+                            name={question.id}
+                            value={option}
+                            checked={feedbackData.custom_responses?.[question.id] === option}
+                            onChange={(e) => handleCustomResponse(question.id, e.target.value)}
+                          />
+                          <Label htmlFor={`${question.id}_${index}`}>{option}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Perguntas adicionais */}
+          <div className="space-y-3">
+            <Label htmlFor="questions">Dúvidas ou sugestões? (Opcional)</Label>
             <Textarea
-              placeholder="Tem alguma dúvida sobre treinos, alimentação ou gostaria de fazer alguma pergunta?"
-              value={formData.questions}
-              onChange={(e) => setFormData(prev => ({ ...prev, questions: e.target.value }))}
-              className="min-h-[60px]"
+              id="questions"
+              placeholder="Tem alguma dúvida ou sugestão para seu professor?"
+              value={feedbackData.questions}
+              onChange={(e) => setFeedbackData(prev => ({ ...prev, questions: e.target.value }))}
+              className="min-h-[80px]"
             />
           </div>
         </div>
