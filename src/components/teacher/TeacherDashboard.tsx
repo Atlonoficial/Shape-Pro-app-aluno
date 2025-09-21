@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell, MessageSquare, CreditCard } from "lucide-react";
+import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell, MessageSquare, CreditCard, Activity } from "lucide-react";
 import { CourseManagement } from "./CourseManagement";
 import { ProductManagement } from "./ProductManagement";
 import { StudentStats } from "./StudentStats";
@@ -9,6 +9,7 @@ import { NutritionDashboard } from "./NutritionDashboard";
 import { NotificationManager } from "./NotificationManager";
 import { FeedbackManager } from "./FeedbackManager";
 import { PaymentGatewayConfig } from "./PaymentGatewayConfig";
+import { StravaStudentMonitoring } from "./StravaStudentMonitoring";
 import { useAuth } from "@/hooks/useAuth";
 
 export const TeacherDashboard = () => {
@@ -51,7 +52,7 @@ export const TeacherDashboard = () => {
 
        {/* Tabs Navigation */}
         <Tabs defaultValue="courses" className="w-full">
-          <TabsList className="grid w-full grid-cols-8 mb-6">
+          <TabsList className="grid w-full grid-cols-9 mb-6">
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Cursos
@@ -83,6 +84,10 @@ export const TeacherDashboard = () => {
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Pagamentos
+            </TabsTrigger>
+            <TabsTrigger value="strava" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Strava
             </TabsTrigger>
           </TabsList>
 
@@ -116,6 +121,10 @@ export const TeacherDashboard = () => {
         
         <TabsContent value="payments" className="mt-4">
           <PaymentGatewayConfig />
+        </TabsContent>
+        
+        <TabsContent value="strava" className="mt-4">
+          <StravaStudentMonitoring />
         </TabsContent>
       </Tabs>
     </div>
