@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Camera, Save, User } from "lucide-react";
+import { ArrowLeft, Camera, Save, User, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -38,6 +38,10 @@ export default function CadastroCompleto() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile?.avatar_url || null);
+  const [editingMeasurements, setEditingMeasurements] = useState(false);
+  const [editingGoals, setEditingGoals] = useState(false);
+  const [savingMeasurements, setSavingMeasurements] = useState(false);
+  const [savingGoals, setSavingGoals] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -114,18 +118,6 @@ export default function CadastroCompleto() {
         phone: data.phone,
       });
 
-      // Atualizar dados específicos do estudante
-      if (student) {
-        await updateProfile({
-          weight: data.weight,
-          height: data.height,
-          body_fat: data.body_fat,
-          muscle_mass: data.muscle_mass,
-          goals: data.goals || [],
-          measurements_updated_at: new Date().toISOString(),
-        });
-      }
-
       toast.success("Perfil atualizado com sucesso!");
       navigate("/?tab=profile");
     } catch (error) {
@@ -133,6 +125,50 @@ export default function CadastroCompleto() {
       toast.error("Erro ao salvar alterações");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveMeasurements = async () => {
+    if (!user?.id || !student) return;
+    setSavingMeasurements(true);
+
+    try {
+      const data = form.getValues();
+      await updateProfile({
+        weight: data.weight,
+        height: data.height,
+        body_fat: data.body_fat,
+        muscle_mass: data.muscle_mass,
+        measurements_updated_at: new Date().toISOString(),
+      });
+
+      toast.success("Medidas corporais atualizadas!");
+      setEditingMeasurements(false);
+    } catch (error) {
+      console.error("Erro ao salvar medidas:", error);
+      toast.error("Erro ao salvar medidas corporais");
+    } finally {
+      setSavingMeasurements(false);
+    }
+  };
+
+  const handleSaveGoals = async () => {
+    if (!user?.id || !student) return;
+    setSavingGoals(true);
+
+    try {
+      const data = form.getValues();
+      await updateProfile({
+        goals: data.goals || [],
+      });
+
+      toast.success("Objetivos atualizados!");
+      setEditingGoals(false);
+    } catch (error) {
+      console.error("Erro ao salvar objetivos:", error);
+      toast.error("Erro ao salvar objetivos");
+    } finally {
+      setSavingGoals(false);
     }
   };
 
@@ -285,80 +321,207 @@ export default function CadastroCompleto() {
           {/* Medidas Corporais */}
           <Card>
             <CardHeader>
-              <CardTitle>Medidas Corporais</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Medidas Corporais</CardTitle>
+                {!editingMeasurements && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingMeasurements(true)}
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="weight">Peso (kg)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    step="0.1"
-                    {...form.register("weight", { valueAsNumber: true })}
-                    placeholder="70.5"
-                  />
+              {!editingMeasurements ? (
+                // View Mode
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <Label className="text-sm font-medium text-muted-foreground">Peso</Label>
+                    <p className="text-lg font-semibold mt-1">
+                      {student?.weight ? `${student.weight} kg` : "Não informado"}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <Label className="text-sm font-medium text-muted-foreground">Altura</Label>
+                    <p className="text-lg font-semibold mt-1">
+                      {student?.height ? `${student.height} cm` : "Não informado"}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <Label className="text-sm font-medium text-muted-foreground">% Gordura</Label>
+                    <p className="text-lg font-semibold mt-1">
+                      {student?.body_fat ? `${student.body_fat}%` : "Não informado"}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <Label className="text-sm font-medium text-muted-foreground">Massa Muscular</Label>
+                    <p className="text-lg font-semibold mt-1">
+                      {student?.muscle_mass ? `${student.muscle_mass} kg` : "Não informado"}
+                    </p>
+                  </div>
                 </div>
+              ) : (
+                // Edit Mode
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="weight">Peso (kg)</Label>
+                      <Input
+                        id="weight"
+                        type="number"
+                        step="0.1"
+                        {...form.register("weight", { valueAsNumber: true })}
+                        placeholder="70.5"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="height">Altura (cm)</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    step="0.1"
-                    {...form.register("height", { valueAsNumber: true })}
-                    placeholder="175"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="height">Altura (cm)</Label>
+                      <Input
+                        id="height"
+                        type="number"
+                        step="0.1"
+                        {...form.register("height", { valueAsNumber: true })}
+                        placeholder="175"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="body_fat">% Gordura</Label>
-                  <Input
-                    id="body_fat"
-                    type="number"
-                    step="0.1"
-                    {...form.register("body_fat", { valueAsNumber: true })}
-                    placeholder="15.5"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="body_fat">% Gordura</Label>
+                      <Input
+                        id="body_fat"
+                        type="number"
+                        step="0.1"
+                        {...form.register("body_fat", { valueAsNumber: true })}
+                        placeholder="15.5"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="muscle_mass">Massa Muscular (kg)</Label>
-                  <Input
-                    id="muscle_mass"
-                    type="number"
-                    step="0.1"
-                    {...form.register("muscle_mass", { valueAsNumber: true })}
-                    placeholder="45.2"
-                  />
-                </div>
-              </div>
+                    <div>
+                      <Label htmlFor="muscle_mass">Massa Muscular (kg)</Label>
+                      <Input
+                        id="muscle_mass"
+                        type="number"
+                        step="0.1"
+                        {...form.register("muscle_mass", { valueAsNumber: true })}
+                        placeholder="45.2"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingMeasurements(false);
+                        // Reset form values to current data
+                        form.setValue("weight", student?.weight);
+                        form.setValue("height", student?.height);
+                        form.setValue("body_fat", student?.body_fat);
+                        form.setValue("muscle_mass", student?.muscle_mass);
+                      }}
+                      disabled={savingMeasurements}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveMeasurements}
+                      disabled={savingMeasurements}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {savingMeasurements ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
           {/* Objetivos */}
           <Card>
             <CardHeader>
-              <CardTitle>Objetivos</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Objetivos</CardTitle>
+                {!editingGoals && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingGoals(true)}
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <div>
-                <Label htmlFor="goals">Seus Objetivos</Label>
-                <Textarea
-                  id="goals"
-                  placeholder="Descreva seus objetivos fitness (ex: perder peso, ganhar massa muscular, melhorar condicionamento...)"
-                  className="mt-1"
-                  value={student?.goals?.join(", ") || ""}
-                  onChange={(e) => {
-                    const goals = e.target.value.split(",").map(g => g.trim()).filter(Boolean);
-                    form.setValue("goals", goals);
-                  }}
-                />
-              </div>
+              {!editingGoals ? (
+                // View Mode
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Label className="text-sm font-medium text-muted-foreground">Seus Objetivos</Label>
+                  <p className="text-base mt-2 leading-relaxed">
+                    {student?.goals?.length ? student.goals.join(", ") : "Nenhum objetivo definido ainda"}
+                  </p>
+                </div>
+              ) : (
+                // Edit Mode
+                <>
+                  <div>
+                    <Label htmlFor="goals">Seus Objetivos</Label>
+                    <Textarea
+                      id="goals"
+                      placeholder="Descreva seus objetivos fitness (ex: perder peso, ganhar massa muscular, melhorar condicionamento...)"
+                      className="mt-1"
+                      value={student?.goals?.join(", ") || ""}
+                      onChange={(e) => {
+                        const goals = e.target.value.split(",").map(g => g.trim()).filter(Boolean);
+                        form.setValue("goals", goals);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingGoals(false);
+                        // Reset form values to current data
+                        form.setValue("goals", student?.goals || []);
+                      }}
+                      disabled={savingGoals}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveGoals}
+                      disabled={savingGoals}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {savingGoals ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
-          {/* Botões */}
+          {/* Botões para Dados Pessoais */}
           <div className="flex gap-3 pt-4">
             <Button
               type="button"
@@ -366,7 +529,7 @@ export default function CadastroCompleto() {
               onClick={() => navigate("/?tab=profile")}
               className="flex-1"
             >
-              Cancelar
+              Voltar
             </Button>
             <Button
               type="submit"
@@ -374,7 +537,7 @@ export default function CadastroCompleto() {
               className="flex-1"
             >
               <Save className="w-4 h-4 mr-2" />
-              {saving ? "Salvando..." : "Salvar Alterações"}
+              {saving ? "Salvando..." : "Salvar Dados Pessoais"}
             </Button>
           </div>
         </form>
