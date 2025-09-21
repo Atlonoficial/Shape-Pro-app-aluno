@@ -82,10 +82,10 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
         throw mealError;
       }
 
-      // Buscar o plano nutricional atual para atualizar os meal_ids
+      // Buscar o plano nutricional atual para atualizar os meals_data
       const { data: plan, error: planError } = await supabase
-        .from('nutrition_plans')
-        .select('meal_ids')
+        .from('meal_plans')
+        .select('meals_data')
         .eq('id', nutritionPlanId)
         .single();
 
@@ -94,14 +94,14 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
         throw planError;
       }
 
-      // Adicionar o novo meal_id ao array existente
-      const currentMealIds = (plan.meal_ids as string[]) || [];
-      const updatedMealIds = [...currentMealIds, meal.id];
+      // Adicionar o novo meal ao meals_data existente
+      const currentMealsData = (plan.meals_data as any[]) || [];
+      const updatedMealsData = [...currentMealsData, { meal_id: meal.id, added_at: new Date().toISOString() }];
 
-      // Atualizar o plano nutricional com o novo meal_id
+      // Atualizar o plano nutricional com o novo meal
       const { error: updateError } = await supabase
-        .from('nutrition_plans')
-        .update({ meal_ids: updatedMealIds })
+        .from('meal_plans')
+        .update({ meals_data: updatedMealsData })
         .eq('id', nutritionPlanId);
 
       if (updateError) {

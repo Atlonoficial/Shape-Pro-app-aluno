@@ -382,7 +382,7 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
       {
         event: '*',
         schema: 'public',
-        table: 'nutrition_plans'
+        table: 'meal_plans'
       },
       () => {
         fetchPlans();
@@ -392,9 +392,9 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
 
   const fetchPlans = async () => {
     const { data, error } = await supabase
-      .from('nutrition_plans')
+      .from('meal_plans')
       .select('*')
-      .contains('assigned_to', [userId])
+      .contains('assigned_students', [userId])
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -402,7 +402,26 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
       callback([]);
       return;
     }
-    callback((data || []) as NutritionPlan[]);
+    
+    // Transform meal_plans data to match NutritionPlan interface
+    const transformedPlans: NutritionPlan[] = (data || []).map(plan => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      meals: Array.isArray(plan.meals_data) ? plan.meals_data : (plan.meals_data ? [plan.meals_data] : []),
+      daily_calories: plan.total_calories,
+      daily_protein: plan.total_protein,
+      daily_carbs: plan.total_carbs,
+      daily_fat: plan.total_fat,
+      assigned_to: plan.assigned_students || [],
+      created_by: plan.created_by,
+      is_template: false,
+      duration: plan.duration_days,
+      created_at: plan.created_at,
+      updated_at: plan.updated_at
+    }));
+    
+    callback(transformedPlans);
   };
 
   fetchPlans();

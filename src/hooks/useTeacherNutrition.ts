@@ -52,14 +52,14 @@ export const useTeacherNutrition = () => {
       const progressData = await Promise.all(
         (students || []).map(async (student: any) => {
           // Buscar plano ativo do aluno
-          const { data: nutritionPlans } = await supabase
-            .from('nutrition_plans')
-            .select('*, meal_ids')
-            .contains('assigned_to', [student.user_id])
+          const { data: mealPlans } = await supabase
+            .from('meal_plans')
+            .select('*, meals_data, total_calories')
+            .contains('assigned_students', [student.user_id])
             .order('created_at', { ascending: false })
             .limit(1);
 
-          const activePlan = nutritionPlans?.[0];
+          const activePlan = mealPlans?.[0];
           
           // Buscar logs de refeições de hoje
           const { data: mealLogs } = await supabase
@@ -75,12 +75,12 @@ export const useTeacherNutrition = () => {
           let dailyCaloriesConsumed = 0;
           let lastMealTime: string | undefined;
 
-          // Usar nova estrutura com meal_ids
-          if (activePlan?.meal_ids && Array.isArray(activePlan.meal_ids)) {
-            // Converter meal_ids para array de strings
-            const mealIds = activePlan.meal_ids.filter((id): id is string => 
-              typeof id === 'string'
-            );
+          // Usar nova estrutura com meals_data
+          if (activePlan?.meals_data && Array.isArray(activePlan.meals_data)) {
+            // Extrair meal_ids do meals_data
+            const mealIds = activePlan.meals_data
+              .map((item: any) => item.meal_id)
+              .filter((id): id is string => typeof id === 'string');
             
             if (mealIds.length > 0) {
               // Buscar dados das refeições
@@ -90,7 +90,7 @@ export const useTeacherNutrition = () => {
                 .in('id', mealIds);
 
               totalMeals = meals?.length || 0;
-              dailyCaloriesTarget = activePlan.daily_calories || 0;
+              dailyCaloriesTarget = activePlan.total_calories || 0;
 
               // Calcular refeições completadas e calorias consumidas
               meals?.forEach((meal) => {

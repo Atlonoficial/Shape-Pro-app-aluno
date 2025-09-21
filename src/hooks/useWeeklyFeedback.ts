@@ -18,6 +18,7 @@ export interface WeeklyFeedbackData {
   training_feedback?: string;
   diet_feedback?: string;
   questions?: string;
+  custom_responses?: { [key: string]: any };
 }
 
 export const useWeeklyFeedback = () => {
