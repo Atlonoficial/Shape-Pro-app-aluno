@@ -18,7 +18,6 @@ import { useWeightProgress } from "@/hooks/useWeightProgress";
 import { useProgressActions } from "@/components/progress/ProgressActions";
 import { useWeeklyFeedback } from "@/hooks/useWeeklyFeedback";
 import { WeeklyFeedbackModal } from "@/components/feedback/WeeklyFeedbackModal";
-import { PointsWidget } from "@/components/gamification/PointsWidget";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -140,11 +139,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         <p className="text-foreground">
           Estou aqui para te guiar, vamos começar?
         </p>
-      </div>
-
-      {/* Points Widget - Gamification */}
-      <div className="mb-6">
-        <PointsWidget onClick={() => navigate('/?tab=gamification')} />
       </div>
 
 
