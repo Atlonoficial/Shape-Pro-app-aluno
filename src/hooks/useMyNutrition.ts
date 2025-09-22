@@ -3,6 +3,8 @@ import { useAuth } from './useAuth';
 import { getMealLogsByUserAndDate, createMealLog } from '@/lib/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useMealPlans, type MealPlan } from './useMealPlans';
+import { ensureValidMealId, isValidUUID } from '@/lib/utils';
+import { useMealLogDiagnostics } from './useMealLogDiagnostics';
 
 export interface MealLog {
   id: string;
@@ -65,6 +67,7 @@ export interface DailyStats {
 export const useMyNutrition = () => {
   const { user } = useAuth();
   const { currentPlan, loading: plansLoading } = useMealPlans();
+  const { logDiagnostic } = useMealLogDiagnostics();
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [todaysMeals, setTodaysMeals] = useState<MealLog[]>([]);
@@ -199,8 +202,11 @@ export const useMyNutrition = () => {
     
     todaysMeals.forEach(log => {
       if (log.consumed) {
-        // Encontrar a refeição nas refeições do plano
-        const meal = planMeals.find(m => m.id === log.meal_id);
+        // Encontrar a refeição nas refeições do plano (buscar por ID original ou UUID)
+        const meal = planMeals.find(m => 
+          m.id === log.meal_id || 
+          ensureValidMealId(m.id) === log.meal_id
+        );
         if (meal) {
           consumed.calories += meal.calories || 0;
           consumed.protein += meal.protein || 0;
@@ -222,55 +228,76 @@ export const useMyNutrition = () => {
 
   const logMeal = async (mealId: string, consumed: boolean = true, notes?: string): Promise<boolean> => {
     if (!user?.id || !currentPlan) {
-      console.error('Usuário não autenticado ou plano não encontrado');
+      console.error('[logMeal] Usuário não autenticado ou plano não encontrado');
       return false;
     }
+
+    // CORREÇÃO: Garantir que meal_id seja UUID válido
+    const validMealId = ensureValidMealId(mealId);
+    console.log(`[logMeal] Processing meal: original="${mealId}", valid="${validMealId}"`);
 
     const today = new Date().toISOString().split('T')[0];
     
     try {
-      // Verificar se já existe log para esta refeição hoje
+      // Verificar se já existe log para esta refeição hoje (usando meal_id original para busca)
       const existingLog = todaysMeals.find(log => 
-        log.meal_id === mealId && 
+        (log.meal_id === mealId || log.meal_id === validMealId) && 
         log.date.split('T')[0] === today
       );
 
       // Se já existe um log consumido e está tentando desmarcar, impedir
       if (existingLog && existingLog.consumed && consumed === false) {
-        console.warn('Cannot uncheck consumed meal - only allowed once per day');
+        console.warn('[logMeal] Cannot uncheck consumed meal - only allowed once per day');
         return false;
       }
 
       if (existingLog) {
         // Se já está consumido e está tentando marcar novamente, retornar sucesso
         if (existingLog.consumed && consumed) {
+          console.log('[logMeal] Meal already consumed, returning success');
           return true;
         }
         
         // Atualizar log existente via supabase
+        console.log(`[logMeal] Updating existing log: ${existingLog.id}`);
         const { error } = await supabase
           .from('meal_logs')
           .update({ consumed, notes })
           .eq('id', existingLog.id);
           
         if (error) {
-          console.error('Erro ao atualizar meal log:', error);
+          console.error('[logMeal] Erro ao atualizar meal log:', error);
           return false;
         }
+
+        console.log('[logMeal] Successfully updated existing meal log');
       } else {
         // Criar novo log apenas se está marcando como consumido
         if (!consumed) {
+          console.log('[logMeal] Not creating log for unconsumed meal');
           return false;
         }
+        
+        console.log(`[logMeal] Creating new meal log with meal_id: ${validMealId}`);
         
         await createMealLog({
           user_id: user.id,
           nutrition_plan_id: currentPlan.id,
-          meal_id: mealId,
+          meal_id: validMealId, // USAR UUID VÁLIDO
           date: new Date().toISOString(),
           consumed,
           notes,
           actual_time: new Date().toTimeString().split(' ')[0]
+        });
+
+        console.log('[logMeal] Successfully created new meal log');
+        
+        // Log diagnostic success
+        logDiagnostic({
+          action: 'create',
+          mealId,
+          validMealId,
+          success: true
         });
       }
       
@@ -278,7 +305,29 @@ export const useMyNutrition = () => {
       fetchTodayMealLogs();
       return true;
     } catch (error) {
-      console.error('Erro ao registrar refeição:', error);
+      console.error('[logMeal] Erro ao registrar refeição:', error);
+      
+      // Log diagnostic error
+      logDiagnostic({
+        action: 'error',
+        mealId,
+        validMealId,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
+      // Diagnóstico adicional do erro
+      if (error instanceof Error) {
+        console.error('[logMeal] Error details:', {
+          message: error.message,
+          mealId: mealId,
+          validMealId: validMealId,
+          isValidUUID: isValidUUID(validMealId),
+          userId: user.id,
+          planId: currentPlan.id
+        });
+      }
+      
       return false;
     }
   };
