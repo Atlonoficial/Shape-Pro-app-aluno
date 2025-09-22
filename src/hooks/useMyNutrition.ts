@@ -204,6 +204,41 @@ export const useMyNutrition = () => {
     };
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
 
+  // Função auxiliar para calcular valores nutricionais de uma refeição
+  const calculateMealNutrition = useCallback((meal: TodayMeal) => {
+    // Se a refeição já tem valores nutricionais não-zero, usar eles
+    if (meal.calories > 0 || meal.protein > 0 || meal.carbs > 0 || meal.fat > 0) {
+      return {
+        calories: meal.calories || 0,
+        protein: meal.protein || 0,
+        carbs: meal.carbs || 0,
+        fat: meal.fat || 0
+      };
+    }
+
+    // Se não, calcular a partir dos alimentos individuais
+    let foods = [];
+    try {
+      foods = Array.isArray(meal.foods) ? meal.foods : 
+              (meal.foods && typeof meal.foods === 'object') ? 
+              (meal.foods.foods || []) : [];
+    } catch (e) {
+      console.warn('[useMyNutrition] Error parsing foods for meal:', meal.meal_name, e);
+      foods = [];
+    }
+
+    if (!foods.length) {
+      return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    }
+
+    return foods.reduce((acc, food) => ({
+      calories: acc.calories + (food.calories || 0),
+      protein: acc.protein + (food.protein || 0),
+      carbs: acc.carbs + (food.carbs || 0),
+      fat: acc.fat + (food.fat || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }, []);
+
   // Calcular estatísticas diárias baseadas nas refeições do dia
   useEffect(() => {
     if (!todaysMeals.length) {
@@ -215,14 +250,20 @@ export const useMyNutrition = () => {
       return;
     }
 
-    // Calcular totais alvo
+    console.log('[useMyNutrition] Calculating daily stats for meals:', todaysMeals);
+
+    // Calcular totais alvo usando valores corretos
     const target = todaysMeals.reduce(
-      (acc, meal) => ({
-        calories: acc.calories + (meal.calories || 0),
-        protein: acc.protein + (meal.protein || 0),
-        carbs: acc.carbs + (meal.carbs || 0),
-        fat: acc.fat + (meal.fat || 0)
-      }),
+      (acc, meal) => {
+        const mealNutrition = calculateMealNutrition(meal);
+        console.log(`[useMyNutrition] Meal ${meal.meal_name} nutrition:`, mealNutrition);
+        return {
+          calories: acc.calories + mealNutrition.calories,
+          protein: acc.protein + mealNutrition.protein,
+          carbs: acc.carbs + mealNutrition.carbs,
+          fat: acc.fat + mealNutrition.fat
+        };
+      },
       { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
 
@@ -230,12 +271,15 @@ export const useMyNutrition = () => {
     const consumed = todaysMeals
       .filter(meal => meal.is_logged)
       .reduce(
-        (acc, meal) => ({
-          calories: acc.calories + (meal.calories || 0),
-          protein: acc.protein + (meal.protein || 0),
-          carbs: acc.carbs + (meal.carbs || 0),
-          fat: acc.fat + (meal.fat || 0)
-        }),
+        (acc, meal) => {
+          const mealNutrition = calculateMealNutrition(meal);
+          return {
+            calories: acc.calories + mealNutrition.calories,
+            protein: acc.protein + mealNutrition.protein,
+            carbs: acc.carbs + mealNutrition.carbs,
+            fat: acc.fat + mealNutrition.fat
+          };
+        },
         { calories: 0, protein: 0, carbs: 0, fat: 0 }
       );
 
@@ -247,8 +291,10 @@ export const useMyNutrition = () => {
       fat: target.fat > 0 ? (consumed.fat / target.fat) * 100 : 0,
     };
 
+    console.log('[useMyNutrition] Daily stats calculated - Target:', target, 'Consumed:', consumed, 'Percentage:', percentage);
+
     setDailyStats({ consumed, target, percentage });
-  }, [todaysMeals]);
+  }, [todaysMeals, calculateMealNutrition]);
 
   // Função para registrar uma refeição usando a nova estrutura
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
@@ -340,25 +386,25 @@ export const useMyNutrition = () => {
 
   const addMealLog = logMeal; // Alias para compatibilidade
 
-  // Converter todaysMeals para o formato Meal[] para compatibilidade
-  const planMeals: Meal[] = todaysMeals.map(meal => ({
-    id: meal.meal_plan_item_id,
-    name: meal.meal_name,
-    time: meal.meal_time,
-    meal_type: meal.meal_type,
-    calories: meal.calories,
-    protein: meal.protein,
-    carbs: meal.carbs,
-    fat: meal.fat,
-    foods: Array.isArray(meal.foods) ? meal.foods : []
-  }));
-
   return {
     nutritionPlans: [], // Deprecated - usar todaysMeals
     mealLogs,
     activePlan: null, // Deprecated - informações já estão em todaysMeals
     todaysMeals,
-    planMeals, // Para compatibilidade
+    planMeals: todaysMeals.map(meal => {
+      const nutrition = calculateMealNutrition(meal);
+      return {
+        id: meal.meal_plan_item_id,
+        name: meal.meal_name,
+        time: meal.meal_time,
+        meal_type: meal.meal_type,
+        calories: nutrition.calories,
+        protein: nutrition.protein,
+        carbs: nutrition.carbs,
+        fat: nutrition.fat,
+        foods: Array.isArray(meal.foods) ? meal.foods : []
+      };
+    }), // Para compatibilidade
     dailyStats,
     loading,
     logMeal,
