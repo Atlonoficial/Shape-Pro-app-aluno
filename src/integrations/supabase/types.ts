@@ -2970,6 +2970,33 @@ export type Database = {
         }
         Relationships: []
       }
+      student_content_permissions: {
+        Row: {
+          content_id: string
+          created_at: string | null
+          granted_at: string | null
+          id: string
+          student_id: string
+          teacher_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string | null
+          granted_at?: string | null
+          id?: string
+          student_id: string
+          teacher_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string | null
+          granted_at?: string | null
+          id?: string
+          student_id?: string
+          teacher_id?: string
+        }
+        Relationships: []
+      }
       student_invitations: {
         Row: {
           accepted_at: string | null
@@ -4442,6 +4469,10 @@ export type Database = {
       update_user_streak: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      user_has_content_access: {
+        Args: { p_content_id: string }
+        Returns: boolean
       }
       user_has_course_access: {
         Args: { p_course_id: string; p_user_id?: string }

@@ -20,6 +20,15 @@ export const Nutrition = () => {
   const { userPoints } = useGamification();
   const [previousMealCount, setPreviousMealCount] = useState(0);
 
+  // Debug logs
+  useEffect(() => {
+    console.log('[Nutrition] Component mounted/updated');
+    console.log('[Nutrition] User:', user?.id);
+    console.log('[Nutrition] Loading:', loading);
+    console.log('[Nutrition] Today meals:', todaysMeals);
+    console.log('[Nutrition] Daily stats:', dailyStats);
+  }, [user, loading, todaysMeals, dailyStats]);
+
   // Detectar quando uma refeição é completada para mostrar pontos
   useEffect(() => {
     const currentMealCount = todaysMeals.filter(meal => meal.is_logged).length;
