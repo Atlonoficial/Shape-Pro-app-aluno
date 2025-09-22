@@ -11,7 +11,7 @@ import { AddCustomMealDialog } from "@/components/nutrition/AddCustomMealDialog"
 export const RegistrarRefeicao = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { activePlan, todaysMeals, dailyStats, loading, logMeal } = useMyNutrition();
+  const { activePlan, todaysMeals, dailyStats, loading, logMeal, planMeals } = useMyNutrition();
   const { toast } = useToast();
   const [loadingMeals, setLoadingMeals] = useState<Set<string>>(new Set());
   const [showAddMealDialog, setShowAddMealDialog] = useState(false);
@@ -139,8 +139,8 @@ export const RegistrarRefeicao = () => {
           </Button>
         </div>
         
-{activePlan.meals && activePlan.meals.length > 0 ? (
-          activePlan.meals.map((meal: any, index: number) => {
+{planMeals && planMeals.length > 0 ? (
+          planMeals.map((meal, index) => {
             const mealLog = todaysMeals.find(log => log.meal_id === meal.id);
             const isCompleted = mealLog?.consumed || false;
             const isLoading = loadingMeals.has(meal.id);
@@ -168,10 +168,10 @@ export const RegistrarRefeicao = () => {
                       )}
                     </div>
                     
-                    {meal.ingredients && meal.ingredients.length > 0 && (
+                    {meal.foods && meal.foods.length > 0 && (
                       <div className="mt-2">
                         <p className="text-xs text-muted-foreground">
-                          {Array.isArray(meal.ingredients) ? meal.ingredients.join(", ") : meal.ingredients}
+                          {meal.foods.map(food => food.name).join(", ")}
                         </p>
                       </div>
                     )}

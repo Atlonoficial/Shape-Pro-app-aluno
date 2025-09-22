@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Search, Filter, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useWorkouts } from "@/hooks/useSupabase";
+import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/hooks/useAuth";
 import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
@@ -14,14 +14,47 @@ type ViewState = 'list' | 'detail' | 'exercise' | 'session';
 
 export const Workouts = () => {
   const { user } = useAuth();
-  const { workouts, loading } = useWorkouts(user?.id || "");
+  const { workouts, loading } = useWorkouts();
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<ViewState>('list');
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
 
-  // Muscle groups derived from real workout data
-  const muscleGroups = ["Todos", ...Array.from(new Set(workouts.flatMap(w => w.muscle_groups || [])))];
+  // Muscle groups derived from workout data - extract from sessions and exercises
+  const muscleGroups = ["Todos", ...Array.from(new Set(
+    workouts.flatMap(w => 
+      w.sessions.flatMap(s => 
+        s.exercises.flatMap(e => e.muscle_groups || [])
+      )
+    )
+  ))];
+
+  // Get all muscle groups from a workout
+  const getWorkoutMuscleGroups = (workout: any) => {
+    const groups = workout.sessions?.flatMap((s: any) => 
+      s.exercises?.flatMap((e: any) => e.muscle_groups || []) || []
+    ) || [];
+    return [...new Set(groups)];
+  };
+
+  // Estimate workout duration based on exercises
+  const estimateWorkoutDuration = (workout: any) => {
+    if (!workout.sessions || workout.sessions.length === 0) return 30;
+    const firstSession = workout.sessions[0];
+    if (!firstSession.exercises || firstSession.exercises.length === 0) return 30;
+    
+    // Rough estimate: 3 minutes per exercise on average
+    return firstSession.exercises.length * 3;
+  };
+
+  // Estimate calories based on duration and difficulty
+  const estimateCalories = (workout: any) => {
+    const duration = estimateWorkoutDuration(workout);
+    const baseCalories = duration * 8; // ~8 calories per minute base
+    const multiplier = workout.difficulty === 'advanced' ? 1.3 : 
+                      workout.difficulty === 'intermediate' ? 1.1 : 1.0;
+    return Math.round(baseCalories * multiplier);
+  };
 
   const handleWorkoutSelect = useCallback((workout: any) => {
     const mapped = mapWorkout(workout);
@@ -54,10 +87,10 @@ export const Workouts = () => {
   const mapWorkout = (w: any) => ({
     id: w.id,
     name: w.name,
-    type: Array.isArray(w.muscle_groups) ? w.muscle_groups.join(', ') : 'Geral',
-    duration: w.estimated_duration || 0,
+    type: getWorkoutMuscleGroups(w).join(', ') || 'Geral',
+    duration: estimateWorkoutDuration(w),
     difficulty: difficultyPt(w.difficulty),
-    exercises: mapExercises(w.exercises),
+    exercises: w.sessions?.[0]?.exercises ? mapExercises(w.sessions[0].exercises) : [],
     image: w.image_url
   });
 
@@ -197,11 +230,11 @@ export const Workouts = () => {
             <WorkoutCard 
               key={workout.id} 
               name={workout.name}
-              duration={workout.estimated_duration}
+              duration={estimateWorkoutDuration(workout)}
               difficulty={difficultyPt(workout.difficulty)}
-              calories={workout.estimated_calories}
-              muscleGroup={Array.isArray(workout.muscle_groups) ? workout.muscle_groups.join(', ') : 'Geral'}
-              isCompleted={workout.sessions ? workout.sessions > 0 : false}
+              calories={estimateCalories(workout)}
+              muscleGroup={getWorkoutMuscleGroups(workout).join(', ') || 'Geral'}
+              isCompleted={workout.sessions && workout.sessions.length > 0}
               onClick={() => handleWorkoutSelect(workout)}
             />
           ))}
