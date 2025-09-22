@@ -139,36 +139,34 @@ export const RegistrarRefeicao = () => {
           </Button>
         </div>
         
-{planMeals && planMeals.length > 0 ? (
-          planMeals.map((meal, index) => {
-            const mealLog = todaysMeals.find(log => log.meal_id === meal.id);
-            const isCompleted = mealLog?.consumed || false;
-            const isLoading = loadingMeals.has(meal.id);
+{todaysMeals && todaysMeals.length > 0 ? (
+          todaysMeals.map((meal, index) => {
+            const isLoading = loadingMeals.has(meal.meal_plan_item_id);
             
             return (
-              <Card key={meal.id || index} className="card-gradient p-4 border border-border/50">
+              <Card key={meal.meal_plan_item_id || index} className="card-gradient p-4 border border-border/50">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-foreground">{meal.name}</h4>
-                      {meal.time && (
+                      <h4 className="font-medium text-foreground">{meal.meal_name}</h4>
+                      {meal.meal_time && (
                         <div className="flex items-center gap-1">
                           <Clock size={14} className="text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{meal.time}</span>
+                          <span className="text-xs text-muted-foreground">{meal.meal_time}</span>
                         </div>
                       )}
                     </div>
                     
                     <div className="flex items-center gap-4">
                       <span className="text-sm text-warning font-medium">{meal.calories || 0} kcal</span>
-                      {isCompleted && (
+                      {meal.is_logged && (
                         <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">
                           Concluído
                         </span>
                       )}
                     </div>
                     
-                    {meal.foods && meal.foods.length > 0 && (
+                    {meal.foods && Array.isArray(meal.foods) && meal.foods.length > 0 && (
                       <div className="mt-2">
                         <p className="text-xs text-muted-foreground">
                           {meal.foods.map(food => food.name).join(", ")}
@@ -180,11 +178,11 @@ export const RegistrarRefeicao = () => {
                   <div className="flex items-center gap-2">
                     {isLoading ? (
                       <Loader2 size={20} className="animate-spin text-muted-foreground" />
-                    ) : isCompleted ? (
+                    ) : meal.is_logged ? (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleMealToggle(meal.id, true)}
+                        onClick={() => handleMealToggle(meal.meal_plan_item_id, true)}
                       >
                         <Apple size={16} className="text-success mr-1" />
                         Concluído
@@ -193,7 +191,7 @@ export const RegistrarRefeicao = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleMealToggle(meal.id, false)}
+                        onClick={() => handleMealToggle(meal.meal_plan_item_id, false)}
                       >
                         Registrar
                       </Button>

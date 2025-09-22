@@ -12,10 +12,8 @@ import { toast } from "sonner";
 export const Nutrition = () => {
   const { user } = useAuth();
   const { 
-    activePlan, 
     loading, 
     todaysMeals, 
-    planMeals,
     dailyStats, 
     logMeal 
   } = useMyNutrition();
@@ -24,7 +22,7 @@ export const Nutrition = () => {
 
   // Detectar quando uma refeição é completada para mostrar pontos
   useEffect(() => {
-    const currentMealCount = todaysMeals.filter(log => log.consumed).length;
+    const currentMealCount = todaysMeals.filter(meal => meal.is_logged).length;
     
     if (currentMealCount > previousMealCount) {
       // Nova refeição foi logada, mostrar toast de pontos
@@ -38,8 +36,8 @@ export const Nutrition = () => {
     setPreviousMealCount(currentMealCount);
   }, [todaysMeals, previousMealCount]);
   
-  const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
-    if (!user?.id || !activePlan) return;
+  const handleMealToggle = async (mealPlanItemId: string, isCompleted: boolean) => {
+    if (!user?.id) return;
     
     // Impedir desmarcação - só permite marcar como consumido uma vez por dia
     if (isCompleted) {
@@ -48,7 +46,7 @@ export const Nutrition = () => {
     }
     
     try {
-      const success = await logMeal(mealId, true);
+      const success = await logMeal(mealPlanItemId, true);
       if (!success) {
         toast.error('Erro ao registrar refeição. Tente novamente.');
       }
@@ -69,7 +67,7 @@ export const Nutrition = () => {
     );
   }
 
-  if (!activePlan) {
+  if (!todaysMeals.length) {
     return (
       <div className="p-4 pt-8 pb-24">
         <div className="mb-6">
@@ -153,25 +151,22 @@ export const Nutrition = () => {
       {/* Meals */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Refeições de Hoje</h3>
-        {planMeals.length === 0 ? (
+        {todaysMeals.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Nenhuma refeição programada para hoje.</p>
           </div>
         ) : (
-          planMeals.map((meal) => {
-            const mealLog = todaysMeals.find(log => log.meal_id === meal.id);
-            const isCompleted = mealLog?.consumed || false;
-            
+          todaysMeals.map((meal) => {
             return (
-              <div key={meal.id}>
+              <div key={meal.meal_plan_item_id}>
                 <NutritionCard
-                  title={meal.name}
-                  time={meal.time}
+                  title={meal.meal_name}
+                  time={meal.meal_time}
                   calories={meal.calories}
-                  foods={meal.foods || []}
+                  foods={Array.isArray(meal.foods) ? meal.foods : []}
                   description=""
-                  isCompleted={isCompleted}
-                  onClick={() => handleMealToggle(meal.id, isCompleted)}
+                  isCompleted={meal.is_logged}
+                  onClick={() => handleMealToggle(meal.meal_plan_item_id, meal.is_logged)}
                 />
               </div>
             );

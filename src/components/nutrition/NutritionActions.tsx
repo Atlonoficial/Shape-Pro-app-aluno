@@ -1,36 +1,55 @@
+// Update NutritionActions to use new meal logging system
 import { useGamificationActions } from "@/hooks/useRealtimeGamification";
 import { toast } from "sonner";
+import { useMyNutrition } from "@/hooks/useMyNutrition";
 
 /**
  * Hook que automaticamente dá pontos quando o usuário registra refeições
- * Integrado com sistema de gamificação mais robusto
+ * Integrado com sistema de gamificação mais robusto e novo sistema de meal logging
  */
 export const useNutritionActions = () => {
   const { awardMealPoints } = useGamificationActions();
+  const { logMeal: logMealFromHook } = useMyNutrition();
 
-  const logMeal = async (mealName: string, calories?: number, mealId?: string) => {
+  const logMeal = async (mealPlanItemId: string, mealName?: string, consumed: boolean = true, notes?: string) => {
     try {
-      // Aqui você faria o registro da refeição no banco de dados
-      console.log(`Logging meal: ${mealName}${calories ? ` (${calories} cal)` : ''}`);
+      console.log(`[useNutritionActions] Logging meal: ${mealPlanItemId} (${mealName})`);
       
-      // Dar pontos automaticamente
-      await awardMealPoints();
+      // Usar o hook atualizado para registrar a refeição
+      const success = await logMealFromHook(mealPlanItemId, consumed, notes);
       
-      toast.success("Refeição registrada! Você ganhou pontos!");
+      if (!success) {
+        toast.error("Erro ao registrar refeição");
+        return false;
+      }
+
+      // Dar pontos automaticamente apenas se foi marcada como consumida
+      if (consumed) {
+        await awardMealPoints();
+        toast.success(`Refeição "${mealName}" registrada! Você ganhou pontos!`);
+      } else {
+        toast.success("Refeição desmarcada!");
+      }
+      
+      return true;
     } catch (error) {
-      console.error('Error logging meal:', error);
+      console.error('[useNutritionActions] Error logging meal:', error);
       toast.error("Erro ao registrar refeição");
+      return false;
     }
   };
 
-  const logBreakfast = (name: string, calories?: number, mealId?: string) => 
-    logMeal(`Café da manhã: ${name}`, calories, mealId);
-  const logLunch = (name: string, calories?: number, mealId?: string) => 
-    logMeal(`Almoço: ${name}`, calories, mealId);
-  const logDinner = (name: string, calories?: number, mealId?: string) => 
-    logMeal(`Jantar: ${name}`, calories, mealId);
-  const logSnack = (name: string, calories?: number, mealId?: string) => 
-    logMeal(`Lanche: ${name}`, calories, mealId);
+  const logBreakfast = (mealPlanItemId: string, name?: string, consumed: boolean = true, notes?: string) => 
+    logMeal(mealPlanItemId, `Café da manhã${name ? `: ${name}` : ''}`, consumed, notes);
+    
+  const logLunch = (mealPlanItemId: string, name?: string, consumed: boolean = true, notes?: string) => 
+    logMeal(mealPlanItemId, `Almoço${name ? `: ${name}` : ''}`, consumed, notes);
+    
+  const logDinner = (mealPlanItemId: string, name?: string, consumed: boolean = true, notes?: string) => 
+    logMeal(mealPlanItemId, `Jantar${name ? `: ${name}` : ''}`, consumed, notes);
+    
+  const logSnack = (mealPlanItemId: string, name?: string, consumed: boolean = true, notes?: string) => 
+    logMeal(mealPlanItemId, `Lanche${name ? `: ${name}` : ''}`, consumed, notes);
 
   return {
     logMeal,

@@ -1377,10 +1377,12 @@ export type Database = {
       }
       gamification_settings: {
         Row: {
+          auto_reset_enabled: boolean | null
           created_at: string
           id: string
           level_up_bonus: number
           max_daily_points: number
+          next_reset_date: string | null
           points_ai_interaction: number
           points_assessment: number
           points_checkin: number
@@ -1390,15 +1392,18 @@ export type Database = {
           points_progress_update: number
           points_teacher_message: number
           points_workout: number
+          reset_frequency: string | null
           streak_multiplier: number
           teacher_id: string
           updated_at: string
         }
         Insert: {
+          auto_reset_enabled?: boolean | null
           created_at?: string
           id?: string
           level_up_bonus?: number
           max_daily_points?: number
+          next_reset_date?: string | null
           points_ai_interaction?: number
           points_assessment?: number
           points_checkin?: number
@@ -1408,15 +1413,18 @@ export type Database = {
           points_progress_update?: number
           points_teacher_message?: number
           points_workout?: number
+          reset_frequency?: string | null
           streak_multiplier?: number
           teacher_id: string
           updated_at?: string
         }
         Update: {
+          auto_reset_enabled?: boolean | null
           created_at?: string
           id?: string
           level_up_bonus?: number
           max_daily_points?: number
+          next_reset_date?: string | null
           points_ai_interaction?: number
           points_assessment?: number
           points_checkin?: number
@@ -1426,6 +1434,7 @@ export type Database = {
           points_progress_update?: number
           points_teacher_message?: number
           points_workout?: number
+          reset_frequency?: string | null
           streak_multiplier?: number
           teacher_id?: string
           updated_at?: string
@@ -1533,6 +1542,9 @@ export type Database = {
           date: string
           id: string
           meal_id: string | null
+          meal_name: string | null
+          meal_plan_id: string | null
+          meal_plan_item_id: string | null
           notes: string | null
           nutrition_plan_id: string | null
           photo_url: string | null
@@ -1548,6 +1560,9 @@ export type Database = {
           date: string
           id?: string
           meal_id?: string | null
+          meal_name?: string | null
+          meal_plan_id?: string | null
+          meal_plan_item_id?: string | null
           notes?: string | null
           nutrition_plan_id?: string | null
           photo_url?: string | null
@@ -1563,21 +1578,16 @@ export type Database = {
           date?: string
           id?: string
           meal_id?: string | null
+          meal_name?: string | null
+          meal_plan_id?: string | null
+          meal_plan_item_id?: string | null
           notes?: string | null
           nutrition_plan_id?: string | null
           photo_url?: string | null
           rating?: number | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "meal_logs_meal_id_fkey"
-            columns: ["meal_id"]
-            isOneToOne: false
-            referencedRelation: "meals"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       meal_plans: {
         Row: {
@@ -2460,6 +2470,42 @@ export type Database = {
           },
         ]
       }
+      points_reset_history: {
+        Row: {
+          affected_students: number
+          backup_data: Json | null
+          created_at: string
+          id: string
+          reason: string | null
+          reset_date: string
+          reset_type: string
+          teacher_id: string
+          total_points_reset: number
+        }
+        Insert: {
+          affected_students?: number
+          backup_data?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reset_date?: string
+          reset_type?: string
+          teacher_id: string
+          total_points_reset?: number
+        }
+        Update: {
+          affected_students?: number
+          backup_data?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reset_date?: string
+          reset_type?: string
+          teacher_id?: string
+          total_points_reset?: number
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string | null
@@ -3159,32 +3205,50 @@ export type Database = {
       }
       teacher_feedback_settings: {
         Row: {
+          auto_request_feedback: boolean
           created_at: string
           custom_questions: Json
+          default_feedback_period: number
           feedback_days: number[]
           feedback_frequency: string
+          feedback_reminder_days: number
+          feedback_types_enabled: string[]
+          feedbacks_per_page: number
           id: string
           is_active: boolean
+          show_feedback_stats: boolean
           teacher_id: string
           updated_at: string
         }
         Insert: {
+          auto_request_feedback?: boolean
           created_at?: string
           custom_questions?: Json
+          default_feedback_period?: number
           feedback_days?: number[]
           feedback_frequency?: string
+          feedback_reminder_days?: number
+          feedback_types_enabled?: string[]
+          feedbacks_per_page?: number
           id?: string
           is_active?: boolean
+          show_feedback_stats?: boolean
           teacher_id: string
           updated_at?: string
         }
         Update: {
+          auto_request_feedback?: boolean
           created_at?: string
           custom_questions?: Json
+          default_feedback_period?: number
           feedback_days?: number[]
           feedback_frequency?: string
+          feedback_reminder_days?: number
+          feedback_types_enabled?: string[]
+          feedbacks_per_page?: number
           id?: string
           is_active?: boolean
+          show_feedback_stats?: boolean
           teacher_id?: string
           updated_at?: string
         }
@@ -4173,6 +4237,23 @@ export type Database = {
           protein: number
         }[]
       }
+      get_meals_for_today_v2: {
+        Args: { p_user_id: string }
+        Returns: {
+          calories: number
+          carbs: number
+          fat: number
+          foods: Json
+          is_logged: boolean
+          log_id: string
+          meal_name: string
+          meal_plan_id: string
+          meal_plan_item_id: string
+          meal_time: string
+          meal_type: string
+          protein: number
+        }[]
+      }
       get_teacher_chat_stats: {
         Args: { teacher_id_param: string }
         Returns: Json
@@ -4283,6 +4364,10 @@ export type Database = {
       redeem_reward: {
         Args: { _reward_id: string }
         Returns: string
+      }
+      reset_all_student_points: {
+        Args: { p_reason?: string; p_teacher_id: string }
+        Returns: Json
       }
       sanitize_chat_input: {
         Args: { input_text: string }

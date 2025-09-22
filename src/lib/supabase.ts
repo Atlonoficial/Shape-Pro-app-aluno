@@ -599,8 +599,11 @@ export const getMealLogsByUserAndDate = (userId: string, date: string, callback:
 
 export const createMealLog = async (mealLog: {
   user_id: string;
-  nutrition_plan_id: string;
-  meal_id: string;
+  nutrition_plan_id?: string;
+  meal_id?: string;
+  meal_plan_id?: string;
+  meal_plan_item_id?: string;
+  meal_name?: string;
   date: string;
   consumed: boolean;
   actual_time?: string;
@@ -610,13 +613,20 @@ export const createMealLog = async (mealLog: {
   custom_portion_amount?: number;
   custom_portion_unit?: string;
 }) => {
+  console.log('[createMealLog] Creating meal log with data:', mealLog);
+  
   const { data, error } = await supabase
     .from('meal_logs')
     .insert(mealLog)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('[createMealLog] Error creating meal log:', error);
+    throw error;
+  }
+  
+  console.log('[createMealLog] Successfully created meal log:', data);
   return data;
 };
 
