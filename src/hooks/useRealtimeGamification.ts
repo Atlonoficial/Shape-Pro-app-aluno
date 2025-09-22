@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { showPointsToast } from "@/components/gamification/PointsToast";
 import { useGamificationDebounce } from "@/hooks/useGamificationDebounce";
+import { useTeacherGamificationSettings } from "@/hooks/useTeacherGamificationSettings";
 
 interface RealtimeGamificationHook {
   awardPointsForAction: (action: string, description?: string, metadata?: any) => Promise<void>;
@@ -13,6 +14,7 @@ interface RealtimeGamificationHook {
 export const useRealtimeGamification = (): RealtimeGamificationHook => {
   const { user } = useAuthContext();
   const { isDuplicateAction, generateActionKey } = useGamificationDebounce();
+  const { settings, teacherId } = useTeacherGamificationSettings();
 
   const awardPointsForAction = useCallback(async (action: string, description?: string, metadata: any = {}) => {
     if (!user?.id) {
@@ -88,6 +90,55 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     }
   }, [user?.id, awardPointsForAction]);
 
+  // Real-time subscription for user points changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('[Gamification] Setting up real-time subscription for user points:', user.id);
+
+    const channel = supabase
+      .channel(`user-points-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_points',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[Gamification] Real-time points update:', payload);
+          // Points updated in real-time - this will trigger UI updates automatically
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'gamification_activities',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[Gamification] Real-time activity update:', payload);
+          
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const activity = payload.new as any;
+            // Show points toast when new points are awarded
+            if (activity.points_earned > 0) {
+              showPointsToast(activity.points_earned);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[Gamification] Cleaning up points subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   // Controle de inicialização para evitar duplicações usando sessionStorage
   useEffect(() => {
     if (user?.id) {
@@ -104,6 +155,13 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       }
     }
   }, [user?.id, updateStreak]);
+
+  // Log current settings for debugging
+  useEffect(() => {
+    if (settings) {
+      console.log('[Gamification] Current teacher settings:', settings);
+    }
+  }, [settings]);
 
   return {
     awardPointsForAction,
