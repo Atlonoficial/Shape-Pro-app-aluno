@@ -11,7 +11,7 @@ import { StravaIntegrationCard } from "./StravaIntegrationCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { useWorkouts } from "@/hooks/useSupabase";
+import { useCurrentWorkoutSession } from "@/hooks/useCurrentWorkoutSession";
 
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
@@ -90,8 +90,8 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     return null; // Enquanto redireciona
   }
   
-  // Fetch real data from Supabase
-  const { workouts, loading: workoutsLoading } = useWorkouts(user?.id || '');
+  // Fetch current workout session
+  const { currentSession, loading: workoutSessionLoading, hasWorkoutPlan } = useCurrentWorkoutSession();
   // const { progress, loading: progressLoading } = useProgress(user?.id || '');
   const progress: any[] = [];
   const progressLoading = false;
@@ -159,44 +159,50 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
       {/* Stats Overview */}
       <DashboardStats 
-        workouts={workouts} 
+        workouts={currentSession ? [{ name: currentSession.sessionName }] : []} 
         progress={progress} 
-        loading={workoutsLoading || progressLoading} 
+        loading={workoutSessionLoading || progressLoading} 
       />
 
 
-      {workouts && workouts.length > 0 && (
+      {hasWorkoutPlan && currentSession && (
         <div className="card-gradient p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">Treino de Hoje</h3>
             <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-              {workouts[0]?.name || 'Treino'}
+              {currentSession.sessionLabel}
             </span>
           </div>
           
           <div className="space-y-3">
             <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Sessão</span>
+              <span className="text-sm font-medium text-foreground">
+                {currentSession.sessionName}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Duração estimada</span>
               <span className="text-sm font-medium text-foreground">
-                {workouts[0]?.estimated_duration ? `${workouts[0].estimated_duration} min` : '-'}
+                {currentSession.estimatedDuration > 0 ? `${Math.round(currentSession.estimatedDuration)} min` : '-'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Exercícios</span>
               <span className="text-sm font-medium text-foreground">
-                {Array.isArray(workouts[0]?.exercises) ? `${workouts[0].exercises.length} exercícios` : '-'}
+                {currentSession.totalExercises} exercícios
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Dificuldade</span>
               <span className="text-sm font-medium text-muted-foreground">
-                {workouts[0]?.difficulty || '-'}
+                {currentSession.difficulty}
               </span>
             </div>
           </div>
           
           <button onClick={onWorkoutClick} className="btn-primary w-full mt-4">
-            Iniciar Treino
+            Iniciar {currentSession.sessionLabel}
           </button>
         </div>
       )}
