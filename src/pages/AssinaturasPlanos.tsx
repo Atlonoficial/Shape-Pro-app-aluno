@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
-import { ArrowLeft, Crown, Check, Star, Calendar, Diamond, Trophy, Gem, X } from "lucide-react";
+import { ArrowLeft, Crown, Check, Star, Calendar, Diamond, Trophy, Gem, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { supabase } from "@/integrations/supabase/client";
 
 // Mapeamento de ícones dos planos
@@ -29,79 +30,7 @@ const AssinaturasPlanos = () => {
   const navigate = useNavigate();
   const { student } = useStudentProfile();
   const { user } = useAuth();
-
-  const [subInfo, setSubInfo] = useState<{
-    nome: string;
-    preco: string;
-    periodo: string;
-    dataRenovacao: string;
-    status: string;
-    features?: string[];
-  } | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      if (!user?.id) {
-        if (isMounted) setSubInfo(null);
-        return;
-      }
-      try {
-        const { data: sub } = await (supabase as any)
-          .from('plan_subscriptions')
-          .select('id, plan_id, status, start_at, end_at, teacher_id')
-          .eq('student_user_id', user.id)
-          .eq('status', 'active')
-          .order('start_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!sub) {
-          if (isMounted) setSubInfo(null);
-          return;
-        }
-
-        const { data: plan } = await (supabase as any)
-          .from('plan_catalog')
-          .select('name, price, interval, currency, features')
-          .eq('id', sub.plan_id)
-          .single();
-
-        const currency = plan?.currency || 'BRL';
-        const price = typeof plan?.price === 'number'
-          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(plan.price)
-          : '-';
-
-        const periodoMap: Record<string, string> = {
-          monthly: 'mês',
-          quarterly: 'trimestre',
-          yearly: 'ano'
-        };
-
-        const periodo = plan?.interval ? (periodoMap[plan.interval] || plan.interval) : '-';
-        const dataRenovacao = sub.end_at
-          ? new Date(sub.end_at).toLocaleDateString('pt-BR')
-          : '-';
-
-        if (isMounted) {
-          setSubInfo({
-            nome: plan?.name ?? student?.active_plan ?? 'free',
-            preco: price,
-            periodo,
-            dataRenovacao,
-            status: sub.status ?? 'ativo',
-            features: plan?.features || [],
-          });
-        }
-      } catch (e) {
-        if (isMounted) setSubInfo(null);
-      }
-    };
-    load();
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id, student?.teacher_id]);
+  const { subscription, loading: subscriptionLoading } = useActiveSubscription();
 
   // Estrutura de benefícios para plano gratuito
   const beneficiosEstruturados = {
@@ -114,17 +43,50 @@ const AssinaturasPlanos = () => {
   };
 
 const planoAtual = useMemo(() => {
-  if (subInfo) return subInfo;
+  if (subscription) {
+    const currency = subscription.plan_currency || 'BRL';
+    const price = subscription.plan_price 
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(subscription.plan_price)
+      : '-';
+
+    const periodoMap: Record<string, string> = {
+      monthly: 'mês',
+      quarterly: 'trimestre', 
+      yearly: 'ano'
+    };
+    
+    const periodo = subscription.plan_interval 
+      ? (periodoMap[subscription.plan_interval] || subscription.plan_interval) 
+      : '-';
+    
+    const dataRenovacao = subscription.end_at
+      ? new Date(subscription.end_at).toLocaleDateString('pt-BR')
+      : '-';
+
+    return {
+      nome: subscription.plan_name,
+      preco: price,
+      periodo,
+      dataRenovacao,
+      status: subscription.status,
+      features: subscription.plan_features || [],
+      daysRemaining: subscription.daysRemaining,
+      expirationStatus: subscription.expirationStatus
+    };
+  }
+  
   if (!student?.active_plan) return null;
   return {
     nome: student.active_plan === 'free' ? 'Gratuito' : student.active_plan,
     preco: "-",
-    periodo: "-",
+    periodo: "-", 
     dataRenovacao: "-",
     status: student.membership_status || "ativo",
     features: [],
+    daysRemaining: undefined,
+    expirationStatus: undefined
   };
-}, [subInfo, student?.active_plan, student?.membership_status]);
+}, [subscription, student?.active_plan, student?.membership_status]);
 
   // Determinar se é plano gratuito
   const isPlanoGratuito = !planoAtual || planoAtual.nome === 'Gratuito' || planoAtual.nome === 'free';
@@ -280,9 +242,26 @@ const planoAtual = useMemo(() => {
                   <div>
                     <h2 className="text-lg font-bold text-foreground">{planoAtual.nome}</h2>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-success/20 text-success">
+                      <Badge 
+                        variant="secondary" 
+                        className={
+                          planoAtual.expirationStatus === 'expired' 
+                            ? "bg-destructive/20 text-destructive"
+                            : planoAtual.expirationStatus === 'expiring_soon' 
+                              ? "bg-warning/20 text-warning"
+                              : "bg-success/20 text-success"
+                        }
+                      >
                         {planoAtual.status?.toUpperCase?.() || 'ATIVO'}
                       </Badge>
+                      {planoAtual.daysRemaining !== undefined && planoAtual.daysRemaining >= 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          {planoAtual.daysRemaining === 0 
+                            ? "Vence hoje" 
+                            : `${planoAtual.daysRemaining} dias restantes`
+                          }
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -336,22 +315,71 @@ const planoAtual = useMemo(() => {
 
             {/* Informações de Cobrança - apenas se existir detalhamento */}
             {planoAtual.preco !== '-' && planoAtual.dataRenovacao !== '-' && (
-              <Card className="p-6">
+              <Card className={`p-6 ${
+                planoAtual.expirationStatus === 'expiring_soon' 
+                  ? "border-warning/30 bg-warning/5" 
+                  : planoAtual.expirationStatus === 'expired'
+                    ? "border-destructive/30 bg-destructive/5"
+                    : ""
+              }`}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-primary" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    planoAtual.expirationStatus === 'expiring_soon' 
+                      ? "bg-warning/20" 
+                      : planoAtual.expirationStatus === 'expired'
+                        ? "bg-destructive/20"
+                        : "bg-primary/20"
+                  }`}>
+                    <Calendar className={`w-5 h-5 ${
+                      planoAtual.expirationStatus === 'expiring_soon' 
+                        ? "text-warning" 
+                        : planoAtual.expirationStatus === 'expired'
+                          ? "text-destructive"
+                          : "text-primary"
+                    }`} />
                   </div>
                   <h2 className="text-lg font-semibold text-foreground">Informações de Cobrança</h2>
                 </div>
                 <div className="space-y-3">
+                  {planoAtual.expirationStatus === 'expiring_soon' && (
+                    <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                      <p className="text-sm text-warning font-medium">
+                        ⚠️ Seu plano vence em {planoAtual.daysRemaining} dias! Entre em contato com seu professor para renovar.
+                      </p>
+                    </div>
+                  )}
+                  {planoAtual.expirationStatus === 'expired' && (
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                      <p className="text-sm text-destructive font-medium">
+                        ❌ Seu plano expirou! Entre em contato com seu professor para renovar.
+                      </p>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center py-2 border-b border-border/30">
-                    <span className="text-muted-foreground">Próxima cobrança</span>
+                    <span className="text-muted-foreground">
+                      {planoAtual.expirationStatus === 'expired' ? 'Expirou em' : 'Próxima cobrança'}
+                    </span>
                     <span className="text-foreground">{planoAtual.dataRenovacao}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Valor</span>
                     <span className="text-foreground font-semibold">{planoAtual.preco}</span>
                   </div>
+                  {planoAtual.daysRemaining !== undefined && planoAtual.daysRemaining >= 0 && (
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground">Tempo restante</span>
+                      <span className={`font-semibold ${
+                        planoAtual.expirationStatus === 'expiring_soon' 
+                          ? "text-warning" 
+                          : "text-foreground"
+                      }`}>
+                        {planoAtual.daysRemaining === 0 
+                          ? "Vence hoje" 
+                          : `${planoAtual.daysRemaining} dias`
+                        }
+                      </span>
+                    </div>
+                  )}
                 </div>
               </Card>
             )}

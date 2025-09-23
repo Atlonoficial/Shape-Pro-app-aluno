@@ -12,6 +12,11 @@ export interface ActiveSubscription {
   end_at: string | null;
   plan_name: string;
   plan_features: any[];
+  plan_price?: number;
+  plan_currency?: string;
+  plan_interval?: string;
+  daysRemaining?: number;
+  expirationStatus?: 'active' | 'expiring_soon' | 'expired';
 }
 
 export const useActiveSubscription = () => {
@@ -20,6 +25,21 @@ export const useActiveSubscription = () => {
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const calculateDaysRemaining = (endDate: string | null): number => {
+    if (!endDate) return -1;
+    const now = new Date();
+    const end = new Date(endDate);
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const getExpirationStatus = (daysRemaining: number): 'active' | 'expiring_soon' | 'expired' => {
+    if (daysRemaining < 0) return 'expired';
+    if (daysRemaining <= 7) return 'expiring_soon';
+    return 'active';
+  };
 
   const fetchActiveSubscription = async () => {
     if (!user?.id) {
@@ -32,7 +52,45 @@ export const useActiveSubscription = () => {
       setLoading(true);
       setError(null);
 
-      // First get student data to get teacher_id
+      // First try to get subscription from plan_subscriptions table
+      const { data: planSub, error: planSubError } = await supabase
+        .from('plan_subscriptions')
+        .select(`
+          id, plan_id, status, start_at, end_at, teacher_id,
+          plan_catalog (
+            name, price, currency, interval, features
+          )
+        `)
+        .eq('student_user_id', user.id)
+        .eq('status', 'active')
+        .order('start_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (planSub && planSub.plan_catalog) {
+        const daysRemaining = calculateDaysRemaining(planSub.end_at);
+        const expirationStatus = getExpirationStatus(daysRemaining);
+        
+        setSubscription({
+          id: planSub.id,
+          plan_id: planSub.plan_id,
+          teacher_id: planSub.teacher_id,
+          status: planSub.status,
+          start_at: planSub.start_at,
+          end_at: planSub.end_at,
+          plan_name: planSub.plan_catalog.name,
+          plan_features: Array.isArray(planSub.plan_catalog.features) ? planSub.plan_catalog.features : [],
+          plan_price: planSub.plan_catalog.price,
+          plan_currency: planSub.plan_catalog.currency,
+          plan_interval: planSub.plan_catalog.interval,
+          daysRemaining,
+          expirationStatus
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to legacy approach using students table
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('teacher_id, active_plan, membership_status, membership_expiry')
@@ -47,12 +105,11 @@ export const useActiveSubscription = () => {
         return;
       }
 
-      // For now, use the legacy approach until types are updated
       if (studentData.active_plan && studentData.active_plan !== 'free' && studentData.membership_status === 'active') {
-        // Check if subscription is not expired
-        const isExpired = studentData.membership_expiry && new Date(studentData.membership_expiry) <= new Date();
+        const daysRemaining = calculateDaysRemaining(studentData.membership_expiry);
+        const expirationStatus = getExpirationStatus(daysRemaining);
         
-        if (!isExpired) {
+        if (expirationStatus !== 'expired') {
           setSubscription({
             id: 'legacy-subscription',
             plan_id: studentData.active_plan,
@@ -61,7 +118,9 @@ export const useActiveSubscription = () => {
             start_at: new Date().toISOString(),
             end_at: studentData.membership_expiry,
             plan_name: studentData.active_plan,
-            plan_features: []
+            plan_features: [],
+            daysRemaining,
+            expirationStatus
           });
         } else {
           setSubscription(null);
@@ -103,6 +162,17 @@ export const useActiveSubscription = () => {
           schema: 'public',
           table: 'plan_subscriptions',
           filter: `student_user_id=eq.${user?.id}`,
+        },
+        () => {
+          fetchActiveSubscription();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'plan_catalog'
         },
         () => {
           fetchActiveSubscription();
