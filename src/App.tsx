@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
 import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { NativeIntegration } from "@/components/native/NativeIntegration";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 // Core application imports ready for production
@@ -64,6 +65,7 @@ const App = () => (
         <Sonner />
           <BrowserRouter>
             <AuthProvider>
+              <NativeIntegration />
               <GamificationProvider>
                 <GamificationIntegrator>
                   <Routes>
