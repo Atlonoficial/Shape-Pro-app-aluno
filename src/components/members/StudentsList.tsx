@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { getStudentsByTeacher, getStudentAssessments, Student } from '@/lib/supabase';
+import { StudentPlanManager } from '@/components/teacher/StudentPlanManager';
 
 interface StudentsListProps {
   onSelectStudent: (student: any) => void;
@@ -92,7 +93,15 @@ export const StudentsList = ({ onSelectStudent }: StudentsListProps) => {
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <StudentPlanManager 
+                    studentId={student.user_id}
+                    studentName={student.profiles?.name || 'Aluno'}
+                    currentPlan={student.active_plan}
+                    teacherId={user?.id || ''}
+                  />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>

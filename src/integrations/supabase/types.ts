@@ -4406,12 +4406,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      sync_student_membership: {
-        Args: { p_student_user_id: string; p_teacher_id: string }
-        Returns: string
-      }
       teacher_link_students: {
         Args: { _emails: string[] }
+        Returns: Json
+      }
+      teacher_update_student_plan: {
+        Args: {
+          p_end_date?: string
+          p_membership_status?: string
+          p_plan_id: string
+          p_student_user_id: string
+        }
         Returns: Json
       }
       teacher_update_student_profile: {
