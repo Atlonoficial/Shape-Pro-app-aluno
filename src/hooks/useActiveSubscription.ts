@@ -51,6 +51,7 @@ export const useActiveSubscription = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('[useActiveSubscription] Fetching subscription for user:', user.id);
 
       // First try to get subscription from plan_subscriptions table
       const { data: planSub, error: planSubError } = await supabase
@@ -91,6 +92,7 @@ export const useActiveSubscription = () => {
       }
 
       // Fallback to legacy approach using students table
+      console.log('[useActiveSubscription] No active plan subscription found, checking students table');
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('teacher_id, active_plan, membership_status, membership_expiry')
@@ -99,7 +101,10 @@ export const useActiveSubscription = () => {
 
       if (studentError) throw studentError;
 
+      console.log('[useActiveSubscription] Student data found:', studentData);
+
       if (!studentData || !studentData.teacher_id) {
+        console.log('[useActiveSubscription] No student data or teacher found');
         setSubscription(null);
         setLoading(false);
         return;
@@ -138,21 +143,33 @@ export const useActiveSubscription = () => {
   };
 
   useEffect(() => {
+    if (!user?.id) {
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
     fetchActiveSubscription();
 
-    // Set up real-time subscription for changes
+    // Set up real-time subscription for changes with enhanced debugging
+    console.log('[useActiveSubscription] Setting up real-time subscriptions for user:', user.id);
+    
     const channel = supabase
-      .channel('subscription-changes')
+      .channel(`subscription-changes-${user.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'students',
-          filter: `user_id=eq.${user?.id}`,
+          filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          fetchActiveSubscription();
+        (payload) => {
+          console.log('[useActiveSubscription] Students table change detected:', payload);
+          // Add small delay to ensure database consistency
+          setTimeout(() => {
+            fetchActiveSubscription();
+          }, 100);
         }
       )
       .on(
@@ -161,10 +178,13 @@ export const useActiveSubscription = () => {
           event: '*',
           schema: 'public',
           table: 'plan_subscriptions',
-          filter: `student_user_id=eq.${user?.id}`,
+          filter: `student_user_id=eq.${user.id}`,
         },
-        () => {
-          fetchActiveSubscription();
+        (payload) => {
+          console.log('[useActiveSubscription] Plan subscriptions change detected:', payload);
+          setTimeout(() => {
+            fetchActiveSubscription();
+          }, 100);
         }
       )
       .on(
@@ -174,16 +194,29 @@ export const useActiveSubscription = () => {
           schema: 'public',
           table: 'plan_catalog'
         },
-        () => {
-          fetchActiveSubscription();
+        (payload) => {
+          console.log('[useActiveSubscription] Plan catalog change detected:', payload);
+          setTimeout(() => {
+            fetchActiveSubscription();
+          }, 100);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useActiveSubscription] Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          toast({
+            title: "Conectado",
+            description: "Sistema de atualizações em tempo real ativo",
+            duration: 2000,
+          });
+        }
+      });
 
     return () => {
+      console.log('[useActiveSubscription] Cleaning up subscriptions for user:', user.id);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   // Helper functions
   const hasActiveSubscription = () => {
