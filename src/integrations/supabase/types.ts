@@ -4147,6 +4147,18 @@ export type Database = {
               p_description?: string
               p_duration?: number
               p_scheduled_time: string
+              p_student_id: string
+              p_student_notes?: string
+              p_student_objectives?: string
+              p_student_title?: string
+              p_teacher_id: string
+              p_title?: string
+              p_type?: string
+            }
+          | {
+              p_description?: string
+              p_duration?: number
+              p_scheduled_time: string
               p_student_notes?: string
               p_student_objectives?: string
               p_student_title?: string
@@ -4409,6 +4421,10 @@ export type Database = {
       teacher_link_students: {
         Args: { _emails: string[] }
         Returns: Json
+      }
+      teacher_sync_student_plan: {
+        Args: { p_student_user_id: string }
+        Returns: string
       }
       teacher_update_student_plan: {
         Args: {

@@ -11,13 +11,13 @@ import { AddCustomMealDialog } from "@/components/nutrition/AddCustomMealDialog"
 export const RegistrarRefeicao = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { activePlan, todaysMeals, dailyStats, loading, logMeal, planMeals } = useMyNutrition();
+  const { activePlan, todaysMeals, dailyStats, loading, logMeal, planMeals, hasNutritionAccess } = useMyNutrition();
   const { toast } = useToast();
   const [loadingMeals, setLoadingMeals] = useState<Set<string>>(new Set());
   const [showAddMealDialog, setShowAddMealDialog] = useState(false);
 
   const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
-    if (!user?.id || !activePlan) return;
+    if (!user?.id) return;
     
     setLoadingMeals(prev => new Set([...prev, mealId]));
     
@@ -54,7 +54,8 @@ export const RegistrarRefeicao = () => {
     );
   }
 
-  if (!activePlan) {
+  // CORRIGIDO: Verificar por todaysMeals ao invés de activePlan
+  if (!hasNutritionAccess || todaysMeals.length === 0) {
     return (
       <div className="p-4 pt-8 pb-24">
         <div className="flex items-center gap-3 mb-6">
@@ -73,8 +74,21 @@ export const RegistrarRefeicao = () => {
         </div>
         
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Nenhum plano nutricional disponível ainda.</p>
-          <p className="text-sm text-muted-foreground mt-2">Aguarde seu nutricionista criar um plano para você!</p>
+          <p className="text-muted-foreground">Nenhuma refeição programada para hoje.</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {hasNutritionAccess ? 
+              'Aguarde seu nutricionista programar suas refeições!' :
+              'Para acessar o controle nutricional, você precisa de uma consultoria ativa.'
+            }
+          </p>
+          {!hasNutritionAccess && (
+            <Button 
+              className="mt-4"
+              onClick={() => navigate("/assinaturas-planos")}
+            >
+              Ver Planos Disponíveis
+            </Button>
+          )}
         </div>
       </div>
     );

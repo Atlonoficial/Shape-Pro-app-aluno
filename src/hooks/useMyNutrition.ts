@@ -389,7 +389,12 @@ export const useMyNutrition = () => {
   return {
     nutritionPlans: [], // Deprecated - usar todaysMeals
     mealLogs,
-    activePlan: null, // Deprecated - informações já estão em todaysMeals
+    // CORRIGIDO: Retornar activePlan baseado nas refeições disponíveis
+    activePlan: todaysMeals.length > 0 ? { 
+      id: todaysMeals[0]?.meal_plan_id || 'active-plan',
+      name: 'Plano Nutricional Ativo',
+      meals: todaysMeals.length 
+    } : null,
     todaysMeals,
     planMeals: todaysMeals.map(meal => {
       const nutrition = calculateMealNutrition(meal);
@@ -408,6 +413,8 @@ export const useMyNutrition = () => {
     dailyStats,
     loading,
     logMeal,
-    addMealLog
+    addMealLog,
+    // Função adicional para verificar se tem acesso nutricional
+    hasNutritionAccess: () => todaysMeals.length > 0
   };
 };
