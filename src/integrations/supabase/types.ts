@@ -4074,7 +4074,9 @@ export type Database = {
     }
     Functions: {
       accept_invitation: {
-        Args: { code: string }
+        Args:
+          | { code: string }
+          | { invitation_code: string; user_id_param?: string }
         Returns: string
       }
       aggregate_banner_interactions: {

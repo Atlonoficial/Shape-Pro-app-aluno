@@ -9,6 +9,7 @@ import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { ConnectionStatus } from "@/components/ui/ConnectionStatus";
 
 // Mapeamento de ícones dos planos
 const PLAN_ICONS = {
@@ -175,16 +176,19 @@ const planoAtual = useMemo(() => {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="p-4 pt-8 border-b border-border/30">
-        <div className="flex items-center gap-3 mb-4">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate("/configuracoes")}
-            className="text-foreground"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">Planos e Assinaturas</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate("/configuracoes")}
+              className="text-foreground"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold text-foreground">Planos e Assinaturas</h1>
+          </div>
+          <ConnectionStatus />
         </div>
       </div>
 
