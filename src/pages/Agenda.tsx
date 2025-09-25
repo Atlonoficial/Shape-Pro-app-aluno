@@ -58,23 +58,27 @@ export default function Agenda() {
 
   const loading = appointmentsLoading || teacherLoading || subscriptionLoading || bookingSettingsLoading;
   
-  // Filtrar agendamentos por status e data
-  const currentDateTime = new Date().toISOString();
-  
+  // Use filtered appointments directly from hook (centralized logic)
   const confirmedAppointments = useMemo(() => {
-    return upcomingAppointments.filter(apt => 
-      (apt.status === 'scheduled' || apt.status === 'confirmed') && 
-      apt.scheduled_time > currentDateTime
+    // Sort by scheduled time - hook already filters valid statuses
+    return upcomingAppointments.sort((a, b) => 
+      new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()
     );
-  }, [upcomingAppointments, currentDateTime]);
+  }, [upcomingAppointments]);
   
   const historicalAppointments = useMemo(() => {
-    return [...upcomingAppointments, ...pastAppointments].filter(apt => 
-      apt.scheduled_time < currentDateTime || apt.status === 'cancelled'
-    );
-  }, [upcomingAppointments, pastAppointments, currentDateTime]);
+    // Hook already separates past appointments correctly
+    return pastAppointments;
+  }, [pastAppointments]);
   
   const nextAppointment = useMemo(() => confirmedAppointments[0] ?? null, [confirmedAppointments]);
+
+  // Debug logging (temporary)
+  console.log('[Agenda] Debug Info:', {
+    confirmedCount: confirmedAppointments.length,
+    historicalCount: historicalAppointments.length,
+    nextAppointment: nextAppointment ? { id: nextAppointment.id, status: nextAppointment.status, time: nextAppointment.scheduled_time } : null
+  });
 
   // Load available slots for selected date
   const loadAvailableSlots = useCallback(async () => {

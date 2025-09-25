@@ -230,12 +230,27 @@ export const useStudentAppointments = () => {
 
   // Separate upcoming and past appointments
   const now = new Date();
+  
+  // Define valid active statuses (centralized logic)
+  const isActiveStatus = (status: string | null) => {
+    return ['scheduled', 'confirmed', 'pending'].includes(status || '');
+  };
+  
   const upcomingAppointments = appointments.filter(
-    (apt) => new Date(apt.scheduled_time) >= now && apt.status !== 'cancelled'
+    (apt) => new Date(apt.scheduled_time) >= now && isActiveStatus(apt.status)
   );
   const pastAppointments = appointments.filter(
-    (apt) => new Date(apt.scheduled_time) < now || apt.status === 'cancelled'
+    (apt) => new Date(apt.scheduled_time) < now || !isActiveStatus(apt.status)
   ).reverse();
+
+  // Debug logging (temporary)
+  console.log('[useStudentAppointments] Debug Info:', {
+    totalAppointments: appointments.length,
+    upcomingCount: upcomingAppointments.length,
+    pastCount: pastAppointments.length,
+    upcomingStatuses: upcomingAppointments.map(apt => ({ id: apt.id, status: apt.status, time: apt.scheduled_time })),
+    pastStatuses: pastAppointments.map(apt => ({ id: apt.id, status: apt.status, time: apt.scheduled_time }))
+  });
 
   return {
     appointments,
