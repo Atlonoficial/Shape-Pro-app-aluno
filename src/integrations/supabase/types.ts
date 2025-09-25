@@ -62,6 +62,54 @@ export type Database = {
         }
         Relationships: []
       }
+      advanced_techniques: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string
+          difficulty: string
+          examples: string[] | null
+          id: string
+          image_url: string | null
+          instructions: string | null
+          muscles: string[] | null
+          name: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by: string
+          description: string
+          difficulty: string
+          examples?: string[] | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          muscles?: string[] | null
+          name: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          difficulty?: string
+          examples?: string[] | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          muscles?: string[] | null
+          name?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           created_at: string
@@ -1783,6 +1831,48 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      menu_library: {
+        Row: {
+          created_at: string
+          description: string | null
+          extracted_text: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          folder_name: string
+          id: string
+          name: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          extracted_text?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          folder_name: string
+          id?: string
+          name: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          extracted_text?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          folder_name?: string
+          id?: string
+          name?: string
+          teacher_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4134,6 +4224,31 @@ export type Database = {
           | {
               p_description?: string
               p_duration?: number
+              p_is_manual_creation?: boolean
+              p_scheduled_time: string
+              p_student_id?: string
+              p_student_notes?: string
+              p_student_objectives?: string
+              p_student_title?: string
+              p_teacher_id: string
+              p_title?: string
+              p_type?: string
+            }
+          | {
+              p_description?: string
+              p_duration?: number
+              p_is_manual_creation?: boolean
+              p_scheduled_time: string
+              p_student_notes?: string
+              p_student_objectives?: string
+              p_student_title?: string
+              p_teacher_id: string
+              p_title?: string
+              p_type?: string
+            }
+          | {
+              p_description?: string
+              p_duration?: number
               p_location_id?: string
               p_scheduled_time: string
               p_student_notes?: string
@@ -4176,6 +4291,10 @@ export type Database = {
           total_fat: number
           total_protein: number
         }[]
+      }
+      calculate_plan_expiry: {
+        Args: { plan_interval: string }
+        Returns: string
       }
       calculate_user_level: {
         Args: { points: number }
@@ -4294,6 +4413,14 @@ export type Database = {
           meal_type: string
           protein: number
         }[]
+      }
+      get_plan_id_by_name: {
+        Args: { plan_name: string; teacher_id_param: string }
+        Returns: string
+      }
+      get_plan_name_by_id: {
+        Args: { plan_id: string }
+        Returns: string
       }
       get_teacher_chat_stats: {
         Args: { teacher_id_param: string }
@@ -4418,6 +4545,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      sync_student_membership: {
+        Args: { teacher_id_param: string; user_id_param: string }
+        Returns: undefined
+      }
       teacher_link_students: {
         Args: { _emails: string[] }
         Returns: Json
@@ -4436,27 +4567,18 @@ export type Database = {
         Returns: Json
       }
       teacher_update_student_profile: {
-        Args:
-          | {
-              p_active_plan?: string
-              p_email?: string
-              p_goals?: string[]
-              p_membership_expiry?: string
-              p_membership_status?: string
-              p_mode?: string
-              p_name?: string
-              p_student_user_id: string
-            }
-          | {
-              p_active_plan?: string
-              p_email?: string
-              p_goals?: string[]
-              p_membership_expiry?: string
-              p_membership_status?: string
-              p_name?: string
-              p_student_user_id: string
-            }
-        Returns: string
+        Args: {
+          p_active_plan?: string
+          p_email: string
+          p_goals?: string[]
+          p_membership_expiry?: string
+          p_membership_status?: string
+          p_mode?: string
+          p_name: string
+          p_phone?: string
+          p_student_id: string
+        }
+        Returns: Json
       }
       trigger_cleanup_rate_limits: {
         Args: Record<PropertyKey, never>
