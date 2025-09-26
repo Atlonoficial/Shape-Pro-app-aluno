@@ -89,89 +89,108 @@ export const useWeeklyFeedback = () => {
     return result;
   };
 
-  // Check if should show feedback modal
+  // Optimized check for feedback modal with better error handling
   const checkShouldShowFeedbackModal = async (): Promise<boolean> => {
-    if (!user?.id || !hasActiveSubscription || !teacherId) return false;
-
-    // Fetch teacher's feedback settings
-    const settings = await fetchFeedbackSettings();
-    if (!settings || !settings.is_active) return false;
-
-    setFeedbackSettings(settings);
-
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
-    
-    // Check if today is one of the configured feedback days
-    if (!settings.feedback_days.includes(dayOfWeek)) return false;
+    if (!user?.id || !hasActiveSubscription || !teacherId) {
+      console.log('[Feedback] Modal check skipped - missing requirements', {
+        userId: !!user?.id,
+        hasSubscription: hasActiveSubscription,
+        teacherId: !!teacherId
+      });
+      return false;
+    }
 
     try {
-      // Calculate time range based on frequency
-      let startDate: Date, endDate: Date;
+      // Fetch teacher's feedback settings with timeout
+      console.log('[Feedback] Fetching settings for teacher:', teacherId);
+      const settings = await fetchFeedbackSettings();
       
-      switch (settings.feedback_frequency) {
-        case 'daily':
-          startDate = new Date(today);
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(today);
-          endDate.setHours(23, 59, 59, 999);
-          break;
-        case 'weekly':
-          startDate = new Date(today);
-          startDate.setDate(today.getDate() - today.getDay()); // Go to Sunday
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + 6); // Go to Saturday
-          endDate.setHours(23, 59, 59, 999);
-          break;
-        case 'biweekly':
-          startDate = new Date(today);
-          startDate.setDate(today.getDate() - 14);
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(today);
-          endDate.setHours(23, 59, 59, 999);
-          break;
-        case 'monthly':
-          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-          endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
-          break;
-        default:
-          startDate = new Date(today);
-          startDate.setDate(today.getDate() - today.getDay());
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + 6);
-          endDate.setHours(23, 59, 59, 999);
-      }
-
-      // Check if user already sent feedback in this period
-      const { data: existingFeedback, error } = await supabase
-        .from('feedbacks')
-        .select('id')
-        .eq('student_id', user.id)
-        .eq('teacher_id', teacherId)
-        .eq('type', 'periodic_feedback')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking existing feedback:', error);
+      if (!settings || !settings.is_active) {
+        console.log('[Feedback] Settings not active or not found:', settings);
         return false;
       }
 
-      // If feedback already exists in this period, don't show modal
-      return !existingFeedback;
+      setFeedbackSettings(settings);
+      console.log('[Feedback] Settings loaded:', settings);
+
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+      
+      // Check if today is one of the configured feedback days
+      if (!settings.feedback_days.includes(dayOfWeek)) {
+        console.log('[Feedback] Today is not a feedback day', {
+          today: dayOfWeek,
+          configuredDays: settings.feedback_days
+        });
+        return false;
+      }
+
+      // Simple period check - use database function logic
+      const { data: existingFeedback, error } = await supabase
+        .from('feedbacks')
+        .select('id, created_at')
+        .eq('student_id', user.id)
+        .eq('teacher_id', teacherId)
+        .eq('type', 'periodic_feedback')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[Feedback] Error checking existing feedback:', error);
+        return false;
+      }
+
+      if (existingFeedback) {
+        const lastFeedbackDate = new Date(existingFeedback.created_at);
+        const today = new Date();
+        
+        // Check based on frequency
+        let shouldShow = false;
+        switch (settings.feedback_frequency) {
+          case 'daily':
+            shouldShow = lastFeedbackDate.toDateString() !== today.toDateString();
+            break;
+          case 'weekly':
+            const daysSinceLastFeedback = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
+            shouldShow = daysSinceLastFeedback >= 7;
+            break;
+          case 'biweekly':
+            const daysSinceBiweekly = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
+            shouldShow = daysSinceBiweekly >= 14;
+            break;
+          case 'monthly':
+            shouldShow = lastFeedbackDate.getMonth() !== today.getMonth() || 
+                        lastFeedbackDate.getFullYear() !== today.getFullYear();
+            break;
+          default:
+            const daysSinceDefault = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
+            shouldShow = daysSinceDefault >= 7;
+        }
+
+        console.log('[Feedback] Existing feedback check:', {
+          lastFeedback: lastFeedbackDate,
+          frequency: settings.feedback_frequency,
+          shouldShow
+        });
+
+        return shouldShow;
+      }
+
+      // No existing feedback - show modal
+      console.log('[Feedback] No existing feedback found - showing modal');
+      return true;
+
     } catch (error) {
-      console.error('Error checking feedback modal:', error);
+      console.error('[Feedback] Error in modal check:', error);
       return false;
     }
   };
 
-  // Submit weekly feedback
+  // Submit weekly feedback with improved error handling
   const submitWeeklyFeedback = async (feedbackData: WeeklyFeedbackData): Promise<boolean> => {
     if (!user?.id || !teacherId) {
-      console.error('User ID or Teacher ID not available');
+      console.error('[Feedback] User ID or Teacher ID not available', { userId: user?.id, teacherId });
       toast({
         title: "Erro",
         description: "Informações do usuário não disponíveis",
@@ -182,9 +201,14 @@ export const useWeeklyFeedback = () => {
 
     try {
       setLoading(true);
+      console.log('[Feedback] Starting feedback submission', { 
+        studentId: user.id, 
+        teacherId, 
+        feedbackData 
+      });
 
-      // Usar função RPC para transação atômica
-      const { data: result, error } = await supabase.rpc('submit_feedback_with_points', {
+      // Usar função RPC otimizada v2
+      const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v2', {
         p_student_id: user.id,
         p_teacher_id: teacherId,
         p_feedback_data: {
@@ -196,28 +220,42 @@ export const useWeeklyFeedback = () => {
             year: new Date().getFullYear(),
             training_rating: feedbackData.trainingRating,
             diet_rating: feedbackData.dietRating,
-            training_feedback: feedbackData.trainingFeedback,
-            diet_feedback: feedbackData.dietFeedback,
-            questions: feedbackData.questions,
+            training_feedback: feedbackData.trainingFeedback || '',
+            diet_feedback: feedbackData.dietFeedback || '',
+            questions: feedbackData.questions || '',
             custom_responses: feedbackData.customResponses || {},
-            frequency: feedbackSettings?.feedback_frequency
+            frequency: feedbackSettings?.feedback_frequency || 'weekly',
+            submitted_at: new Date().toISOString()
           }
         }
       });
 
       if (error) {
-        console.error('Error submitting feedback:', error);
+        console.error('[Feedback] RPC error:', error);
         throw error;
       }
 
+      console.log('[Feedback] RPC result:', result);
+      
       const resultData = result as any;
       if (!resultData?.success) {
-        const errorMessage = resultData?.message || 'Erro ao enviar feedback';
+        const errorMessage = resultData?.message || 'Erro desconhecido ao enviar feedback';
+        console.warn('[Feedback] Operation failed:', resultData);
         
         if (resultData?.duplicate) {
           toast({
             title: "Feedback já enviado",
             description: errorMessage,
+            variant: "destructive"
+          });
+          setShouldShowModal(false); // Hide modal if already sent
+          return false;
+        }
+
+        if (resultData?.error_type === 'relationship') {
+          toast({
+            title: "Erro de validação",
+            description: "Relacionamento aluno-professor não encontrado. Entre em contato com o suporte.",
             variant: "destructive"
           });
           return false;
@@ -226,34 +264,48 @@ export const useWeeklyFeedback = () => {
         throw new Error(errorMessage);
       }
 
-      // Sucesso - mostrar toast com pontos
+      // Sucesso - mostrar toast com pontos e fechar modal
       const pointsAwarded = resultData.points_awarded || 0;
+      console.log('[Feedback] Success! Points awarded:', pointsAwarded);
+      
       toast({
         title: "Feedback enviado!",
         description: pointsAwarded > 0 
           ? `Obrigado pelo feedback! Você ganhou ${pointsAwarded} pontos.`
-          : "Obrigado pelo seu feedback!"
+          : "Obrigado pelo seu feedback!",
+        variant: "default"
       });
 
+      setShouldShowModal(false);
       return true;
+
     } catch (error: any) {
-      console.error('Error submitting feedback:', error);
+      console.error('[Feedback] Submit error:', error);
       
-      // Mensagens de erro específicas
-      let errorMessage = "Tente novamente em alguns instantes";
-      if (error.message?.includes('relationship')) {
-        errorMessage = "Relacionamento aluno-professor não encontrado";
+      // Mensagens de erro mais específicas e amigáveis
+      let errorMessage = "Erro interno. Tente novamente em alguns instantes.";
+      let errorTitle = "Erro ao enviar feedback";
+      
+      if (error.message?.includes('relationship') || error.message?.includes('not found')) {
+        errorMessage = "Relacionamento professor-aluno não encontrado. Verifique se você está vinculado corretamente.";
+        errorTitle = "Erro de vinculação";
       } else if (error.message?.includes('duplicate') || error.message?.includes('já enviado')) {
-        errorMessage = "Feedback já enviado esta semana";
-      } else if (error.message?.includes('violates')) {
-        errorMessage = "Dados inválidos. Verifique as informações";
+        errorMessage = "Feedback já enviado neste período. Aguarde o próximo ciclo.";
+        errorTitle = "Feedback duplicado";
+      } else if (error.message?.includes('violates') || error.message?.includes('constraint')) {
+        errorMessage = "Dados inválidos. Verifique se todas as informações estão corretas.";
+        errorTitle = "Dados inválidos";
+      } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        errorMessage = "Problema de conexão. Verifique sua internet e tente novamente.";
+        errorTitle = "Erro de conexão";
       }
       
       toast({
-        title: "Erro ao enviar feedback",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive"
       });
+      
       return false;
     } finally {
       setLoading(false);

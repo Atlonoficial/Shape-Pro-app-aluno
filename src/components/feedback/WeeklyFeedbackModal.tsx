@@ -52,10 +52,22 @@ export const WeeklyFeedbackModal = ({
   });
 
   const handleSubmit = async () => {
-    if (!isValid) return;
+    if (!isValid) {
+      console.warn('[FeedbackModal] Submit blocked - form invalid', {
+        overallRating: feedbackData.overallRating,
+        trainingRating: feedbackData.trainingRating,
+        dietRating: feedbackData.dietRating,
+        generalFeedback: feedbackData.generalFeedback?.length,
+        customQuestionsValid: checkCustomQuestionValidity()
+      });
+      return;
+    }
+    
+    console.log('[FeedbackModal] Submitting feedback:', feedbackData);
     
     const success = await onSubmit(feedbackData);
     if (success) {
+      console.log('[FeedbackModal] Feedback submitted successfully, resetting form');
       setFeedbackData({
         overallRating: 0,
         trainingRating: 0,
@@ -67,6 +79,8 @@ export const WeeklyFeedbackModal = ({
         customResponses: {}
       });
       onClose();
+    } else {
+      console.warn('[FeedbackModal] Feedback submission failed');
     }
   };
 

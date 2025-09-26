@@ -33,7 +33,13 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
   
   // Weekly feedback hook
-  const { shouldShowModal: shouldShowFeedbackModal, setShouldShowModal: setShouldShowFeedbackModal, submitWeeklyFeedback, loading: feedbackLoading } = useWeeklyFeedback();
+  const { 
+    shouldShowModal: shouldShowFeedbackModal, 
+    setShouldShowModal: setShouldShowFeedbackModal, 
+    submitWeeklyFeedback, 
+    loading: feedbackLoading,
+    feedbackSettings 
+  } = useWeeklyFeedback();
   
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
@@ -224,6 +230,14 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         onClose={() => setShouldShowFeedbackModal(false)}
         onSubmit={submitWeeklyFeedback}
         loading={feedbackLoading}
+        customQuestions={feedbackSettings?.custom_questions || []}
+        feedbackFrequency={
+          feedbackSettings?.feedback_frequency === 'daily' ? 'diário' :
+          feedbackSettings?.feedback_frequency === 'weekly' ? 'semanal' :
+          feedbackSettings?.feedback_frequency === 'biweekly' ? 'quinzenal' :
+          feedbackSettings?.feedback_frequency === 'monthly' ? 'mensal' :
+          'periódico'
+        }
       />
     </div>
   );

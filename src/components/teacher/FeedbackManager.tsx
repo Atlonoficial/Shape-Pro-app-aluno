@@ -37,14 +37,15 @@ export const FeedbackManager = () => {
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
 
-  // Fetch feedbacks from students
+  // Fetch feedbacks from students with real-time updates
   const fetchFeedbacks = async () => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
+      console.log('[FeedbackManager] Fetching feedbacks for teacher:', user.id);
       
-      // Get feedbacks with student info
+      // Get feedbacks with student info - include periodic_feedback
       const { data, error } = await supabase
         .from('feedbacks')
         .select(`
@@ -61,16 +62,32 @@ export const FeedbackManager = () => {
         `)
         .eq('teacher_id', user.id)
         .in('type', ['weekly_feedback', 'periodic_feedback'])
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to most recent 50 feedbacks
 
-      if (error) throw error;
+      if (error) {
+        console.error('[FeedbackManager] Error fetching feedbacks:', error);
+        throw error;
+      }
+
+      console.log('[FeedbackManager] Found feedbacks:', data?.length || 0);
 
       // Get student profiles separately
       const studentIds = [...new Set((data || []).map(f => f.student_id))];
-      const { data: studentsData } = await supabase
+      if (studentIds.length === 0) {
+        setFeedbacks([]);
+        setStudents([]);
+        return;
+      }
+
+      const { data: studentsData, error: studentsError } = await supabase
         .from('profiles')
         .select('id, name, email')
         .in('id', studentIds);
+
+      if (studentsError) {
+        console.error('[FeedbackManager] Error fetching students:', studentsError);
+      }
 
       const studentsMap = (studentsData || []).reduce((acc, student) => {
         acc[student.id] = student;
@@ -84,6 +101,7 @@ export const FeedbackManager = () => {
       }));
 
       setFeedbacks(feedbacksWithStudentInfo);
+      console.log('[FeedbackManager] Processed feedbacks:', feedbacksWithStudentInfo.length);
 
       // Get unique students for filter
       const uniqueStudents = feedbacksWithStudentInfo.reduce((acc, feedback) => {
@@ -99,7 +117,7 @@ export const FeedbackManager = () => {
 
       setStudents(uniqueStudents);
     } catch (error) {
-      console.error('Error fetching feedbacks:', error);
+      console.error('[FeedbackManager] Error fetching feedbacks:', error);
       toast({
         title: "Erro ao carregar feedbacks",
         description: "Não foi possível carregar os feedbacks dos alunos.",
@@ -160,13 +178,75 @@ export const FeedbackManager = () => {
 
   useEffect(() => {
     fetchFeedbacks();
+
+    // Set up real-time subscription for new feedbacks
+    if (user?.id) {
+      console.log('[FeedbackManager] Setting up real-time subscription');
+      
+      const channel = supabase
+        .channel('teacher-feedbacks')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'feedbacks',
+            filter: `teacher_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('[FeedbackManager] New feedback received:', payload.new);
+            
+            // Show notification for new feedback
+            toast({
+              title: "Novo feedback recebido!",
+              description: "Um aluno enviou um novo feedback.",
+              variant: "default"
+            });
+            
+            // Refresh feedbacks
+            fetchFeedbacks();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'feedbacks',
+            filter: `teacher_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('[FeedbackManager] Feedback updated:', payload.new);
+            
+            // If teacher response was updated, refresh
+            if (payload.new.teacher_response !== payload.old.teacher_response) {
+              fetchFeedbacks();
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        console.log('[FeedbackManager] Cleaning up real-time subscription');
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user?.id]);
 
   const getWeekFromMetadata = (metadata: any): string => {
     if (metadata?.week && metadata?.year) {
       return `Semana ${metadata.week}/${metadata.year}`;
     }
-    return 'Feedback Semanal';
+    if (metadata?.frequency) {
+      const frequencyMap = {
+        'daily': 'Feedback Diário',
+        'weekly': 'Feedback Semanal',
+        'biweekly': 'Feedback Quinzenal',
+        'monthly': 'Feedback Mensal'
+      };
+      return frequencyMap[metadata.frequency as keyof typeof frequencyMap] || 'Feedback Periódico';
+    }
+    return 'Feedback Periódico';
   };
 
   const StarDisplay = ({ rating }: { rating: number }) => (

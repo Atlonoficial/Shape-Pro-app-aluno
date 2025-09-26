@@ -2518,6 +2518,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -4543,6 +4582,16 @@ export type Database = {
         Args: { plan_interval: string }
         Returns: string
       }
+      calculate_student_payment_status: {
+        Args: { p_student_id: string; p_teacher_id: string }
+        Returns: {
+          next_payment_date: string
+          overdue_amount: number
+          status: string
+          student_id: string
+          total_pending: number
+        }[]
+      }
       calculate_user_level: {
         Args: { points: number }
         Returns: number
@@ -4801,7 +4850,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      submit_feedback_with_points: {
+      submit_feedback_with_points_v2: {
         Args: {
           p_feedback_data: Json
           p_student_id: string
@@ -4889,6 +4938,10 @@ export type Database = {
       }
       validate_input: {
         Args: { allow_html?: boolean; input_text: string; max_length?: number }
+        Returns: boolean
+      }
+      validate_payment_data_local: {
+        Args: { p_amount: number; p_student_id: string; p_teacher_id: string }
         Returns: boolean
       }
     }
