@@ -12,13 +12,14 @@ interface FeedbackSettings {
 }
 
 export interface WeeklyFeedbackData {
-  training_rating: number;
-  diet_rating: number;
-  general_feedback: string;
-  training_feedback?: string;
-  diet_feedback?: string;
+  overallRating: number;
+  trainingRating: number;
+  dietRating: number;
+  generalFeedback: string;
+  trainingFeedback?: string;
+  dietFeedback?: string;
   questions?: string;
-  custom_responses?: { [key: string]: any };
+  customResponses?: { [key: string]: any };
 }
 
 export const useWeeklyFeedback = () => {
@@ -169,61 +170,88 @@ export const useWeeklyFeedback = () => {
 
   // Submit weekly feedback
   const submitWeeklyFeedback = async (feedbackData: WeeklyFeedbackData): Promise<boolean> => {
-    if (!user?.id || !teacherId) return false;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('feedbacks')
-        .insert({
-          student_id: user.id,
-          teacher_id: teacherId,
-          type: 'periodic_feedback',
-          rating: Math.round((feedbackData.training_rating + feedbackData.diet_rating) / 2),
-          message: feedbackData.general_feedback,
-          related_item_id: `${feedbackSettings?.feedback_frequency}_${new Date().getFullYear()}_${getWeekNumber(new Date())}`,
-          metadata: {
-            training_rating: feedbackData.training_rating,
-            diet_rating: feedbackData.diet_rating,
-            training_feedback: feedbackData.training_feedback,
-            diet_feedback: feedbackData.diet_feedback,
-            questions: feedbackData.questions,
-            custom_responses: feedbackData.custom_responses || {},
-            frequency: feedbackSettings?.feedback_frequency,
-            week: getWeekNumber(new Date()),
-            year: new Date().getFullYear()
-          }
-        });
-
-      if (error) throw error;
-
+    if (!user?.id || !teacherId) {
+      console.error('User ID or Teacher ID not available');
       toast({
-        title: "Feedback enviado!",
-        description: "Seu feedback foi enviado ao professor com sucesso.",
+        title: "Erro",
+        description: "Informações do usuário não disponíveis",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      setLoading(true);
+
+      // Usar função RPC para transação atômica
+      const { data: result, error } = await supabase.rpc('submit_feedback_with_points', {
+        p_student_id: user.id,
+        p_teacher_id: teacherId,
+        p_feedback_data: {
+          type: 'periodic_feedback',
+          rating: feedbackData.overallRating,
+          message: feedbackData.generalFeedback || '',
+          metadata: {
+            week: getWeekNumber(new Date()),
+            year: new Date().getFullYear(),
+            training_rating: feedbackData.trainingRating,
+            diet_rating: feedbackData.dietRating,
+            training_feedback: feedbackData.trainingFeedback,
+            diet_feedback: feedbackData.dietFeedback,
+            questions: feedbackData.questions,
+            custom_responses: feedbackData.customResponses || {},
+            frequency: feedbackSettings?.feedback_frequency
+          }
+        }
       });
 
-      // Award points for feedback submission
-      try {
-        await supabase.rpc('award_points_enhanced_v3', {
-          p_user_id: user.id,
-          p_activity_type: 'periodic_feedback',
-          p_description: 'Feedback enviado',
-          p_metadata: { 
-            frequency: feedbackSettings?.feedback_frequency,
-            week: getWeekNumber(new Date()), 
-            year: new Date().getFullYear() 
-          }
-        });
-      } catch (pointsError) {
-        console.warn('Error awarding points for feedback:', pointsError);
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        throw error;
       }
+
+      const resultData = result as any;
+      if (!resultData?.success) {
+        const errorMessage = resultData?.message || 'Erro ao enviar feedback';
+        
+        if (resultData?.duplicate) {
+          toast({
+            title: "Feedback já enviado",
+            description: errorMessage,
+            variant: "destructive"
+          });
+          return false;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Sucesso - mostrar toast com pontos
+      const pointsAwarded = resultData.points_awarded || 0;
+      toast({
+        title: "Feedback enviado!",
+        description: pointsAwarded > 0 
+          ? `Obrigado pelo feedback! Você ganhou ${pointsAwarded} pontos.`
+          : "Obrigado pelo seu feedback!"
+      });
 
       return true;
     } catch (error: any) {
       console.error('Error submitting feedback:', error);
+      
+      // Mensagens de erro específicas
+      let errorMessage = "Tente novamente em alguns instantes";
+      if (error.message?.includes('relationship')) {
+        errorMessage = "Relacionamento aluno-professor não encontrado";
+      } else if (error.message?.includes('duplicate') || error.message?.includes('já enviado')) {
+        errorMessage = "Feedback já enviado esta semana";
+      } else if (error.message?.includes('violates')) {
+        errorMessage = "Dados inválidos. Verifique as informações";
+      }
+      
       toast({
         title: "Erro ao enviar feedback",
-        description: "Ocorreu um erro ao enviar seu feedback. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
       return false;

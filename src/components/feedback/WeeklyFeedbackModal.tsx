@@ -7,13 +7,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Star, MessageSquare, Dumbbell, Apple, HelpCircle } from 'lucide-react';
 
 export interface WeeklyFeedbackData {
-  training_rating: number;
-  diet_rating: number;
-  general_feedback: string;
-  training_feedback?: string;
-  diet_feedback?: string;
+  overallRating: number;
+  trainingRating: number;
+  dietRating: number;
+  generalFeedback: string;
+  trainingFeedback?: string;
+  dietFeedback?: string;
   questions?: string;
-  custom_responses?: { [key: string]: any };
+  customResponses?: { [key: string]: any };
 }
 
 interface WeeklyFeedbackModalProps {
@@ -40,13 +41,14 @@ export const WeeklyFeedbackModal = ({
   feedbackFrequency = 'semanal' 
 }: WeeklyFeedbackModalProps) => {
   const [feedbackData, setFeedbackData] = useState<WeeklyFeedbackData>({
-    training_rating: 0,
-    diet_rating: 0,
-    general_feedback: "",
-    training_feedback: "",
-    diet_feedback: "",
+    overallRating: 0,
+    trainingRating: 0,
+    dietRating: 0,
+    generalFeedback: "",
+    trainingFeedback: "",
+    dietFeedback: "",
     questions: "",
-    custom_responses: {}
+    customResponses: {}
   });
 
   const handleSubmit = async () => {
@@ -55,13 +57,14 @@ export const WeeklyFeedbackModal = ({
     const success = await onSubmit(feedbackData);
     if (success) {
       setFeedbackData({
-        training_rating: 0,
-        diet_rating: 0,
-        general_feedback: "",
-        training_feedback: "",
-        diet_feedback: "",
+        overallRating: 0,
+        trainingRating: 0,
+        dietRating: 0,
+        generalFeedback: "",
+        trainingFeedback: "",
+        dietFeedback: "",
         questions: "",
-        custom_responses: {}
+        customResponses: {}
       });
       onClose();
     }
@@ -70,8 +73,8 @@ export const WeeklyFeedbackModal = ({
   const handleCustomResponse = (questionId: string, value: any) => {
     setFeedbackData(prev => ({
       ...prev,
-      custom_responses: {
-        ...prev.custom_responses,
+      customResponses: {
+        ...prev.customResponses,
         [questionId]: value
       }
     }));
@@ -80,7 +83,7 @@ export const WeeklyFeedbackModal = ({
   const checkCustomQuestionValidity = () => {
     for (const question of customQuestions) {
       if (question.required) {
-        const response = feedbackData.custom_responses?.[question.id];
+        const response = feedbackData.customResponses?.[question.id];
         if (!response || (typeof response === 'string' && response.trim().length === 0)) {
           return false;
         }
@@ -89,9 +92,10 @@ export const WeeklyFeedbackModal = ({
     return true;
   };
 
-  const isValid = feedbackData.training_rating > 0 && 
-                  feedbackData.diet_rating > 0 && 
-                  feedbackData.general_feedback.trim().length > 0 &&
+  const isValid = feedbackData.overallRating > 0 &&
+                  feedbackData.trainingRating > 0 && 
+                  feedbackData.dietRating > 0 && 
+                  feedbackData.generalFeedback.trim().length > 0 &&
                   checkCustomQuestionValidity();
 
   const StarRating = ({ label, value, onChange, questionId }: {
@@ -131,6 +135,21 @@ export const WeeklyFeedbackModal = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Overall Rating */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="h-4 w-4 text-warning" />
+                <h4 className="font-medium">Avaliação Geral</h4>
+              </div>
+              <StarRating
+                value={feedbackData.overallRating}
+                onChange={(rating) => setFeedbackData(prev => ({ ...prev, overallRating: rating }))}
+                label="Como você avalia este período de forma geral?"
+              />
+            </CardContent>
+          </Card>
+
           {/* Training Rating */}
           <Card>
             <CardContent className="p-4">
@@ -139,16 +158,16 @@ export const WeeklyFeedbackModal = ({
                 <h4 className="font-medium">Treinos</h4>
               </div>
               <StarRating
-                value={feedbackData.training_rating}
-                onChange={(rating) => setFeedbackData(prev => ({ ...prev, training_rating: rating }))}
+                value={feedbackData.trainingRating}
+                onChange={(rating) => setFeedbackData(prev => ({ ...prev, trainingRating: rating }))}
                 label="Como foram seus treinos neste período?"
               />
               <div className="mt-3">
                 <Label className="text-sm">Comentários sobre treinos (opcional)</Label>
                 <Textarea
                   placeholder="Como se sentiu nos treinos, dificuldades, melhorias..."
-                  value={feedbackData.training_feedback}
-                  onChange={(e) => setFeedbackData(prev => ({ ...prev, training_feedback: e.target.value }))}
+                  value={feedbackData.trainingFeedback}
+                  onChange={(e) => setFeedbackData(prev => ({ ...prev, trainingFeedback: e.target.value }))}
                   className="mt-1 min-h-[60px]"
                 />
               </div>
@@ -163,16 +182,16 @@ export const WeeklyFeedbackModal = ({
                 <h4 className="font-medium">Alimentação</h4>
               </div>
               <StarRating
-                value={feedbackData.diet_rating}
-                onChange={(rating) => setFeedbackData(prev => ({ ...prev, diet_rating: rating }))}
+                value={feedbackData.dietRating}
+                onChange={(rating) => setFeedbackData(prev => ({ ...prev, dietRating: rating }))}
                 label="Como foi sua alimentação neste período?"
               />
               <div className="mt-3">
                 <Label className="text-sm">Comentários sobre alimentação (opcional)</Label>
                 <Textarea
                   placeholder="Dificuldades com a dieta, mudanças, preferências..."
-                  value={feedbackData.diet_feedback}
-                  onChange={(e) => setFeedbackData(prev => ({ ...prev, diet_feedback: e.target.value }))}
+                  value={feedbackData.dietFeedback}
+                  onChange={(e) => setFeedbackData(prev => ({ ...prev, dietFeedback: e.target.value }))}
                   className="mt-1 min-h-[60px]"
                 />
               </div>
@@ -187,8 +206,8 @@ export const WeeklyFeedbackModal = ({
             </Label>
             <Textarea
               placeholder="Como se sentiu durante este período? Há algo que gostaria de comentar ou melhorar?"
-              value={feedbackData.general_feedback}
-              onChange={(e) => setFeedbackData(prev => ({ ...prev, general_feedback: e.target.value }))}
+              value={feedbackData.generalFeedback}
+              onChange={(e) => setFeedbackData(prev => ({ ...prev, generalFeedback: e.target.value }))}
               className="min-h-[80px]"
               required
             />
@@ -205,10 +224,10 @@ export const WeeklyFeedbackModal = ({
                   </Label>
                   
                   {question.type === 'text' && (
-                    <Textarea
+                     <Textarea
                       id={question.id}
                       placeholder="Digite sua resposta..."
-                      value={feedbackData.custom_responses?.[question.id] || ''}
+                      value={feedbackData.customResponses?.[question.id] || ''}
                       onChange={(e) => handleCustomResponse(question.id, e.target.value)}
                       className="min-h-[80px]"
                     />
@@ -218,7 +237,7 @@ export const WeeklyFeedbackModal = ({
                     <StarRating
                       questionId={question.id}
                       label=""
-                      value={feedbackData.custom_responses?.[question.id] || 0}
+                      value={feedbackData.customResponses?.[question.id] || 0}
                       onChange={(value) => handleCustomResponse(question.id, value)}
                     />
                   )}
@@ -232,7 +251,7 @@ export const WeeklyFeedbackModal = ({
                             id={`${question.id}_${index}`}
                             name={question.id}
                             value={option}
-                            checked={feedbackData.custom_responses?.[question.id] === option}
+                            checked={feedbackData.customResponses?.[question.id] === option}
                             onChange={(e) => handleCustomResponse(question.id, e.target.value)}
                           />
                           <Label htmlFor={`${question.id}_${index}`}>{option}</Label>
