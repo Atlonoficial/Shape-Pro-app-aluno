@@ -207,12 +207,11 @@ export const useWeeklyFeedback = () => {
         feedbackData 
       });
 
-      // Usar função RPC otimizada v2
-      const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v2', {
+      // Usar função RPC corrigida v3
+      const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v3', {
         p_student_id: user.id,
         p_teacher_id: teacherId,
         p_feedback_data: {
-          type: 'periodic_feedback',
           rating: feedbackData.overallRating,
           message: feedbackData.generalFeedback || '',
           metadata: {
@@ -252,10 +251,10 @@ export const useWeeklyFeedback = () => {
           return false;
         }
 
-        if (resultData?.error_type === 'relationship') {
+        if (resultData?.error_type === 'relationship_not_found' || resultData?.error_type === 'teacher_not_found') {
           toast({
             title: "Erro de validação",
-            description: "Relacionamento aluno-professor não encontrado. Entre em contato com o suporte.",
+            description: resultData?.message || "Relacionamento aluno-professor não encontrado.",
             variant: "destructive"
           });
           return false;

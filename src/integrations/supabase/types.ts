@@ -4858,6 +4858,14 @@ export type Database = {
         }
         Returns: Json
       }
+      submit_feedback_with_points_v3: {
+        Args: {
+          p_feedback_data: Json
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: Json
+      }
       sync_student_membership: {
         Args: { teacher_id_param: string; user_id_param: string }
         Returns: undefined

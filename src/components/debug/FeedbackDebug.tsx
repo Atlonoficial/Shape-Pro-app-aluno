@@ -102,13 +102,12 @@ export const FeedbackDebug = () => {
       // Test 5: RPC function
       if (user?.id && teacherId) {
         try {
-          const { data: testResult, error: rpcError } = await supabase.rpc('submit_feedback_with_points_v2', {
+          const { data: testResult, error: rpcError } = await supabase.rpc('submit_feedback_with_points_v3', {
             p_student_id: user.id,
             p_teacher_id: teacherId,
             p_feedback_data: {
-              type: 'periodic_feedback',
               rating: 5,
-              message: '[TESTE] Este é um feedback de teste do sistema',
+              message: '[TESTE] Este é um feedback de teste do sistema v3',
               metadata: {
                 test: true,
                 testing_time: new Date().toISOString()
@@ -117,35 +116,35 @@ export const FeedbackDebug = () => {
           });
 
           if (rpcError) {
-            results.push({
-              test: 'Função RPC de feedback',
-              status: 'error',
-              message: `Erro na função RPC: ${rpcError.message}`
-            });
+          results.push({
+            test: 'Função RPC de feedback v3',
+            status: 'error',
+            message: `Erro na função RPC v3: ${rpcError.message}`
+          });
           } else if ((testResult as any)?.success) {
             results.push({
-              test: 'Função RPC de feedback',
+              test: 'Função RPC de feedback v3',
               status: 'success',
-              message: `RPC funcionando. Pontos: ${(testResult as any).points_awarded || 0}`
+              message: `RPC v3 funcionando. Pontos: ${(testResult as any).points_awarded || 0}`
             });
           } else if ((testResult as any)?.duplicate) {
             results.push({
-              test: 'Função RPC de feedback',
+              test: 'Função RPC de feedback v3',
               status: 'warning',
-              message: 'RPC funcionando - feedback já existe para este período'
+              message: 'RPC v3 funcionando - feedback já existe para este período'
             });
           } else {
             results.push({
-              test: 'Função RPC de feedback',
+              test: 'Função RPC de feedback v3',
               status: 'error',
-              message: `RPC falhou: ${(testResult as any)?.message || 'Erro desconhecido'}`
+              message: `RPC v3 falhou: ${(testResult as any)?.message || 'Erro desconhecido'}`
             });
           }
         } catch (error: any) {
           results.push({
-            test: 'Função RPC de feedback',
+            test: 'Função RPC de feedback v3',
             status: 'error',
-            message: `Erro ao testar RPC: ${error.message}`
+            message: `Erro ao testar RPC v3: ${error.message}`
           });
         }
       }
