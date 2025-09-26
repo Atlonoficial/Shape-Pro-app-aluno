@@ -243,14 +243,7 @@ export const useStudentAppointments = () => {
     (apt) => new Date(apt.scheduled_time) < now || !isActiveStatus(apt.status)
   ).reverse();
 
-  // Debug logging (temporary)
-  console.log('[useStudentAppointments] Debug Info:', {
-    totalAppointments: appointments.length,
-    upcomingCount: upcomingAppointments.length,
-    pastCount: pastAppointments.length,
-    upcomingStatuses: upcomingAppointments.map(apt => ({ id: apt.id, status: apt.status, time: apt.scheduled_time })),
-    pastStatuses: pastAppointments.map(apt => ({ id: apt.id, status: apt.status, time: apt.scheduled_time }))
-  });
+  // Status validation centralized in this hook
 
   return {
     appointments,

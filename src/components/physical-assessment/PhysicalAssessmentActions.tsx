@@ -39,37 +39,22 @@ export const usePhysicalAssessmentActions = () => {
   }, []);
 
   const insertProgressRecords = useCallback(async (progressRecords: any[], retries = 2) => {
-    console.log('💾 Attempting to insert progress records...');
-    console.log('Records to insert:', JSON.stringify(progressRecords, null, 2));
-
     for (let attempt = 1; attempt <= retries + 1; attempt++) {
       try {
-        console.log(`📤 Insert attempt ${attempt}/${retries + 1}`);
-        
         const { data, error } = await supabase
           .from("progress")
           .insert(progressRecords)
           .select();
 
         if (error) {
-          console.error(`❌ Insert error on attempt ${attempt}:`, error);
-          console.error('Error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-          });
-
           // RLS errors - specific handling
           if (error.message?.includes('row-level security') || error.message?.includes('policy')) {
-            console.error('🚫 RLS Policy Error detected');
             toast.error("Erro de permissão. Verifique se você está logado corretamente.");
             return { success: false, error };
           }
 
           // If not last attempt, retry
           if (attempt <= retries) {
-            console.log(`⏳ Retrying in ${attempt * 1000}ms...`);
             await new Promise(resolve => setTimeout(resolve, attempt * 1000));
             continue;
           }
@@ -77,14 +62,10 @@ export const usePhysicalAssessmentActions = () => {
           throw error;
         }
 
-        console.log('✅ Insert successful:', data);
         return { success: true, data };
 
       } catch (err) {
-        console.error(`❌ Insert failed on attempt ${attempt}:`, err);
-        
         if (attempt <= retries) {
-          console.log(`⏳ Retrying in ${attempt * 1000}ms...`);
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
           continue;
         }

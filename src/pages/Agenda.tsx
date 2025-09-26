@@ -73,12 +73,7 @@ export default function Agenda() {
   
   const nextAppointment = useMemo(() => confirmedAppointments[0] ?? null, [confirmedAppointments]);
 
-  // Debug logging (temporary)
-  console.log('[Agenda] Debug Info:', {
-    confirmedCount: confirmedAppointments.length,
-    historicalCount: historicalAppointments.length,
-    nextAppointment: nextAppointment ? { id: nextAppointment.id, status: nextAppointment.status, time: nextAppointment.scheduled_time } : null
-  });
+  // Filter logic centralized in useStudentAppointments hook
 
   // Load available slots for selected date
   const loadAvailableSlots = useCallback(async () => {

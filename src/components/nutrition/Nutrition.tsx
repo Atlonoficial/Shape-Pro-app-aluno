@@ -20,21 +20,6 @@ export const Nutrition = () => {
   const { userPoints } = useGamification();
   const [previousMealCount, setPreviousMealCount] = useState(0);
 
-  // Debug logs - mais detalhados
-  useEffect(() => {
-    console.log('[Nutrition] Component mounted/updated');
-    console.log('[Nutrition] User:', user?.id);
-    console.log('[Nutrition] Loading:', loading);
-    console.log('[Nutrition] Today meals count:', todaysMeals?.length || 0);
-    console.log('[Nutrition] Today meals:', todaysMeals);
-    console.log('[Nutrition] Daily stats:', dailyStats);
-    
-    // Log adicional para entender se a função está sendo chamada
-    if (user?.id && !loading) {
-      console.log('[Nutrition] Should have data for user:', user.id);
-    }
-  }, [user, loading, todaysMeals, dailyStats]);
-
   // Detectar quando uma refeição é completada para mostrar pontos
   useEffect(() => {
     const currentMealCount = todaysMeals.filter(meal => meal.is_logged).length;
@@ -109,15 +94,6 @@ export const Nutrition = () => {
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2">Nenhum plano nutricional encontrado</h2>
           <p className="text-muted-foreground mb-4">Entre em contato com seu professor para receber um plano alimentar personalizado.</p>
-          
-          {/* Debug info em desenvolvimento */}
-          <div className="bg-muted/30 p-4 rounded-lg mt-4 text-left">
-            <p className="text-sm font-medium mb-2">Informações de Debug:</p>
-            <p className="text-xs text-muted-foreground">• User ID: {user?.id || 'Não encontrado'}</p>
-            <p className="text-xs text-muted-foreground">• Loading: {loading ? 'true' : 'false'}</p>
-            <p className="text-xs text-muted-foreground">• Today meals count: {todaysMeals?.length || 0}</p>
-            <p className="text-xs text-muted-foreground">• Daily stats: {dailyStats ? 'Dados carregados' : 'Sem dados'}</p>
-          </div>
         </div>
       </div>
     );
