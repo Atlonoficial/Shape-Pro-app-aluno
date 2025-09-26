@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_tests: {
+        Row: {
+          confidence_level: number
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          results: Json | null
+          sample_size: number | null
+          start_date: string | null
+          statistical_significance: number | null
+          status: string
+          success_metric: string
+          traffic_split: number
+          updated_at: string
+          variant_a: Json
+          variant_b: Json
+          winner_variant: string | null
+        }
+        Insert: {
+          confidence_level?: number
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          results?: Json | null
+          sample_size?: number | null
+          start_date?: string | null
+          statistical_significance?: number | null
+          status?: string
+          success_metric?: string
+          traffic_split?: number
+          updated_at?: string
+          variant_a: Json
+          variant_b: Json
+          winner_variant?: string | null
+        }
+        Update: {
+          confidence_level?: number
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          results?: Json | null
+          sample_size?: number | null
+          start_date?: string | null
+          statistical_significance?: number | null
+          status?: string
+          success_metric?: string
+          traffic_split?: number
+          updated_at?: string
+          variant_a?: Json
+          variant_b?: Json
+          winner_variant?: string | null
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           condition_data: Json | null
@@ -445,36 +508,66 @@ export type Database = {
       banner_interactions: {
         Row: {
           banner_id: string
+          browser: string | null
+          conversion_value: number | null
           created_at: string
+          device_type: string | null
           id: string
           interaction_type: string
           ip_address: string | null
           metadata: Json | null
+          page_url: string | null
+          placement: string | null
+          referrer: string | null
           session_id: string | null
+          time_on_page: number | null
           user_agent: string | null
           user_id: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           banner_id: string
+          browser?: string | null
+          conversion_value?: number | null
           created_at?: string
+          device_type?: string | null
           id?: string
           interaction_type: string
           ip_address?: string | null
           metadata?: Json | null
+          page_url?: string | null
+          placement?: string | null
+          referrer?: string | null
           session_id?: string | null
+          time_on_page?: number | null
           user_agent?: string | null
           user_id: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           banner_id?: string
+          browser?: string | null
+          conversion_value?: number | null
           created_at?: string
+          device_type?: string | null
           id?: string
           interaction_type?: string
           ip_address?: string | null
           metadata?: Json | null
+          page_url?: string | null
+          placement?: string | null
+          referrer?: string | null
           session_id?: string | null
+          time_on_page?: number | null
           user_agent?: string | null
           user_id?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -488,8 +581,10 @@ export type Database = {
       }
       banners: {
         Row: {
+          ab_test_id: string | null
           action_text: string | null
           action_url: string | null
+          auto_optimization: boolean | null
           created_at: string | null
           created_by: string | null
           deep_link: string | null
@@ -498,16 +593,21 @@ export type Database = {
           image_url: string | null
           is_active: boolean | null
           message: string | null
+          performance_score: number | null
           priority: number | null
+          quality_score: number | null
           start_date: string | null
           target_users: string[] | null
           title: string
           type: string | null
           updated_at: string | null
+          variant_type: string | null
         }
         Insert: {
+          ab_test_id?: string | null
           action_text?: string | null
           action_url?: string | null
+          auto_optimization?: boolean | null
           created_at?: string | null
           created_by?: string | null
           deep_link?: string | null
@@ -516,16 +616,21 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           message?: string | null
+          performance_score?: number | null
           priority?: number | null
+          quality_score?: number | null
           start_date?: string | null
           target_users?: string[] | null
           title: string
           type?: string | null
           updated_at?: string | null
+          variant_type?: string | null
         }
         Update: {
+          ab_test_id?: string | null
           action_text?: string | null
           action_url?: string | null
+          auto_optimization?: boolean | null
           created_at?: string | null
           created_by?: string | null
           deep_link?: string | null
@@ -534,12 +639,15 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           message?: string | null
+          performance_score?: number | null
           priority?: number | null
+          quality_score?: number | null
           start_date?: string | null
           target_users?: string[] | null
           title?: string
           type?: string | null
           updated_at?: string | null
+          variant_type?: string | null
         }
         Relationships: []
       }
@@ -1579,6 +1687,156 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_campaigns: {
+        Row: {
+          banner_template: Json
+          campaign_type: string
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string | null
+          execution_count: number
+          id: string
+          last_execution: string | null
+          name: string
+          performance_metrics: Json
+          schedule_config: Json | null
+          start_date: string | null
+          status: string
+          target_segments: Json
+          triggers: Json
+          updated_at: string
+        }
+        Insert: {
+          banner_template: Json
+          campaign_type?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date?: string | null
+          execution_count?: number
+          id?: string
+          last_execution?: string | null
+          name: string
+          performance_metrics?: Json
+          schedule_config?: Json | null
+          start_date?: string | null
+          status?: string
+          target_segments?: Json
+          triggers?: Json
+          updated_at?: string
+        }
+        Update: {
+          banner_template?: Json
+          campaign_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string | null
+          execution_count?: number
+          id?: string
+          last_execution?: string | null
+          name?: string
+          performance_metrics?: Json
+          schedule_config?: Json | null
+          start_date?: string | null
+          status?: string
+          target_segments?: Json
+          triggers?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_insights: {
+        Row: {
+          actions: Json | null
+          created_at: string
+          created_by: string
+          data: Json
+          description: string
+          expires_at: string | null
+          id: string
+          insight_type: string
+          is_actionable: boolean
+          is_dismissed: boolean
+          priority: string
+          title: string
+        }
+        Insert: {
+          actions?: Json | null
+          created_at?: string
+          created_by: string
+          data: Json
+          description: string
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          is_actionable?: boolean
+          is_dismissed?: boolean
+          priority?: string
+          title: string
+        }
+        Update: {
+          actions?: Json | null
+          created_at?: string
+          created_by?: string
+          data?: Json
+          description?: string
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          is_actionable?: boolean
+          is_dismissed?: boolean
+          priority?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      marketing_segments: {
+        Row: {
+          created_at: string
+          created_by: string
+          criteria: Json
+          description: string | null
+          engagement_score: number | null
+          id: string
+          is_dynamic: boolean
+          last_calculated: string | null
+          name: string
+          segment_type: string
+          updated_at: string
+          user_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          criteria: Json
+          description?: string | null
+          engagement_score?: number | null
+          id?: string
+          is_dynamic?: boolean
+          last_calculated?: string | null
+          name: string
+          segment_type: string
+          updated_at?: string
+          user_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          criteria?: Json
+          description?: string | null
+          engagement_score?: number | null
+          id?: string
+          is_dynamic?: boolean
+          last_calculated?: string | null
+          name?: string
+          segment_type?: string
+          updated_at?: string
+          user_count?: number
+        }
+        Relationships: []
       }
       meal_logs: {
         Row: {
@@ -4270,17 +4528,6 @@ export type Database = {
               p_title?: string
               p_type?: string
             }
-          | {
-              p_description?: string
-              p_duration?: number
-              p_scheduled_time: string
-              p_student_notes?: string
-              p_student_objectives?: string
-              p_student_title?: string
-              p_teacher_id: string
-              p_title?: string
-              p_type?: string
-            }
         Returns: string
       }
       calculate_meal_plan_totals: {
@@ -4298,6 +4545,10 @@ export type Database = {
       }
       calculate_user_level: {
         Args: { points: number }
+        Returns: number
+      }
+      calculate_user_segment_membership: {
+        Args: { p_criteria: Json; p_segment_id: string }
         Returns: number
       }
       can_insert_notification: {
@@ -4332,6 +4583,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_presence: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4357,6 +4612,10 @@ export type Database = {
       ensure_student_record: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      execute_marketing_campaign: {
+        Args: { p_campaign_id: string }
+        Returns: Json
       }
       generate_backup_codes: {
         Args: Record<PropertyKey, never>
@@ -4428,14 +4687,7 @@ export type Database = {
       }
       get_teacher_chat_stats_optimized: {
         Args: { teacher_id_param: string }
-        Returns: {
-          active_students_count: number
-          conversations_with_student_messages: number
-          conversations_with_teacher_messages: number
-          response_rate: number
-          total_conversations_count: number
-          unread_teacher_messages: number
-        }[]
+        Returns: Json
       }
       get_teacher_conversations: {
         Args: { teacher_id_param: string }
@@ -4529,9 +4781,13 @@ export type Database = {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: undefined
       }
+      mark_multiple_conversations_as_read: {
+        Args: { conversation_ids: string[]; user_type?: string }
+        Returns: Json
+      }
       redeem_reward: {
         Args: { _reward_id: string }
-        Returns: string
+        Returns: Json
       }
       reset_all_student_points: {
         Args: { p_reason?: string; p_teacher_id: string }
