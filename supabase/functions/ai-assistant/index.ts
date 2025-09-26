@@ -1,5 +1,4 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
 
 const corsHeaders = {
@@ -283,10 +282,10 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       headers: securityHeaders,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in AI assistant:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Internal server error' 
+      error: error?.message || 'Internal server error' 
     }), {
       status: 500,
       headers: securityHeaders,

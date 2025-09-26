@@ -1,6 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -119,36 +118,40 @@ serve(async (req) => {
     }
 
     // Atualizar transação com dados do gateway
-    await supabase
-      .from('payment_transactions')
-      .update({
-        gateway_transaction_id: checkoutResponse.transaction_id,
-        gateway_payment_id: checkoutResponse.payment_id,
-        checkout_url: checkoutResponse.checkout_url,
-        gateway_response: checkoutResponse.raw_response,
-        expires_at: checkoutResponse.expires_at
-      })
-      .eq('id', transaction.id);
+    if (checkoutResponse) {
+      await supabase
+        .from('payment_transactions')
+        .update({
+          gateway_transaction_id: checkoutResponse.transaction_id,
+          gateway_payment_id: checkoutResponse.payment_id,
+          checkout_url: checkoutResponse.checkout_url,
+          gateway_response: checkoutResponse.raw_response,
+          expires_at: checkoutResponse.expires_at
+        })
+        .eq('id', transaction.id);
 
-    console.log('✅ Checkout created successfully:', checkoutResponse.checkout_url);
+      console.log('✅ Checkout created successfully:', checkoutResponse.checkout_url);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        transaction_id: transaction.id,
-        checkout_url: checkoutResponse.checkout_url,
-        gateway_type: paymentSettings.gateway_type,
-        expires_at: checkoutResponse.expires_at
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      return new Response(
+        JSON.stringify({
+          success: true,
+          transaction_id: transaction.id,
+          checkout_url: checkoutResponse.checkout_url,
+          gateway_type: paymentSettings.gateway_type,
+          expires_at: checkoutResponse.expires_at
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      throw new Error('Checkout response is empty');
+    }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Checkout creation failed:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error?.message || 'Internal server error'
       }),
       { 
         status: 400,
