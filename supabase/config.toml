@@ -13,6 +13,12 @@ port = 54324
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://bqbopkqzkavhmenjlhab.supabase.co"]
 jwt_expiry = 3600
+# Security improvements for OTP
+enable_signup = true
+password_min_length = 8
+enable_anonymous_sign_ins = false
+# Reduced OTP expiry for better security (1 hour instead of default)
+external_email_otp_expiry = 3600
 
 [functions.send-push-notification]
 verify_jwt = false
