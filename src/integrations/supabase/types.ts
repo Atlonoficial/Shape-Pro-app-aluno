@@ -125,6 +125,69 @@ export type Database = {
         }
         Relationships: []
       }
+      active_subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          created_at: string | null
+          end_date: string
+          features: Json | null
+          id: string
+          plan_id: string
+          start_date: string
+          status: string
+          subscription_id: string | null
+          teacher_id: string
+          transaction_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          end_date: string
+          features?: Json | null
+          id?: string
+          plan_id: string
+          start_date?: string
+          status?: string
+          subscription_id?: string | null
+          teacher_id: string
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          end_date?: string
+          features?: Json | null
+          id?: string
+          plan_id?: string
+          start_date?: string
+          status?: string
+          subscription_id?: string | null
+          teacher_id?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_subscriptions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "plan_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_subscriptions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advanced_techniques: {
         Row: {
           category: string
@@ -4932,6 +4995,10 @@ export type Database = {
         Args: { conversation_ids: string[]; user_type?: string }
         Returns: Json
       }
+      process_subscription_renewals: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       redeem_reward: {
         Args: { _reward_id: string }
         Returns: Json
@@ -5047,7 +5114,9 @@ export type Database = {
         Returns: boolean
       }
       user_has_feature_access: {
-        Args: { p_feature_key: string; p_user_id: string }
+        Args:
+          | { p_feature: string; p_teacher_id: string; p_user_id: string }
+          | { p_feature_key: string; p_user_id: string }
         Returns: boolean
       }
       validate_input: {

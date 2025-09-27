@@ -167,10 +167,24 @@ serve(async (req) => {
 
 // MercadoPago Integration
 async function createMercadoPagoCheckout(credentials: any, transaction: any, items: any[], customerData: any) {
-  const accessToken = credentials.access_token;
+  console.log('🔑 Creating MercadoPago checkout with credentials check');
+  
+  // Support both api_key (dashboard format) and access_token (legacy format)
+  const accessToken = credentials.api_key || credentials.access_token;
+  
   if (!accessToken) {
-    throw new Error('MercadoPago access token não configurado');
+    console.error('❌ MercadoPago credentials missing:', { 
+      has_api_key: !!credentials.api_key,
+      has_access_token: !!credentials.access_token,
+      available_keys: Object.keys(credentials)
+    });
+    throw new Error('MercadoPago API key não configurado');
   }
+  
+  console.log('✅ MercadoPago credentials found:', { 
+    credential_type: credentials.api_key ? 'api_key' : 'access_token',
+    is_sandbox: credentials.is_sandbox 
+  });
 
   const preference = {
     items: items.map(item => ({
