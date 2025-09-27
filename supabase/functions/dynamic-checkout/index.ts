@@ -80,6 +80,7 @@ serve(async (req) => {
     let checkoutResponse;
     
     switch (paymentSettings.gateway_type) {
+      case 'mercado_pago':
       case 'mercadopago':
         checkoutResponse = await createMercadoPagoCheckout(
           paymentSettings.credentials,
