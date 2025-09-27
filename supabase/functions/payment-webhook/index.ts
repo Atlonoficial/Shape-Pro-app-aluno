@@ -188,7 +188,7 @@ async function processSuccessfulPayment(transactionId: string) {
 
   const metadata = transaction.metadata;
   
-  // Liberar acesso aos cursos comprados
+  // Processar itens comprados
   if (metadata.items) {
     for (const item of metadata.items) {
       if (item.type === 'course') {
@@ -196,6 +196,14 @@ async function processSuccessfulPayment(transactionId: string) {
       }
       if (item.type === 'product') {
         await processProductPurchase(transaction.student_id, item.product_id);
+      }
+      if (item.type === 'plan') {
+        // Usar função do banco para ativar plano
+        await supabase.rpc('activate_student_plan', {
+          p_student_id: transaction.student_id,
+          p_teacher_id: transaction.teacher_id,
+          p_plan_catalog_id: item.plan_catalog_id
+        });
       }
     }
   }
@@ -235,6 +243,94 @@ async function grantCourseAccess(studentId: string, courseId: string) {
 async function processProductPurchase(studentId: string, productId: string) {
   // Implementar lógica para produtos físicos/digitais
   console.log('📦 Processing product purchase:', { studentId, productId });
+}
+
+// Ativar assinatura de plano
+async function activatePlanSubscription(studentId: string, teacherId: string, planCatalogId: string) {
+  console.log('📋 Activating plan subscription:', { studentId, teacherId, planCatalogId });
+
+  try {
+    // Buscar dados do plano
+    const { data: planData, error: planError } = await supabase
+      .from('plan_catalog')
+      .select('*')
+      .eq('id', planCatalogId)
+      .single();
+
+    if (planError || !planData) {
+      throw new Error(`Plan not found: ${planCatalogId}`);
+    }
+
+    // Calcular data de expiração baseada no intervalo
+    const startDate = new Date();
+    let endDate = new Date();
+    
+    switch (planData.interval) {
+      case 'monthly':
+        endDate.setMonth(endDate.getMonth() + 1);
+        break;
+      case 'quarterly':
+        endDate.setMonth(endDate.getMonth() + 3);
+        break;
+      case 'yearly':
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        break;
+      default:
+        endDate.setMonth(endDate.getMonth() + 1); // Default para mensal
+    }
+
+    // Criar/atualizar assinatura do plano
+    const { error: subscriptionError } = await supabase
+      .from('plan_subscriptions')
+      .upsert({
+        student_user_id: studentId,
+        teacher_id: teacherId,
+        plan_id: planCatalogId,
+        status: 'active',
+        start_at: startDate.toISOString(),
+        end_at: endDate.toISOString(),
+        renewed_at: startDate.toISOString()
+      }, {
+        onConflict: 'student_user_id,teacher_id,plan_id'
+      });
+
+    if (subscriptionError) {
+      throw subscriptionError;
+    }
+
+    // Atualizar tabela students com novo plano ativo
+    const { error: studentUpdateError } = await supabase
+      .from('students')
+      .update({
+        active_plan: planData.name,
+        membership_status: 'active'
+      })
+      .eq('user_id', studentId)
+      .eq('teacher_id', teacherId);
+
+    if (studentUpdateError) {
+      console.error('❌ Failed to update student plan:', studentUpdateError);
+    }
+
+    // Notificar estudante sobre ativação
+    await supabase.functions.invoke('send-push-notification', {
+      body: {
+        user_ids: [studentId],
+        title: '🎉 Plano Ativado!',
+        message: `Seu plano "${planData.name}" foi ativado com sucesso!`,
+        data: {
+          type: 'plan_activated',
+          plan_id: planCatalogId,
+          plan_name: planData.name
+        }
+      }
+    });
+
+    console.log('✅ Plan subscription activated successfully');
+  } catch (error) {
+    console.error('❌ Failed to activate plan subscription:', error);
+    throw error;
+  }
 }
 
 // Notificar professor sobre venda

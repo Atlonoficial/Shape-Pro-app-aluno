@@ -12,6 +12,7 @@ interface CheckoutItem {
   quantity?: number;
   course_id?: string;
   product_id?: string;
+  plan_catalog_id?: string;
 }
 
 interface CustomerData {

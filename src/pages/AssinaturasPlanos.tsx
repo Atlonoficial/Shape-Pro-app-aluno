@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { useCheckout } from "@/hooks/useCheckout";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectionStatus } from "@/components/ui/ConnectionStatus";
 
@@ -32,6 +33,7 @@ const AssinaturasPlanos = () => {
   const { student } = useStudentProfile();
   const { user } = useAuth();
   const { subscription, loading: subscriptionLoading } = useActiveSubscription();
+  const { createCheckout, loading: checkoutLoading } = useCheckout();
 
   // Estrutura de benefícios para plano gratuito
   const beneficiosEstruturados = {
@@ -147,26 +149,48 @@ const planoAtual = useMemo(() => {
   const handleContratarPlano = async (planoId: string) => {
     if (!user?.id || !student?.teacher_id) return;
     
-    try {
-      const { error } = await (supabase as any)
-        .from('plan_subscriptions')
-        .insert({
-          student_user_id: user.id,
-          teacher_id: student.teacher_id,
-          plan_id: planoId,
-          status: 'pending'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Solicitação enviada!",
-        description: "Seu professor será notificado para aprovar sua assinatura."
-      });
-    } catch (error) {
+    // Buscar dados do plano
+    const plano = planosDisponiveis.find(p => p.id === planoId);
+    if (!plano) {
       toast({
         title: "Erro",
-        description: "Não foi possível enviar a solicitação. Tente novamente.",
+        description: "Plano não encontrado.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Criar checkout direto
+      const checkoutResult = await createCheckout([{
+        type: 'plan',
+        id: planoId,
+        title: plano.name,
+        price: plano.price,
+        quantity: 1,
+        plan_catalog_id: planoId
+      }], {
+        name: user.user_metadata?.name || user.email?.split('@')[0] || '',
+        email: user.email || '',
+        phone: ''
+      });
+
+      if (checkoutResult?.success && checkoutResult.checkout_url) {
+        toast({
+          title: "Redirecionando para pagamento...",
+          description: `Você será direcionado para ${checkoutResult.gateway_type}`
+        });
+        
+        // Redirecionar para checkout
+        window.location.href = checkoutResult.checkout_url;
+      } else {
+        throw new Error(checkoutResult?.error || 'Erro ao criar checkout');
+      }
+    } catch (error: any) {
+      console.error('Erro no checkout:', error);
+      toast({
+        title: "Erro no pagamento",
+        description: error.message || "Não foi possível processar o pagamento. Tente novamente.",
         variant: "destructive"
       });
     }

@@ -73,6 +73,9 @@ serve(async (req) => {
 
     console.log('✅ Transaction created:', transaction.id);
 
+    // Processar itens específicos por tipo
+    const processedItems = await processCheckoutItems(items, teacherId);
+    
     // Direcionar para gateway específico baseado na configuração
     let checkoutResponse;
     
@@ -81,7 +84,7 @@ serve(async (req) => {
         checkoutResponse = await createMercadoPagoCheckout(
           paymentSettings.credentials,
           transaction,
-          items,
+          processedItems,
           customerData
         );
         break;
@@ -90,7 +93,7 @@ serve(async (req) => {
         checkoutResponse = await createStripeCheckout(
           paymentSettings.credentials,
           transaction,
-          items,
+          processedItems,
           customerData
         );
         break;
@@ -99,7 +102,7 @@ serve(async (req) => {
         checkoutResponse = await createPagSeguroCheckout(
           paymentSettings.credentials,
           transaction,
-          items,
+          processedItems,
           customerData
         );
         break;
@@ -108,7 +111,7 @@ serve(async (req) => {
         checkoutResponse = await createAsaasCheckout(
           paymentSettings.credentials,
           transaction,
-          items,
+          processedItems,
           customerData
         );
         break;
@@ -285,4 +288,43 @@ async function createAsaasCheckout(credentials: any, transaction: any, items: an
 
   // Asaas implementation aqui
   throw new Error('Asaas integration em desenvolvimento');
+}
+
+// Processar itens do checkout baseado no tipo
+async function processCheckoutItems(items: any[], teacherId: string) {
+  const processedItems = [];
+  
+  for (const item of items) {
+    if (item.type === 'plan') {
+      // Buscar dados do plano no catálogo
+      const { data: planData, error } = await supabase
+        .from('plan_catalog')
+        .select('*')
+        .eq('id', item.plan_catalog_id)
+        .eq('teacher_id', teacherId)
+        .eq('is_active', true)
+        .single();
+        
+      if (error || !planData) {
+        throw new Error(`Plano não encontrado ou inativo: ${item.plan_catalog_id}`);
+      }
+      
+      // Validar preço
+      if (planData.price !== parseFloat(item.price)) {
+        throw new Error(`Preço do plano inválido. Esperado: ${planData.price}, Recebido: ${item.price}`);
+      }
+      
+      processedItems.push({
+        ...item,
+        title: planData.name,
+        description: planData.description,
+        plan_data: planData
+      });
+    } else {
+      // Outros tipos de item (curso, produto, etc.)
+      processedItems.push(item);
+    }
+  }
+  
+  return processedItems;
 }

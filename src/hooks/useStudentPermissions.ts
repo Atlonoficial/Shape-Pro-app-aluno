@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
 import { useMyNutrition } from '@/hooks/useMyNutrition';
+import { useRealTimePermissions } from '@/hooks/useRealTimePermissions';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StudentPermissions {
@@ -43,6 +44,9 @@ export const useStudentPermissions = (): StudentPermissions => {
     loading: nutritionLoading,
     hasNutritionAccess 
   } = useMyNutrition();
+
+  // Hook para escutar mudanças em tempo real
+  useRealTimePermissions();
 
   const [studentData, setStudentData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
