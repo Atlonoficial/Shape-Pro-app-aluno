@@ -2561,6 +2561,7 @@ export type Database = {
         Row: {
           amount: number
           checkout_url: string | null
+          course_id: string | null
           created_at: string | null
           currency: string | null
           expires_at: string | null
@@ -2569,9 +2570,14 @@ export type Database = {
           gateway_transaction_id: string | null
           gateway_type: string
           id: string
+          item_name: string | null
+          item_type: string | null
+          last_error: string | null
           metadata: Json | null
           paid_at: string | null
           payment_method: string | null
+          plan_catalog_id: string | null
+          retry_count: number | null
           service_pricing_id: string | null
           status: string | null
           student_id: string
@@ -2581,6 +2587,7 @@ export type Database = {
         Insert: {
           amount: number
           checkout_url?: string | null
+          course_id?: string | null
           created_at?: string | null
           currency?: string | null
           expires_at?: string | null
@@ -2589,9 +2596,14 @@ export type Database = {
           gateway_transaction_id?: string | null
           gateway_type: string
           id?: string
+          item_name?: string | null
+          item_type?: string | null
+          last_error?: string | null
           metadata?: Json | null
           paid_at?: string | null
           payment_method?: string | null
+          plan_catalog_id?: string | null
+          retry_count?: number | null
           service_pricing_id?: string | null
           status?: string | null
           student_id: string
@@ -2601,6 +2613,7 @@ export type Database = {
         Update: {
           amount?: number
           checkout_url?: string | null
+          course_id?: string | null
           created_at?: string | null
           currency?: string | null
           expires_at?: string | null
@@ -2609,9 +2622,14 @@ export type Database = {
           gateway_transaction_id?: string | null
           gateway_type?: string
           id?: string
+          item_name?: string | null
+          item_type?: string | null
+          last_error?: string | null
           metadata?: Json | null
           paid_at?: string | null
           payment_method?: string | null
+          plan_catalog_id?: string | null
+          retry_count?: number | null
           service_pricing_id?: string | null
           status?: string | null
           student_id?: string
@@ -2619,6 +2637,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_transactions_plan_catalog_id_fkey"
+            columns: ["plan_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_transactions_service_pricing_id_fkey"
             columns: ["service_pricing_id"]
@@ -4624,6 +4649,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_expired_transactions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_chat_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4722,6 +4751,10 @@ export type Database = {
           protein: number
         }[]
       }
+      get_payment_system_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_plan_id_by_name: {
         Args: { plan_name: string; teacher_id_param: string }
         Returns: string
@@ -4768,6 +4801,10 @@ export type Database = {
       get_teacher_name: {
         Args: { teacher_id_param: string }
         Returns: string
+      }
+      get_transaction_context: {
+        Args: { p_authenticated_user_id: string; p_target_student_id?: string }
+        Returns: Json
       }
       get_user_entitlements: {
         Args: { p_teacher_id: string; p_user_id: string }
@@ -4840,6 +4877,10 @@ export type Database = {
       }
       reset_all_student_points: {
         Args: { p_reason?: string; p_teacher_id: string }
+        Returns: Json
+      }
+      rollback_failed_transaction: {
+        Args: { p_transaction_id: string }
         Returns: Json
       }
       sanitize_chat_input: {
@@ -4950,6 +4991,18 @@ export type Database = {
       }
       validate_payment_data_local: {
         Args: { p_amount: number; p_student_id: string; p_teacher_id: string }
+        Returns: boolean
+      }
+      validate_transaction_data_enhanced: {
+        Args: {
+          p_amount: number
+          p_course_id?: string
+          p_item_type: string
+          p_plan_catalog_id?: string
+          p_service_pricing_id?: string
+          p_student_id: string
+          p_teacher_id: string
+        }
         Returns: boolean
       }
     }
