@@ -2826,6 +2826,50 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_features: {
+        Row: {
+          created_at: string
+          description: string | null
+          feature_key: string
+          feature_name: string
+          id: string
+          is_enabled: boolean
+          max_usage: number | null
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          feature_key: string
+          feature_name: string
+          id?: string
+          is_enabled?: boolean
+          max_usage?: number | null
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          feature_key?: string
+          feature_name?: string
+          id?: string
+          is_enabled?: boolean
+          max_usage?: number | null
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_subscriptions: {
         Row: {
           approved_at: string | null
@@ -4491,6 +4535,14 @@ export type Database = {
           | { invitation_code: string; user_id_param?: string }
         Returns: string
       }
+      activate_student_plan: {
+        Args: {
+          p_plan_catalog_id: string
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: Json
+      }
       aggregate_banner_interactions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4632,6 +4684,15 @@ export type Database = {
       check_and_award_achievements: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      check_item_reference_flexible: {
+        Args: {
+          p_course_id: string
+          p_item_type: string
+          p_plan_catalog_id: string
+          p_service_pricing_id: string
+        }
+        Returns: boolean
       }
       check_rate_limit: {
         Args: {
@@ -4983,6 +5044,10 @@ export type Database = {
       }
       user_has_course_access: {
         Args: { p_course_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      user_has_feature_access: {
+        Args: { p_feature_key: string; p_user_id: string }
         Returns: boolean
       }
       validate_input: {

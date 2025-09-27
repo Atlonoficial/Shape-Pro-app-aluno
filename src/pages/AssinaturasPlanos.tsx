@@ -519,7 +519,7 @@ const planoAtual = useMemo(() => {
                       {/* Botão de Ação */}
                       <div className="pt-2">
                         <Button 
-                          onClick={() => handleContratarPlano(plano.id)}
+                          disabled={checkoutLoading}
                           className={`w-full h-10 text-sm font-semibold transition-all duration-300 ${
                             plano.highlighted 
                               ? 'btn-primary animate-glow' 
@@ -527,7 +527,7 @@ const planoAtual = useMemo(() => {
                           }`}
                           size="sm"
                         >
-                          Solicitar Plano
+                          {checkoutLoading ? 'Processando...' : 'Contratar Agora'}
                         </Button>
                       </div>
                     </div>
