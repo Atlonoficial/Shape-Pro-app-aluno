@@ -199,6 +199,11 @@ async function createMercadoPagoCheckout(credentials: any, transaction: any, ite
     },
     external_reference: transaction.id,
     notification_url: `${supabaseUrl}/functions/v1/payment-webhook/mercadopago`,
+    back_urls: {
+      success: `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/assinaturas-planos?payment=success&transaction_id=${transaction.id}`,
+      failure: `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/assinaturas-planos?payment=failure&transaction_id=${transaction.id}`,
+      pending: `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/assinaturas-planos?payment=pending&transaction_id=${transaction.id}`,
+    },
     auto_return: 'approved',
     expires: true,
     expiration_date_from: new Date().toISOString(),

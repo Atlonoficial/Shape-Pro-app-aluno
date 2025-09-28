@@ -35,6 +35,39 @@ const AssinaturasPlanos = () => {
   const { subscription, loading: subscriptionLoading } = useActiveSubscription();
   const { createCheckout, loading: checkoutLoading } = useCheckout();
 
+  // Handle payment return from MercadoPago
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const transactionId = urlParams.get('transaction_id');
+
+    if (paymentStatus && transactionId) {
+      switch (paymentStatus) {
+        case 'success':
+          toast({
+            title: "Pagamento Aprovado! ✅",
+            description: "Seu plano foi ativado com sucesso.",
+          });
+          break;
+        case 'pending':
+          toast({
+            title: "Pagamento Pendente ⏳",
+            description: "Aguarde a confirmação do pagamento.",
+          });
+          break;
+        case 'failure':
+          toast({
+            title: "Pagamento Rejeitado ❌",
+            description: "O pagamento não foi aprovado. Tente novamente.",
+            variant: "destructive"
+          });
+          break;
+      }
+      // Clean URL
+      window.history.replaceState({}, '', '/assinaturas-planos');
+    }
+  }, []);
+
   // Estrutura de benefícios para plano gratuito
   const beneficiosEstruturados = {
     liberados: ["Conteúdos liberados pelo professor"],
