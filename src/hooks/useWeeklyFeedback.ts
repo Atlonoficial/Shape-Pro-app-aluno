@@ -89,7 +89,72 @@ export const useWeeklyFeedback = () => {
     return result;
   };
 
-  // Optimized check for feedback modal with better error handling
+  // Check for missed feedback and implement rescheduling logic
+  const checkMissedFeedback = async (settings: FeedbackSettings): Promise<boolean> => {
+    if (!user?.id || !teacherId) return false;
+
+    try {
+      const { data: existingFeedback, error } = await supabase
+        .from('feedbacks')
+        .select('id, created_at, metadata')
+        .eq('student_id', user.id)
+        .eq('teacher_id', teacherId)
+        .eq('type', 'periodic_feedback')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[Feedback] Error checking missed feedback:', error);
+        return false;
+      }
+
+      if (!existingFeedback) return false;
+
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const lastFeedbackDate = new Date(existingFeedback.created_at);
+      const daysSinceLastFeedback = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Check if feedback was missed based on frequency
+      let feedbackWasMissed = false;
+      let expectedDay = -1;
+
+      switch (settings.feedback_frequency) {
+        case 'weekly':
+          expectedDay = settings.feedback_days[0] || 5; // Default Friday
+          feedbackWasMissed = daysSinceLastFeedback >= 7 && dayOfWeek !== expectedDay;
+          break;
+        case 'biweekly':
+          expectedDay = settings.feedback_days[0] || 5;
+          feedbackWasMissed = daysSinceLastFeedback >= 14 && dayOfWeek !== expectedDay;
+          break;
+        case 'monthly':
+          feedbackWasMissed = daysSinceLastFeedback >= 30;
+          break;
+        default:
+          expectedDay = settings.feedback_days[0] || 5;
+          feedbackWasMissed = daysSinceLastFeedback >= 7 && dayOfWeek !== expectedDay;
+      }
+
+      if (feedbackWasMissed) {
+        console.log('[Feedback] Missed feedback detected, rescheduling for today', {
+          expectedDay,
+          currentDay: dayOfWeek,
+          daysSinceLastFeedback,
+          frequency: settings.feedback_frequency
+        });
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('[Feedback] Error in missed feedback check:', error);
+      return false;
+    }
+  };
+
+  // Optimized check for feedback modal with rescheduling logic
   const checkShouldShowFeedbackModal = async (): Promise<boolean> => {
     if (!user?.id || !hasActiveSubscription || !teacherId) {
       console.log('[Feedback] Modal check skipped - missing requirements', {
@@ -115,6 +180,13 @@ export const useWeeklyFeedback = () => {
 
       const today = new Date();
       const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+      
+      // First, check if feedback was missed and needs rescheduling
+      const isMissedFeedback = await checkMissedFeedback(settings);
+      if (isMissedFeedback) {
+        console.log('[Feedback] Showing rescheduled feedback modal');
+        return true;
+      }
       
       // Check if today is one of the configured feedback days
       if (!settings.feedback_days.includes(dayOfWeek)) {

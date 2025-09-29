@@ -1,4 +1,4 @@
-import { Bell, Settings, Calendar, Trophy, MessageSquare, TestTube } from "lucide-react";
+import { Bell, Settings, Calendar, Trophy, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { WeightChart } from "./WeightChart";
@@ -12,14 +12,12 @@ import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useCurrentWorkoutSession } from "@/hooks/useCurrentWorkoutSession";
-import { FeedbackSystemTest } from "@/components/debug/FeedbackSystemTest";
 
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
 import { useProgressActions } from "@/components/progress/ProgressActions";
 import { useWeeklyFeedback } from "@/hooks/useWeeklyFeedback";
 import { WeeklyFeedbackModal } from "@/components/feedback/WeeklyFeedbackModal";
-import { Button } from "@/components/ui/button";
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -32,8 +30,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { logWeight } = progressActions;
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
-  const [showTestFeedbackModal, setShowTestFeedbackModal] = useState(false);
-  const [showDebugFeedback, setShowDebugFeedback] = useState(false);
   const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
   
   // Weekly feedback hook
@@ -142,22 +138,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
             Olá, <span className="text-gradient-primary">{firstName}!</span>
           </h1>
         </div>
-        <Button 
-          onClick={() => setShowDebugFeedback(!showDebugFeedback)}
-          variant="ghost"
-          size="sm"
-          className="text-xs"
-        >
-          <TestTube className="h-4 w-4" />
-        </Button>
       </div>
-
-      {/* Debug Feedback Component */}
-      {showDebugFeedback && (
-        <div className="mb-6">
-          <FeedbackSystemTest />
-        </div>
-      )}
 
       {/* Welcome Message */}
       <div className="mb-6 text-center">
@@ -178,18 +159,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
       {/* Quick Actions */}
       <QuickActions />
-
-      {/* Test Feedback Button */}
-      <div className="mb-6">
-        <Button
-          onClick={() => setShowTestFeedbackModal(true)}
-          className="flex items-center gap-2 w-full bg-gradient-to-r from-secondary to-secondary-variant"
-          size="lg"
-        >
-          <TestTube className="h-4 w-4" />
-          Testar Sistema de Feedback (Debug)
-        </Button>
-      </div>
 
       {/* Announcement Banner - Positioned between agenda/meta and stats */}
       <AnnouncementBanner />
@@ -269,16 +238,6 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
           feedbackSettings?.feedback_frequency === 'monthly' ? 'mensal' :
           'periódico'
         }
-      />
-
-      {/* Test Feedback Modal */}
-      <WeeklyFeedbackModal
-        isOpen={showTestFeedbackModal}
-        onClose={() => setShowTestFeedbackModal(false)}
-        onSubmit={submitWeeklyFeedback}
-        loading={feedbackLoading}
-        customQuestions={feedbackSettings?.custom_questions || []}
-        feedbackFrequency="Teste - Imediato"
       />
     </div>
   );
