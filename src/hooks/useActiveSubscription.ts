@@ -51,38 +51,62 @@ export const useActiveSubscription = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('[useActiveSubscription] Fetching subscription for user:', user.id);
+      console.log('🔍 [useActiveSubscription] Fetching subscription for user:', user.id);
 
-      // Try both approaches in parallel for better performance
-      const [planSubResult, studentDataResult] = await Promise.all([
-        supabase
-          .from('plan_subscriptions')
-          .select(`
-            id, plan_id, status, start_at, end_at, teacher_id,
-            plan_catalog (
-              name, price, currency, interval, features
-            )
-          `)
-          .eq('student_user_id', user.id)
-          .in('status', ['active', 'pending'])
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        
-        supabase
-          .from('students')
-          .select('teacher_id, active_plan, membership_status, membership_expiry')
-          .eq('user_id', user.id)
-          .maybeSingle()
-      ]);
+      // Priority 1: Check active_subscriptions table (new primary source)
+      const { data: activeSubData, error: activeSubError } = await supabase
+        .from('active_subscriptions')
+        .select('id, plan_id, status, start_date, end_date, teacher_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .gte('end_date', new Date().toISOString().split('T')[0])
+        .order('created_at', { ascending: false })
+        .maybeSingle();
 
-      const { data: planSub } = planSubResult;
-      const { data: studentData } = studentDataResult;
+      if (activeSubData) {
+        // Fetch plan catalog data separately
+        const { data: planCatalogData, error: planCatalogError } = await supabase
+          .from('plan_catalog')
+          .select('name, price, currency, interval, features')
+          .eq('id', activeSubData.plan_id)
+          .eq('teacher_id', activeSubData.teacher_id)
+          .maybeSingle();
 
-      console.log('[useActiveSubscription] Plan subscription data:', planSub);
+        if (planCatalogData) {
+          const daysRemaining = calculateDaysRemaining(activeSubData.end_date);
+          const expirationStatus = getExpirationStatus(daysRemaining);
+          
+          console.log('✅ [useActiveSubscription] Found active subscription from active_subscriptions:', activeSubData);
+          
+          setSubscription({
+            id: activeSubData.id,
+            plan_id: activeSubData.plan_id,
+            teacher_id: activeSubData.teacher_id,
+            status: 'active',
+            start_at: activeSubData.start_date,
+            end_at: activeSubData.end_date,
+            plan_name: planCatalogData.name,
+            plan_features: Array.isArray(planCatalogData.features) ? planCatalogData.features : [],
+            plan_price: planCatalogData.price,
+            plan_currency: planCatalogData.currency,
+            plan_interval: planCatalogData.interval,
+            daysRemaining,
+            expirationStatus
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Priority 2: Check student membership data (legacy support)
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('teacher_id, active_plan, membership_status, membership_expiry')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       console.log('[useActiveSubscription] Student data:', studentData);
 
-      // PRIORIDADE CORRIGIDA: Dados do students quando membership_status = 'active'
       if (studentData?.membership_status === 'active' && 
           studentData.active_plan && 
           studentData.active_plan !== 'free' && 
@@ -91,11 +115,11 @@ export const useActiveSubscription = () => {
         const daysRemaining = calculateDaysRemaining(studentData.membership_expiry);
         const expirationStatus = getExpirationStatus(daysRemaining);
         
-        // Só considerar expirado se realmente passou da data
+        // Only consider expired if date has actually passed
         if (expirationStatus !== 'expired') {
           let planCatalogData = null;
           
-          // Buscar dados do catálogo para informações complementares
+          // Fetch catalog data for additional information
           try {
             const planId = studentData.active_plan;
             const { data: catalogData } = await supabase
@@ -111,17 +135,17 @@ export const useActiveSubscription = () => {
             console.warn('[useActiveSubscription] Error fetching plan catalog:', e);
           }
 
-          console.log('[useActiveSubscription] Using student data as primary source - Active membership');
+          console.log('✅ [useActiveSubscription] Using student data as primary source - Active membership');
           
           setSubscription({
-            id: planSub?.id || 'student-based-subscription',
+            id: 'student-based-subscription',
             plan_id: studentData.active_plan,
             teacher_id: studentData.teacher_id,
-            status: 'active', // Forçar active baseado no student
-            start_at: planSub?.start_at || new Date().toISOString(),
+            status: 'active',
+            start_at: new Date().toISOString(),
             end_at: studentData.membership_expiry,
             plan_name: planCatalogData?.name || studentData.active_plan,
-            plan_features: Array.isArray(planCatalogData?.features) ? planCatalogData.features : (planCatalogData?.features ? [planCatalogData.features] : []),
+            plan_features: Array.isArray(planCatalogData?.features) ? planCatalogData.features : [],
             plan_price: planCatalogData?.price,
             plan_currency: planCatalogData?.currency,
             plan_interval: planCatalogData?.interval,
@@ -133,12 +157,26 @@ export const useActiveSubscription = () => {
         }
       }
 
-      // Priority 2: Active plan subscription with catalog data (fallback)
-      if (planSub && planSub.plan_catalog && planSub.status === 'active') {
+      // Priority 3: Check plan_subscriptions table (fallback)
+      const { data: planSub, error: planSubError } = await supabase
+        .from('plan_subscriptions')
+        .select(`
+          id, plan_id, status, start_at, end_at, teacher_id,
+          plan_catalog (
+            name, price, currency, interval, features
+          )
+        `)
+        .eq('student_user_id', user.id)
+        .in('status', ['active', 'pending'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (planSub?.plan_catalog && planSub.status === 'active') {
         const daysRemaining = calculateDaysRemaining(planSub.end_at);
         const expirationStatus = getExpirationStatus(daysRemaining);
         
-        console.log('[useActiveSubscription] Using plan subscription as secondary source');
+        console.log('✅ [useActiveSubscription] Using plan subscription as fallback source');
         
         setSubscription({
           id: planSub.id,
@@ -148,7 +186,7 @@ export const useActiveSubscription = () => {
           start_at: planSub.start_at,
           end_at: planSub.end_at,
           plan_name: planSub.plan_catalog.name,
-          plan_features: Array.isArray(planSub.plan_catalog.features) ? planSub.plan_catalog.features : (planSub.plan_catalog.features ? [planSub.plan_catalog.features] : []),
+          plan_features: Array.isArray(planSub.plan_catalog.features) ? planSub.plan_catalog.features : [],
           plan_price: planSub.plan_catalog.price,
           plan_currency: planSub.plan_catalog.currency,
           plan_interval: planSub.plan_catalog.interval,
@@ -159,34 +197,11 @@ export const useActiveSubscription = () => {
         return;
       }
 
-      // Priority 3: Pending plan subscription (last resort)
-      if (planSub && planSub.status === 'pending') {
-        console.log('[useActiveSubscription] Found pending subscription, showing as pending');
-        
-        setSubscription({
-          id: planSub.id,
-          plan_id: planSub.plan_id,
-          teacher_id: planSub.teacher_id,
-          status: 'pending',
-          start_at: planSub.start_at,
-          end_at: planSub.end_at,
-          plan_name: planSub.plan_catalog?.name || 'Plano Pendente',
-          plan_features: Array.isArray(planSub.plan_catalog?.features) ? planSub.plan_catalog.features : (planSub.plan_catalog?.features ? [planSub.plan_catalog.features] : []),
-          plan_price: planSub.plan_catalog?.price,
-          plan_currency: planSub.plan_catalog?.currency,
-          plan_interval: planSub.plan_catalog?.interval,
-          daysRemaining: undefined,
-          expirationStatus: undefined
-        });
-        setLoading(false);
-        return;
-      }
-
       // No active subscription found
-      console.log('[useActiveSubscription] No active subscription found');
+      console.log('ℹ️ [useActiveSubscription] No active subscription found');
       setSubscription(null);
     } catch (error: any) {
-      console.error('[useActiveSubscription] Error fetching subscription:', error);
+      console.error('❌ [useActiveSubscription] Error fetching subscription:', error);
       setError(error.message);
       setSubscription(null);
     } finally {
@@ -208,6 +223,21 @@ export const useActiveSubscription = () => {
     
     const channel = supabase
       .channel(`subscription-changes-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'active_subscriptions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('[useActiveSubscription] Active subscriptions change detected:', payload);
+          setTimeout(() => {
+            fetchActiveSubscription();
+          }, 100);
+        }
+      )
       .on(
         'postgres_changes',
         {

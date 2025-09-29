@@ -21,6 +21,13 @@ serve(async (req) => {
     const gateway = url.pathname.split('/').pop(); // mercadopago, stripe, etc
     
     console.log('🔔 Webhook received from:', gateway);
+    console.log('📋 Request method:', req.method);
+    console.log('🔗 Full URL:', req.url);
+
+    // Se for GET, é um teste de conectividade
+    if (req.method === 'GET') {
+      return new Response('Webhook is active', { status: 200, headers: corsHeaders });
+    }
 
     let paymentData;
     
@@ -40,13 +47,19 @@ serve(async (req) => {
       case 'asaas':
         paymentData = await handleAsaasWebhook(req);
         break;
+
+      case 'test':
+        // Endpoint de teste para processar transações pendentes manualmente
+        return await processTestPayments();
         
       default:
+        console.log('❓ Unknown gateway:', gateway);
         throw new Error(`Gateway webhook não suportado: ${gateway}`);
     }
 
     if (!paymentData) {
-      return new Response('OK', { status: 200 });
+      console.log('⚠️ No payment data returned from gateway handler');
+      return new Response('OK', { status: 200, headers: corsHeaders });
     }
 
     console.log('💰 Payment data processed:', paymentData);
@@ -57,7 +70,8 @@ serve(async (req) => {
       .update({
         status: paymentData.status,
         paid_at: paymentData.status === 'paid' ? new Date().toISOString() : null,
-        gateway_response: paymentData.raw_data
+        gateway_response: paymentData.raw_data,
+        updated_at: new Date().toISOString()
       })
       .eq('gateway_transaction_id', paymentData.transaction_id);
 
@@ -68,6 +82,7 @@ serve(async (req) => {
 
     // Se pagamento aprovado, liberar acesso
     if (paymentData.status === 'paid') {
+      console.log('✅ Payment approved, processing access...');
       await processSuccessfulPayment(paymentData.transaction_id);
     }
 
@@ -176,36 +191,54 @@ async function processSuccessfulPayment(transactionId: string) {
   console.log('🎉 Processing successful payment:', transactionId);
 
   // Buscar transação
-  const { data: transaction } = await supabase
+  const { data: transaction, error: fetchError } = await supabase
     .from('payment_transactions')
     .select('*')
     .eq('gateway_transaction_id', transactionId)
     .single();
 
-  if (!transaction) {
-    throw new Error('Transaction not found');
+  if (fetchError || !transaction) {
+    console.error('❌ Transaction not found:', transactionId, fetchError);
+    throw new Error(`Transaction not found: ${transactionId}`);
   }
+
+  console.log('📄 Processing transaction:', transaction);
 
   const metadata = transaction.metadata;
   
   // Processar itens comprados
   if (metadata.items) {
     for (const item of metadata.items) {
+      console.log('🔄 Processing item:', item);
+      
       if (item.type === 'course') {
+        console.log('📚 Granting course access...');
         await grantCourseAccess(transaction.student_id, item.course_id);
       }
+      
       if (item.type === 'product') {
+        console.log('📦 Processing product purchase...');
         await processProductPurchase(transaction.student_id, item.product_id);
       }
+      
       if (item.type === 'plan') {
-        // Usar função do banco para ativar plano
-        await supabase.rpc('activate_student_plan', {
+        console.log('💳 Activating plan subscription...');
+        const { data: activationResult, error: activationError } = await supabase.rpc('activate_student_plan', {
           p_student_id: transaction.student_id,
           p_teacher_id: transaction.teacher_id,
           p_plan_catalog_id: item.plan_catalog_id
         });
+        
+        if (activationError) {
+          console.error('❌ Failed to activate plan:', activationError);
+          throw new Error(`Failed to activate plan: ${activationError.message}`);
+        }
+        
+        console.log('✅ Plan activated successfully:', activationResult);
       }
     }
+  } else {
+    console.log('⚠️ No items found in transaction metadata');
   }
 
   // Dar pontos de gamificação pela compra
@@ -262,6 +295,79 @@ async function notifyTeacherOfSale(transaction: any) {
     });
   } catch (error) {
     console.error('❌ Failed to notify teacher:', error);
+  }
+}
+
+// Processar transações de teste (para desenvolvimento)
+async function processTestPayments() {
+  console.log('🧪 Processing test payments...');
+  
+  try {
+    // Buscar transações pendentes criadas nas últimas 24 horas
+    const { data: pendingTransactions, error } = await supabase
+      .from('payment_transactions')
+      .select('*')
+      .eq('status', 'pending')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(10);
+
+    if (error) {
+      console.error('❌ Failed to fetch pending transactions:', error);
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const results = [];
+
+    for (const transaction of pendingTransactions || []) {
+      console.log(`🔄 Processing pending transaction: ${transaction.id}`);
+      
+      try {
+        // Simular pagamento aprovado
+        const { error: updateError } = await supabase
+          .from('payment_transactions')
+          .update({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            gateway_response: { test: true, processed_at: new Date().toISOString() }
+          })
+          .eq('id', transaction.id);
+
+        if (updateError) {
+          console.error('❌ Failed to update transaction:', updateError);
+          results.push({ transaction_id: transaction.id, success: false, error: updateError.message });
+          continue;
+        }
+
+        // Processar pagamento aprovado
+        await processSuccessfulPayment(transaction.gateway_transaction_id || transaction.id);
+        
+        results.push({ transaction_id: transaction.id, success: true });
+        console.log(`✅ Transaction ${transaction.id} processed successfully`);
+        
+      } catch (error: any) {
+        console.error(`❌ Failed to process transaction ${transaction.id}:`, error);
+        results.push({ transaction_id: transaction.id, success: false, error: error.message });
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      message: 'Test payments processed',
+      processed: results.length,
+      results 
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (error: any) {
+    console.error('❌ Test payment processing failed:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 }
 

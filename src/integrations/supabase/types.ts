@@ -2387,6 +2387,7 @@ export type Database = {
           target_users: string[] | null
           title: string
           type: string | null
+          user_id: string | null
         }
         Insert: {
           action_required?: boolean | null
@@ -2407,6 +2408,7 @@ export type Database = {
           target_users?: string[] | null
           title: string
           type?: string | null
+          user_id?: string | null
         }
         Update: {
           action_required?: boolean | null
@@ -2427,6 +2429,7 @@ export type Database = {
           target_users?: string[] | null
           title?: string
           type?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2629,6 +2632,7 @@ export type Database = {
           currency: string | null
           expires_at: string | null
           gateway_payment_id: string | null
+          gateway_preference_id: string | null
           gateway_response: Json | null
           gateway_transaction_id: string | null
           gateway_type: string
@@ -2655,6 +2659,7 @@ export type Database = {
           currency?: string | null
           expires_at?: string | null
           gateway_payment_id?: string | null
+          gateway_preference_id?: string | null
           gateway_response?: Json | null
           gateway_transaction_id?: string | null
           gateway_type: string
@@ -2681,6 +2686,7 @@ export type Database = {
           currency?: string | null
           expires_at?: string | null
           gateway_payment_id?: string | null
+          gateway_preference_id?: string | null
           gateway_response?: Json | null
           gateway_transaction_id?: string | null
           gateway_type?: string
@@ -5131,7 +5137,7 @@ export type Database = {
         Args: {
           p_amount: number
           p_course_id?: string
-          p_item_type: string
+          p_item_type?: string
           p_plan_catalog_id?: string
           p_service_pricing_id?: string
           p_student_id: string
