@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
 import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
+import { SecurityProvider } from "@/components/security/SecurityProvider";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { NativeIntegration } from "@/components/native/NativeIntegration";
 import AuthGuard from "@/components/AuthGuard";
@@ -59,15 +60,16 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-          <BrowserRouter>
-            <AuthProvider>
-              <NativeIntegration />
-              <GamificationProvider>
-                <GamificationIntegrator>
+    <SecurityProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+            <BrowserRouter>
+              <AuthProvider>
+                <NativeIntegration />
+                <GamificationProvider>
+                  <GamificationIntegrator>
                   <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/cadastro-completo" element={<AuthGuard><CadastroCompleto /></AuthGuard>} />
@@ -105,8 +107,9 @@ const App = () => (
               </GamificationProvider>
             </AuthProvider>
           </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </SecurityProvider>
   </ErrorBoundary>
 );
 
