@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
 import { useToast } from '@/hooks/use-toast';
-import { showFeedbackSuccessToast } from '@/components/feedback/FeedbackSuccessToast';
+import { showPointsToast } from '@/components/gamification/PointsToast';
 
 interface FeedbackSettings {
   feedback_frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
@@ -209,16 +209,27 @@ export const useWeeklyFeedback = () => {
 
       switch (settings.feedback_frequency) {
         case 'weekly':
-          // If it's Friday and no feedback this week
+          // Usar verificação de semana ISO correta
+          const getWeekNumber = (date: Date) => {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+          };
+          
+          const currentWeek = getWeekNumber(today);
+          const lastFeedbackWeek = getWeekNumber(lastFeedbackDate);
+          const currentYear = today.getFullYear();
+          const lastFeedbackYear = lastFeedbackDate.getFullYear();
+          
+          // Feedback foi perdido se não foi enviado nesta semana e é o dia esperado (ou passou)
           if (dayOfWeek === expectedDay) {
-            const weekStart = new Date(today);
-            weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
-            weekStart.setHours(0, 0, 0, 0);
-            feedbackWasMissed = lastFeedbackDate < weekStart;
+            feedbackWasMissed = !(currentWeek === lastFeedbackWeek && currentYear === lastFeedbackYear);
           }
-          // If it's past Friday and no feedback from last week
-          else if (dayOfWeek === 6 || dayOfWeek === 0 || dayOfWeek === 1) {
-            feedbackWasMissed = daysSinceLastFeedback >= 7;
+          // Se passou do dia esperado na semana
+          else if (dayOfWeek > expectedDay || (dayOfWeek < expectedDay && dayOfWeek <= 1)) {
+            feedbackWasMissed = !(currentWeek === lastFeedbackWeek && currentYear === lastFeedbackYear);
           }
           break;
         case 'biweekly':
@@ -345,23 +356,36 @@ export const useWeeklyFeedback = () => {
         const lastFeedbackDate = new Date(existingFeedback.created_at);
         const today = new Date();
         
-        // Check based on frequency
+        // Check based on frequency - CORRIGIDO para não aparecer no mesmo período
         let shouldShow = false;
         switch (settings.feedback_frequency) {
           case 'daily':
+            // Se foi enviado hoje, não mostrar novamente
             shouldShow = lastFeedbackDate.toDateString() !== today.toDateString();
             break;
           case 'weekly':
-            const daysSinceLastFeedback = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
-            shouldShow = daysSinceLastFeedback >= 7;
+            // Se foi enviado nesta semana ISO, não mostrar novamente
+            const getWeekNumber = (date: Date) => {
+              const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+              const dayNum = d.getUTCDay() || 7;
+              d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+              const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+              return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+            };
+            const currentWeek = getWeekNumber(today);
+            const lastFeedbackWeek = getWeekNumber(lastFeedbackDate);
+            const currentYear = today.getFullYear();
+            const lastFeedbackYear = lastFeedbackDate.getFullYear();
+            shouldShow = !(currentWeek === lastFeedbackWeek && currentYear === lastFeedbackYear);
             break;
           case 'biweekly':
             const daysSinceBiweekly = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
             shouldShow = daysSinceBiweekly >= 14;
             break;
           case 'monthly':
-            shouldShow = lastFeedbackDate.getMonth() !== today.getMonth() || 
-                        lastFeedbackDate.getFullYear() !== today.getFullYear();
+            // Se foi enviado neste mês, não mostrar novamente
+            shouldShow = !(lastFeedbackDate.getMonth() === today.getMonth() && 
+                          lastFeedbackDate.getFullYear() === today.getFullYear());
             break;
           default:
             const daysSinceDefault = Math.floor((today.getTime() - lastFeedbackDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -371,7 +395,8 @@ export const useWeeklyFeedback = () => {
         console.log('[Feedback] Existing feedback check:', {
           lastFeedback: lastFeedbackDate,
           frequency: settings.feedback_frequency,
-          shouldShow
+          shouldShow,
+          sameDay: lastFeedbackDate.toDateString() === today.toDateString()
         });
 
         return shouldShow;
@@ -467,11 +492,11 @@ export const useWeeklyFeedback = () => {
       const pointsAwarded = resultData.points_awarded || 0;
       console.log('[Feedback] Success! Points awarded:', pointsAwarded);
       
-      // Usar toast customizado para mostrar sucesso
-      showFeedbackSuccessToast({
-        pointsAwarded,
-        feedbackId: resultData.feedback_id || 'unknown',
-        studentName: user?.user_metadata?.name || user?.email || 'Usuário'
+      // Usar toast padrão do sistema de gamificação
+      showPointsToast({
+        points: pointsAwarded,
+        activity: 'Feedback Enviado',
+        description: 'Obrigado pelo seu feedback!'
       });
 
       setShouldShowModal(false);
