@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
 import { useToast } from '@/hooks/use-toast';
+import { showFeedbackSuccessToast } from '@/components/feedback/FeedbackSuccessToast';
 
 interface FeedbackSettings {
   feedback_frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
