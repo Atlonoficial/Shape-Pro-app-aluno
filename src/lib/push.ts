@@ -9,11 +9,19 @@ declare global {
     device?: {
       platform: string;
     };
+    cordova?: any;
+    OneSignalDeferred?: any[];
+    OneSignal?: any;
   }
 }
 
 let isInitialized = false;
 let currentExternalUserId: string | null = null;
+
+// Detectar se é mobile (Capacitor/Cordova) ou web
+const isMobileApp = () => {
+  return !!window.device || !!window.cordova;
+};
 
 export async function initPush(externalUserId?: string) {
   const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
@@ -24,6 +32,16 @@ export async function initPush(externalUserId?: string) {
     return;
   }
 
+  // Inicializar Web ou Mobile baseado no ambiente
+  if (isMobileApp()) {
+    initMobilePush(APP_ID, externalUserId);
+  } else {
+    initWebPush(APP_ID, externalUserId);
+  }
+}
+
+// Inicialização Mobile (Cordova/Capacitor)
+function initMobilePush(APP_ID: string, externalUserId?: string) {
   document.addEventListener('deviceready', async () => {
     try {
       if (!window.plugins?.OneSignal) {
@@ -112,6 +130,85 @@ export async function initPush(externalUserId?: string) {
   }, { once: true });
 }
 
+// Inicialização Web Push
+async function initWebPush(APP_ID: string, externalUserId?: string) {
+  try {
+    if (import.meta.env.DEV) {
+      console.log('OneSignal Web: Initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
+    }
+
+    // Carregar SDK Web do OneSignal
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    
+    window.OneSignalDeferred.push(async function(OneSignal: any) {
+      await OneSignal.init({
+        appId: APP_ID,
+        allowLocalhostAsSecureOrigin: import.meta.env.DEV,
+        notifyButton: {
+          enable: false, // Não mostrar botão padrão
+        },
+        serviceWorkerParam: {
+          scope: '/'
+        },
+        serviceWorkerPath: '/OneSignalSDKWorker.js'
+      });
+
+      // Configurar external user ID
+      if (externalUserId) {
+        currentExternalUserId = externalUserId;
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Web: Setting external user ID:', externalUserId);
+        }
+        await OneSignal.login(externalUserId);
+      }
+
+      // Obter player ID e salvar no Supabase
+      const playerId = await OneSignal.User.PushSubscription.id;
+      if (playerId && externalUserId) {
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Web: Got Player ID:', playerId);
+        }
+        updatePlayerIdInSupabase(playerId, externalUserId);
+      }
+
+      // Listener para mudanças de subscription
+      OneSignal.User.PushSubscription.addEventListener('change', (event: any) => {
+        if (event.current.id && externalUserId) {
+          if (import.meta.env.DEV) {
+            console.log('OneSignal Web: Subscription changed, updating Player ID');
+          }
+          updatePlayerIdInSupabase(event.current.id, externalUserId);
+        }
+      });
+
+      // Listener para notificações clicadas
+      OneSignal.Notifications.addEventListener('click', (event: any) => {
+        if (import.meta.env.DEV) {
+          console.log('OneSignal Web: Notification clicked:', event);
+        }
+        handleNotificationAction(event.notification.additionalData);
+      });
+
+      isInitialized = true;
+      if (import.meta.env.DEV) {
+        console.log('OneSignal Web: Initialized successfully');
+      }
+    });
+
+    // Carregar script do OneSignal se ainda não estiver carregado
+    if (!document.getElementById('onesignal-sdk')) {
+      const script = document.createElement('script');
+      script.id = 'onesignal-sdk';
+      script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+  } catch (error) {
+    console.error('OneSignal Web: Initialization error:', error);
+  }
+}
+
 // Utilitárias para controle de push
 export function enablePush(): void {
   if (!isInitialized || !window.plugins?.OneSignal) return;
@@ -142,17 +239,24 @@ export function disablePush(): void {
 }
 
 export function clearExternalUserId(): void {
-  if (!isInitialized || !window.plugins?.OneSignal) return;
+  if (!isInitialized) return;
   
   try {
-    const OneSignal = window.plugins.OneSignal;
-    OneSignal.removeExternalUserId?.();
-    currentExternalUserId = null;
-    if (import.meta.env.DEV) {
-      console.log('OneSignal Native: External user ID cleared');
+    if (isMobileApp() && window.plugins?.OneSignal) {
+      const OneSignal = window.plugins.OneSignal;
+      OneSignal.removeExternalUserId?.();
+      if (import.meta.env.DEV) {
+        console.log('OneSignal Native: External user ID cleared');
+      }
+    } else if (window.OneSignal) {
+      window.OneSignal.logout();
+      if (import.meta.env.DEV) {
+        console.log('OneSignal Web: User logged out');
+      }
     }
+    currentExternalUserId = null;
   } catch (error) {
-    console.error('OneSignal Native: Error clearing external user ID:', error);
+    console.error('OneSignal: Error clearing external user ID:', error);
   }
 }
 
