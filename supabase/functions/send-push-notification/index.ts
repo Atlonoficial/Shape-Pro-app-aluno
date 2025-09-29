@@ -86,15 +86,26 @@ serve(async (req) => {
       });
     }
 
-    console.log('OneSignal: Processing notification request', { title, target_users })
+    console.log('=== OneSignal Notification Request ===')
+    console.log('Title:', title)
+    console.log('Message:', message)
+    console.log('Target Users:', target_users?.length || 'BROADCAST')
+    console.log('Deep Link:', deep_link)
+    console.log('Timestamp:', new Date().toISOString())
 
     // Get OneSignal App ID and API Key from secrets/environment
     const oneSignalAppId = Deno.env.get('ONESIGNAL_APP_ID')
     const oneSignalApiKey = Deno.env.get('ONESIGNAL_API_KEY')
     
     if (!oneSignalAppId || !oneSignalApiKey) {
+      console.error('❌ OneSignal credentials not configured!')
+      console.error('ONESIGNAL_APP_ID:', oneSignalAppId ? 'SET' : 'MISSING')
+      console.error('ONESIGNAL_API_KEY:', oneSignalApiKey ? 'SET' : 'MISSING')
       throw new Error('OneSignal credentials not configured')
     }
+    
+    console.log('✅ OneSignal credentials found')
+    console.log('App ID:', oneSignalAppId)
 
     // If no target users specified, this is a broadcast to all users
     let playerIds: string[] = []
@@ -102,7 +113,7 @@ serve(async (req) => {
     
     if (target_users && target_users.length > 0) {
       // Get OneSignal player IDs for specific users
-      console.log('OneSignal: Targeting specific users:', target_users.length)
+      console.log('🎯 Targeting specific users:', target_users.length)
       
       const { data: profiles, error: profilesError } = await supabaseClient
         .from('profiles')
@@ -124,13 +135,16 @@ serve(async (req) => {
         .map(p => p.onesignal_player_id)
         .filter(Boolean) || []
       
-      console.log(`OneSignal: Found ${playerIds.length}/${totalUsersChecked} valid player IDs`)
-      console.log('OneSignal: Users with Player IDs:', usersWithPlayerIds.map(u => ({ id: u.id, name: u.name })))
-      console.log('OneSignal: Users without Player IDs:', usersWithoutPlayerIds.map(u => ({ id: u.id, name: u.name })))
+      console.log(`📊 Found ${playerIds.length}/${totalUsersChecked} valid player IDs`)
+      console.log('✅ Users WITH Player IDs:', usersWithPlayerIds.map(u => ({ id: u.id, name: u.name, playerId: u.onesignal_player_id })))
+      
+      if (usersWithoutPlayerIds.length > 0) {
+        console.warn('⚠️ Users WITHOUT Player IDs (won\'t receive notification):', usersWithoutPlayerIds.map(u => ({ id: u.id, name: u.name, email: u.email })))
+      }
       
     } else {
       // Broadcast to all students (global broadcast)
-      console.log('OneSignal: Broadcasting to all students')
+      console.log('📢 Broadcasting to all students')
       
       const { data: allStudents, error: studentsError } = await supabaseClient
         .from('profiles')
@@ -147,7 +161,11 @@ serve(async (req) => {
           .map(s => s.onesignal_player_id)
           .filter(Boolean) || []
         
-        console.log(`OneSignal: Broadcasting to ${playerIds.length}/${totalUsersChecked} students with Player IDs`)
+        console.log(`📊 Broadcasting to ${playerIds.length}/${totalUsersChecked} students with Player IDs`)
+        
+        if (playerIds.length === 0) {
+          console.warn('⚠️ No students have Player IDs registered!')
+        }
       }
     }
 
@@ -191,7 +209,8 @@ serve(async (req) => {
       oneSignalPayload.send_after = scheduled_for
     }
 
-    console.log('OneSignal: Sending notification payload:', oneSignalPayload)
+    console.log('📤 Sending to OneSignal API...')
+    console.log('Payload:', JSON.stringify(oneSignalPayload, null, 2))
 
     // Send notification via OneSignal API
     const oneSignalResponse = await fetch('https://onesignal.com/api/v1/notifications', {
@@ -206,11 +225,16 @@ serve(async (req) => {
     const oneSignalResult = await oneSignalResponse.json()
     
     if (!oneSignalResponse.ok) {
-      console.error('OneSignal: API Error:', oneSignalResult)
-      throw new Error(`OneSignal API Error: ${oneSignalResult.errors || 'Unknown error'}`)
+      console.error('❌ OneSignal API Error:', oneSignalResult)
+      console.error('Response Status:', oneSignalResponse.status)
+      console.error('Response Headers:', Object.fromEntries(oneSignalResponse.headers.entries()))
+      throw new Error(`OneSignal API Error: ${JSON.stringify(oneSignalResult.errors || oneSignalResult)}`)
     }
 
-    console.log('OneSignal: Notification sent successfully:', oneSignalResult)
+    console.log('✅ Notification sent successfully!')
+    console.log('OneSignal ID:', oneSignalResult.id)
+    console.log('Recipients:', oneSignalResult.recipients)
+    console.log('Result:', oneSignalResult)
 
     // Log successful notifications to database
     if (target_users && target_users.length > 0) {
@@ -225,7 +249,9 @@ serve(async (req) => {
         .insert(notificationLogs)
 
       if (logError) {
-        console.error('OneSignal: Error logging notifications:', logError)
+        console.error('⚠️ Error logging notifications to database:', logError)
+      } else {
+        console.log('✅ Notification logs saved to database')
       }
     }
 
@@ -242,12 +268,19 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error('OneSignal: Function error:', error)
+    console.error('❌ Edge Function Error:', error)
+    console.error('Error Stack:', error?.stack)
+    console.error('Error Details:', {
+      message: error?.message,
+      name: error?.name,
+      cause: error?.cause
+    })
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error?.message || 'Internal server error'
+        error: error?.message || 'Internal server error',
+        details: error?.cause || error?.stack?.split('\n')[0]
       }),
       {
         headers: securityHeaders,
