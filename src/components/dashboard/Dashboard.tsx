@@ -12,6 +12,7 @@ import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useCurrentWorkoutSession } from "@/hooks/useCurrentWorkoutSession";
+import { FeedbackSystemTest } from "@/components/debug/FeedbackSystemTest";
 
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
@@ -32,6 +33,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showTestFeedbackModal, setShowTestFeedbackModal] = useState(false);
+  const [showDebugFeedback, setShowDebugFeedback] = useState(false);
   const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
   
   // Weekly feedback hook
@@ -135,12 +137,27 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-variant rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-lg">A</span>
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">
             Olá, <span className="text-gradient-primary">{firstName}!</span>
           </h1>
         </div>
+        <Button 
+          onClick={() => setShowDebugFeedback(!showDebugFeedback)}
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+        >
+          <TestTube className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Debug Feedback Component */}
+      {showDebugFeedback && (
+        <div className="mb-6">
+          <FeedbackSystemTest />
+        </div>
+      )}
 
       {/* Welcome Message */}
       <div className="mb-6 text-center">
