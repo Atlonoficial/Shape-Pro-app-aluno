@@ -406,8 +406,8 @@ export const useWeeklyFeedback = () => {
         feedbackData 
       });
 
-      // Usar função RPC corrigida v3
-      const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v3', {
+      // Usar função RPC corrigida v4 com logs detalhados
+      const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v4', {
         p_student_id: user.id,
         p_teacher_id: teacherId,
         p_feedback_data: {
@@ -466,12 +466,11 @@ export const useWeeklyFeedback = () => {
       const pointsAwarded = resultData.points_awarded || 0;
       console.log('[Feedback] Success! Points awarded:', pointsAwarded);
       
-      toast({
-        title: "Feedback enviado!",
-        description: pointsAwarded > 0 
-          ? `Obrigado pelo feedback! Você ganhou ${pointsAwarded} pontos.`
-          : "Obrigado pelo seu feedback!",
-        variant: "default"
+      // Usar toast customizado para mostrar sucesso
+      showFeedbackSuccessToast({
+        pointsAwarded,
+        feedbackId: resultData.feedback_id || 'unknown',
+        studentName: user?.user_metadata?.name || user?.email || 'Usuário'
       });
 
       setShouldShowModal(false);

@@ -62,9 +62,6 @@ export const TeacherCard = () => {
     // Prioriza whatsapp_url sobre whatsapp_number
     if (teacher.whatsapp_url) {
       window.open(teacher.whatsapp_url, '_blank');
-    } else if (teacher.whatsapp_number) {
-      const message = encodeURIComponent('Olá! Vim através do app Shape Pro.');
-      window.open(`https://wa.me/${teacher.whatsapp_number.replace(/\D/g, '')}?text=${message}`, '_blank');
     }
   };
 
@@ -140,7 +137,7 @@ export const TeacherCard = () => {
                 </Button>
               )}
               
-              {(teacher.whatsapp_url || teacher.whatsapp_number) && (
+              {teacher.whatsapp_url && (
                 <Button
                   variant="ghost"
                   size="sm"

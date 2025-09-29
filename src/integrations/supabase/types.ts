@@ -3086,6 +3086,9 @@ export type Database = {
           created_at: string | null
           email: string
           facebook_url: string | null
+          gym_address: string | null
+          gym_cnpj: string | null
+          gym_name: string | null
           id: string
           instagram_url: string | null
           name: string
@@ -3101,7 +3104,6 @@ export type Database = {
           specialties: string[] | null
           updated_at: string | null
           user_type: string | null
-          whatsapp_number: string | null
           whatsapp_url: string | null
           youtube_url: string | null
         }
@@ -3111,6 +3113,9 @@ export type Database = {
           created_at?: string | null
           email: string
           facebook_url?: string | null
+          gym_address?: string | null
+          gym_cnpj?: string | null
+          gym_name?: string | null
           id: string
           instagram_url?: string | null
           name: string
@@ -3126,7 +3131,6 @@ export type Database = {
           specialties?: string[] | null
           updated_at?: string | null
           user_type?: string | null
-          whatsapp_number?: string | null
           whatsapp_url?: string | null
           youtube_url?: string | null
         }
@@ -3136,6 +3140,9 @@ export type Database = {
           created_at?: string | null
           email?: string
           facebook_url?: string | null
+          gym_address?: string | null
+          gym_cnpj?: string | null
+          gym_name?: string | null
           id?: string
           instagram_url?: string | null
           name?: string
@@ -3151,7 +3158,6 @@ export type Database = {
           specialties?: string[] | null
           updated_at?: string | null
           user_type?: string | null
-          whatsapp_number?: string | null
           whatsapp_url?: string | null
           youtube_url?: string | null
         }
@@ -5034,6 +5040,14 @@ export type Database = {
         Returns: Json
       }
       submit_feedback_with_points_v3: {
+        Args: {
+          p_feedback_data: Json
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: Json
+      }
+      submit_feedback_with_points_v4: {
         Args: {
           p_feedback_data: Json
           p_student_id: string

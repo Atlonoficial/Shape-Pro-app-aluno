@@ -11,7 +11,6 @@ export interface TeacherProfile {
   instagram_url?: string;
   facebook_url?: string;
   youtube_url?: string;
-  whatsapp_number?: string;
   whatsapp_url?: string;
   specialties?: string[];
 }
@@ -47,7 +46,6 @@ export const useTeacherProfile = () => {
           instagram_url, 
           facebook_url, 
           youtube_url,
-          whatsapp_number,
           whatsapp_url,
           specialties
         `)
