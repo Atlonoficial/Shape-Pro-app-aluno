@@ -30,7 +30,7 @@ export const useTeacherGatewayStatus = (teacherId: string) => {
         .from('teacher_payment_settings')
         .select('gateway_type, is_active, credentials, commission_rate, pix_key')
         .eq('teacher_id', teacherId)
-        .single();
+        .maybeSingle();
 
       console.log('[useTeacherGatewayStatus] Query result:', { data, error });
 

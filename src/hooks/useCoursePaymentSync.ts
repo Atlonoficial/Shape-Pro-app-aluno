@@ -50,7 +50,7 @@ export const useCoursePaymentSync = (courseId: string) => {
         .from('teacher_payment_settings')
         .select('*')
         .eq('teacher_id', course.instructor)
-        .single();
+        .maybeSingle();
 
       console.log('[useCoursePaymentSync] Payment settings query result:', { data: paymentSettings, error: paymentError });
 
