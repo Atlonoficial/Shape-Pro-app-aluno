@@ -78,14 +78,24 @@ export const useAllModules = () => {
             return;
           }
 
-        // Check user purchases for course access
+        // Check user purchases and active subscriptions for course access
         const { data: userPurchases } = await supabase
           .from('user_purchases')
           .select('course_id')
           .eq('user_id', user.id);
 
+        const { data: activeSubscriptions } = await supabase
+          .from('active_subscriptions')
+          .select('plan_id, status, end_date')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .gte('end_date', new Date().toISOString().split('T')[0]);
+
         const purchasedCourseIds = userPurchases?.map(p => p.course_id) || [];
+        const hasActiveSubscription = activeSubscriptions && activeSubscriptions.length > 0;
+        
         console.log('useAllModules: User purchases:', purchasedCourseIds);
+        console.log('useAllModules: Active subscriptions:', hasActiveSubscription);
 
         // Get all modules for these courses
         const courseIds = courses.map(course => course.id);
@@ -138,6 +148,7 @@ export const useAllModules = () => {
             .map((module: any) => {
               const hasAccess = course.is_free || 
                                purchasedCourseIds.includes(course.id) || 
+                               hasActiveSubscription ||
                                userProfile?.user_type === 'teacher';
               
               return {
@@ -156,6 +167,7 @@ export const useAllModules = () => {
 
           const hasAccess = course.is_free || 
                            purchasedCourseIds.includes(course.id) || 
+                           hasActiveSubscription ||
                            userProfile?.user_type === 'teacher';
 
           const courseWithModules = {

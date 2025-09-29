@@ -164,7 +164,7 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
           <div>
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-foreground text-lg">{course.title}</h3>
-              <Badge className={`${statusContent.badgeColor} text-xs`}>
+              <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
                 Premium
               </Badge>
             </div>
@@ -193,76 +193,67 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
             </div>
           </div>
 
-          {/* Status Section */}
-          <div className="bg-muted/50 rounded-lg p-4">
-            <div className="flex items-center gap-3 mb-2">
-              {statusContent.icon}
-              <h4 className="font-medium text-foreground">{statusContent.title}</h4>
-            </div>
-            <p className="text-sm text-muted-foreground">{statusContent.description}</p>
-          </div>
+          {/* Automatic Purchase System */}
+          {courseData?.canPurchase && canProcessPayments ? (
+            <>
+              {/* Purchase Info */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <ShoppingCart className="w-5 h-5 text-green-600" />
+                  <h4 className="font-medium text-green-800">Compra Automática</h4>
+                </div>
+                <p className="text-sm text-green-700">
+                  Compre agora e tenha acesso <strong>imediato</strong> ao curso. Sem espera, sem aprovação manual!
+                </p>
+              </div>
 
-          {/* Actions */}
-          <div className="space-y-3">
-            {/* Purchase Button (always visible if gateway configured and course has price) */}
-            {courseData?.canPurchase && canProcessPayments && (
+              {/* Purchase Button */}
               <Button 
                 onClick={handlePurchaseCourse}
                 disabled={isProcessingPayment}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full h-12 bg-green-600 hover:bg-green-700 text-white text-base font-medium"
               >
                 {isProcessingPayment ? (
-                  "Processando..."
+                  "Processando Pagamento..."
                 ) : (
                   <>
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Comprar - R$ {courseData?.price?.toFixed(2)}
-                    {requestStatus === 'pending' && ' (Acesso Imediato)'}
+                    <ShoppingCart className="w-5 h-5 mr-3" />
+                    Comprar Agora - R$ {courseData?.price?.toFixed(2)}
                   </>
                 )}
               </Button>
-            )}
-            
-            {/* Status info for pending requests */}
-            {requestStatus === 'pending' && courseData?.canPurchase && canProcessPayments && (
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">
-                  💡 Compre agora e tenha acesso imediato, sem aguardar aprovação!
-                </p>
+            </>
+          ) : (
+            <>
+              {/* Manual Request System (fallback) */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  {statusContent.icon}
+                  <h4 className="font-medium text-foreground">{statusContent.title}</h4>
+                </div>
+                <p className="text-sm text-muted-foreground">{statusContent.description}</p>
               </div>
-            )}
-            
-            {/* Manual Request / Other Actions */}
-            <div className="flex gap-3">
+
+              {/* Manual Request Button */}
               <Button 
-                onClick={onClose}
-                variant="outline" 
-                className="flex-1"
+                onClick={handleUnlockRequest}
+                disabled={statusContent.buttonDisabled || isRequesting}
+                className="w-full h-12"
+                variant={requestStatus === 'approved' ? 'default' : 'outline'}
               >
-                Fechar
+                {isRequesting ? "Enviando..." : statusContent.buttonText}
               </Button>
-              {requestStatus !== 'approved' && (
-                <Button 
-                  onClick={handleUnlockRequest}
-                  disabled={statusContent.buttonDisabled || isRequesting}
-                  variant={courseData?.canPurchase ? "outline" : "default"}
-                  className="flex-1"
-                >
-                  {isRequesting ? "Enviando..." : (
-                    courseData?.canPurchase ? "Solicitar Acesso" : statusContent.buttonText
-                  )}
-                </Button>
-              )}
-              {requestStatus === 'approved' && (
-                <Button 
-                  onClick={onClose}
-                  className="flex-1"
-                >
-                  Acessar Curso
-                </Button>
-              )}
-            </div>
-          </div>
+            </>
+          )}
+
+          {/* Close Button */}
+          <Button 
+            onClick={onClose}
+            variant="outline" 
+            className="w-full"
+          >
+            Fechar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
