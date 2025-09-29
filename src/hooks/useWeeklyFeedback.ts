@@ -30,15 +30,63 @@ export const useWeeklyFeedback = () => {
   const [shouldShowModal, setShouldShowModal] = useState(false);
   const [feedbackSettings, setFeedbackSettings] = useState<FeedbackSettings | null>(null);
 
-  // Fetch teacher's feedback settings
-  const fetchFeedbackSettings = async (): Promise<FeedbackSettings | null> => {
-    if (!teacherId) return null;
+  // Enhanced verification using direct student table check as fallback
+  const verifyStudentStatus = async (): Promise<{ isActive: boolean; teacherId: string | null }> => {
+    if (!user?.id) {
+      console.log('[Feedback] No user ID available');
+      return { isActive: false, teacherId: null };
+    }
 
     try {
+      console.log('[Feedback] Verifying student status for user:', user.id);
+      
+      // Direct check in students table for most reliable verification
+      const { data: studentData, error } = await supabase
+        .from('students')
+        .select('teacher_id, membership_status')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[Feedback] Error checking student status:', error);
+        return { isActive: false, teacherId: null };
+      }
+
+      if (!studentData) {
+        console.log('[Feedback] No student record found');
+        return { isActive: false, teacherId: null };
+      }
+
+      const isActive = studentData.membership_status === 'active' || studentData.membership_status === 'free_trial';
+      
+      console.log('[Feedback] Student verification result:', {
+        userId: user.id,
+        teacherId: studentData.teacher_id,
+        membershipStatus: studentData.membership_status,
+        isActive,
+        fallbackUsed: !hasActiveSubscription
+      });
+
+      return { 
+        isActive, 
+        teacherId: studentData.teacher_id 
+      };
+    } catch (error) {
+      console.error('[Feedback] Error in student verification:', error);
+      return { isActive: false, teacherId: null };
+    }
+  };
+
+  // Fetch teacher's feedback settings with explicit teacher ID
+  const fetchFeedbackSettingsForTeacher = async (targetTeacherId: string): Promise<FeedbackSettings | null> => {
+    if (!targetTeacherId) return null;
+
+    try {
+      console.log('[Feedback] Fetching settings from DB for teacher:', targetTeacherId);
       const { data, error } = await supabase
         .from('teacher_feedback_settings')
         .select('*')
-        .eq('teacher_id', teacherId)
+        .eq('teacher_id', targetTeacherId)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -89,16 +137,16 @@ export const useWeeklyFeedback = () => {
     return result;
   };
 
-  // Check for missed feedback and implement rescheduling logic
-  const checkMissedFeedback = async (settings: FeedbackSettings): Promise<boolean> => {
-    if (!user?.id || !teacherId) return false;
+  // Check for missed feedback with enhanced teacher ID handling
+  const checkMissedFeedback = async (settings: FeedbackSettings, targetTeacherId: string): Promise<boolean> => {
+    if (!user?.id || !targetTeacherId) return false;
 
     try {
       const { data: existingFeedback, error } = await supabase
         .from('feedbacks')
         .select('id, created_at, metadata')
         .eq('student_id', user.id)
-        .eq('teacher_id', teacherId)
+        .eq('teacher_id', targetTeacherId)
         .eq('type', 'periodic_feedback')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -154,21 +202,49 @@ export const useWeeklyFeedback = () => {
     }
   };
 
-  // Optimized check for feedback modal with rescheduling logic
+  // Enhanced check for feedback modal with robust verification
   const checkShouldShowFeedbackModal = async (): Promise<boolean> => {
-    if (!user?.id || !hasActiveSubscription || !teacherId) {
-      console.log('[Feedback] Modal check skipped - missing requirements', {
-        userId: !!user?.id,
-        hasSubscription: hasActiveSubscription,
-        teacherId: !!teacherId
+    console.log('[Feedback] === STARTING FEEDBACK MODAL CHECK ===');
+    console.log('[Feedback] Initial state:', {
+      userId: user?.id,
+      hasActiveSubscription,
+      teacherId,
+      userExists: !!user?.id
+    });
+
+    if (!user?.id) {
+      console.log('[Feedback] ❌ No user ID - aborting');
+      return false;
+    }
+
+    // Use enhanced verification as primary method with fallback
+    const studentStatus = await verifyStudentStatus();
+    const finalTeacherId = teacherId || studentStatus.teacherId;
+    const finalIsActive = hasActiveSubscription || studentStatus.isActive;
+
+    console.log('[Feedback] Enhanced verification results:', {
+      fromSubscriptionHook: { hasActiveSubscription, teacherId },
+      fromDirectCheck: studentStatus,
+      finalValues: { finalIsActive, finalTeacherId }
+    });
+
+    if (!finalIsActive || !finalTeacherId) {
+      console.log('[Feedback] ❌ Requirements not met:', {
+        isActive: finalIsActive,
+        teacherId: finalTeacherId
       });
       return false;
     }
 
     try {
-      // Fetch teacher's feedback settings with timeout
-      console.log('[Feedback] Fetching settings for teacher:', teacherId);
-      const settings = await fetchFeedbackSettings();
+      // Fetch teacher's feedback settings using final teacher ID
+      console.log('[Feedback] ✅ Fetching settings for teacher:', finalTeacherId);
+      const settings = await Promise.race([
+        fetchFeedbackSettingsForTeacher(finalTeacherId),
+        new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Settings fetch timeout')), 5000)
+        )
+      ]);
       
       if (!settings || !settings.is_active) {
         console.log('[Feedback] Settings not active or not found:', settings);
@@ -182,27 +258,31 @@ export const useWeeklyFeedback = () => {
       const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
       
       // First, check if feedback was missed and needs rescheduling
-      const isMissedFeedback = await checkMissedFeedback(settings);
+      const isMissedFeedback = await checkMissedFeedback(settings, finalTeacherId);
       if (isMissedFeedback) {
-        console.log('[Feedback] Showing rescheduled feedback modal');
+        console.log('[Feedback] ✅ Showing rescheduled feedback modal');
         return true;
       }
       
       // Check if today is one of the configured feedback days
+      console.log('[Feedback] 📅 Day check:', {
+        today: dayOfWeek,
+        configuredDays: settings.feedback_days,
+        isConfiguredDay: settings.feedback_days.includes(dayOfWeek)
+      });
+      
       if (!settings.feedback_days.includes(dayOfWeek)) {
-        console.log('[Feedback] Today is not a feedback day', {
-          today: dayOfWeek,
-          configuredDays: settings.feedback_days
-        });
+        console.log('[Feedback] ❌ Today is not a feedback day');
         return false;
       }
 
-      // Simple period check - use database function logic
+      // Check existing feedback using final teacher ID
+      console.log('[Feedback] 🔍 Checking existing feedback...');
       const { data: existingFeedback, error } = await supabase
         .from('feedbacks')
         .select('id, created_at')
         .eq('student_id', user.id)
-        .eq('teacher_id', teacherId)
+        .eq('teacher_id', finalTeacherId)
         .eq('type', 'periodic_feedback')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -250,7 +330,7 @@ export const useWeeklyFeedback = () => {
       }
 
       // No existing feedback - show modal
-      console.log('[Feedback] No existing feedback found - showing modal');
+      console.log('[Feedback] ✅ No existing feedback found - showing modal');
       return true;
 
     } catch (error) {
@@ -421,17 +501,43 @@ export const useWeeklyFeedback = () => {
     }
   };
 
-  // Check on component mount and when dependencies change
+  // Enhanced effect with retry mechanism and better timing
   useEffect(() => {
-    const checkModal = async () => {
-      const shouldShow = await checkShouldShowFeedbackModal();
-      setShouldShowModal(shouldShow);
+    let timeoutId: NodeJS.Timeout;
+    
+    const checkModalWithRetry = async (retryCount = 0) => {
+      console.log('[Feedback] Effect triggered, retry count:', retryCount);
+      
+      if (!user?.id) {
+        console.log('[Feedback] No user, waiting...');
+        return;
+      }
+
+      try {
+        const shouldShow = await checkShouldShowFeedbackModal();
+        console.log('[Feedback] Modal check result:', shouldShow);
+        setShouldShowModal(shouldShow);
+      } catch (error) {
+        console.error('[Feedback] Error in modal check:', error);
+        
+        // Retry up to 3 times with increasing delay
+        if (retryCount < 3) {
+          const delay = (retryCount + 1) * 2000; // 2s, 4s, 6s
+          console.log(`[Feedback] Retrying in ${delay}ms...`);
+          timeoutId = setTimeout(() => checkModalWithRetry(retryCount + 1), delay);
+        }
+      }
     };
 
-    if (hasActiveSubscription && teacherId) {
-      checkModal();
+    // Always try to check, don't depend on subscription hook state
+    if (user?.id) {
+      checkModalWithRetry();
     }
-  }, [user?.id, hasActiveSubscription, teacherId]);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [user?.id]); // Simplified dependency array
 
   return {
     shouldShowModal,
