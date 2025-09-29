@@ -2,12 +2,28 @@ import { useMemo } from 'react';
 import { useAuth } from './useAuth';
 import { useStudentProfile } from './useStudentProfile';
 
-export const useProfileCompletion = () => {
+interface ProfileCompletionResult {
+  percentage: number;
+  isComplete: boolean;
+  missingFields: number;
+  completedFields: number;
+  totalFields: number;
+}
+
+export const useProfileCompletion = (): ProfileCompletionResult => {
   const { userProfile } = useAuth();
   const { student } = useStudentProfile();
 
-  const completion = useMemo(() => {
-    if (!userProfile) return 0;
+  const completion = useMemo((): ProfileCompletionResult => {
+    if (!userProfile) {
+      return {
+        percentage: 0,
+        isComplete: false,
+        missingFields: 7,
+        completedFields: 0,
+        totalFields: 7
+      };
+    }
 
     const requiredFields = [
       userProfile.name,

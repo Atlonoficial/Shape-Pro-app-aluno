@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { updateUserProfile, getUserProfile } from "@/lib/supabase";
+import { getUserProfile } from "@/lib/supabase";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Trophy, Camera, Calendar, Activity, Target, CalendarDays, CreditCard, ClipboardList, Stethoscope, Images, Ruler, Shield, Cog, TrophyIcon } from "lucide-react";
+import { Trophy, Camera, Calendar, Activity, Target, CalendarDays, CreditCard, ClipboardList, Stethoscope, Images, Ruler, Shield, Cog } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PointsWidget } from "@/components/gamification/PointsWidget";
@@ -15,131 +14,24 @@ import { DynamicBadge } from "@/components/ui/DynamicBadge";
 import { useViewedItems } from "@/hooks/useViewedItems";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useAnamneseCompletion } from "@/hooks/useAnamneseCompletion";
-import { useProfileSync } from "@/hooks/useProfileSync";
+import { useProfileStats } from "@/hooks/useProfileStats";
+import { useOptimizedAvatar } from "@/hooks/useOptimizedAvatar";
+import { ProfileStats } from "./ProfileStats";
 
 export const Profile = () => {
   const { user, userProfile } = useAuthContext();
   const [uploading, setUploading] = useState(false);
-  const [points, setPoints] = useState<number>(0);
-  const [sessionsCount, setSessionsCount] = useState<number>(0);
-  const [activeDays, setActiveDays] = useState<number>(0);
-  const [examCount, setExamCount] = useState<number>(0);
-  const [photoCount, setPhotoCount] = useState<number>(0);
-  const [assessmentCount, setAssessmentCount] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { forceSync } = useProfileSync();
   
-  // Hooks para badges dinâmicas
+  // Optimized hooks
   const { markAsViewed } = useViewedItems(user?.id);
   const profileCompletion = useProfileCompletion();
   const anamneseCompletion = useAnamneseCompletion();
+  const { points, sessionsCount, activeDays, examCount, photoCount, assessmentCount, loading: statsLoading } = useProfileStats();
+  const { avatarUrl, memberSince, displayName, avatarFallback } = useOptimizedAvatar();
 
-  // Avatar URL with cache busting for real-time updates
-  const avatarUrl = userProfile?.avatar_url ? 
-    `${userProfile.avatar_url}?t=${Date.now()}` : 
-    userProfile?.avatar_url;
-
-  const memberSince = useMemo(() => {
-    const created = userProfile?.created_at ? new Date(userProfile.created_at) : null;
-    return created
-      ? created.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
-      : "";
-  }, [userProfile?.created_at]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    // Pontos do usuário
-    supabase
-      .from("user_points")
-      .select("total_points")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Erro ao buscar pontos:", error);
-          return;
-        }
-        setPoints(data?.total_points ?? 0);
-      });
-
-    // Quantidade de sessões concluídas
-    supabase
-      .from("workout_sessions")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .then(({ count, error }) => {
-        if (error) {
-          console.error("Erro ao contar sessões:", error);
-          return;
-        }
-        setSessionsCount(count ?? 0);
-      });
-
-    // Dias ativos distintos
-    supabase
-      .from("workout_sessions")
-      .select("start_time")
-      .eq("user_id", user.id)
-      .order("start_time", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Erro ao buscar dias ativos:", error);
-          return;
-        }
-        const days = new Set(
-          (data ?? [])
-            .map((s: any) => s.start_time)
-            .filter(Boolean)
-            .map((iso: string) => new Date(iso).toISOString().slice(0, 10))
-        );
-        setActiveDays(days.size);
-      });
-
-    // Contagem de Exames Médicos
-    (supabase as any)
-      .from("medical_exams")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .then(({ count, error }: any) => {
-        if (error) {
-          console.error("Erro ao contar exames:", error);
-          return;
-        }
-        setExamCount(count ?? 0);
-      });
-
-    // Contagem de Fotos de Progresso
-    (supabase as any)
-      .from("progress_photos")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .then(({ count, error }: any) => {
-        if (error) {
-          console.error("Erro ao contar fotos:", error);
-          return;
-        }
-        setPhotoCount(count ?? 0);
-      });
-
-    // Contagem de avaliações físicas (datas únicas)
-    supabase
-      .from("progress")
-      .select("date, type")
-      .eq("user_id", user.id)
-      .eq("type", "physical_assessment")
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Erro ao buscar avaliações físicas:", error);
-          return;
-        }
-        const uniqueDates = new Set(
-          (data ?? []).map((r: any) => new Date(r.date).toISOString().slice(0, 10))
-        );
-        setAssessmentCount(uniqueDates.size);
-      });
-  }, [user?.id]);
+  // Statistics are now handled by useProfileStats hook
 
   const handleAvatarUpload = async (file: File) => {
     if (!file || !user?.id) return;
@@ -225,7 +117,7 @@ export const Profile = () => {
           <Avatar className="w-24 h-24">
             <AvatarImage src={avatarUrl ?? undefined} alt="Avatar do usuário" />
             <AvatarFallback className="text-xl">
-              {userProfile?.name?.charAt(0)?.toUpperCase() || "U"}
+              {avatarFallback}
             </AvatarFallback>
           </Avatar>
           <Button
@@ -248,7 +140,7 @@ export const Profile = () => {
         </div>
 
         <h1 className="text-2xl font-bold text-foreground">
-          {userProfile?.name || "Usuário"}
+          {displayName}
         </h1>
         {memberSince && (
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
@@ -263,35 +155,12 @@ export const Profile = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Activity className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-xs text-muted-foreground">Treinos Concluídos</p>
-              <p className="text-lg font-semibold text-foreground">{sessionsCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <TrophyIcon className="w-5 h-5 text-warning" />
-            <div>
-              <p className="text-xs text-muted-foreground">Pontos Totais</p>
-              <p className="text-lg font-semibold text-foreground">{points.toLocaleString("pt-BR")}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <CalendarDays className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-xs text-muted-foreground">Dias Ativos</p>
-              <p className="text-lg font-semibold text-foreground">{activeDays}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ProfileStats 
+        points={points}
+        sessionsCount={sessionsCount}
+        activeDays={activeDays}
+        loading={statsLoading}
+      />
 
       {/* Teacher Profile */}
       <TeacherCard />
@@ -352,8 +221,8 @@ export const Profile = () => {
               <p className="text-sm text-muted-foreground">Complete suas informações pessoais</p>
             </div>
             <DynamicBadge 
-              percentage={profileCompletion === 0 ? undefined : profileCompletion.percentage}
-              show={profileCompletion !== 0 && !profileCompletion.isComplete}
+              percentage={profileCompletion.percentage}
+              show={!profileCompletion.isComplete}
             />
           </CardContent>
         </Card>

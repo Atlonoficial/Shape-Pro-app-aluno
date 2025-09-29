@@ -20,7 +20,7 @@ export const DynamicBadge = ({
 }: DynamicBadgeProps) => {
   if (!show) return null;
 
-  // Se tem contagem, mostra número
+  // Count badge (highest priority)
   if (count !== undefined && count > 0) {
     return (
       <Badge 
@@ -37,23 +37,36 @@ export const DynamicBadge = ({
     );
   }
 
-  // Se tem porcentagem, mostra status baseado na %
-  if (percentage !== undefined) {
+  // Percentage-based badge
+  if (percentage !== undefined && percentage >= 0) {
     if (percentage === 100) {
       return (
         <div 
           className={cn(
-            "absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-background rounded-full",
+            "absolute -top-1 -right-1 w-3 h-3 bg-success border-2 border-background rounded-full",
             size === 'lg' && "w-4 h-4",
             className
           )}
         />
       );
+    } else if (percentage >= 75) {
+      return (
+        <Badge 
+          className={cn(
+            "absolute -top-2 -right-2 bg-success/80 hover:bg-success text-success-foreground text-xs px-1 py-0 h-5 rounded-full border border-success",
+            size === 'sm' && "text-[10px] h-4",
+            size === 'lg' && "h-6",
+            className
+          )}
+        >
+          {percentage}%
+        </Badge>
+      );
     } else if (percentage >= 50) {
       return (
         <Badge 
           className={cn(
-            "absolute -top-2 -right-2 bg-yellow-500 hover:bg-yellow-600 text-background text-xs px-1 py-0 h-5 rounded-full",
+            "absolute -top-2 -right-2 bg-warning hover:bg-warning/80 text-warning-foreground text-xs px-1 py-0 h-5 rounded-full border border-warning",
             size === 'sm' && "text-[10px] h-4",
             size === 'lg' && "h-6",
             className
@@ -81,7 +94,7 @@ export const DynamicBadge = ({
         <Badge 
           variant="outline"
           className={cn(
-            "absolute -top-2 -right-2 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-950 text-xs px-1.5 py-0 h-5 rounded-full",
+            "absolute -top-2 -right-2 border-primary text-primary bg-primary/10 text-xs px-1.5 py-0 h-5 rounded-full",
             size === 'sm' && "text-[10px] h-4",
             size === 'lg' && "h-6", 
             className
@@ -93,7 +106,7 @@ export const DynamicBadge = ({
     }
   }
 
-  // Status específicos
+  // Status-specific badges
   switch (status) {
     case 'pending':
       return (
@@ -115,7 +128,7 @@ export const DynamicBadge = ({
         <Badge 
           variant="outline"
           className={cn(
-            "absolute -top-2 -right-2 border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-950 text-xs px-1.5 py-0 h-5 rounded-full",
+            "absolute -top-2 -right-2 border-primary text-primary bg-primary/10 text-xs px-1.5 py-0 h-5 rounded-full",
             size === 'sm' && "text-[10px] h-4",
             size === 'lg' && "h-6",
             className
@@ -129,7 +142,7 @@ export const DynamicBadge = ({
       return (
         <div 
           className={cn(
-            "absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-background rounded-full",
+            "absolute -top-1 -right-1 w-3 h-3 bg-success border-2 border-background rounded-full",
             size === 'lg' && "w-4 h-4",
             className
           )}
