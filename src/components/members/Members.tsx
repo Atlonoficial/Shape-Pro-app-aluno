@@ -10,7 +10,6 @@ import { UnlockCourseDialog } from "./UnlockCourseDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAllModules, CourseWithModules } from "@/hooks/useAllModules";
-import { useUnlockRequests } from "@/hooks/useUnlockRequests";
 import { Student } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
@@ -19,7 +18,6 @@ export const Members = () => {
   const { user, userProfile } = useAuth();
   const { student } = useStudentProfile();
   const { courses, loading } = useAllModules();
-  const { getRequestStatus } = useUnlockRequests();
   const [activeTab, setActiveTab] = useState<'modules' | 'shop' | 'students'>('modules');
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -284,7 +282,6 @@ export const Members = () => {
           total_lessons: unlockCourse.total_lessons
         } : null}
         onClose={() => setUnlockCourse(null)}
-        requestStatus={unlockCourse ? getRequestStatus(unlockCourse.id) : 'none'}
       />
 
     </div>
