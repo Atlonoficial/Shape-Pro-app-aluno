@@ -54,30 +54,44 @@ export const useCoursePaymentSync = (courseId: string) => {
 
       console.log('[useCoursePaymentSync] Payment settings query result:', { data: paymentSettings, error: paymentError });
 
-      const hasActiveGateway = paymentSettings?.is_active && 
-                              paymentSettings?.gateway_type && 
-                              Object.keys(paymentSettings?.credentials || {}).length > 0;
+      if (paymentSettings) {
+        const hasActiveGateway = paymentSettings.is_active && 
+                                paymentSettings.gateway_type && 
+                                Object.keys(paymentSettings.credentials || {}).length > 0;
 
-      const canPurchase = hasActiveGateway && course.price && course.price > 0;
+        const canPurchase = hasActiveGateway && course.price && course.price > 0;
 
-      console.log('[useCoursePaymentSync] Gateway analysis:', {
-        hasPaymentSettings: !!paymentSettings,
-        isActive: paymentSettings?.is_active,
-        gatewayType: paymentSettings?.gateway_type,
-        hasCredentials: Object.keys(paymentSettings?.credentials || {}).length > 0,
-        hasActiveGateway,
-        coursePrice: course.price,
-        canPurchase
-      });
+        console.log('[useCoursePaymentSync] Gateway analysis:', {
+          hasPaymentSettings: true,
+          isActive: paymentSettings.is_active,
+          gatewayType: paymentSettings.gateway_type,
+          hasCredentials: Object.keys(paymentSettings.credentials || {}).length > 0,
+          hasActiveGateway,
+          coursePrice: course.price,
+          canPurchase
+        });
 
-      const courseData = {
-        ...course,
-        hasActiveGateway,
-        canPurchase
-      };
+        const courseData = {
+          ...course,
+          hasActiveGateway,
+          canPurchase
+        };
 
-      console.log('[useCoursePaymentSync] Final course data:', courseData);
-      setCourseData(courseData);
+        console.log('[useCoursePaymentSync] Final course data:', courseData);
+        setCourseData(courseData);
+      } else {
+        console.log('[useCoursePaymentSync] No payment settings found for teacher');
+        
+        // Se não há configurações de pagamento, definir como não pode comprar
+        const courseData = {
+          ...course,
+          hasActiveGateway: false,
+          canPurchase: false
+        };
+        
+        console.log('[useCoursePaymentSync] Final course data (no payment settings):', courseData);
+        setCourseData(courseData);
+      }
     } catch (error) {
       console.error('[useCoursePaymentSync] Error fetching course payment data:', error);
     } finally {

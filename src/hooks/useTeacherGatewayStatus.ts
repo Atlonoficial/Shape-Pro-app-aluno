@@ -32,13 +32,6 @@ export const useTeacherGatewayStatus = (teacherId: string) => {
         .eq('teacher_id', teacherId)
         .maybeSingle();
 
-      console.log('[useTeacherGatewayStatus] Query result:', { data, error });
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('[useTeacherGatewayStatus] Error fetching gateway status:', error);
-        return;
-      }
-
       if (data) {
         const gatewayStatus = {
           gateway_type: data.gateway_type,
@@ -54,6 +47,10 @@ export const useTeacherGatewayStatus = (teacherId: string) => {
         setGatewayStatus(gatewayStatus);
       } else {
         console.log('[useTeacherGatewayStatus] No payment settings found for teacher');
+        setGatewayStatus({
+          is_active: false,
+          has_credentials: false
+        });
       }
     } catch (error) {
       console.error('[useTeacherGatewayStatus] Error fetching gateway status:', error);
