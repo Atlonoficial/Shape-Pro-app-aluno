@@ -67,13 +67,13 @@ export const PaymentGatewayConfig = () => {
         return (
           <>
             <div className="space-y-2">
-              <Label htmlFor="access_token">Access Token</Label>
+              <Label htmlFor="api_key">API Key</Label>
               <Input
-                id="access_token"
+                id="api_key"
                 type="password"
-                value={formData.credentials.access_token || ''}
-                onChange={(e) => updateCredential('access_token', e.target.value)}
-                placeholder="APP_USR-..."
+                value={formData.credentials.api_key || ''}
+                onChange={(e) => updateCredential('api_key', e.target.value)}
+                placeholder="TEST-6471334101864522-..."
               />
             </div>
             <div className="space-y-2">
@@ -82,8 +82,19 @@ export const PaymentGatewayConfig = () => {
                 id="public_key"
                 value={formData.credentials.public_key || ''}
                 onChange={(e) => updateCredential('public_key', e.target.value)}
-                placeholder="APP_USR-..."
+                placeholder="TEST-..."
               />
+            </div>
+            <div className="space-y-2">
+              <Label>
+                <input 
+                  type="checkbox" 
+                  checked={formData.credentials.is_sandbox || false}
+                  onChange={(e) => updateCredential('is_sandbox', e.target.checked.toString())}
+                  className="mr-2"
+                />
+                Ambiente de Teste (Sandbox)
+              </Label>
             </div>
           </>
         );
@@ -175,7 +186,7 @@ export const PaymentGatewayConfig = () => {
           {hasActiveGateway ? (
             <Badge className="bg-green-500/10 text-green-600 border-green-200">
               <CheckCircle className="w-3 h-3 mr-1" />
-              Ativo
+              Ativo - {settings?.gateway_type?.toUpperCase()}
             </Badge>
           ) : (
             <Badge variant="secondary">
@@ -259,6 +270,24 @@ export const PaymentGatewayConfig = () => {
             <Save className="w-4 h-4 mr-2" />
             {loading ? 'Salvando...' : 'Salvar Configurações'}
           </Button>
+          
+          {/* Status Information */}
+          {hasActiveGateway && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-medium text-green-800 mb-2">✅ Gateway Ativo</h4>
+              <div className="text-sm text-green-700 space-y-1">
+                <p>• Tipo: {settings?.gateway_type?.toUpperCase()}</p>
+                <p>• Credenciais: Configuradas</p>
+                {settings?.commission_rate && (
+                  <p>• Taxa: {settings.commission_rate}%</p>
+                )}
+                {settings?.pix_key && (
+                  <p>• PIX: Configurado</p>
+                )}
+                <p className="mt-2 font-medium">Vendas automáticas de cursos estão ativas!</p>
+              </div>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>

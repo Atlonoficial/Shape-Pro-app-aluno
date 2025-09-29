@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUnlockRequests } from '@/hooks/useUnlockRequests';
-import { useTeacherPaymentSettings } from '@/hooks/useTeacherPaymentSettings';
+import { useCoursePaymentSync } from '@/hooks/useCoursePaymentSync';
+import { useTeacherGatewayStatus } from '@/hooks/useTeacherGatewayStatus';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Course {
@@ -28,8 +29,11 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { createUnlockRequest } = useUnlockRequests();
   
-  // Fetch teacher's payment settings to check if they have a gateway configured
-  const { settings: teacherPaymentSettings, hasActiveGateway } = useTeacherPaymentSettings();
+  // Fetch synchronized course and payment data
+  const { courseData } = useCoursePaymentSync(course?.id || '');
+  
+  // Get real-time gateway status from teacher
+  const { gatewayStatus, canProcessPayments } = useTeacherGatewayStatus(course?.instructor || '');
 
   if (!course) return null;
 
@@ -47,17 +51,27 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
   };
 
   const handlePurchaseCourse = async () => {
-    if (!hasActiveGateway || !course.price) return;
+    if (!courseData?.canPurchase || !courseData?.price) return;
     
     setIsProcessingPayment(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
+      const { data, error } = await supabase.functions.invoke('dynamic-checkout', {
         body: {
-          course_id: course.id,
-          teacher_id: course.instructor,
-          amount: course.price,
-          course_title: course.title
+          teacherId: course.instructor,
+          studentId: null, // Will be set by the function based on auth
+          items: [{
+            type: 'course',
+            id: course.id,
+            title: course.title,
+            price: course.price,
+            course_id: course.id
+          }],
+          totalAmount: course.price,
+          customerData: {
+            name: null,
+            email: null
+          }
         }
       });
 
@@ -168,6 +182,14 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
                   R$ {course.price.toFixed(2)}
                 </span>
               )}
+              {gatewayStatus.gateway_type && canProcessPayments && (
+                <span className="text-green-600 font-medium">
+                  {gatewayStatus.gateway_type === 'mercadopago' && 'Mercado Pago'}
+                  {gatewayStatus.gateway_type === 'stripe' && 'Stripe'}
+                  {gatewayStatus.gateway_type === 'pagseguro' && 'PagSeguro'}
+                  {gatewayStatus.gateway_type === 'asaas' && 'Asaas'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -183,7 +205,7 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
           {/* Actions */}
           <div className="space-y-3">
             {/* Purchase Button (if gateway configured and course has price) */}
-            {hasActiveGateway && course.price && requestStatus === 'none' && (
+            {courseData?.canPurchase && canProcessPayments && requestStatus === 'none' && (
               <Button 
                 onClick={handlePurchaseCourse}
                 disabled={isProcessingPayment}
@@ -194,7 +216,7 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
                 ) : (
                   <>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Comprar Curso - R$ {course.price.toFixed(2)}
+                    Comprar Curso - R$ {courseData?.price?.toFixed(2)}
                   </>
                 )}
               </Button>
@@ -213,11 +235,11 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
                 <Button 
                   onClick={handleUnlockRequest}
                   disabled={statusContent.buttonDisabled || isRequesting}
-                  variant={hasActiveGateway && course.price ? "outline" : "default"}
+                  variant={courseData?.canPurchase ? "outline" : "default"}
                   className="flex-1"
                 >
                   {isRequesting ? "Enviando..." : (
-                    hasActiveGateway && course.price ? "Solicitar Acesso" : statusContent.buttonText
+                    courseData?.canPurchase ? "Solicitar Acesso" : statusContent.buttonText
                   )}
                 </Button>
               )}
