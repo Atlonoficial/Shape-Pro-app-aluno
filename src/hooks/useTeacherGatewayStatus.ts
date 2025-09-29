@@ -17,10 +17,14 @@ export const useTeacherGatewayStatus = (teacherId: string) => {
   const [loading, setLoading] = useState(false);
 
   const fetchGatewayStatus = async () => {
-    if (!teacherId) return;
+    if (!teacherId) {
+      console.log('[useTeacherGatewayStatus] No teacherId provided');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('[useTeacherGatewayStatus] Fetching gateway status for teacher:', teacherId);
       
       const { data, error } = await supabase
         .from('teacher_payment_settings')
@@ -28,22 +32,31 @@ export const useTeacherGatewayStatus = (teacherId: string) => {
         .eq('teacher_id', teacherId)
         .single();
 
+      console.log('[useTeacherGatewayStatus] Query result:', { data, error });
+
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching gateway status:', error);
+        console.error('[useTeacherGatewayStatus] Error fetching gateway status:', error);
         return;
       }
 
       if (data) {
-        setGatewayStatus({
+        const gatewayStatus = {
           gateway_type: data.gateway_type,
           is_active: data.is_active,
           has_credentials: data.credentials && Object.keys(data.credentials).length > 0,
           commission_rate: data.commission_rate,
           pix_key: data.pix_key
-        });
+        };
+
+        console.log('[useTeacherGatewayStatus] Gateway status:', gatewayStatus);
+        console.log('[useTeacherGatewayStatus] Can process payments:', gatewayStatus.is_active && gatewayStatus.has_credentials);
+        
+        setGatewayStatus(gatewayStatus);
+      } else {
+        console.log('[useTeacherGatewayStatus] No payment settings found for teacher');
       }
     } catch (error) {
-      console.error('Error fetching gateway status:', error);
+      console.error('[useTeacherGatewayStatus] Error fetching gateway status:', error);
     } finally {
       setLoading(false);
     }

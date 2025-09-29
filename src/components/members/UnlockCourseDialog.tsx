@@ -35,6 +35,18 @@ export const UnlockCourseDialog = ({ course, onClose }: UnlockCourseDialogProps)
   // Use checkout hook for payment processing
   const { createCheckout } = useCheckout();
 
+  // Debug logs
+  console.log('[UnlockCourseDialog] Course:', course);
+  console.log('[UnlockCourseDialog] Course data from hook:', courseData);
+  console.log('[UnlockCourseDialog] Gateway status:', gatewayStatus);
+  console.log('[UnlockCourseDialog] Can process payments:', canProcessPayments);
+  console.log('[UnlockCourseDialog] Can purchase conditions:', {
+    courseDataExists: !!courseData,
+    courseDataCanPurchase: courseData?.canPurchase,
+    canProcessPayments,
+    finalCondition: courseData?.canPurchase && canProcessPayments
+  });
+
   if (!course) return null;
 
   const handlePurchaseCourse = async () => {
