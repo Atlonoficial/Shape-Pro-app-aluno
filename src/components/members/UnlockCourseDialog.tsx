@@ -204,8 +204,8 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
 
           {/* Actions */}
           <div className="space-y-3">
-            {/* Purchase Button (if gateway configured and course has price) */}
-            {courseData?.canPurchase && canProcessPayments && requestStatus === 'none' && (
+            {/* Purchase Button (always visible if gateway configured and course has price) */}
+            {courseData?.canPurchase && canProcessPayments && (
               <Button 
                 onClick={handlePurchaseCourse}
                 disabled={isProcessingPayment}
@@ -216,10 +216,20 @@ export const UnlockCourseDialog = ({ course, onClose, requestStatus }: UnlockCou
                 ) : (
                   <>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Comprar Curso - R$ {courseData?.price?.toFixed(2)}
+                    Comprar - R$ {courseData?.price?.toFixed(2)}
+                    {requestStatus === 'pending' && ' (Acesso Imediato)'}
                   </>
                 )}
               </Button>
+            )}
+            
+            {/* Status info for pending requests */}
+            {requestStatus === 'pending' && courseData?.canPurchase && canProcessPayments && (
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">
+                  💡 Compre agora e tenha acesso imediato, sem aguardar aprovação!
+                </p>
+              </div>
             )}
             
             {/* Manual Request / Other Actions */}
