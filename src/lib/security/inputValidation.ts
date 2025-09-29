@@ -6,7 +6,7 @@ export class SecurityValidator {
   private static SQL_INJECTION_PATTERNS = [
     /(\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b)/i,
     /(;|\|\||&&|--|\/\*|\*\/)/,
-    /(\b(xp_|sp_|sys\.)/i,
+    /(\b(xp_|sp_|sys\.))/i,
     /(char\(|ascii\(|substring\()/i
   ];
 
