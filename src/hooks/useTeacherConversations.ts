@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useRealtimeManager } from './useRealtimeManager';
 
 interface TeacherConversation {
   conversation_id: string;
@@ -19,68 +20,56 @@ export const useTeacherConversations = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchConversations = useCallback(async () => {
     if (!user || userProfile?.user_type !== 'teacher') {
       setLoading(false);
       return;
     }
 
-    const fetchConversations = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_teacher_conversations', {
-          teacher_id_param: user.id
-        });
+    try {
+      const { data, error } = await supabase.rpc('get_teacher_conversations', {
+        teacher_id_param: user.id
+      });
 
-        if (error) {
-          console.error('Erro ao buscar conversas:', error);
-          setError(error.message);
-          return;
-        }
-
-        setConversations(data || []);
-        setError(null);
-      } catch (err: any) {
-        console.error('Erro ao buscar conversas:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (error) {
+        console.error('Erro ao buscar conversas:', error);
+        setError(error.message);
+        return;
       }
-    };
 
-    fetchConversations();
-
-    // Escutar mudanças em tempo real
-    const channel = supabase
-      .channel('teacher-conversations')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversations',
-          filter: `teacher_id=eq.${user.id}`
-        },
-        () => {
-          fetchConversations();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_messages'
-        },
-        () => {
-          fetchConversations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      setConversations(data || []);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao buscar conversas:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, [user, userProfile]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  // Usar useRealtimeManager para subscriptions consolidadas
+  useRealtimeManager({
+    subscriptions: user && userProfile?.user_type === 'teacher' ? [
+      {
+        table: 'conversations',
+        event: '*',
+        filter: `teacher_id=eq.${user.id}`,
+        callback: () => fetchConversations(),
+      },
+      {
+        table: 'chat_messages',
+        event: '*',
+        callback: () => fetchConversations(),
+      }
+    ] : [],
+    enabled: !!user && userProfile?.user_type === 'teacher',
+    channelName: 'teacher-conversations',
+    debounceMs: 800,
+  });
 
   const getTotalUnreadCount = () => {
     return conversations.reduce((total, conv) => total + conv.unread_count, 0);

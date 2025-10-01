@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useRealtimeManager } from './useRealtimeManager';
 import { toast } from 'sonner';
 
 interface Conversation {
@@ -42,12 +43,10 @@ export const useConversation = (userId?: string) => {
   const [reconnecting, setReconnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
   
-  const channelRef = useRef<any>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout>();
   const localMessagesCache = useRef<ChatMessage[]>([]);
-  // Set para controlar IDs únicos e evitar duplicação
   const messageIdsRef = useRef<Set<string>>(new Set());
-  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const processedPayloadsRef = useRef<Set<string>>(new Set());
 
   // Função para criar ou buscar conversação com retry
   const findOrCreateConversation = useCallback(async (retryCount = 0) => {
@@ -126,129 +125,84 @@ export const useConversation = (userId?: string) => {
     }
   }, [userId, userProfile]);
 
-  // Buscar mensagens em tempo real com reconexão automática
-  const fetchMessages = useCallback((conversationId: string) => {
-    const channel = supabase
-      .channel(`chat:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          // Debounce para evitar processamento múltiplo
-          if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
+  // Buscar mensagens existentes
+  const loadMessages = useCallback(async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      
+      const messagesWithStatus = (data || []).map(msg => ({ 
+        ...msg, 
+        status: 'sent' as const 
+      }));
+      
+      messageIdsRef.current.clear();
+      messagesWithStatus.forEach(msg => messageIdsRef.current.add(msg.id));
+      
+      setMessages(messagesWithStatus);
+      localMessagesCache.current = messagesWithStatus;
+      setConnectionStatus('connected');
+    } catch (error) {
+      console.error('Erro ao buscar mensagens:', error);
+      toast.error('Erro ao carregar mensagens');
+    }
+  }, []);
+
+  // Usar useRealtimeManager para subscriptions consolidadas
+  useRealtimeManager({
+    subscriptions: conversation?.id ? [{
+      table: 'chat_messages',
+      event: 'INSERT',
+      filter: `conversation_id=eq.${conversation.id}`,
+      callback: (payload: any) => {
+        const payloadKey = `${payload.new.id}-${payload.new.created_at}`;
+        if (processedPayloadsRef.current.has(payloadKey)) {
+          return;
+        }
+        processedPayloadsRef.current.add(payloadKey);
+
+        const newMessage = payload.new as ChatMessage;
+        
+        if (messageIdsRef.current.has(newMessage.id)) {
+          return;
+        }
+        
+        setMessages(prev => {
+          const localMsgIndex = prev.findIndex(msg => 
+            msg.status === 'sending' && 
+            msg.message === newMessage.message &&
+            msg.sender_id === newMessage.sender_id &&
+            Math.abs(new Date(msg.created_at || 0).getTime() - new Date(newMessage.created_at || 0).getTime()) < 10000
+          );
+          
+          let updatedMessages = [...prev];
+          
+          if (localMsgIndex >= 0) {
+            updatedMessages[localMsgIndex] = { ...newMessage, status: 'sent' };
+          } else {
+            const existsById = updatedMessages.some(msg => msg.id === newMessage.id);
+            if (!existsById) {
+              updatedMessages.push({ ...newMessage, status: 'sent' });
+            }
           }
           
-          debounceTimerRef.current = setTimeout(() => {
-            console.log('Nova mensagem:', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              const newMessage = payload.new as ChatMessage;
-              
-              // Verificar se já processamos esta mensagem
-              if (messageIdsRef.current.has(newMessage.id)) {
-                console.log('Mensagem já existe, ignorando duplicação:', newMessage.id);
-                return;
-              }
-              
-              setMessages(prev => {
-                // Procurar mensagem local correspondente pelo conteúdo e timestamp aproximado
-                const localMsgIndex = prev.findIndex(msg => 
-                  msg.status === 'sending' && 
-                  msg.message === newMessage.message &&
-                  msg.sender_id === newMessage.sender_id &&
-                  Math.abs(new Date(msg.created_at || 0).getTime() - new Date(newMessage.created_at || 0).getTime()) < 10000 // 10 segundos de diferença
-                );
-                
-                let updatedMessages = [...prev];
-                
-                // Se encontrou mensagem local correspondente, substituir
-                if (localMsgIndex >= 0) {
-                  updatedMessages[localMsgIndex] = { ...newMessage, status: 'sent' };
-                } else {
-                  // Verificar se mensagem já existe pelo ID
-                  const existsById = updatedMessages.some(msg => msg.id === newMessage.id);
-                  if (!existsById) {
-                    updatedMessages.push({ ...newMessage, status: 'sent' });
-                  }
-                }
-                
-                // Adicionar ao set de IDs processados
-                messageIdsRef.current.add(newMessage.id);
-                
-                // Ordenar por data de criação
-                return updatedMessages.sort((a, b) => 
-                  new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-                );
-              });
-              
-              // Atualizar cache local
-              localMessagesCache.current = localMessagesCache.current.map(msg => 
-                msg.status === 'sending' && 
-                msg.message === newMessage.message &&
-                msg.sender_id === newMessage.sender_id
-                  ? { ...newMessage, status: 'sent' }
-                  : msg
-              );
-            }
-          }, 100); // 100ms de debounce
-        }
-      )
-      .subscribe((status) => {
-        console.log('Canal status:', status);
-        setConnectionStatus(status === 'SUBSCRIBED' ? 'connected' : 'connecting');
-      });
-
-    channelRef.current = channel;
-
-    // Buscar mensagens existentes com retry
-    const loadMessages = async (retryCount = 0) => {
-      try {
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
-        
-        const messagesWithStatus = (data || []).map(msg => ({ 
-          ...msg, 
-          status: 'sent' as const 
-        }));
-        
-        // Limpar set de IDs e adicionar mensagens existentes
-        messageIdsRef.current.clear();
-        messagesWithStatus.forEach(msg => messageIdsRef.current.add(msg.id));
-        
-        setMessages(messagesWithStatus);
-        localMessagesCache.current = messagesWithStatus;
-        
-      } catch (error) {
-        console.error(`Erro ao buscar mensagens (tentativa ${retryCount + 1}):`, error);
-        
-        if (retryCount < 2) {
-          setTimeout(() => loadMessages(retryCount + 1), 2000);
-        } else {
-          toast.error('Erro ao carregar mensagens');
-        }
+          messageIdsRef.current.add(newMessage.id);
+          
+          return updatedMessages.sort((a, b) => 
+            new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+          );
+        });
       }
-    };
-
-    loadMessages();
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, []);
+    }] : [],
+    enabled: !!conversation?.id,
+    channelName: `chat-messages-${conversation?.id}`,
+    debounceMs: 500,
+  });
 
   // Enviar mensagem com retry e estado local
   const sendMessage = useCallback(async (content: string) => {
@@ -399,23 +353,15 @@ export const useConversation = (userId?: string) => {
   }, [findOrCreateConversation]);
 
   useEffect(() => {
-    if (conversation) {
-      const cleanup = fetchMessages(conversation.id);
-      return cleanup;
+    if (conversation?.id) {
+      loadMessages(conversation.id);
     }
-  }, [conversation, fetchMessages]);
+  }, [conversation?.id, loadMessages]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
-      }
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
       }
     };
   }, []);

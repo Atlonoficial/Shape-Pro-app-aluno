@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
+import { useRealtimeManager } from "./useRealtimeManager";
 import { toast } from "sonner";
 
 export interface UserGoal {
@@ -159,30 +160,18 @@ export const useGoals = () => {
     fetchGoals();
   }, [fetchGoals]);
 
-  // Real-time subscription
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel('user_goals_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_goals',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          fetchGoals();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, fetchGoals]);
+  // Usar useRealtimeManager para subscriptions consolidadas
+  useRealtimeManager({
+    subscriptions: user?.id ? [{
+      table: 'user_goals',
+      event: '*',
+      filter: `user_id=eq.${user.id}`,
+      callback: () => fetchGoals(),
+    }] : [],
+    enabled: !!user?.id,
+    channelName: 'user-goals',
+    debounceMs: 1000,
+  });
 
   return {
     goals,

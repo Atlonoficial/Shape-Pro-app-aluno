@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeManager } from './useRealtimeManager';
 
 export interface MealLog {
   id: string;
@@ -137,72 +138,45 @@ export const useMyNutrition = () => {
     }
   }, []);
 
-  // Buscar refeições do dia usando a nova estrutura
-  useEffect(() => {
+  // Buscar refeições do dia
+  const fetchData = useCallback(async () => {
     if (!user?.id) return;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        console.log('[useMyNutrition] Starting data fetch for user:', user.id);
-        
-        // Buscar refeições do dia com status de log
-        const todayMealsData = await getTodayMeals(user.id);
-        setTodaysMeals(todayMealsData);
-        
-        // Buscar logs do dia para compatibilidade
-        const today = new Date().toISOString().split('T')[0];
-        const logs = await getMealLogsByUserAndDate(user.id, today);
-        setMealLogs(logs);
-        
-        console.log('[useMyNutrition] Data fetch completed successfully');
-        console.log('[useMyNutrition] Today meals:', todayMealsData);
-        console.log('[useMyNutrition] Meal logs:', logs);
-      } catch (error) {
-        console.error('[useMyNutrition] Error in data fetch:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
-
-  // Configurar subscription em tempo real
-  useEffect(() => {
-    if (!user?.id) return;
-
-    console.log('[useMyNutrition] Setting up real-time subscription for user:', user.id);
     
-    const channel = supabase
-      .channel('meal-logs-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'meal_logs',
-          filter: `user_id=eq.${user.id}`
-        },
-        async (payload) => {
-          console.log('[useMyNutrition] Real-time update received:', payload);
-          
-          // Refetch data when changes occur
-          const todayMealsData = await getTodayMeals(user.id);
-          setTodaysMeals(todayMealsData);
-          
-          const today = new Date().toISOString().split('T')[0];
-          const logs = await getMealLogsByUserAndDate(user.id, today);
-          setMealLogs(logs);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('[useMyNutrition] Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
-    };
+    try {
+      setLoading(true);
+      console.log('[useMyNutrition] Starting data fetch for user:', user.id);
+      
+      const todayMealsData = await getTodayMeals(user.id);
+      setTodaysMeals(todayMealsData);
+      
+      const today = new Date().toISOString().split('T')[0];
+      const logs = await getMealLogsByUserAndDate(user.id, today);
+      setMealLogs(logs);
+      
+      console.log('[useMyNutrition] Data fetch completed successfully');
+    } catch (error) {
+      console.error('[useMyNutrition] Error in data fetch:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Usar useRealtimeManager para subscriptions consolidadas
+  useRealtimeManager({
+    subscriptions: user?.id ? [{
+      table: 'meal_logs',
+      event: '*',
+      filter: `user_id=eq.${user.id}`,
+      callback: () => fetchData(),
+    }] : [],
+    enabled: !!user?.id,
+    channelName: 'meal-logs',
+    debounceMs: 1000,
+  });
 
   // Função auxiliar para calcular valores nutricionais de uma refeição
   const calculateMealNutrition = useCallback((meal: TodayMeal) => {

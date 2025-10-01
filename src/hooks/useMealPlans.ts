@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useRealtimeManager } from './useRealtimeManager';
 
 export interface MealPlan {
   id: string;
@@ -74,48 +75,36 @@ export const useMealPlans = () => {
     }
   }, [user?.id]);
 
-  // Real-time subscription para meal_plans
   useEffect(() => {
-    if (!user?.id) {
+    if (user?.id) {
+      fetchMealPlans();
+    } else {
       setLoading(false);
-      return;
     }
-
-    // Initial fetch
-    fetchMealPlans();
-
-    // Setup real-time subscription
-    const channel = supabase
-      .channel('meal_plans_realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'meal_plans',
-        },
-        (payload) => {
-          console.log('Meal plans realtime update:', payload);
-          
-          // Check if change affects current user
-          const newRecord = payload.new as any;
-          const oldRecord = payload.old as any;
-          
-          const isRelevant = 
-            (newRecord && Array.isArray(newRecord.assigned_students) && newRecord.assigned_students.includes(user.id)) ||
-            (oldRecord && Array.isArray(oldRecord.assigned_students) && oldRecord.assigned_students.includes(user.id));
-            
-          if (isRelevant) {
-            fetchMealPlans();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [user?.id, fetchMealPlans]);
+
+  // Usar useRealtimeManager para subscriptions consolidadas
+  useRealtimeManager({
+    subscriptions: user?.id ? [{
+      table: 'meal_plans',
+      event: '*',
+      callback: (payload: any) => {
+        const newRecord = payload.new as any;
+        const oldRecord = payload.old as any;
+        
+        const isRelevant = 
+          (newRecord && Array.isArray(newRecord.assigned_students) && newRecord.assigned_students.includes(user.id)) ||
+          (oldRecord && Array.isArray(oldRecord.assigned_students) && oldRecord.assigned_students.includes(user.id));
+          
+        if (isRelevant) {
+          fetchMealPlans();
+        }
+      },
+    }] : [],
+    enabled: !!user?.id,
+    channelName: 'meal-plans',
+    debounceMs: 1000,
+  });
 
   // Get active plans for current user
   const activePlans = mealPlans.filter(plan => plan.status === 'active');
