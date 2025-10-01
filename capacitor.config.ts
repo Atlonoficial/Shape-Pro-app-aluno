@@ -23,6 +23,8 @@ const config: CapacitorConfig = {
     appendUserAgent: 'Shape Pro/1.0',
     overrideUserAgent: 'Shape Pro/1.0 Mobile App',
     hideLogs: true,
+    cleartext: true,
+    networkSecurityConfig: true,
   },
 
   plugins: {
