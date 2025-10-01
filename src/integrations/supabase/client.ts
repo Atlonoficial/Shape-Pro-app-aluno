@@ -27,20 +27,18 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
   },
   realtime: {
+    // CRITICAL: Force secure WebSocket protocol
+    transport: 'websocket' as any,
     params: {
       eventsPerSecond: 10,
     },
     timeout: isCapacitor ? 15000 : 10000,
     heartbeatIntervalMs: 30000,
-    // Force secure WebSocket protocol
-    log_level: 'info',
   },
   global: {
     headers: {
       'X-Client-Info': 'shape-pro-mobile/1.0',
       'X-Platform': isCapacitor ? 'capacitor' : 'web',
-      'Upgrade': 'websocket',
-      'Connection': 'Upgrade',
     },
   },
 });

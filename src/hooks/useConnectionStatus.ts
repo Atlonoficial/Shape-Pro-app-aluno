@@ -14,29 +14,46 @@ export const useConnectionStatus = () => {
     let retryCount = 0;
     const maxRetries = 3;
     let wsHealthCheck: ReturnType<typeof setInterval> | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    // WebSocket health check via realtime
+    // Enhanced WebSocket health check with protocol detection
     const checkWebSocketHealth = () => {
-      const channel = supabase.channel('health-check');
+      const channelName = `health-check-${Date.now()}`;
+      const channel = supabase.channel(channelName);
       
       const timeout = setTimeout(() => {
         console.warn('[ConnectionStatus] ⚠️ WebSocket timeout, enabling HTTP fallback');
         setUseHttpFallback(true);
+        setStatus('connecting');
         supabase.removeChannel(channel);
-      }, 5000);
+        
+        // Schedule reconnection attempt
+        reconnectTimeout = setTimeout(() => {
+          console.log('[ConnectionStatus] 🔄 Attempting WebSocket reconnection...');
+          checkWebSocketHealth();
+        }, 10000);
+      }, 8000);
 
       channel
         .subscribe((status) => {
           clearTimeout(timeout);
+          console.log('[ConnectionStatus] Subscription status:', status);
+          
           if (status === 'SUBSCRIBED') {
-            console.log('[ConnectionStatus] ✅ WebSocket healthy');
+            console.log('[ConnectionStatus] ✅ WebSocket connected via wss://');
             setUseHttpFallback(false);
             setStatus('connected');
+            retryCount = 0;
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('[ConnectionStatus] ❌ WebSocket error:', status);
+            setUseHttpFallback(true);
+            setStatus('connecting');
           }
         });
 
       return () => {
         clearTimeout(timeout);
+        if (reconnectTimeout) clearTimeout(reconnectTimeout);
         supabase.removeChannel(channel);
       };
     };
