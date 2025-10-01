@@ -10,13 +10,17 @@ export const useConnectionStatus = () => {
   const { isMobileApp, platform } = useIsMobileApp();
 
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+
     // Monitor connection status
     const checkConnection = async () => {
       try {
         console.log('[ConnectionStatus] Checking connection...', {
           isMobileApp,
           platform,
-          isOnline
+          isOnline,
+          retryCount
         });
         
         const { error } = await supabase.from('profiles').select('id').limit(1);
@@ -24,9 +28,18 @@ export const useConnectionStatus = () => {
         
         console.log('[ConnectionStatus] ✅ Connection successful');
         setStatus('connected');
+        retryCount = 0; // Reset retry count on success
       } catch (error) {
         console.error('[ConnectionStatus] ❌ Connection check failed:', error);
-        setStatus('disconnected');
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`[ConnectionStatus] Retrying... (${retryCount}/${maxRetries})`);
+          setStatus('connecting');
+          setTimeout(checkConnection, 2000 * retryCount); // Exponential backoff
+        } else {
+          setStatus('disconnected');
+        }
       }
     };
 
@@ -38,12 +51,15 @@ export const useConnectionStatus = () => {
 
     // Listen to online/offline events
     const handleOnline = () => {
+      console.log('[ConnectionStatus] Network online');
       setIsOnline(true);
       setStatus('connecting');
+      retryCount = 0;
       checkConnection();
     };
 
     const handleOffline = () => {
+      console.log('[ConnectionStatus] Network offline');
       setIsOnline(false);
       setStatus('disconnected');
     };
@@ -56,7 +72,7 @@ export const useConnectionStatus = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [isMobileApp, platform]);
 
   return { status, isOnline };
 };

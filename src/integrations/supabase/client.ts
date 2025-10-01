@@ -12,16 +12,30 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 const isCapacitor = typeof window !== 'undefined' && 
   (window as any).Capacitor !== undefined;
 
+// Force secure WebSocket connection (wss://)
+const REALTIME_URL = SUPABASE_URL.replace('https://', 'wss://').replace('http://', 'wss://');
+
+console.log('[Supabase Client] Initializing with:', {
+  url: SUPABASE_URL,
+  realtimeUrl: REALTIME_URL,
+  isCapacitor,
+  isSecure: REALTIME_URL.startsWith('wss://')
+});
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
   },
   realtime: {
     params: {
       eventsPerSecond: 10,
     },
+    transport: 'websocket',
+    timeout: isCapacitor ? 15000 : 10000,
+    heartbeatIntervalMs: 30000,
   },
   global: {
     headers: {

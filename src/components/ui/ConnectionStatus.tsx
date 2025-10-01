@@ -7,15 +7,26 @@ export const ConnectionStatus = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     // Monitor connection status
-    const channel = supabase.channel('connection-status');
-    
-    channel.subscribe((status) => {
-      console.log('[ConnectionStatus] Subscription status:', status);
-      setIsConnected(status === 'SUBSCRIBED');
+    const channel = supabase.channel('connection-status', {
+      config: {
+        broadcast: { self: true },
+        presence: { key: 'connection-check' }
+      }
     });
+    
+    channel
+      .subscribe((status) => {
+        if (!mounted) return;
+        
+        console.log('[ConnectionStatus UI] Subscription status:', status);
+        setIsConnected(status === 'SUBSCRIBED');
+      });
 
     return () => {
+      mounted = false;
       supabase.removeChannel(channel);
     };
   }, []);

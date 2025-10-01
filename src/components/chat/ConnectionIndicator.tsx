@@ -43,12 +43,12 @@ export const ConnectionIndicator = ({
   const Icon = config.icon;
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${config.bgColor} ${className}`}>
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${config.bgColor} ${className} transition-all duration-300`}>
       <Icon 
-        size={14} 
+        size={16} 
         className={`${config.color} ${config.animate ? 'animate-spin' : ''}`} 
       />
-      <span className={`text-xs font-medium ${config.color}`}>
+      <span className={`text-xs font-semibold ${config.color}`}>
         {config.text}
       </span>
     </div>
