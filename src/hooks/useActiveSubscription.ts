@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { useRealtimeManager } from './useRealtimeManager';
 
 export interface ActiveSubscription {
   id: string;
@@ -21,7 +21,6 @@ export interface ActiveSubscription {
 
 export const useActiveSubscription = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -217,88 +216,51 @@ export const useActiveSubscription = () => {
     }
 
     fetchActiveSubscription();
+  }, [user?.id]);
 
-    // Set up real-time subscription for changes with enhanced debugging
-    console.log('[useActiveSubscription] Setting up real-time subscriptions for user:', user.id);
-    
-    const channel = supabase
-      .channel(`subscription-changes-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'active_subscriptions',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('[useActiveSubscription] Active subscriptions change detected:', payload);
-          setTimeout(() => {
-            fetchActiveSubscription();
-          }, 100);
+  // Use centralized realtime manager
+  useRealtimeManager({
+    subscriptions: user?.id ? [
+      {
+        table: 'active_subscriptions',
+        event: '*',
+        filter: `user_id=eq.${user.id}`,
+        callback: () => {
+          console.log('[useActiveSubscription] Active subscriptions change detected');
+          setTimeout(() => fetchActiveSubscription(), 100);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'students',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('[useActiveSubscription] Students table change detected:', payload);
-          // Add small delay to ensure database consistency
-          setTimeout(() => {
-            fetchActiveSubscription();
-          }, 100);
+      },
+      {
+        table: 'students',
+        event: '*',
+        filter: `user_id=eq.${user.id}`,
+        callback: () => {
+          console.log('[useActiveSubscription] Students table change detected');
+          setTimeout(() => fetchActiveSubscription(), 100);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'plan_subscriptions',
-          filter: `student_user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('[useActiveSubscription] Plan subscriptions change detected:', payload);
-          setTimeout(() => {
-            fetchActiveSubscription();
-          }, 100);
+      },
+      {
+        table: 'plan_subscriptions',
+        event: '*',
+        filter: `student_user_id=eq.${user.id}`,
+        callback: () => {
+          console.log('[useActiveSubscription] Plan subscriptions change detected');
+          setTimeout(() => fetchActiveSubscription(), 100);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'plan_catalog'
-        },
-        (payload) => {
-          console.log('[useActiveSubscription] Plan catalog change detected:', payload);
-          setTimeout(() => {
-            fetchActiveSubscription();
-          }, 100);
+      },
+      {
+        table: 'plan_catalog',
+        event: '*',
+        callback: () => {
+          console.log('[useActiveSubscription] Plan catalog change detected');
+          setTimeout(() => fetchActiveSubscription(), 100);
         }
-      )
-      .subscribe((status) => {
-        console.log('[useActiveSubscription] Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          toast({
-            title: "Conectado",
-            description: "Sistema de atualizações em tempo real ativo",
-            duration: 2000,
-          });
-        }
-      });
-
-    return () => {
-      console.log('[useActiveSubscription] Cleaning up subscriptions for user:', user.id);
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, toast]);
+      }
+    ] : [],
+    enabled: !!user?.id,
+    channelName: 'active-subscription',
+    debounceMs: 500
+  });
 
   // Helper functions - CORRIGIDO para considerar membership_status
   const hasActiveSubscription = () => {

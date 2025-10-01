@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
-import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeManager } from './useRealtimeManager';
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -32,39 +32,33 @@ export const useAuth = () => {
       setLoading(false);
     });
 
-    // Real-time subscription for profile changes
-    let profileChannel: any = null;
-    if (user?.id) {
-      profileChannel = supabase
-        .channel('profile_realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${user.id}`
-          },
-          async (payload) => {
-            console.log('[useAuth] Profile updated in real-time:', payload);
-            try {
-              const updatedProfile = await getUserProfile(user.id);
-              setUserProfile(updatedProfile);
-            } catch (error) {
-              console.error('[useAuth] Error syncing profile:', error);
-            }
-          }
-        )
-        .subscribe();
-    }
-
     return () => {
       subscription.unsubscribe();
-      if (profileChannel) {
-        supabase.removeChannel(profileChannel);
-      }
     };
-  }, [user?.id]);
+  }, []);
+
+  // Use centralized realtime manager for profile changes
+  useRealtimeManager({
+    subscriptions: user?.id ? [{
+      table: 'profiles',
+      event: '*',
+      filter: `id=eq.${user.id}`,
+      callback: async () => {
+        console.log('[useAuth] Profile updated in real-time');
+        try {
+          if (user?.id) {
+            const updatedProfile = await getUserProfile(user.id);
+            setUserProfile(updatedProfile);
+          }
+        } catch (error) {
+          console.error('[useAuth] Error syncing profile:', error);
+        }
+      }
+    }] : [],
+    enabled: !!user?.id,
+    channelName: 'auth-profile',
+    debounceMs: 500
+  });
 
   return {
     user,

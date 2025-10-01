@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
+import { useRealtimeManager } from "./useRealtimeManager";
 
 export interface RealtimeGamificationStats {
   userPoints: {
@@ -60,24 +61,21 @@ export const useGamificationRealtime = (): RealtimeGamificationStats => {
     }
   };
 
-  // Setup real-time subscriptions
+  // Fetch initial data when user changes
   useEffect(() => {
-    if (!user?.id) return;
+    if (user?.id) {
+      fetchInitialData();
+    }
+  }, [user?.id]);
 
-    fetchInitialData();
-
-    // Subscribe to user points changes
-    const pointsChannel = supabase
-      .channel(`user-points-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_points',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
+  // Use centralized realtime manager
+  useRealtimeManager({
+    subscriptions: user?.id ? [
+      {
+        table: 'user_points',
+        event: 'UPDATE',
+        filter: `user_id=eq.${user.id}`,
+        callback: (payload) => {
           console.log('[Real-time] Points updated:', payload);
           setUserPoints({
             total_points: payload.new.total_points,
@@ -86,21 +84,12 @@ export const useGamificationRealtime = (): RealtimeGamificationStats => {
             longest_streak: payload.new.longest_streak
           });
         }
-      )
-      .subscribe();
-
-    // Subscribe to new activities
-    const activitiesChannel = supabase
-      .channel(`user-activities-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'gamification_activities',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
+      },
+      {
+        table: 'gamification_activities',
+        event: 'INSERT',
+        filter: `user_id=eq.${user.id}`,
+        callback: (payload) => {
           console.log('[Real-time] New activity:', payload);
           const newActivity = {
             id: payload.new.id,
@@ -109,17 +98,14 @@ export const useGamificationRealtime = (): RealtimeGamificationStats => {
             description: payload.new.description,
             created_at: payload.new.created_at
           };
-          
           setRecentActivities(prev => [newActivity, ...prev.slice(0, 9)]);
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(pointsChannel);
-      supabase.removeChannel(activitiesChannel);
-    };
-  }, [user?.id]);
+      }
+    ] : [],
+    enabled: !!user?.id,
+    channelName: 'gamification-student',
+    debounceMs: 500
+  });
 
   return {
     userPoints,
@@ -194,57 +180,52 @@ export const useTeacherGamificationRealtime = () => {
     }
   };
 
-  // Setup real-time subscription for student activities
+  // Fetch initial data
   useEffect(() => {
-    if (!user?.id) return;
+    if (user?.id) {
+      fetchStudentActivities();
+    }
+  }, [user?.id]);
 
-    fetchStudentActivities();
+  // Use centralized realtime manager for teacher activities
+  useRealtimeManager({
+    subscriptions: user?.id ? [{
+      table: 'gamification_activities',
+      event: 'INSERT',
+      callback: async (payload) => {
+        // Verificar se é atividade de um estudante deste professor
+        const { data: student } = await supabase
+          .from('students')
+          .select('user_id')
+          .eq('user_id', payload.new.user_id)
+          .eq('teacher_id', user.id)
+          .single();
 
-    const teacherChannel = supabase
-      .channel(`teacher-activities-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'gamification_activities'
-        },
-        async (payload) => {
-          // Verificar se é atividade de um estudante deste professor
-          const { data: student } = await supabase
-            .from('students')
-            .select('user_id')
-            .eq('user_id', payload.new.user_id)
-            .eq('teacher_id', user.id)
+        if (student) {
+          // Buscar nome do estudante
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', payload.new.user_id)
             .single();
 
-          if (student) {
-            // Buscar nome do estudante
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('id', payload.new.user_id)
-              .single();
-
-            console.log('[Real-time] New student activity:', payload);
-            const newActivity = {
-              student_name: profile?.name || 'Estudante',
-              activity_type: payload.new.activity_type,
-              points_earned: payload.new.points_earned,
-              description: payload.new.description,
-              created_at: payload.new.created_at
-            };
-            
-            setStudentActivities(prev => [newActivity, ...prev.slice(0, 19)]);
-          }
+          console.log('[Real-time] New student activity:', payload);
+          const newActivity = {
+            student_name: profile?.name || 'Estudante',
+            activity_type: payload.new.activity_type,
+            points_earned: payload.new.points_earned,
+            description: payload.new.description,
+            created_at: payload.new.created_at
+          };
+          
+          setStudentActivities(prev => [newActivity, ...prev.slice(0, 19)]);
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(teacherChannel);
-    };
-  }, [user?.id]);
+      }
+    }] : [],
+    enabled: !!user?.id,
+    channelName: 'gamification-teacher',
+    debounceMs: 1000
+  });
 
   return {
     studentActivities,

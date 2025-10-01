@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeManager } from './useRealtimeManager';
 
 interface BannerMetrics {
   banner_id: string;
@@ -122,31 +123,20 @@ export const useBannerMetrics = ({
     fetchMetrics();
   }, [fetchMetrics]);
 
-  // Configurar realtime updates
-  useEffect(() => {
-    console.log('[BannerMetrics] Setting up realtime subscription');
-    
-    const channel = supabase
-      .channel('banner-analytics-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'banner_analytics'
-        },
-        (payload) => {
-          console.log('[BannerMetrics] Realtime update received:', payload);
-          fetchMetrics(); // Refetch data when changes occur
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('[BannerMetrics] Cleaning up realtime subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [fetchMetrics]);
+  // Use centralized realtime manager
+  useRealtimeManager({
+    subscriptions: [{
+      table: 'banner_analytics',
+      event: '*',
+      callback: () => {
+        console.log('[BannerMetrics] Realtime update received');
+        fetchMetrics();
+      }
+    }],
+    enabled: true,
+    channelName: 'banner-metrics',
+    debounceMs: 1000
+  });
 
   // Calculate aggregated totals
   const totals = metrics.reduce((acc, metric) => ({

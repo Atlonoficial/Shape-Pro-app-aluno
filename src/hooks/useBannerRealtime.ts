@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeManager } from './useRealtimeManager';
 
 interface BannerRealtimeMetrics {
   totalInteractions: number;
@@ -69,22 +70,16 @@ export const useBannerRealtime = () => {
 
   useEffect(() => {
     fetchInitialData();
+  }, []);
 
-    // Setup realtime subscription
-    console.log('[BannerRealtime] Setting up realtime subscription');
-    
-    const channel = supabase
-      .channel('banner-interactions-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'banner_interactions'
-        },
-        (payload) => {
+  // Use centralized realtime manager
+  const { isConnected } = useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'banner_interactions',
+        event: 'INSERT',
+        callback: (payload) => {
           console.log('[BannerRealtime] New interaction received:', payload);
-          
           setMetrics(prev => ({
             ...prev,
             totalInteractions: prev.totalInteractions + 1,
@@ -92,32 +87,23 @@ export const useBannerRealtime = () => {
             recentInteractions: [payload.new, ...prev.recentInteractions.slice(0, 9)]
           }));
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public', 
-          table: 'banner_analytics'
-        },
-        (payload) => {
-          console.log('[BannerRealtime] Analytics update received:', payload);
-          // Trigger refresh of analytics data
+      },
+      {
+        table: 'banner_analytics',
+        event: '*',
+        callback: () => {
+          console.log('[BannerRealtime] Analytics update received');
         }
-      )
-      .subscribe((status) => {
-        console.log('[BannerRealtime] Subscription status:', status);
-        setMetrics(prev => ({
-          ...prev,
-          isConnected: status === 'SUBSCRIBED'
-        }));
-      });
+      }
+    ],
+    enabled: true,
+    channelName: 'banner-realtime',
+    debounceMs: 500
+  });
 
-    return () => {
-      console.log('[BannerRealtime] Cleaning up subscription');
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  useEffect(() => {
+    setMetrics(prev => ({ ...prev, isConnected }));
+  }, [isConnected]);
 
   return {
     ...metrics,
