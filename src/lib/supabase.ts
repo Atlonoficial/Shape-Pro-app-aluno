@@ -122,11 +122,16 @@ export interface ChatMessage {
 
 // Auth functions
 export const signUpUser = async (email: string, password: string, name: string, userType: 'student' | 'teacher' = 'student') => {
+  // Use shapepro.site as the primary domain for email redirects
+  const redirectDomain = window.location.hostname === 'localhost' 
+    ? window.location.origin 
+    : 'https://shapepro.site';
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/confirm`,
+      emailRedirectTo: `${redirectDomain}/auth/confirm`,
       data: {
         name,
         user_type: userType
@@ -156,9 +161,14 @@ export const signOutUser = async () => {
 export const resetPasswordForEmail = async (email: string) => {
   console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
   
+  // Use shapepro.site as the primary domain for email redirects
+  const redirectDomain = window.location.hostname === 'localhost' 
+    ? window.location.origin 
+    : 'https://shapepro.site';
+  
   try {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/recovery`,
+      redirectTo: `${redirectDomain}/auth/recovery`,
     });
     
     if (error) {
