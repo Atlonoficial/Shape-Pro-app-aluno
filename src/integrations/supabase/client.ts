@@ -27,8 +27,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
   },
   realtime: {
-    // CRITICAL: Force secure WebSocket protocol
-    transport: 'websocket' as any,
+    // Force secure WebSocket - Supabase handles wss:// automatically on https://
     params: {
       eventsPerSecond: 10,
     },

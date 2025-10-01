@@ -65,14 +65,9 @@ export const useRealtimeManager = ({
 
     console.log('[RealtimeManager] 🚀 Initializing with', subscriptions.length, 'subscriptions');
 
-    // Create unique channel for this context
-    const uniqueChannelName = `${channelName}-${Date.now()}`;
-    const channel = supabase.channel(uniqueChannelName, {
-      config: {
-        broadcast: { self: false },
-        presence: { key: '' },
-      },
-    });
+    // Create unique channel for this context with timestamp to prevent conflicts
+    const uniqueChannelName = `${channelName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const channel = supabase.channel(uniqueChannelName);
 
     channelRef.current = channel;
 
@@ -99,17 +94,17 @@ export const useRealtimeManager = ({
       });
     });
 
-    // Subscribe to channel
+    // Subscribe to channel with status callback
     channel.subscribe((status) => {
       console.log('[RealtimeManager] Channel status:', status);
       isConnectedRef.current = status === 'SUBSCRIBED';
 
       if (status === 'SUBSCRIBED') {
-        console.log('[RealtimeManager] ✅ All subscriptions active via wss://');
+        console.log('[RealtimeManager] ✅ All subscriptions active');
       } else if (status === 'CHANNEL_ERROR') {
         console.error('[RealtimeManager] ❌ Channel error - connection failed');
       } else if (status === 'TIMED_OUT') {
-        console.error('[RealtimeManager] ⏱️ Channel timeout - retrying...');
+        console.error('[RealtimeManager] ⏱️ Channel timeout');
       }
     });
 
