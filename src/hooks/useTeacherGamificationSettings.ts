@@ -28,6 +28,22 @@ export const useTeacherGamificationSettings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Default settings used when teacher hasn't configured custom values
+  const DEFAULT_SETTINGS: Omit<GamificationSettings, 'id' | 'teacher_id' | 'created_at' | 'updated_at'> = {
+    points_workout: 75,
+    points_checkin: 10,
+    points_meal_log: 25,
+    points_progress_update: 100,
+    points_goal_achieved: 300,
+    points_assessment: 150,
+    points_medical_exam: 100,
+    points_ai_interaction: 5,
+    points_teacher_message: 20,
+    level_up_bonus: 50,
+    max_daily_points: 500,
+    auto_reset_enabled: false,
+  };
+
   const fetchSettings = useCallback(async () => {
     if (!teacherId) return;
 
@@ -51,41 +67,34 @@ export const useTeacherGamificationSettings = () => {
         console.log('[useTeacherGamificationSettings] Settings loaded:', data);
         setSettings(data);
       } else {
-        console.log('[useTeacherGamificationSettings] No settings found for teacher, using defaults');
-        // Create default settings if none exist
-        const defaultSettings = {
+        console.log('[useTeacherGamificationSettings] No settings found, using in-memory defaults');
+        // Use in-memory defaults instead of creating DB records
+        // This prevents RLS violations when students try to fetch teacher settings
+        setSettings({
+          id: 'default',
           teacher_id: teacherId,
-          points_workout: 75,
-          points_checkin: 10,
-          points_meal_log: 25,
-          points_progress_update: 100,
-          points_goal_achieved: 300,
-          points_assessment: 150,
-          points_medical_exam: 100,
-          points_ai_interaction: 5,
-          points_teacher_message: 20,
-          level_up_bonus: 50,
-          max_daily_points: 500,
-          auto_reset_enabled: false
-        };
-
-        const { data: newSettings, error: createError } = await supabase
-          .from('gamification_settings')
-          .insert(defaultSettings)
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('[useTeacherGamificationSettings] Error creating default settings:', createError);
-          setError(createError.message);
-        } else {
-          console.log('[useTeacherGamificationSettings] Default settings created:', newSettings);
-          setSettings(newSettings);
-        }
+          ...DEFAULT_SETTINGS,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
       }
     } catch (err) {
       console.error('[useTeacherGamificationSettings] Unexpected error:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      
+      // Handle RLS violations gracefully
+      if (err instanceof Error && err.message?.includes('row-level security')) {
+        console.log('[useTeacherGamificationSettings] RLS violation detected, using defaults');
+        setSettings({
+          id: 'default',
+          teacher_id: teacherId,
+          ...DEFAULT_SETTINGS,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        setError(null); // Clear error since we handled it
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
     } finally {
       setLoading(false);
     }
