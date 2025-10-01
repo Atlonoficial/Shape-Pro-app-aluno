@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useRealtimeManager } from './useRealtimeManager';
 
 interface ProfileStats {
   points: number;
@@ -118,38 +119,65 @@ export const useProfileStats = (): ProfileStats => {
     };
 
     fetchStats();
-
-    // Set up real-time subscriptions for key tables
-    const channels = [
-      supabase
-        .channel('user_points_changes')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'user_points',
-          filter: `user_id=eq.${user.id}` 
-        }, () => {
-          fetchStats();
-        }),
-        
-      supabase
-        .channel('workout_sessions_changes')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'workout_sessions',
-          filter: `user_id=eq.${user.id}` 
-        }, () => {
-          fetchStats();
-        })
-    ];
-
-    channels.forEach(channel => channel.subscribe());
-
-    return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
-    };
   }, [user?.id]);
+
+  // Centralized realtime subscriptions
+  useRealtimeManager({
+    subscriptions: user?.id ? [
+      {
+        table: 'user_points',
+        event: '*',
+        filter: `user_id=eq.${user.id}`,
+        callback: async () => {
+          // Refetch stats when points change
+          const pointsResult = await supabase
+            .from('user_points')
+            .select('total_points')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (pointsResult.data) {
+            setStats(prev => ({ ...prev, points: pointsResult.data.total_points || 0 }));
+          }
+        },
+      },
+      {
+        table: 'workout_sessions',
+        event: '*',
+        filter: `user_id=eq.${user.id}`,
+        callback: async () => {
+          // Refetch workout stats when sessions change
+          const [sessionsResult, workoutDatesResult] = await Promise.all([
+            supabase
+              .from('workout_sessions')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id),
+            supabase
+              .from('workout_sessions')
+              .select('start_time')
+              .eq('user_id', user.id)
+              .not('start_time', 'is', null)
+              .order('start_time', { ascending: false }),
+          ]);
+
+          const activeDaysSet = new Set(
+            (workoutDatesResult.data || [])
+              .filter((session: any) => session.start_time)
+              .map((session: any) => new Date(session.start_time).toISOString().slice(0, 10))
+          );
+
+          setStats(prev => ({
+            ...prev,
+            sessionsCount: sessionsResult.count || 0,
+            activeDays: activeDaysSet.size,
+          }));
+        },
+      },
+    ] : [],
+    enabled: !!user?.id,
+    channelName: 'profile-stats-realtime',
+    debounceMs: 1000,
+  });
 
   return useMemo(() => ({
     ...stats,

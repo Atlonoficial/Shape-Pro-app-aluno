@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRealtimeManager } from "@/hooks/useRealtimeManager";
 
 interface RewardItem {
   id: string;
@@ -19,6 +20,44 @@ export const Rewards = () => {
   const [points, setPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
+
+  // Centralized realtime subscriptions
+  useRealtimeManager({
+    subscriptions: user?.id ? [
+      {
+        table: 'user_points',
+        event: '*',
+        filter: `user_id=eq.${user.id}`,
+        callback: (payload) => {
+          if (payload.new && typeof payload.new === 'object' && 'total_points' in payload.new) {
+            setPoints(payload.new.total_points);
+          }
+        },
+      },
+      {
+        table: 'rewards_items',
+        event: '*',
+        callback: async () => {
+          // Refetch rewards when they change
+          try {
+            const { data: itemsData, error: itemsErr } = await supabase
+              .from("rewards_items")
+              .select("id,title,description,points_cost,image_url")
+              .eq("is_active", true)
+              .order("created_at", { ascending: false });
+            
+            if (itemsErr) throw itemsErr;
+            setItems(itemsData || []);
+          } catch (e) {
+            console.error('Error refreshing rewards:', e);
+          }
+        },
+      },
+    ] : [],
+    enabled: !!user?.id,
+    channelName: 'rewards-realtime',
+    debounceMs: 1000,
+  });
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -40,44 +79,8 @@ export const Rewards = () => {
       }
     };
 
-    const setupRealtimeSubscriptions = () => {
-      if (!user?.id) return;
-
-      // Subscribe to real-time updates for user points
-      const pointsChannel = supabase
-        .channel('user_points_changes')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'user_points', filter: `user_id=eq.${user.id}` },
-          (payload) => {
-            if (payload.new && typeof payload.new === 'object' && 'total_points' in payload.new) {
-              setPoints(payload.new.total_points);
-            }
-          }
-        )
-        .subscribe();
-
-      // Subscribe to real-time updates for rewards items
-      const rewardsChannel = supabase
-        .channel('rewards_changes')
-        .on('postgres_changes',
-          { event: '*', schema: 'public', table: 'rewards_items' },
-          () => {
-            // Refetch rewards when they change
-            fetchAll();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        pointsChannel.unsubscribe();
-        rewardsChannel.unsubscribe();
-      };
-    };
-
     if (user?.id) {
       fetchAll();
-      const unsubscribe = setupRealtimeSubscriptions();
-      return unsubscribe;
     }
   }, [user?.id]);
 
