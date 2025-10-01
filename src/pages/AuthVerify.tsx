@@ -1,25 +1,27 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getRedirectPath } from "@/utils/authRedirectUtils";
-import { CheckCircle, Mail, Clock, RefreshCw } from "lucide-react";
+import { CheckCircle, Mail, Clock, RefreshCw, AlertCircle, Loader2 } from "lucide-react";
 
 export const AuthVerify = () => {
   const [params] = useSearchParams();
   const emailParam = params.get("email") || "";
   const [sending, setSending] = useState(false);
-  const [checking, setChecking] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const email = useMemo(() => emailParam, [emailParam]);
 
   useEffect(() => {
-    document.title = "Confirme seu email | Shape Pro";
+    document.title = "Verificar Email | Shape Pro";
   }, []);
 
   // Verificar status de confirmação do email
@@ -44,31 +46,40 @@ export const AuthVerify = () => {
     }
   }, []);
 
-  // Polling automático para verificar confirmação
+  // Polling automático inteligente para verificar confirmação
   useEffect(() => {
-    const intervalId = setInterval(async () => {
+    const checkVerification = async () => {
       if (!isVerified) {
+        setChecking(true);
         const confirmed = await checkEmailVerification();
+        setChecking(false);
+        setPollCount(prev => prev + 1);
+        
         if (confirmed) {
           setIsVerified(true);
-          clearInterval(intervalId);
           
           toast({
-            title: "Email confirmado!",
-            description: "Redirecionando você para o aplicativo...",
+            title: "✅ Email confirmado!",
+            description: "Redirecionando para o app...",
           });
 
-          // Redirecionar após pequeno delay
           setTimeout(async () => {
             const redirectPath = await getRedirectPath();
-            navigate(redirectPath);
-          }, 2000);
+            navigate(redirectPath, { replace: true });
+          }, 1500);
         }
       }
-    }, 10000); // Verifica a cada 10 segundos
+    };
+
+    // Verificar imediatamente
+    checkVerification();
+
+    // Polling inteligente: mais frequente nos primeiros 30s (15 verificações)
+    const interval = pollCount < 15 ? 2000 : 5000;
+    const intervalId = setInterval(checkVerification, interval);
 
     return () => clearInterval(intervalId);
-  }, [isVerified, checkEmailVerification, navigate, toast]);
+  }, [isVerified, checkEmailVerification, navigate, toast, pollCount]);
 
   // Função para verificar manualmente quando o usuário clica no botão
   const handleCheckVerification = async () => {
@@ -81,56 +92,62 @@ export const AuthVerify = () => {
         setIsVerified(true);
         
         toast({
-          title: "Email confirmado com sucesso!",
-          description: "Redirecionando você para o aplicativo...",
+          title: "✅ Email verificado!",
+          description: "Bem-vindo ao Shape Pro!",
         });
 
         setTimeout(async () => {
           const redirectPath = await getRedirectPath();
-          navigate(redirectPath);
-        }, 2000);
+          navigate(redirectPath, { replace: true });
+        }, 1500);
       } else {
         toast({
-          title: "Email ainda não confirmado",
-          description: "Verifique sua caixa de entrada e clique no link de confirmação. Pode levar alguns minutos.",
-          variant: "destructive",
+          title: "⏳ Aguarde...",
+          description: "Ainda não detectamos a confirmação. Clique no link do email.",
         });
       }
     } catch (error) {
       toast({
         title: "Erro ao verificar",
-        description: "Tente novamente em instantes.",
+        description: "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
     } finally {
-      setChecking(false);
+      setTimeout(() => setChecking(false), 1000);
     }
   };
 
   const handleResend = async () => {
     if (!email) {
       toast({
-        title: "Informe um email válido",
-        description: "Volte e preencha o email para reenviar a confirmação.",
+        title: "Email não informado",
+        description: "Não foi possível reenviar o email de confirmação.",
         variant: "destructive",
       });
       return;
     }
+    
     setSending(true);
-    const { error } = await supabase.auth.resend({ type: "signup", email });
-    setSending(false);
-    if (error) {
+    
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      
+      if (error) throw error;
+
+      toast({
+        title: "📧 Email reenviado!",
+        description: "Verifique sua caixa de entrada e spam.",
+      });
+    } catch (error: any) {
+      console.error('Resend error:', error);
       toast({
         title: "Erro ao reenviar",
-        description: error.message || "Tente novamente em instantes.",
+        description: error.message || "Aguarde alguns minutos antes de tentar novamente.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setSending(false);
     }
-    toast({
-      title: "Email reenviado",
-      description: "Verifique sua caixa de entrada e spam.",
-    });
   };
 
   if (isVerified) {
@@ -139,16 +156,17 @@ export const AuthVerify = () => {
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500 animate-pulse" />
+              <CheckCircle className="h-16 w-16 text-green-500 animate-in zoom-in-50" />
             </div>
-            <CardTitle className="text-green-600">Email Confirmado!</CardTitle>
+            <CardTitle>✅ Email Verificado!</CardTitle>
             <CardDescription>
-              Sua conta foi verificada com sucesso. Redirecionando você...
+              Sua conta foi confirmada com sucesso. Redirecionando...
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center">
-              <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            <div className="flex justify-center items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Carregando app...</span>
             </div>
           </CardContent>
         </Card>
@@ -161,62 +179,90 @@ export const AuthVerify = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Mail className="h-16 w-16 text-primary" />
+            {checking ? (
+              <Loader2 className="h-16 w-16 text-primary animate-spin" />
+            ) : (
+              <Mail className="h-16 w-16 text-primary" />
+            )}
           </div>
-          <CardTitle>Confirme seu email</CardTitle>
+          <CardTitle>📧 Verifique seu Email</CardTitle>
           <CardDescription>
-            Enviamos um link de confirmação para <strong>{email || "seu email"}</strong>. 
-            Clique no link para ativar sua conta.
+            {email 
+              ? `Enviamos um link de confirmação para ${email}`
+              : "Enviamos um link de confirmação para seu email"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
-            <Clock className="h-5 w-5 text-muted-foreground mr-2" />
-            <span className="text-sm text-muted-foreground">
-              Verificando automaticamente a cada 10 segundos...
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm space-y-2">
+              <p className="font-medium">Como confirmar seu email:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2 text-muted-foreground">
+                <li>Abra seu aplicativo de email</li>
+                <li>Procure um email do <strong>Shape Pro</strong></li>
+                <li>Clique no botão <strong>"Confirmar Email"</strong></li>
+                <li>Aguarde o redirecionamento automático</li>
+              </ol>
+              <p className="text-xs pt-2 text-amber-600 dark:text-amber-500">
+                💡 Não encontrou? Verifique a pasta de spam
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex items-center justify-center p-3 bg-muted rounded-lg">
+            <Clock className="h-4 w-4 text-muted-foreground mr-2" />
+            <span className="text-xs text-muted-foreground">
+              {checking ? "Verificando..." : "Verificação automática ativa"}
             </span>
           </div>
 
-          <Button 
-            className="w-full" 
-            onClick={handleCheckVerification} 
-            disabled={checking}
-          >
-            {checking ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Verificando...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Já confirmei meu email
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="w-full" 
-            onClick={handleResend} 
-            disabled={sending}
-          >
-            {sending ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Reenviando...
-              </>
-            ) : (
-              <>
-                <Mail className="mr-2 h-4 w-4" />
-                Reenviar email de confirmação
-              </>
-            )}
-          </Button>
-          
-          <Button variant="secondary" className="w-full" onClick={() => navigate("/")}>
-            Voltar para a Home
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button 
+              className="w-full" 
+              onClick={handleCheckVerification} 
+              disabled={checking}
+            >
+              {checking ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Já confirmei meu email
+                </>
+              )}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleResend} 
+              disabled={sending || !email}
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Reenviar email de confirmação
+                </>
+              )}
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="w-full mt-2" 
+              onClick={() => navigate("/", { replace: true })}
+            >
+              Voltar para o início
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>

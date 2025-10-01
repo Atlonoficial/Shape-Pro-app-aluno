@@ -52,15 +52,12 @@ export const AuthScreen = () => {
 
       if (result?.session) {
         toast({
-          title: "Conta criada com sucesso!",
+          title: "✅ Conta criada!",
           description: "Bem-vindo ao Shape Pro!",
         });
         navigate('/', { replace: true });
       } else {
-        toast({
-          title: "Confirme seu email",
-          description: "Enviamos um link de confirmação. Verifique sua caixa de entrada.",
-        });
+        // Redirecionar diretamente para a tela de verificação
         navigate(`/auth/verify?email=${encodeURIComponent(email)}`, { replace: true });
       }
     } catch (error: any) {
