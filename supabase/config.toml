@@ -36,3 +36,14 @@ verify_jwt = true
 
 [functions.strava-sync]
 verify_jwt = true
+
+[realtime]
+enabled = true
+# Force secure WebSocket connections
+secure = true
+# Maximum number of concurrent connections
+max_connections = 1000
+# Connection timeout in seconds
+timeout = 30
+# Enable compression for better performance
+compression = true

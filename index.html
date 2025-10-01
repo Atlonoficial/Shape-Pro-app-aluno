@@ -3,6 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Security Headers for WebSocket -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.onesignal.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.onesignal.com wss://cdn.onesignal.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
     <title>Shape Pro - Seu app, sua marca, seu sucesso</title>
     <meta name="description" content="Aplicativo fitness profissional Shape Pro com treinos personalizados, Coach IA e gamificação para resultados reais" />
     <meta name="author" content="Shape Pro" />

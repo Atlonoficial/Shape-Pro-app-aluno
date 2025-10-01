@@ -15,7 +15,8 @@ const isCapacitor = typeof window !== 'undefined' &&
 console.log('[Supabase Client] Initializing with:', {
   url: SUPABASE_URL,
   isCapacitor,
-  platform: isCapacitor ? 'mobile' : 'web'
+  platform: isCapacitor ? 'mobile' : 'web',
+  protocol: 'wss://' // Force secure WebSocket
 });
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -31,11 +32,15 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     },
     timeout: isCapacitor ? 15000 : 10000,
     heartbeatIntervalMs: 30000,
+    // Force secure WebSocket protocol
+    log_level: 'info',
   },
   global: {
     headers: {
       'X-Client-Info': 'shape-pro-mobile/1.0',
       'X-Platform': isCapacitor ? 'capacitor' : 'web',
+      'Upgrade': 'websocket',
+      'Connection': 'Upgrade',
     },
   },
 });
