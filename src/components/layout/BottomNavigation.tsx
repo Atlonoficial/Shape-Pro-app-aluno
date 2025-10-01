@@ -30,7 +30,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
       {...(isMobileApp ? gestures : {})}
       className={`
         bottom-nav-container
-        fixed left-0 right-0 z-50
+        fixed bottom-0 left-0 right-0 z-50
         transition-transform duration-300 ease-smooth
         ${keyboardVisible ? 'translate-y-full' : 'translate-y-0'}
       `}
@@ -39,17 +39,19 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
     >
       <div className="
         bottom-nav-wrapper
-        max-w-sm mx-auto
+        w-full
         bg-card/95 backdrop-blur-lg
         border-t border-border
         safe-area-bottom
+        md:max-w-md md:mx-auto
+        lg:max-w-lg
       ">
         <div className="
           flex justify-around items-center
-          px-2 py-2
-          min-h-[60px]
-          xs:min-h-[64px]
-          sm:min-h-[68px]
+          px-safe py-2
+          min-h-[64px]
+          xs:min-h-[68px]
+          sm:min-h-[72px]
         ">
           {navItems.map((item) => {
             const Icon = item.icon;

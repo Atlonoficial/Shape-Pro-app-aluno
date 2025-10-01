@@ -335,6 +335,37 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  /* Safe area padding for mobile devices - horizontal */
+  .px-safe {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+  }
+
+  /* Bottom Navigation Full Width Optimization */
+  .bottom-nav-container {
+    @apply fixed bottom-0 left-0 right-0 w-full;
+  }
+
+  .bottom-nav-wrapper {
+    @apply w-full;
+  }
+
+  /* Tablet: Centered with max width */
+  @media (min-width: 768px) {
+    .bottom-nav-wrapper {
+      max-width: 28rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  /* Desktop: Larger centered container */
+  @media (min-width: 1024px) {
+    .bottom-nav-wrapper {
+      max-width: 32rem;
+    }
+  }
+
   /* Shape Pro specific styling */
   .consultoria-online {
     @apply text-warning font-bold tracking-[0.2em] text-sm;
