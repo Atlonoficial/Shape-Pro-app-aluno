@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 export interface StravaStudentActivity {
   id: string;
@@ -165,33 +166,27 @@ export const useStravaStudentData = () => {
     }
   };
 
-  // Configurar real-time para novas atividades
+  // Initial fetch
   useEffect(() => {
     if (!user?.id) return;
-
     fetchStudentStravaData();
+  }, [user?.id]);
 
-    // Escutar novas atividades
-    const channel = supabase
-      .channel(`teacher-strava-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'workout_activities'
-        },
-        () => {
-          // Refresh data when new activity is added
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'workout_activities',
+        event: 'INSERT',
+        callback: () => {
           fetchStudentStravaData();
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `teacher-strava-${user?.id}`,
+    debounceMs: 2000
+  });
 
   return {
     studentActivities,

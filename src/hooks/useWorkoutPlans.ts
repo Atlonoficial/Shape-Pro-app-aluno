@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 export interface WorkoutPlan {
   id: string;
@@ -76,48 +77,41 @@ export const useWorkoutPlans = () => {
     }
   }, [user?.id]);
 
-  // Real-time subscription para workout_plans
+  // Initial fetch
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
-
-    // Initial fetch
     fetchWorkoutPlans();
+  }, [user?.id, fetchWorkoutPlans]);
 
-    // Setup real-time subscription
-    const channel = supabase
-      .channel('workout_plans_realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'workout_plans',
-        },
-        (payload) => {
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'workout_plans',
+        event: '*',
+        callback: (payload) => {
           console.log('Workout plans realtime update:', payload);
           
-          // Check if change affects current user
           const newRecord = payload.new as any;
           const oldRecord = payload.old as any;
           
           const isRelevant = 
-            (newRecord && Array.isArray(newRecord.assigned_students) && newRecord.assigned_students.includes(user.id)) ||
-            (oldRecord && Array.isArray(oldRecord.assigned_students) && oldRecord.assigned_students.includes(user.id));
+            (newRecord && Array.isArray(newRecord.assigned_students) && newRecord.assigned_students.includes(user?.id)) ||
+            (oldRecord && Array.isArray(oldRecord.assigned_students) && oldRecord.assigned_students.includes(user?.id));
             
           if (isRelevant) {
             fetchWorkoutPlans();
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, fetchWorkoutPlans]);
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `workout-plans-${user?.id}`,
+    debounceMs: 2000
+  });
 
   // Get active plans for current user
   const activePlans = workoutPlans.filter(plan => plan.status === 'active');

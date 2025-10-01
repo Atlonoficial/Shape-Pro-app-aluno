@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { showPointsToast } from "@/components/gamification/PointsToast";
 import { useGamificationDebounce } from "@/hooks/useGamificationDebounce";
 import { useTeacherGamificationSettings } from "@/hooks/useTeacherGamificationSettings";
+import { useRealtimeManager } from "@/hooks/useRealtimeManager";
 
 interface RealtimeGamificationHook {
   awardPointsForAction: (action: string, description?: string, metadata?: any) => Promise<void>;
@@ -90,54 +91,37 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     }
   }, [user?.id, awardPointsForAction]);
 
-  // Real-time subscription for user points changes
-  useEffect(() => {
-    if (!user?.id) return;
-
-    console.log('[Gamification] Setting up real-time subscription for user points:', user.id);
-
-    const channel = supabase
-      .channel(`user-points-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_points',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'user_points',
+        event: '*',
+        filter: `user_id=eq.${user?.id}`,
+        callback: (payload) => {
           console.log('[Gamification] Real-time points update:', payload);
-          // Points updated in real-time - this will trigger UI updates automatically
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'gamification_activities',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
+      },
+      {
+        table: 'gamification_activities',
+        event: '*',
+        filter: `user_id=eq.${user?.id}`,
+        callback: (payload) => {
           console.log('[Gamification] Real-time activity update:', payload);
           
           if (payload.eventType === 'INSERT' && payload.new) {
             const activity = payload.new as any;
-            // Show points toast when new points are awarded
             if (activity.points_earned > 0) {
               showPointsToast(activity.points_earned);
             }
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('[Gamification] Cleaning up points subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `gamification-${user?.id}`,
+    debounceMs: 2000
+  });
 
   // Controle de inicialização para evitar duplicações usando sessionStorage
   useEffect(() => {

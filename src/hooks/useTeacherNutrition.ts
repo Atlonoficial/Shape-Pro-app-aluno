@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 export interface StudentNutritionProgress {
   student_id: string;
@@ -191,6 +192,7 @@ export const useTeacherNutrition = () => {
     }
   };
 
+  // Initial setup
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
@@ -200,44 +202,37 @@ export const useTeacherNutrition = () => {
     fetchStudentNutritionProgress().then(() => {
       setLoading(false);
     });
+  }, [user?.id]);
 
-    // Real-time subscription para meal_logs de todos os alunos
-    const realtimeChannel = supabase
-      .channel('teacher_meal_logs_realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'meal_logs'
-        },
-        (payload) => {
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'meal_logs',
+        event: '*',
+        callback: async (payload) => {
           console.log('Teacher nutrition realtime update:', payload);
           
-          // Verificar se o aluno pertence a este professor
           const studentId = (payload.new as any)?.user_id || (payload.old as any)?.user_id;
           if (studentId) {
-            supabase
+            const { data: studentData } = await supabase
               .from('students')
               .select('teacher_id')
               .eq('user_id', studentId)
-              .single()
-              .then(({ data: studentData }) => {
-                if (studentData?.teacher_id === user.id) {
-                  // Recarregar dados se o aluno pertencer a este professor
-                  fetchStudentNutritionProgress();
-                  fetchRecentActivities();
-                }
-              });
+              .single();
+              
+            if (studentData?.teacher_id === user?.id) {
+              fetchStudentNutritionProgress();
+              fetchRecentActivities();
+            }
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(realtimeChannel);
-    };
-  }, [user?.id]);
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `teacher-nutrition-${user?.id}`,
+    debounceMs: 2000
+  });
 
   useEffect(() => {
     if (studentsProgress.length > 0) {

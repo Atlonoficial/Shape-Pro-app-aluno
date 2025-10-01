@@ -1,62 +1,42 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { getUserProfile } from "@/lib/supabase";
+import { useRealtimeManager } from "@/hooks/useRealtimeManager";
 
 export const useProfileSync = () => {
   const { user } = useAuthContext();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    // Realtime subscription para profiles
-    const profileChannel = supabase
-      .channel('profile_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`
-        },
-        (payload) => {
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'profiles',
+        event: '*',
+        filter: `id=eq.${user?.id}`,
+        callback: (payload) => {
           console.log('Profile change detected:', payload);
-          // Invalidate relevant queries
           queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
           queryClient.invalidateQueries({ queryKey: ['user_profile'] });
         }
-      )
-      .subscribe();
-
-    // Realtime subscription para students
-    const studentChannel = supabase
-      .channel('student_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'students',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
+      },
+      {
+        table: 'students',
+        event: '*',
+        filter: `user_id=eq.${user?.id}`,
+        callback: (payload) => {
           console.log('Student data change detected:', payload);
-          // Invalidate relevant queries
           queryClient.invalidateQueries({ queryKey: ['student', user.id] });
           queryClient.invalidateQueries({ queryKey: ['student_profile'] });
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(profileChannel);
-      supabase.removeChannel(studentChannel);
-    };
-  }, [user?.id, queryClient]);
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `profile-sync-${user?.id}`,
+    debounceMs: 2000
+  });
 
   const forceSync = async () => {
     if (!user?.id) return;

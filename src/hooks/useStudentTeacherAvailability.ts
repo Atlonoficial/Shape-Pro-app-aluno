@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 export interface TeacherAvailability {
   id: string;
@@ -70,36 +71,27 @@ export const useStudentTeacherAvailability = () => {
     }
   };
 
+  // Initial fetch
   useEffect(() => {
     fetchTeacherAndAvailability();
+  }, [user?.id, hasActiveSubscription]);
 
-    // Set up real-time subscription for teacher availability changes
-    let channel: any = null;
-    
-    if (teacherId && hasActiveSubscription) {
-      channel = supabase
-        .channel('teacher-availability')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'teacher_availability',
-            filter: `teacher_id=eq.${teacherId}`,
-          },
-          () => {
-            fetchTeacherAndAvailability();
-          }
-        )
-        .subscribe();
-    }
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'teacher_availability',
+        event: '*',
+        filter: `teacher_id=eq.${teacherId}`,
+        callback: () => {
+          fetchTeacherAndAvailability();
+        }
       }
-    };
-  }, [user?.id, teacherId, hasActiveSubscription]);
+    ],
+    enabled: !!(teacherId && hasActiveSubscription),
+    channelName: `teacher-availability-${teacherId}`,
+    debounceMs: 2000
+  });
 
   // Helper function to get availability for a specific weekday
   const getAvailabilityForWeekday = (weekday: number) => {

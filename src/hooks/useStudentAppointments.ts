@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 export interface StudentAppointment {
   id: string;
@@ -183,50 +184,39 @@ export const useStudentAppointments = () => {
     }
   }, []);
 
+  // Initial fetch
   useEffect(() => {
-    if (!user?.id) return;
-    
-    fetchAppointments();
+    if (user?.id) {
+      fetchAppointments();
+    }
+  }, [user?.id]);
 
-    // Set up granular real-time subscriptions for instant updates
-    const channel = supabase
-      .channel('student-appointments-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'appointments',
-          filter: `student_id=eq.${user.id}`,
-        },
-        (payload) => handleRealtimeUpdate({ eventType: 'INSERT', new: payload.new })
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'appointments',
-          filter: `student_id=eq.${user.id}`,
-        },
-        (payload) => handleRealtimeUpdate({ eventType: 'UPDATE', new: payload.new, old: payload.old })
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'appointments',
-          filter: `student_id=eq.${user.id}`,
-        },
-        (payload) => handleRealtimeUpdate({ eventType: 'DELETE', old: payload.old })
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, handleRealtimeUpdate]);
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'appointments',
+        event: 'INSERT',
+        filter: `student_id=eq.${user?.id}`,
+        callback: (payload) => handleRealtimeUpdate({ eventType: 'INSERT', new: payload.new })
+      },
+      {
+        table: 'appointments',
+        event: 'UPDATE',
+        filter: `student_id=eq.${user?.id}`,
+        callback: (payload) => handleRealtimeUpdate({ eventType: 'UPDATE', new: payload.new, old: payload.old })
+      },
+      {
+        table: 'appointments',
+        event: 'DELETE',
+        filter: `student_id=eq.${user?.id}`,
+        callback: (payload) => handleRealtimeUpdate({ eventType: 'DELETE', old: payload.old })
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `student-appointments-${user?.id}`,
+    debounceMs: 1500
+  });
 
   // Separate upcoming and past appointments
   const now = new Date();

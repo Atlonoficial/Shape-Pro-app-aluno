@@ -13,6 +13,7 @@ import { formatMinutesToHoursAndMinutes } from "@/lib/utils";
 import { BookingConfirmationDialog } from "@/components/booking/BookingConfirmationDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeManager } from "@/hooks/useRealtimeManager";
 
 export default function Agenda() {
   const navigate = useNavigate();
@@ -100,39 +101,24 @@ export default function Agenda() {
     if (!teacherLoading && teacherId && availability.length > 0) {
       loadAvailableSlots();
     }
-  }, [teacherId, selectedDate, teacherLoading]); // Removido dependencies problemáticas
+  }, [teacherId, selectedDate, teacherLoading]);
 
-  // Real-time listener for teacher availability changes
-  useEffect(() => {
-    if (!teacherId || !hasActiveSubscription) return;
-
-    let timeoutId: NodeJS.Timeout;
-    
-    const channel = supabase
-      .channel(`agenda-availability-${teacherId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'teacher_availability',
-          filter: `teacher_id=eq.${teacherId}`,
-        },
-        (payload) => {
-          // Debounce para evitar múltiplas atualizações
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            loadAvailableSlots();
-          }, 1000);
+  // Realtime subscriptions using centralized manager  
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'teacher_availability',
+        event: '*',
+        filter: `teacher_id=eq.${teacherId}`,
+        callback: () => {
+          loadAvailableSlots();
         }
-      )
-      .subscribe();
-
-    return () => {
-      clearTimeout(timeoutId);
-      supabase.removeChannel(channel);
-    };
-  }, [teacherId, hasActiveSubscription]); // Removido loadAvailableSlots das dependencies
+      }
+    ],
+    enabled: !!(teacherId && hasActiveSubscription),
+    channelName: `agenda-availability-${teacherId}`,
+    debounceMs: 2000
+  });
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);

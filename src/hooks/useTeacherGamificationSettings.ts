@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentTeacher } from './useStudentTeacher';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 interface GamificationSettings {
   id: string;
@@ -100,23 +101,19 @@ export const useTeacherGamificationSettings = () => {
     }
   }, [teacherId]);
 
-  // Setup real-time subscription for settings changes
+  // Initial fetch
   useEffect(() => {
-    if (!teacherId) return;
+    fetchSettings();
+  }, [fetchSettings]);
 
-    console.log('[useTeacherGamificationSettings] Setting up real-time subscription for teacher:', teacherId);
-
-    const channel = supabase
-      .channel(`gamification-settings-${teacherId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'gamification_settings',
-          filter: `teacher_id=eq.${teacherId}`
-        },
-        (payload) => {
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'gamification_settings',
+        event: '*',
+        filter: `teacher_id=eq.${teacherId}`,
+        callback: (payload) => {
           console.log('[useTeacherGamificationSettings] Real-time settings update:', payload);
           
           if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
@@ -125,19 +122,12 @@ export const useTeacherGamificationSettings = () => {
             setSettings(null);
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('[useTeacherGamificationSettings] Cleaning up subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [teacherId]);
-
-  // Initial fetch
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+      }
+    ],
+    enabled: !!teacherId,
+    channelName: `gamification-settings-${teacherId}`,
+    debounceMs: 2000
+  });
 
   return {
     settings,

@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { FeedbackDetailCard } from './FeedbackDetailCard';
+import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 interface Feedback {
   id: string;
@@ -174,58 +175,43 @@ export const FeedbackManager = () => {
 
   const pendingCount = feedbacks.filter(f => !f.teacher_response).length;
 
+  // Initial fetch
   useEffect(() => {
     fetchFeedbacks();
-
-    // Set up real-time subscription for new feedbacks
-    if (user?.id) {
-      console.log('[FeedbackManager] Setting up real-time subscription');
-      
-      const channel = supabase
-        .channel('teacher-feedbacks')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'feedbacks',
-            filter: `teacher_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('[FeedbackManager] New feedback received:', payload.new);
-            
-            // Show notification for new feedback
-            toast({
-              title: "Novo feedback recebido!",
-              description: "Um aluno enviou um novo feedback.",
-            });
-            
-            // Refresh feedbacks
-            fetchFeedbacks();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'feedbacks',
-            filter: `teacher_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('[FeedbackManager] Feedback updated:', payload.new);
-            // Refresh feedbacks when updated
-            fetchFeedbacks();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        console.log('[FeedbackManager] Cleaning up subscription');
-        supabase.removeChannel(channel);
-      };
-    }
   }, [user?.id, toast]);
+
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'feedbacks',
+        event: 'INSERT',
+        filter: `teacher_id=eq.${user?.id}`,
+        callback: (payload) => {
+          console.log('[FeedbackManager] New feedback received:', payload.new);
+          
+          toast({
+            title: "Novo feedback recebido!",
+            description: "Um aluno enviou um novo feedback.",
+          });
+          
+          fetchFeedbacks();
+        }
+      },
+      {
+        table: 'feedbacks',
+        event: 'UPDATE',
+        filter: `teacher_id=eq.${user?.id}`,
+        callback: (payload) => {
+          console.log('[FeedbackManager] Feedback updated:', payload.new);
+          fetchFeedbacks();
+        }
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `teacher-feedbacks-${user?.id}`,
+    debounceMs: 2000
+  });
 
   if (loading) {
     return (

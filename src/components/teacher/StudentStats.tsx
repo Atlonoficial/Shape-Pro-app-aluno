@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeManager } from "@/hooks/useRealtimeManager";
 
 interface StudentStat {
   user_id: string;
@@ -94,48 +95,35 @@ export const StudentStats = () => {
     }
   }, [user?.id]);
 
-  // Setup real-time subscriptions for gamification updates
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const gamificationChannel = supabase
-      .channel('teacher-gamification-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'gamification_activities'
-        },
-        (payload) => {
-          console.log('[Real-time] New gamification activity:', payload);
-          // Refresh stats when student gains points
-          fetchStudentStats();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_points'
-        },
-        (payload) => {
-          console.log('[Real-time] User points updated:', payload);
-          // Refresh stats when student points are updated
-          fetchStudentStats();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(gamificationChannel);
-    };
-  }, [user?.id, fetchStudentStats]);
-
+  // Initial fetch
   useEffect(() => {
     fetchStudentStats();
   }, [fetchStudentStats]);
+
+  // Realtime subscriptions using centralized manager
+  useRealtimeManager({
+    subscriptions: [
+      {
+        table: 'gamification_activities',
+        event: 'INSERT',
+        callback: (payload) => {
+          console.log('[Real-time] New gamification activity:', payload);
+          fetchStudentStats();
+        }
+      },
+      {
+        table: 'user_points',
+        event: 'UPDATE',
+        callback: (payload) => {
+          console.log('[Real-time] User points updated:', payload);
+          fetchStudentStats();
+        }
+      }
+    ],
+    enabled: !!user?.id,
+    channelName: `teacher-gamification-${user?.id}`,
+    debounceMs: 2000
+  });
 
   if (loading) {
     return (
