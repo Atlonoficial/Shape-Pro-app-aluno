@@ -18,7 +18,9 @@
 		"webContentsDebuggingEnabled": false,
 		"appendUserAgent": "Shape Pro/1.0",
 		"overrideUserAgent": "Shape Pro/1.0 Mobile App",
-		"hideLogs": true
+		"hideLogs": true,
+		"cleartext": true,
+		"networkSecurityConfig": true
 	},
 	"plugins": {
 		"SplashScreen": {
