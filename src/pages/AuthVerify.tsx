@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getRedirectPath } from "@/utils/authRedirectUtils";
-import { CheckCircle, Mail, RefreshCw, Loader2 } from "lucide-react";
+import { CheckCircle, Mail, RefreshCw, Loader2, AlertCircle } from "lucide-react";
 
 export const AuthVerify = () => {
   const [params] = useSearchParams();
@@ -115,102 +112,138 @@ export const AuthVerify = () => {
 
   if (isVerified) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500 animate-in zoom-in-50" />
+      <main className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4 md:p-6">
+        <div className="w-full max-w-md md:max-w-lg">
+          <div className="bg-black/40 backdrop-blur-xl border border-gray-800/50 rounded-2xl md:rounded-3xl shadow-2xl shadow-green-500/10 p-6 md:p-8 animate-in fade-in-50 zoom-in-95 duration-700">
+            {/* Success Icon */}
+            <div className="flex justify-center mb-6 animate-in zoom-in-50 duration-700">
+              <div className="bg-green-500/20 rounded-full p-6 md:p-8">
+                <CheckCircle className="h-20 w-20 md:h-24 md:w-24 text-green-400 animate-pulse" />
+              </div>
             </div>
-            <CardTitle>✅ Email Verificado!</CardTitle>
-            <CardDescription>
-              Sua conta foi confirmada com sucesso. Redirecionando...
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <span>Carregando app...</span>
+
+            {/* Success Text */}
+            <div className="text-center space-y-3 mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-white animate-in slide-in-from-bottom-3 duration-500 delay-200">
+                ✅ Email Verificado!
+              </h1>
+              <p className="text-sm md:text-base text-gray-300 leading-relaxed animate-in slide-in-from-bottom-3 duration-500 delay-300">
+                Sua conta foi confirmada com sucesso
+              </p>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Loading Indicator */}
+            <div className="flex justify-center items-center gap-3 text-gray-400 animate-in fade-in-50 duration-500 delay-500">
+              <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
+              <span className="text-sm md:text-base font-medium">Carregando app...</span>
+            </div>
+          </div>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        {email && (
-          <Alert className="m-6 mb-0 bg-primary/10 border-primary/20">
-            <Mail className="h-4 w-4 text-primary" />
-            <AlertDescription className="text-sm">
-              <span className="font-semibold">✉️ Email enviado para:</span>
-              <br />
-              <span className="text-primary font-mono">{email}</span>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            {checking ? (
-              <Loader2 className="h-16 w-16 text-primary animate-spin" />
-            ) : (
-              <Mail className="h-16 w-16 text-primary" />
-            )}
+    <main className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4 md:p-6 lg:p-8">
+      <div className="w-full max-w-md md:max-w-lg">
+        <div className="bg-black/40 backdrop-blur-xl border border-gray-800/50 rounded-2xl md:rounded-3xl shadow-2xl shadow-yellow-500/5 p-6 md:p-8">
+          
+          {/* Email Banner */}
+          {email && (
+            <div className="bg-gradient-to-r from-yellow-900/30 via-yellow-800/20 to-yellow-900/30 border border-yellow-600/50 rounded-xl p-4 mb-8 animate-in fade-in-50 slide-in-from-top-5 duration-500">
+              <div className="flex items-start gap-3">
+                <Mail className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-300 mb-1">
+                    📧 Email enviado para:
+                  </p>
+                  <p className="text-yellow-500 font-mono font-semibold text-sm md:text-base break-all">
+                    {email}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Icon Container */}
+          <div className="flex justify-center mb-8 animate-in zoom-in-50 duration-700 delay-200">
+            <div className="bg-yellow-500/10 rounded-full p-6 md:p-8">
+              {checking ? (
+                <Loader2 className="h-20 w-20 md:h-24 md:w-24 text-yellow-500 animate-spin" />
+              ) : (
+                <Mail className="h-20 w-20 md:h-24 md:w-24 text-yellow-500 animate-pulse" />
+              )}
+            </div>
           </div>
-          <CardTitle className="text-2xl">📧 Confirme seu Email</CardTitle>
-          <CardDescription className="text-base">
-            Enviamos um link de confirmação. Clique nele para ativar sua conta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3">
-            <Button 
-              className="w-full bg-primary hover:bg-primary/90" 
-              onClick={handleCheckVerification} 
+
+          {/* Text Content */}
+          <div className="text-center space-y-3 mb-8 animate-in fade-in-50 slide-in-from-bottom-3 duration-500 delay-300">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              📧 Confirme seu Email
+            </h1>
+            <p className="text-sm md:text-base text-gray-300 leading-relaxed px-2">
+              Enviamos um link de confirmação. Clique nele para ativar sua conta.
+            </p>
+          </div>
+
+          {/* Buttons Section */}
+          <div className="flex flex-col gap-4 animate-in fade-in-50 slide-in-from-bottom-5 duration-500 delay-500">
+            {/* Primary Button */}
+            <button
+              onClick={handleCheckVerification}
               disabled={checking}
+              className="group relative w-full h-14 md:h-16 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-semibold text-base md:text-lg rounded-xl shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              aria-label="Verificar se o email foi confirmado"
             >
               {checking ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Verificando...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Verificando...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  ✅ Já confirmei meu email
+                  <CheckCircle className="h-5 w-5" />
+                  <span>Já confirmei meu email</span>
                 </>
               )}
-            </Button>
-            
+            </button>
+
+            {/* Error Message */}
             {errorMessage && (
-              <p className="text-sm text-destructive text-center -mt-1">
-                {errorMessage}
-              </p>
+              <div 
+                className="bg-red-500/10 border-l-4 border-red-500 p-3 rounded-lg animate-in slide-in-from-top-2 duration-300"
+                role="alert"
+                aria-live="polite"
+              >
+                <div className="flex items-center gap-2 text-red-400 text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              </div>
             )}
-            
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={handleResend} 
+
+            {/* Secondary Button */}
+            <button
+              onClick={handleResend}
               disabled={sending || !email}
+              className="group w-full h-12 md:h-14 bg-transparent border-2 border-gray-700 hover:border-gray-600 hover:bg-gray-800/50 text-gray-300 hover:text-white font-medium text-sm md:text-base rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              aria-label="Reenviar email de confirmação"
             >
               {sending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enviando...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Enviando...</span>
                 </>
               ) : (
                 <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  🔄 Reenviar email de confirmação
+                  <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
+                  <span>Reenviar email de confirmação</span>
                 </>
               )}
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   );
 };
