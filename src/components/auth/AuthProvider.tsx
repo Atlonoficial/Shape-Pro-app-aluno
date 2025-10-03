@@ -5,6 +5,7 @@ import { UserProfile } from '@/lib/supabase';
 import { LoadingScreen } from './LoadingScreen';
 import { AuthScreen } from './AuthScreen';
 import { initPush, clearExternalUserId } from '@/lib/push';
+import { useLocation } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -32,8 +33,21 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const auth = useAuth();
-  const PUBLIC_PATHS = ['/auth/verify', '/auth/verified', '/reset-password'];
-  const isPublicRoute = PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p));
+  const location = useLocation();
+  
+  const PUBLIC_PATHS = [
+    '/auth/verify', 
+    '/auth/verified', 
+    '/auth/confirm',
+    '/auth/recovery',
+    '/auth/invite',
+    '/auth/magic-link',
+    '/auth/change-email',
+    '/auth/error',
+    '/reset-password'
+  ];
+  
+  const isPublicRoute = PUBLIC_PATHS.some((p) => location.pathname.startsWith(p));
 
   // Inicializar OneSignal quando usuário estiver autenticado
   useEffect(() => {
