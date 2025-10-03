@@ -6,15 +6,15 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getRedirectPath } from "@/utils/authRedirectUtils";
-import { CheckCircle, Mail, Clock, RefreshCw, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Mail, RefreshCw, Loader2 } from "lucide-react";
 
 export const AuthVerify = () => {
   const [params] = useSearchParams();
   const emailParam = params.get("email") || "";
   const [sending, setSending] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [pollCount, setPollCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -46,46 +46,11 @@ export const AuthVerify = () => {
     }
   }, []);
 
-  // Polling automático inteligente para verificar confirmação
-  useEffect(() => {
-    const checkVerification = async () => {
-      if (!isVerified) {
-        setChecking(true);
-        const confirmed = await checkEmailVerification();
-        setChecking(false);
-        setPollCount(prev => prev + 1);
-        
-        if (confirmed) {
-          console.log('✅ Email confirmado com sucesso, iniciando redirecionamento');
-          setIsVerified(true);
-          
-          toast({
-            title: "✅ Email confirmado!",
-            description: "Redirecionando para o app...",
-          });
-
-          setTimeout(async () => {
-            const redirectPath = await getRedirectPath();
-            console.log('🔄 Redirecionando para:', redirectPath);
-            navigate(redirectPath, { replace: true });
-          }, 1500);
-        }
-      }
-    };
-
-    // Verificar imediatamente
-    checkVerification();
-
-    // Polling inteligente: mais frequente nos primeiros 30s (15 verificações)
-    const interval = pollCount < 15 ? 2000 : 5000;
-    const intervalId = setInterval(checkVerification, interval);
-
-    return () => clearInterval(intervalId);
-  }, [isVerified, checkEmailVerification, navigate, toast, pollCount]);
 
   // Função para verificar manualmente quando o usuário clica no botão
   const handleCheckVerification = async () => {
     setChecking(true);
+    setErrorMessage(""); // Limpar erro anterior
     
     try {
       const confirmed = await checkEmailVerification();
@@ -106,19 +71,12 @@ export const AuthVerify = () => {
         }, 1500);
       } else {
         console.log('⏳ Verificação manual: Ainda não confirmado');
-        toast({
-          title: "⏳ Aguarde...",
-          description: "Ainda não detectamos a confirmação. Clique no link do email.",
-        });
+        setErrorMessage("⚠️ Confirme seu email antes de continuar");
       }
     } catch (error) {
-      toast({
-        title: "Erro ao verificar",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive",
-      });
+      setErrorMessage("Erro ao verificar. Tente novamente.");
     } finally {
-      setTimeout(() => setChecking(false), 1000);
+      setChecking(false);
     }
   };
 
@@ -207,32 +165,9 @@ export const AuthVerify = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-sm space-y-2">
-              <p className="font-medium">Como confirmar seu email:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-2 text-muted-foreground">
-                <li>Abra seu aplicativo de email</li>
-                <li>Procure um email do <strong>Shape Pro</strong></li>
-                <li>Clique no botão <strong>"Confirmar Email"</strong></li>
-                <li>Aguarde o redirecionamento automático</li>
-              </ol>
-              <p className="text-xs pt-2 text-amber-600 dark:text-amber-500">
-                💡 Não encontrou? Verifique a pasta de spam
-              </p>
-            </AlertDescription>
-          </Alert>
-
-          <div className="flex items-center justify-center p-3 bg-muted rounded-lg">
-            <Clock className="h-4 w-4 text-muted-foreground mr-2" />
-            <span className="text-xs text-muted-foreground">
-              {checking ? "Verificando..." : "Verificação automática ativa"}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <Button 
-              className="w-full" 
+              className="w-full bg-primary hover:bg-primary/90" 
               onClick={handleCheckVerification} 
               disabled={checking}
             >
@@ -243,11 +178,17 @@ export const AuthVerify = () => {
                 </>
               ) : (
                 <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Já confirmei meu email
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  ✅ Já confirmei meu email
                 </>
               )}
             </Button>
+            
+            {errorMessage && (
+              <p className="text-sm text-destructive text-center -mt-1">
+                {errorMessage}
+              </p>
+            )}
             
             <Button 
               variant="outline" 
@@ -262,18 +203,10 @@ export const AuthVerify = () => {
                 </>
               ) : (
                 <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Reenviar email de confirmação
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  🔄 Reenviar email de confirmação
                 </>
               )}
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              className="w-full mt-2" 
-              onClick={() => navigate("/", { replace: true })}
-            >
-              Voltar para o início
             </Button>
           </div>
         </CardContent>
