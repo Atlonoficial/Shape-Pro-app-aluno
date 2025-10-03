@@ -51,13 +51,18 @@ export const AuthScreen = () => {
       const result = await signUpUser(email, password, name, 'student');
 
       if (result?.session) {
+        console.log('✅ Cadastro: Sessão criada imediatamente (email confirmation disabled)');
         toast({
           title: "✅ Conta criada!",
           description: "Bem-vindo ao Shape Pro!",
         });
         navigate('/', { replace: true });
       } else {
-        // Redirecionar diretamente para a tela de verificação
+        console.log('📧 Cadastro: Sessão não criada, email confirmation necessária');
+        toast({
+          title: "📧 Email de confirmação enviado!",
+          description: `Verifique sua caixa de entrada em ${email}`,
+        });
         navigate(`/auth/verify?email=${encodeURIComponent(email)}`, { replace: true });
       }
     } catch (error: any) {

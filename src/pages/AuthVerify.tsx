@@ -56,6 +56,7 @@ export const AuthVerify = () => {
         setPollCount(prev => prev + 1);
         
         if (confirmed) {
+          console.log('✅ Email confirmado com sucesso, iniciando redirecionamento');
           setIsVerified(true);
           
           toast({
@@ -65,6 +66,7 @@ export const AuthVerify = () => {
 
           setTimeout(async () => {
             const redirectPath = await getRedirectPath();
+            console.log('🔄 Redirecionando para:', redirectPath);
             navigate(redirectPath, { replace: true });
           }, 1500);
         }
@@ -89,6 +91,7 @@ export const AuthVerify = () => {
       const confirmed = await checkEmailVerification();
       
       if (confirmed) {
+        console.log('✅ Verificação manual: Email confirmado');
         setIsVerified(true);
         
         toast({
@@ -98,9 +101,11 @@ export const AuthVerify = () => {
 
         setTimeout(async () => {
           const redirectPath = await getRedirectPath();
+          console.log('🔄 Redirecionando para:', redirectPath);
           navigate(redirectPath, { replace: true });
         }, 1500);
       } else {
+        console.log('⏳ Verificação manual: Ainda não confirmado');
         toast({
           title: "⏳ Aguarde...",
           description: "Ainda não detectamos a confirmação. Clique no link do email.",
@@ -177,6 +182,17 @@ export const AuthVerify = () => {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
+        {email && (
+          <Alert className="m-6 mb-0 bg-primary/10 border-primary/20">
+            <Mail className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-sm">
+              <span className="font-semibold">✉️ Email enviado para:</span>
+              <br />
+              <span className="text-primary font-mono">{email}</span>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             {checking ? (
@@ -185,12 +201,9 @@ export const AuthVerify = () => {
               <Mail className="h-16 w-16 text-primary" />
             )}
           </div>
-          <CardTitle>📧 Verifique seu Email</CardTitle>
-          <CardDescription>
-            {email 
-              ? `Enviamos um link de confirmação para ${email}`
-              : "Enviamos um link de confirmação para seu email"
-            }
+          <CardTitle className="text-2xl">📧 Confirme seu Email</CardTitle>
+          <CardDescription className="text-base">
+            Enviamos um link de confirmação. Clique nele para ativar sua conta.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

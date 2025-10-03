@@ -44,6 +44,8 @@ export const getRedirectPath = async (userType?: 'student' | 'teacher'): Promise
   if (!userType) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 getRedirectPath: Buscando tipo de usuário para:', user?.id);
+      
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -52,41 +54,47 @@ export const getRedirectPath = async (userType?: 'student' | 'teacher'): Promise
           .single();
         
         userType = profile?.user_type as 'student' | 'teacher';
+        console.log('👤 getRedirectPath: Tipo de usuário encontrado:', userType);
       }
     } catch (error) {
-      console.error('Error getting user type:', error);
+      console.error('❌ getRedirectPath: Erro ao buscar tipo de usuário:', error);
     }
   }
 
-  switch (userType) {
-    case 'teacher':
-      return '/dashboard-professor';
-    case 'student':
-      return '/';
-    default:
-      return '/';
-  }
+  const path = userType === 'teacher' ? '/dashboard-professor' : '/';
+  console.log('🎯 getRedirectPath: Redirecionando para:', path);
+  
+  return path;
 };
 
 export const processAuthAction = async (actionData: AuthActionData) => {
   const { type, token_hash, error } = actionData;
 
+  console.log('🔐 processAuthAction: Processando ação de autenticação:', type);
+
   if (error) {
+    console.error('❌ processAuthAction: Erro na ação:', error);
     throw new Error(actionData.error_description || error);
   }
 
   if (!token_hash) {
+    console.error('❌ processAuthAction: Token não encontrado');
     throw new Error('Token de autenticação não encontrado');
   }
 
   switch (type) {
     case 'signup':
     case 'email_confirmation':
+      console.log('📧 processAuthAction: Verificando email de confirmação');
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash,
         type: 'email'
       });
-      if (verifyError) throw verifyError;
+      if (verifyError) {
+        console.error('❌ processAuthAction: Erro ao verificar OTP:', verifyError);
+        throw verifyError;
+      }
+      console.log('✅ processAuthAction: Email confirmado com sucesso');
       break;
 
     case 'recovery':
