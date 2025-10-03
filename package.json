@@ -9,7 +9,7 @@
                     "build:dev":  "vite build --mode development",
                     "lint":  "eslint .",
                     "preview":  "vite preview",
-                    "prebuild":  "node scripts/inject-google-services.js"
+                    "prebuild":  "node scripts/inject-google-services.cjs"
                 },
     "dependencies":  {
                          "@capacitor/android":  "^7.4.3",
@@ -98,3 +98,5 @@
                             "vite":  "^5.4.1"
                         }
 }
+
+
