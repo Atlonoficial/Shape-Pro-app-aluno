@@ -84,9 +84,9 @@ export const TeacherCard = () => {
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{teacher.bio}</p>
               )}
               
-              {teacher.specialties && teacher.specialties.length > 0 && (
+              {teacher.specialties && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {teacher.specialties.slice(0, 3).map((specialty, index) => (
+                  {(Array.isArray(teacher.specialties) ? teacher.specialties : [teacher.specialties]).slice(0, 3).map((specialty, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full"
@@ -94,8 +94,8 @@ export const TeacherCard = () => {
                       {specialty}
                     </span>
                   ))}
-                  {teacher.specialties.length > 3 && (
-                    <span className="text-xs text-muted-foreground">+{teacher.specialties.length - 3} mais</span>
+                  {(Array.isArray(teacher.specialties) ? teacher.specialties.length : 1) > 3 && (
+                    <span className="text-xs text-muted-foreground">+{(Array.isArray(teacher.specialties) ? teacher.specialties.length : 1) - 3} mais</span>
                   )}
                 </div>
               )}

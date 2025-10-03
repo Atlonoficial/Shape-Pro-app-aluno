@@ -12,7 +12,7 @@ export interface TeacherProfile {
   facebook_url?: string;
   youtube_url?: string;
   whatsapp_url?: string;
-  specialties?: string[];
+  specialties?: string | string[];
 }
 
 export const useTeacherProfile = () => {
