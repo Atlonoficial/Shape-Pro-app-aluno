@@ -3166,6 +3166,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          academy_name: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
@@ -3188,7 +3189,7 @@ export type Database = {
           role: string | null
           role_set_once: boolean | null
           show_profile_to_students: boolean | null
-          specialties: string[] | null
+          specialties: string | null
           tenant_id: string | null
           updated_at: string | null
           user_type: string | null
@@ -3196,6 +3197,7 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          academy_name?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -3218,7 +3220,7 @@ export type Database = {
           role?: string | null
           role_set_once?: boolean | null
           show_profile_to_students?: boolean | null
-          specialties?: string[] | null
+          specialties?: string | null
           tenant_id?: string | null
           updated_at?: string | null
           user_type?: string | null
@@ -3226,6 +3228,7 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          academy_name?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -3248,7 +3251,7 @@ export type Database = {
           role?: string | null
           role_set_once?: boolean | null
           show_profile_to_students?: boolean | null
-          specialties?: string[] | null
+          specialties?: string | null
           tenant_id?: string | null
           updated_at?: string | null
           user_type?: string | null
@@ -5099,6 +5102,15 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: Json
       }
+      fix_corrupted_multi_tenant_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_tenants: number
+          errors: string[]
+          fixed_profiles: number
+          fixed_students: number
+        }[]
+      }
       generate_backup_codes: {
         Args: Record<PropertyKey, never>
         Returns: string[]
@@ -5293,6 +5305,10 @@ export type Database = {
       }
       rollback_failed_transaction: {
         Args: { p_transaction_id: string }
+        Returns: Json
+      }
+      safe_delete_user: {
+        Args: { user_id_to_delete: string }
         Returns: Json
       }
       sanitize_chat_input: {
