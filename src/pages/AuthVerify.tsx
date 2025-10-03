@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +12,10 @@ export const AuthVerify = () => {
   const [checking, setChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [autoCheckCount, setAutoCheckCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const email = useMemo(() => emailParam, [emailParam]);
 
@@ -22,39 +24,53 @@ export const AuthVerify = () => {
   }, []);
 
   // Verificar status de confirmação do email
-  const checkEmailVerification = useCallback(async () => {
+  const checkEmailVerification = useCallback(async (silent = false) => {
     try {
+      if (!silent) {
+        console.log('[AuthVerify] 🔍 Verificando status do email...', { autoCheckCount });
+      }
+      
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error) {
-        console.error('Erro ao verificar usuário:', error);
+        console.error('[AuthVerify] ❌ Erro ao verificar usuário:', error);
         return false;
       }
 
       if (user?.email_confirmed_at) {
-        console.log('Email confirmado:', user.email_confirmed_at);
+        console.log('[AuthVerify] ✅ Email confirmado:', {
+          email: user.email,
+          confirmedAt: user.email_confirmed_at
+        });
         return true;
       }
 
+      if (!silent) {
+        console.log('[AuthVerify] ⏳ Email ainda não confirmado');
+      }
       return false;
     } catch (error) {
-      console.error('Erro na verificação:', error);
+      console.error('[AuthVerify] ❌ Erro na verificação:', error);
       return false;
     }
-  }, []);
+  }, [autoCheckCount]);
 
 
-  // Função para verificar manualmente quando o usuário clica no botão
-  const handleCheckVerification = async () => {
-    setChecking(true);
-    setErrorMessage(""); // Limpar erro anterior
+  // Polling automático
+  useEffect(() => {
+    console.log('[AuthVerify] 🚀 Iniciando verificação automática...');
     
-    try {
-      const confirmed = await checkEmailVerification();
+    const autoCheck = async () => {
+      const confirmed = await checkEmailVerification(true);
       
       if (confirmed) {
-        console.log('✅ Verificação manual: Email confirmado');
+        console.log('[AuthVerify] ✅ Email já confirmado! Redirecionando...');
         setIsVerified(true);
+        
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
         
         toast({
           title: "✅ Email verificado!",
@@ -63,14 +79,98 @@ export const AuthVerify = () => {
 
         setTimeout(async () => {
           const redirectPath = await getRedirectPath();
-          console.log('🔄 Redirecionando para:', redirectPath);
+          console.log('[AuthVerify] 🔄 Redirecionando para:', redirectPath);
           navigate(redirectPath, { replace: true });
         }, 1500);
       } else {
-        console.log('⏳ Verificação manual: Ainda não confirmado');
+        // Iniciar polling se não confirmado
+        console.log('[AuthVerify] ⏰ Iniciando polling automático (5s)...');
+        pollingIntervalRef.current = setInterval(async () => {
+          setAutoCheckCount(prev => {
+            const newCount = prev + 1;
+            console.log(`[AuthVerify] 🔄 Tentativa automática ${newCount}/24`);
+            
+            if (newCount >= 24) {
+              console.log('[AuthVerify] ⏹️ Limite de tentativas atingido (2 min)');
+              if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+              }
+            }
+            
+            return newCount;
+          });
+
+          const isConfirmed = await checkEmailVerification(true);
+          
+          if (isConfirmed) {
+            console.log('[AuthVerify] ✅ Email confirmado via polling!');
+            setIsVerified(true);
+            
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            
+            toast({
+              title: "✅ Email verificado!",
+              description: "Bem-vindo ao Shape Pro!",
+            });
+
+            setTimeout(async () => {
+              const redirectPath = await getRedirectPath();
+              console.log('[AuthVerify] 🔄 Redirecionando para:', redirectPath);
+              navigate(redirectPath, { replace: true });
+            }, 1500);
+          }
+        }, 5000);
+      }
+    };
+
+    autoCheck();
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        console.log('[AuthVerify] 🧹 Limpando polling');
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Função para verificar manualmente quando o usuário clica no botão
+  const handleCheckVerification = async () => {
+    console.log('[AuthVerify] 👆 Verificação manual solicitada');
+    setChecking(true);
+    setErrorMessage("");
+    
+    try {
+      const confirmed = await checkEmailVerification(false);
+      
+      if (confirmed) {
+        console.log('[AuthVerify] ✅ Verificação manual: Email confirmado');
+        setIsVerified(true);
+        
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+        
+        toast({
+          title: "✅ Email verificado!",
+          description: "Bem-vindo ao Shape Pro!",
+        });
+
+        setTimeout(async () => {
+          const redirectPath = await getRedirectPath();
+          console.log('[AuthVerify] 🔄 Redirecionando para:', redirectPath);
+          navigate(redirectPath, { replace: true });
+        }, 1500);
+      } else {
+        console.log('[AuthVerify] ⏳ Verificação manual: Ainda não confirmado');
         setErrorMessage("⚠️ Confirme seu email antes de continuar");
       }
     } catch (error) {
+      console.error('[AuthVerify] ❌ Erro na verificação manual:', error);
       setErrorMessage("Erro ao verificar. Tente novamente.");
     } finally {
       setChecking(false);
@@ -78,7 +178,10 @@ export const AuthVerify = () => {
   };
 
   const handleResend = async () => {
+    console.log('[AuthVerify] 📧 Reenviando email de confirmação...');
+    
     if (!email) {
+      console.error('[AuthVerify] ❌ Email não informado');
       toast({
         title: "Email não informado",
         description: "Não foi possível reenviar o email de confirmação.",
@@ -90,16 +193,21 @@ export const AuthVerify = () => {
     setSending(true);
     
     try {
+      console.log('[AuthVerify] 📤 Reenviando para:', email);
       const { error } = await supabase.auth.resend({ type: "signup", email });
       
-      if (error) throw error;
+      if (error) {
+        console.error('[AuthVerify] ❌ Erro ao reenviar:', error);
+        throw error;
+      }
 
+      console.log('[AuthVerify] ✅ Email reenviado com sucesso');
       toast({
         title: "📧 Email reenviado!",
         description: "Verifique sua caixa de entrada e spam.",
       });
     } catch (error: any) {
-      console.error('Resend error:', error);
+      console.error('[AuthVerify] ❌ Erro ao reenviar email:', error);
       toast({
         title: "Erro ao reenviar",
         description: error.message || "Aguarde alguns minutos antes de tentar novamente.",
@@ -184,6 +292,12 @@ export const AuthVerify = () => {
             <p className="text-sm md:text-base text-gray-300 leading-relaxed px-2">
               Enviamos um link de confirmação. Clique nele para ativar sua conta.
             </p>
+            {autoCheckCount > 0 && autoCheckCount < 24 && (
+              <div className="flex items-center justify-center gap-2 text-yellow-500/70 text-xs mt-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Verificando automaticamente... ({autoCheckCount}/24)</span>
+              </div>
+            )}
           </div>
 
           {/* Buttons Section */}
