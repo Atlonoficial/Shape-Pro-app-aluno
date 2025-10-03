@@ -121,22 +121,29 @@ export interface ChatMessage {
 }
 
 // Auth functions
-export const signUpUser = async (email: string, password: string, name: string, userType: 'student' | 'teacher' = 'student') => {
-  // Use shapepro.site as the primary domain for email redirects
-  const redirectDomain = window.location.hostname === 'localhost' 
-    ? window.location.origin 
-    : 'https://shapepro.site';
+export const signUpUser = async (
+  email: string, 
+  password: string, 
+  name: string, 
+  userType: 'student' | 'teacher' = 'student',
+  isNative: boolean = false
+) => {
+  const redirectUrl = isNative
+    ? 'shapepro://app/auth/confirm'
+    : 'https://shapepro.site/app/auth/confirm';
+  
+  console.log('[signUpUser] 🔗 Redirect URL:', redirectUrl, '(isNative:', isNative, ')');
   
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${redirectDomain}/auth/confirm`,
+      emailRedirectTo: redirectUrl,
       data: {
         name,
-        user_type: userType
-      }
-    }
+        user_type: userType,
+      },
+    },
   });
 
   if (error) throw error;
@@ -158,17 +165,18 @@ export const signOutUser = async () => {
   if (error) throw error;
 };
 
-export const resetPasswordForEmail = async (email: string) => {
+export const resetPasswordForEmail = async (email: string, isNative: boolean = false) => {
   console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
   
-  // Use shapepro.site as the primary domain for email redirects
-  const redirectDomain = window.location.hostname === 'localhost' 
-    ? window.location.origin 
-    : 'https://shapepro.site';
+  const redirectUrl = isNative
+    ? 'shapepro://app/auth/reset-password'
+    : 'https://shapepro.site/app/auth/reset-password';
+  
+  console.log('[resetPasswordForEmail] 🔗 Redirect URL:', redirectUrl, '(isNative:', isNative, ')');
   
   try {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${redirectDomain}/auth/recovery`,
+      redirectTo: redirectUrl,
     });
     
     if (error) {

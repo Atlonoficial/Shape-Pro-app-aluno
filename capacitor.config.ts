@@ -6,6 +6,10 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   bundledWebRuntime: false,
   backgroundColor: '#000000',
+  server: {
+    url: 'https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com?forceHideBadge=true',
+    cleartext: true,
+  },
 
   ios: {
     scheme: 'ShapePro',
@@ -28,6 +32,9 @@ const config: CapacitorConfig = {
   },
 
   plugins: {
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 2000,

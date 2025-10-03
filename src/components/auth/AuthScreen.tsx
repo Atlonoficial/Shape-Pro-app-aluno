@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDeviceContext } from '@/hooks/useDeviceContext';
 
 export const AuthScreen = () => {
   const [email, setEmail] = useState('');
@@ -21,6 +22,7 @@ export const AuthScreen = () => {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isNative } = useDeviceContext();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ export const AuthScreen = () => {
     setLoading(true);
 
     try {
-      const result = await signUpUser(email, password, name, 'student');
+      const result = await signUpUser(email, password, name, 'student', isNative);
 
       if (result?.session) {
         console.log('✅ Cadastro: Sessão criada imediatamente (email confirmation disabled)');
@@ -130,7 +132,7 @@ export const AuthScreen = () => {
       }
 
       // Tentar enviar o email de reset
-      await resetPasswordForEmail(email);
+      await resetPasswordForEmail(email, isNative);
       
       toast({
         title: "Email enviado com sucesso!",
