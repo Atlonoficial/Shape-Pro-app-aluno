@@ -43,8 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     '/auth/invite',
     '/auth/magic-link',
     '/auth/change-email',
-    '/auth/error',
-    '/reset-password'
+    '/auth/error'
   ];
   
   const isPublicRoute = PUBLIC_PATHS.some((p) => location.pathname.startsWith(p));

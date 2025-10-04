@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signInUser, signUpUser, resetPasswordForEmail } from '@/lib/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
@@ -20,9 +20,21 @@ export const AuthScreen = () => {
   const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [resetCooldown, setResetCooldown] = useState(0);
+  const [lastResetTime, setLastResetTime] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isNative } = useDeviceContext();
+
+  // Gerenciar cooldown
+  useEffect(() => {
+    if (resetCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResetCooldown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resetCooldown]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +110,16 @@ export const AuthScreen = () => {
   };
 
   const handleResetPassword = async () => {
+    // Verificar cooldown
+    if (resetCooldown > 0) {
+      toast({
+        title: "⏱️ Aguarde",
+        description: `Você poderá solicitar novamente em ${resetCooldown}s`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!email) {
       toast({
         title: "Informe seu email",
@@ -252,26 +274,31 @@ export const AuthScreen = () => {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button 
-                      type="button" 
-                      variant="link" 
-                      size="sm" 
-                      onClick={handleResetPassword}
-                      disabled={resetLoading}
-                      className="flex items-center gap-2"
-                    >
-                      {resetLoading ? (
-                        <>
-                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          Enviando...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="h-3 w-3" />
-                          Esqueceu a senha?
-                        </>
-                      )}
-                    </Button>
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    size="sm" 
+                    onClick={handleResetPassword}
+                    disabled={resetLoading || resetCooldown > 0}
+                    className="flex items-center gap-2"
+                  >
+                    {resetLoading ? (
+                      <>
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Enviando...
+                      </>
+                    ) : resetCooldown > 0 ? (
+                      <>
+                        <Mail className="h-3 w-3" />
+                        Aguarde {resetCooldown}s
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-3 w-3" />
+                        Esqueceu a senha?
+                      </>
+                    )}
+                  </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Entrando..." : "Entrar"}

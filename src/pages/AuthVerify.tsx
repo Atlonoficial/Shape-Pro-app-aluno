@@ -13,6 +13,7 @@ export const AuthVerify = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [autoCheckCount, setAutoCheckCount] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -25,6 +26,16 @@ export const AuthVerify = () => {
 
   // Verificar status de confirmação do email
   const checkEmailVerification = useCallback(async (silent = false) => {
+    // Prevenir execuções simultâneas
+    if (isProcessing && !silent) {
+      console.log('[AuthVerify] ⏸️ Verificação já em andamento, ignorando...');
+      return false;
+    }
+
+    if (!silent) {
+      setIsProcessing(true);
+    }
+
     try {
       if (!silent) {
         console.log('[AuthVerify] 🔍 Verificando status do email...', { autoCheckCount });

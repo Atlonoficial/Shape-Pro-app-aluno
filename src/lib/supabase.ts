@@ -129,8 +129,8 @@ export const signUpUser = async (
   isNative: boolean = false
 ) => {
   const redirectUrl = isNative
-    ? 'shapepro://app/auth/confirm'
-    : 'https://shapepro.site/app/auth/confirm';
+    ? 'shapepro://auth/confirm'
+    : 'https://shapepro.site/auth/confirm';
   
   console.log('[signUpUser] 🔗 Redirect URL:', redirectUrl, '(isNative:', isNative, ')');
   
@@ -169,8 +169,8 @@ export const resetPasswordForEmail = async (email: string, isNative: boolean = f
   console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
   
   const redirectUrl = isNative
-    ? 'shapepro://app/auth/reset-password'
-    : 'https://shapepro.site/app/auth/reset-password';
+    ? 'shapepro://auth/recovery'
+    : 'https://shapepro.site/auth/recovery';
   
   console.log('[resetPasswordForEmail] 🔗 Redirect URL:', redirectUrl, '(isNative:', isNative, ')');
   

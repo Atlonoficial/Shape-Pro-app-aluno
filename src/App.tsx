@@ -19,8 +19,6 @@ import { AuthInvite } from "./pages/auth/AuthInvite";
 import { AuthMagicLink } from "./pages/auth/AuthMagicLink";
 import { AuthChangeEmail } from "./pages/auth/AuthChangeEmail";
 import { AuthError } from "./pages/auth/AuthError";
-import AppAuthConfirm from "./pages/app/auth/AppAuthConfirm";
-import AppResetPassword from "./pages/app/auth/AppResetPassword";
 import { Anamnese } from "./pages/Anamnese";
 import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
@@ -96,10 +94,8 @@ const App = () => (
                 <Route path="/auth/recovery" element={<AuthRecovery />} />
                 <Route path="/auth/invite" element={<AuthInvite />} />
                 <Route path="/auth/magic-link" element={<AuthMagicLink />} />
-                <Route path="/auth/change-email" element={<AuthChangeEmail />} />
-                <Route path="/auth/error" element={<AuthError />} />
-                <Route path="/app/auth/confirm" element={<AppAuthConfirm />} />
-                <Route path="/app/auth/reset-password" element={<AppResetPassword />} />
+              <Route path="/auth/change-email" element={<AuthChangeEmail />} />
+              <Route path="/auth/error" element={<AuthError />} />
                 <Route path="/auth/verify" element={<AuthVerify />} />
                 <Route path="/auth/verified" element={<AuthVerified />} />
                 <Route path="/strava-callback" element={<StravaCallback />} />

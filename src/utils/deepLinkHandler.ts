@@ -15,20 +15,20 @@ export async function initializeDeepLinkHandler() {
     try {
       const urlObj = new URL(url);
       
-      // shapepro://app/auth/confirm?token_hash=xxx&type=signup
-      if (urlObj.host === 'app' && urlObj.pathname.includes('/auth/confirm')) {
+      // shapepro://auth/confirm?token_hash=xxx&type=signup
+      if (urlObj.pathname.includes('/auth/confirm')) {
         const params = urlObj.searchParams.toString();
-        const targetUrl = `/app/auth/confirm?${params}`;
+        const targetUrl = `/auth/confirm?${params}`;
         
         console.log('[DeepLink] ✅ Redirecting to:', targetUrl);
         window.location.href = targetUrl;
         return;
       }
 
-      // shapepro://app/auth/reset-password?token_hash=xxx&type=recovery
-      if (urlObj.host === 'app' && urlObj.pathname.includes('/auth/reset-password')) {
+      // shapepro://auth/recovery?token_hash=xxx&type=recovery
+      if (urlObj.pathname.includes('/auth/recovery')) {
         const params = urlObj.searchParams.toString();
-        const targetUrl = `/app/auth/reset-password?${params}`;
+        const targetUrl = `/auth/recovery?${params}`;
         
         console.log('[DeepLink] ✅ Redirecting to:', targetUrl);
         window.location.href = targetUrl;

@@ -22,11 +22,21 @@ export const AuthRecovery = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [tokenExpired, setTokenExpired] = useState(false);
   const [redirectPath, setRedirectPath] = useState('/');
 
   useEffect(() => {
     const processRecovery = async () => {
       try {
+        // Verificar erro na URL hash
+        const hash = window.location.hash;
+        if (hash.includes('error=otp_expired') || hash.includes('error_description=expired')) {
+          setTokenExpired(true);
+          setErrorMessage('Link de recuperação expirado. Solicite um novo link.');
+          setStatus('error');
+          return;
+        }
+        
         // Parse both search params and URL fragments
         const actionData = parseAuthParams(searchParams);
         
@@ -55,7 +65,17 @@ export const AuthRecovery = () => {
         }
       } catch (error: any) {
         console.error('Recovery error:', error);
-        setErrorMessage(error.message || 'Token de recuperação inválido ou expirado');
+        
+        // Detectar token expirado
+        if (error.message?.includes('expired') || 
+            error.message?.includes('invalid') ||
+            error.message?.includes('otp')) {
+          setTokenExpired(true);
+          setErrorMessage('Link de recuperação expirado. Solicite um novo.');
+        } else {
+          setErrorMessage(error.message || 'Token de recuperação inválido ou expirado');
+        }
+        
         setStatus('error');
       }
     };
@@ -93,7 +113,19 @@ export const AuthRecovery = () => {
 
       if (error) throw error;
 
+      toast({
+        title: "✅ Senha atualizada!",
+        description: "Você já está autenticado e será redirecionado.",
+      });
+
       setStatus('success');
+
+      // Redirecionar automaticamente após 1.5s
+      setTimeout(async () => {
+        const path = await getRedirectPath();
+        console.log('[AuthRecovery] 🔄 Redirecionando para:', path);
+        navigate(path, { replace: true });
+      }, 1500);
     } catch (error: any) {
       console.error('Password update error:', error);
       toast({
@@ -130,6 +162,16 @@ export const AuthRecovery = () => {
           errorMessage={errorMessage}
           onRetry={handleRetry}
         />
+        
+        {tokenExpired && (
+          <Button
+            onClick={() => navigate('/auth?tab=signin')}
+            variant="outline"
+            className="w-full mt-4"
+          >
+            📧 Solicitar Novo Link de Recuperação
+          </Button>
+        )}
       </AuthLayout>
     );
   }
