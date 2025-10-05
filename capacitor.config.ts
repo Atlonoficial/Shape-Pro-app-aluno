@@ -1,4 +1,9 @@
+// capacitor.config.ts
 import type { CapacitorConfig } from '@capacitor/cli';
+
+// Se quiser usar o servidor remoto (apenas DEV), defina esta variável no ambiente:
+// VITE_CAP_SERVER_URL=https://SEU_ID.lovableproject.com?forceHideBadge=true
+const serverUrl = (process.env.VITE_CAP_SERVER_URL || '').trim();
 
 const config: CapacitorConfig = {
   appId: 'com.atlontech.shapepro.aluno',
@@ -6,10 +11,17 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   bundledWebRuntime: false,
   backgroundColor: '#000000',
-  server: {
-    url: 'https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+
+  // 🔒 Em produção, NÃO defina VITE_CAP_SERVER_URL.
+  // Se estiver definida, incluímos o server.url (apenas para DEV/hot-reload).
+  ...(serverUrl
+    ? {
+        server: {
+          url: serverUrl,
+          cleartext: true,
+        },
+      }
+    : {}),
 
   ios: {
     scheme: 'ShapePro',
@@ -38,26 +50,26 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 2000,
-      backgroundColor: "#000000",
-      androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
+      backgroundColor: '#000000',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
       showSpinner: false,
-      iosSpinnerStyle: "small",
-      spinnerColor: "#999999",
+      iosSpinnerStyle: 'small',
+      spinnerColor: '#999999',
     },
     Keyboard: {
-      resize: "body",
-      style: "dark",
+      resize: 'body',
+      style: 'dark',
       resizeOnFullScreen: true,
     },
     StatusBar: {
-      style: "dark",
-      backgroundColor: "#000000",
+      style: 'dark',
+      backgroundColor: '#000000',
     },
     Camera: {
-      permissions: ["camera", "photos"]
-    }
-  }
+      permissions: ['camera', 'photos'],
+    },
+  },
 };
 
 export default config;
