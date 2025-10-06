@@ -10,7 +10,7 @@
   "lint": "eslint .",
   "preview": "vite preview",
   "prebuild": "node scripts/inject-google-services.cjs",
-  "resources": "node scripts/generate-resources.js"
+  "resources": "node scripts/generate-resources.cjs"
 },
 
     "dependencies":  {
