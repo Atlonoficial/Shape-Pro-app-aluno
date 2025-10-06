@@ -70,34 +70,50 @@ export const useWeightProgress = (userId: string) => {
   };
 
   const addWeightEntry = async (weight: number) => {
-    if (!userId) return false;
+    if (!userId) {
+      console.error('❌ No userId found');
+      setError('Usuário não identificado');
+      return false;
+    }
 
     try {
+      console.log('🔍 Starting weight entry process for userId:', userId);
+      
       // Verificar se já registrou peso esta semana
       const alreadyWeighed = await hasWeighedThisWeek();
+      console.log('📅 Already weighed this week?', alreadyWeighed);
+      
       if (alreadyWeighed) {
         setError('Você já registrou seu peso esta semana. Aguarde até a próxima sexta-feira.');
         return false;
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      // Usar formato ISO completo para timestamp with time zone
+      const today = new Date().toISOString();
       
-      console.log('💾 Adding weight entry:', { userId, weight, date: today });
+      const insertData = {
+        user_id: userId,
+        type: 'weight',
+        value: weight,
+        unit: 'kg',
+        date: today
+      };
+      
+      console.log('💾 Inserting weight entry:', insertData);
 
       const { data, error: insertError } = await supabase
         .from('progress')
-        .insert({
-          user_id: userId,
-          type: 'weight',
-          value: weight,
-          unit: 'kg',
-          date: today
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (insertError) {
-        console.error('❌ Error inserting weight:', insertError);
+        console.error('❌ Supabase insert error:', {
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code
+        });
         throw insertError;
       }
 
@@ -107,8 +123,9 @@ export const useWeightProgress = (userId: string) => {
       await fetchWeightProgress();
       return true;
     } catch (err) {
-      console.error('Error adding weight entry:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao salvar peso');
+      console.error('❌ Error adding weight entry:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar peso';
+      setError(errorMessage);
       return false;
     }
   };
@@ -196,7 +213,12 @@ export const useWeightProgress = (userId: string) => {
     if (!userId) return false;
 
     try {
-      console.log('💾 Adding weight from assessment:', { userId, weight, date: assessmentDate });
+      // Garantir formato ISO completo se a data vier em formato simples
+      const formattedDate = assessmentDate.includes('T') 
+        ? assessmentDate 
+        : new Date(assessmentDate + 'T00:00:00').toISOString();
+      
+      console.log('💾 Adding weight from assessment:', { userId, weight, date: formattedDate });
 
       const { data, error: insertError } = await supabase
         .from('progress')
@@ -205,7 +227,7 @@ export const useWeightProgress = (userId: string) => {
           type: 'weight',
           value: weight,
           unit: 'kg',
-          date: assessmentDate
+          date: formattedDate
         })
         .select()
         .single();
