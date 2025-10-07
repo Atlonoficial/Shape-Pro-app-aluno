@@ -46,9 +46,13 @@ export const detectOrigin = (
   const isMobile = typeof window !== 'undefined' && 
     (window as any).Capacitor !== undefined;
 
-  // Obter informações do hostname atual
+  // Obter informações do hostname e pathname atual
   const hostname = typeof window !== 'undefined' 
     ? window.location.hostname 
+    : '';
+  
+  const pathname = typeof window !== 'undefined'
+    ? window.location.pathname
     : '';
   
   const protocol = typeof window !== 'undefined'
@@ -63,14 +67,13 @@ export const detectOrigin = (
     ? window.location.origin
     : '';
 
-  // Domínios conhecidos do sistema
+  // Domínio principal do sistema
   const MAIN_DOMAIN = 'shapepro.site';
-  const ADMIN_DOMAIN = 'admin.shapepro.site';
-  const KNOWN_DOMAINS = [MAIN_DOMAIN, ADMIN_DOMAIN, 'localhost', '127.0.0.1'];
+  const KNOWN_DOMAINS = [MAIN_DOMAIN, 'localhost', '127.0.0.1'];
 
-  // Determinar tipo de origem
-  const isAdminDashboard = hostname.includes('admin.') || hostname === ADMIN_DOMAIN;
-  const isStudentApp = hostname === MAIN_DOMAIN || hostname.includes('localhost');
+  // Determinar tipo de origem BASEADO NA ROTA (pathname)
+  const isAdminDashboard = pathname.includes('dashboard-professor');
+  const isStudentApp = !isAdminDashboard;
   const isCustomDomain = !KNOWN_DOMAINS.some(domain => hostname.includes(domain)) && !isMobile;
 
   // Determinar plataforma
@@ -81,7 +84,7 @@ export const detectOrigin = (
     signupPlatform = 'custom_domain';
   }
 
-  // Calcular URL de redirecionamento inteligente
+  // Calcular URL de redirecionamento inteligente baseado na ROTA
   let redirectUrl = '';
   
   if (isMobile) {
@@ -91,11 +94,11 @@ export const detectOrigin = (
     // Domínio customizado: redirecionar para o próprio domínio
     redirectUrl = `${fullUrl}/auth/confirm`;
   } else if (isAdminDashboard) {
-    // Dashboard admin: redirecionar para admin
-    redirectUrl = `https://${ADMIN_DOMAIN}/auth/confirm`;
+    // Dashboard do professor: redirecionar para rota do dashboard
+    redirectUrl = `https://${MAIN_DOMAIN}/dashboard-professor`;
   } else {
-    // App principal (student): redirecionar para domínio principal
-    redirectUrl = `https://${MAIN_DOMAIN}/auth/confirm`;
+    // App do aluno: redirecionar para home
+    redirectUrl = `https://${MAIN_DOMAIN}/`;
   }
 
   // Construir metadados

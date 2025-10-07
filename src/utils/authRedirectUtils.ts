@@ -43,37 +43,22 @@ export const parseAuthParams = (searchParams: URLSearchParams): AuthActionData =
 export const calculateIntelligentRedirect = (metadata: any, userType?: 'student' | 'teacher'): string => {
   console.log('🧠 calculateIntelligentRedirect: Calculando redirecionamento inteligente');
   console.log('📊 Metadados recebidos:', metadata);
-  console.log('👤 Tipo de usuário:', userType);
+  console.log('👤 Tipo de usuário fornecido:', userType);
 
-  // Prioridade 1: Mobile (sempre redireciona para home do app)
-  if (metadata?.is_mobile === true) {
-    console.log('📱 Redirecionamento: Mobile detectado → /');
-    return '/';
-  }
-
-  // Prioridade 2: Custom Domain (redireciona para home do domínio personalizado)
-  if (metadata?.is_custom_domain === true) {
-    console.log('🌐 Redirecionamento: Custom domain detectado → /');
-    return '/';
-  }
-
-  // Prioridade 3: User Type específico do metadata
+  // Determinar user type final (prioriza o parâmetro, depois metadata)
   const metadataUserType = metadata?.user_type;
   const finalUserType = userType || metadataUserType;
   
-  if (finalUserType === 'teacher' || metadata?.is_admin_dashboard === true) {
+  console.log('👤 Tipo de usuário final:', finalUserType);
+
+  // Prioridade 1: Professor → Dashboard
+  if (finalUserType === 'teacher') {
     console.log('👨‍🏫 Redirecionamento: Professor → /dashboard-professor');
     return '/dashboard-professor';
   }
 
-  // Prioridade 4: Redirect URL customizado
-  if (metadata?.redirect_url) {
-    console.log('🔗 Redirecionamento: URL customizada →', metadata.redirect_url);
-    return metadata.redirect_url;
-  }
-
-  // Default: Home
-  console.log('🏠 Redirecionamento: Default → /');
+  // Prioridade 2: Aluno ou padrão → Home
+  console.log('👨‍🎓 Redirecionamento: Aluno/Default → /');
   return '/';
 };
 
