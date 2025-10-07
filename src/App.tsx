@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
 import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
@@ -58,6 +59,21 @@ const queryClient = new QueryClient({
   },
 });
 
+// Componente auxiliar para redirecionar para /auth/confirm preservando query e hash
+const RedirectToAuthConfirm = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Preservar query params e hash
+    const newPath = `/auth/confirm${location.search}${location.hash}`;
+    console.log('🔄 [Redirect] Old URL detected, redirecting to:', newPath);
+    navigate(newPath, { replace: true });
+  }, [location, navigate]);
+  
+  return null; // Não renderiza nada durante o redirect
+};
+
 const App = () => (
   <ErrorBoundary>
     <SecurityProvider>
@@ -91,6 +107,11 @@ const App = () => (
                 
                 {/* Authentication Routes */}
                 <Route path="/auth/confirm" element={<AuthConfirm />} />
+                
+                {/* ✅ Aliases de compatibilidade (redireciona para /auth/confirm) */}
+                <Route path="/email/confirm" element={<RedirectToAuthConfirm />} />
+                <Route path="/auth/app/confirm.html" element={<RedirectToAuthConfirm />} />
+                
                 <Route path="/auth/recovery" element={<AuthRecovery />} />
                 <Route path="/auth/invite" element={<AuthInvite />} />
                 <Route path="/auth/magic-link" element={<AuthMagicLink />} />

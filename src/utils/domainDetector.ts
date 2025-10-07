@@ -86,19 +86,17 @@ export const detectOrigin = (
 
   // Calcular URL de redirecionamento inteligente baseado na ROTA
   let redirectUrl = '';
+  const srcParam = isAdminDashboard ? 'dashboard' : 'app';
   
   if (isMobile) {
-    // Mobile: usar deep link
-    redirectUrl = 'shapepro://auth/confirm';
+    // Mobile: usar deep link com src
+    redirectUrl = `shapepro://auth/confirm?src=${srcParam}`;
   } else if (isCustomDomain) {
-    // Domínio customizado: redirecionar para o próprio domínio
-    redirectUrl = `${fullUrl}/auth/confirm`;
-  } else if (isAdminDashboard) {
-    // Dashboard do professor: redirecionar para rota do dashboard
-    redirectUrl = `https://${MAIN_DOMAIN}/dashboard-professor`;
+    // Domínio customizado: redirecionar para próprio domínio + /auth/confirm
+    redirectUrl = `${fullUrl}/auth/confirm?src=${srcParam}`;
   } else {
-    // App do aluno: redirecionar para home
-    redirectUrl = `https://${MAIN_DOMAIN}/`;
+    // ✅ PADRÃO: Sempre redirecionar para /auth/confirm (página de processamento)
+    redirectUrl = `https://${MAIN_DOMAIN}/auth/confirm?src=${srcParam}`;
   }
 
   // Construir metadados
