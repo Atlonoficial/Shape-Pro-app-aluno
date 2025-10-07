@@ -126,13 +126,28 @@ export const signUpUser = async (
   password: string, 
   name: string, 
   userType: 'student' | 'teacher' = 'student',
-  isNative: boolean = false
+  isNative: boolean = false,
+  tenantId?: string
 ) => {
-  const redirectUrl = isNative
-    ? 'shapepro://auth/confirm'
-    : 'https://shapepro.site/auth/confirm';
+  // 🎯 FASE 1: Detecção Inteligente de Origem
+  const { detectOrigin, extractUserMetadata, calculateRedirectUrl } = await import('@/utils/domainDetector');
   
-  console.log('[signUpUser] 🔗 Redirect URL:', redirectUrl, '(isNative:', isNative, ')');
+  // Detectar origem automaticamente
+  const originMetadata = detectOrigin(userType, tenantId);
+  
+  // Calcular URL de redirecionamento inteligente
+  const redirectUrl = calculateRedirectUrl(originMetadata);
+  
+  console.log('[signUpUser] 🎯 Smart Origin Detection:', {
+    platform: originMetadata.signup_platform,
+    userType,
+    redirectUrl,
+    isCustomDomain: originMetadata.is_custom_domain,
+    isMobile: originMetadata.is_mobile,
+  });
+  
+  // Extrair metadados para armazenar no user_metadata
+  const userMetadata = extractUserMetadata(originMetadata);
   
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -142,11 +157,18 @@ export const signUpUser = async (
       data: {
         name,
         user_type: userType,
+        // 🔥 Metadados Inteligentes armazenados automaticamente
+        ...userMetadata,
       },
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error('[signUpUser] ❌ Error:', error);
+    throw error;
+  }
+  
+  console.log('[signUpUser] ✅ User created with intelligent metadata');
   return data; // contains { user, session }
 };
 
@@ -165,14 +187,30 @@ export const signOutUser = async () => {
   if (error) throw error;
 };
 
-export const resetPasswordForEmail = async (email: string, isNative: boolean = false) => {
+export const resetPasswordForEmail = async (
+  email: string, 
+  isNative: boolean = false,
+  tenantId?: string
+) => {
   console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
   
-  const redirectUrl = isNative
-    ? 'shapepro://auth/recovery'
-    : 'https://shapepro.site/auth/recovery';
+  // 🎯 FASE 1: Detecção Inteligente de Origem (mesma lógica do signup)
+  const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
   
-  console.log('[resetPasswordForEmail] 🔗 Redirect URL:', redirectUrl, '(isNative:', isNative, ')');
+  // Detectar origem automaticamente (sem userType pois ainda não sabemos)
+  const originMetadata = detectOrigin(undefined, tenantId);
+  
+  // Calcular URL de redirecionamento inteligente
+  // Para recovery, usamos /auth/recovery em vez de /auth/confirm
+  const baseRedirectUrl = calculateRedirectUrl(originMetadata);
+  const redirectUrl = baseRedirectUrl.replace('/auth/confirm', '/auth/recovery');
+  
+  console.log('[resetPasswordForEmail] 🎯 Smart Origin Detection:', {
+    platform: originMetadata.signup_platform,
+    redirectUrl,
+    isCustomDomain: originMetadata.is_custom_domain,
+    isMobile: originMetadata.is_mobile,
+  });
   
   try {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -184,7 +222,7 @@ export const resetPasswordForEmail = async (email: string, isNative: boolean = f
       throw error;
     }
     
-    console.log('[resetPasswordForEmail] Reset iniciado com sucesso:', data);
+    console.log('[resetPasswordForEmail] ✅ Reset iniciado com sucesso');
     return data;
   } catch (error: any) {
     console.error('[resetPasswordForEmail] Erro capturado:', {
