@@ -14,16 +14,20 @@ export const AuthConfirm = () => {
   useEffect(() => {
     const processConfirmation = async () => {
       try {
+        console.log('🔐 AuthConfirm: Iniciando processamento de confirmação');
         const actionData = parseAuthParams(searchParams);
+        console.log('📋 AuthConfirm: Dados da ação:', actionData);
         setActionType(actionData.type);
 
         await processAuthAction(actionData);
+        console.log('✅ AuthConfirm: Ação processada com sucesso');
         
         const path = await getRedirectPath();
+        console.log('🎯 AuthConfirm: Path de redirecionamento calculado:', path);
         setRedirectPath(path);
         setStatus('success');
       } catch (error: any) {
-        console.error('Confirmation error:', error);
+        console.error('❌ AuthConfirm: Erro na confirmação:', error);
         setErrorMessage(error.message || 'Erro ao processar confirmação');
         setStatus('error');
       }

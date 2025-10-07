@@ -40,31 +40,76 @@ export const parseAuthParams = (searchParams: URLSearchParams): AuthActionData =
   return authData;
 };
 
+export const calculateIntelligentRedirect = (metadata: any, userType?: 'student' | 'teacher'): string => {
+  console.log('🧠 calculateIntelligentRedirect: Calculando redirecionamento inteligente');
+  console.log('📊 Metadados recebidos:', metadata);
+  console.log('👤 Tipo de usuário:', userType);
+
+  // Prioridade 1: Mobile (sempre redireciona para home do app)
+  if (metadata?.is_mobile === true) {
+    console.log('📱 Redirecionamento: Mobile detectado → /');
+    return '/';
+  }
+
+  // Prioridade 2: Custom Domain (redireciona para home do domínio personalizado)
+  if (metadata?.is_custom_domain === true) {
+    console.log('🌐 Redirecionamento: Custom domain detectado → /');
+    return '/';
+  }
+
+  // Prioridade 3: User Type específico do metadata
+  const metadataUserType = metadata?.user_type;
+  const finalUserType = userType || metadataUserType;
+  
+  if (finalUserType === 'teacher' || metadata?.is_admin_dashboard === true) {
+    console.log('👨‍🏫 Redirecionamento: Professor → /dashboard-professor');
+    return '/dashboard-professor';
+  }
+
+  // Prioridade 4: Redirect URL customizado
+  if (metadata?.redirect_url) {
+    console.log('🔗 Redirecionamento: URL customizada →', metadata.redirect_url);
+    return metadata.redirect_url;
+  }
+
+  // Default: Home
+  console.log('🏠 Redirecionamento: Default → /');
+  return '/';
+};
+
 export const getRedirectPath = async (userType?: 'student' | 'teacher'): Promise<string> => {
-  if (!userType) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('🔍 getRedirectPath: Buscando tipo de usuário para:', user?.id);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔍 getRedirectPath: Buscando dados do usuário:', user?.id);
+    
+    if (user) {
+      // Buscar metadados de origem armazenados no signup
+      const metadata = user.user_metadata;
+      console.log('📦 getRedirectPath: Metadados do usuário:', metadata);
       
-      if (user) {
+      // Se não tiver userType passado, buscar do profile
+      let finalUserType = userType;
+      if (!finalUserType) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('user_type')
           .eq('id', user.id)
           .single();
         
-        userType = profile?.user_type as 'student' | 'teacher';
-        console.log('👤 getRedirectPath: Tipo de usuário encontrado:', userType);
+        finalUserType = profile?.user_type as 'student' | 'teacher';
+        console.log('👤 getRedirectPath: Tipo de usuário do profile:', finalUserType);
       }
-    } catch (error) {
-      console.error('❌ getRedirectPath: Erro ao buscar tipo de usuário:', error);
+      
+      // Usar função de cálculo inteligente
+      return calculateIntelligentRedirect(metadata, finalUserType);
     }
+  } catch (error) {
+    console.error('❌ getRedirectPath: Erro ao buscar dados:', error);
   }
 
-  const path = userType === 'teacher' ? '/dashboard-professor' : '/';
-  console.log('🎯 getRedirectPath: Redirecionando para:', path);
-  
-  return path;
+  // Fallback seguro
+  console.log('⚠️ getRedirectPath: Usando fallback → /');
+  return '/';
 };
 
 export const processAuthAction = async (actionData: AuthActionData) => {
