@@ -38,6 +38,7 @@ import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
 import Chat from "./pages/Chat";
+import { EditProfile } from "./pages/teacher/EditProfile";
 import DashboardProfessor from "./pages/DashboardProfessor";
 import StravaCallback from "./pages/StravaCallback";
 
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="/recompensas" element={<AuthGuard><Recompensas /></AuthGuard>} />
                 <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
                 <Route path="/dashboard-professor" element={<AuthGuard><DashboardProfessor /></AuthGuard>} />
+                <Route path="/teacher/edit-profile" element={<AuthGuard><EditProfile /></AuthGuard>} />
                 
                 {/* Authentication Routes */}
                 <Route path="/auth/confirm" element={<AuthConfirm />} />

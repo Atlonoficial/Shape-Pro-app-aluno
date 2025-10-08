@@ -39,31 +39,35 @@ export const ChatHeader = ({
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const [teacherName, setTeacherName] = useState<string>('Professor');
+  const [teacherAvatar, setTeacherAvatar] = useState<string | null>(null);
   
   const isStudent = userProfile?.user_type === 'student';
   const chatPartner = isStudent ? teacherName : 'Aluno';
   const chatPartnerId = isStudent ? conversation?.teacher_id : conversation?.student_id;
 
-  // Buscar nome real do professor
+  // Buscar nome e avatar do professor
   useEffect(() => {
-    const fetchTeacherName = async () => {
+    const fetchTeacherData = async () => {
       if (!conversation?.teacher_id) return;
       
       try {
-        const { data, error } = await supabase.rpc('get_teacher_name', {
-          teacher_id_param: conversation.teacher_id
-        });
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name, avatar_url')
+          .eq('id', conversation.teacher_id)
+          .maybeSingle();
         
         if (data && !error) {
-          setTeacherName(data);
+          setTeacherName(data.name || 'Professor');
+          setTeacherAvatar(data.avatar_url);
         }
       } catch (error) {
-        console.error('Erro ao buscar nome do professor:', error);
+        console.error('Erro ao buscar dados do professor:', error);
       }
     };
 
     if (isStudent && conversation?.teacher_id) {
-      fetchTeacherName();
+      fetchTeacherData();
     }
   }, [conversation?.teacher_id, isStudent]);
   
@@ -99,7 +103,7 @@ export const ChatHeader = ({
         <div className="flex items-center gap-3">
           <div className="relative">
             <Avatar className="w-10 h-10">
-              <AvatarImage src="" />
+              <AvatarImage src={isStudent ? teacherAvatar || '' : ''} />
               <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                 {chatPartner.charAt(0)}
               </AvatarFallback>

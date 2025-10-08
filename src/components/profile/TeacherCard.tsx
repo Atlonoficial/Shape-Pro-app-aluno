@@ -80,8 +80,12 @@ export const TeacherCard = () => {
             
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-foreground truncate">{teacher.name}</h4>
-              {teacher.bio && (
+              {teacher.bio ? (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{teacher.bio}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-1 italic">
+                  Entre em contato para mais informações
+                </p>
               )}
               
               {teacher.specialties && (

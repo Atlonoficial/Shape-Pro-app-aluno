@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 
+const DEFAULT_TEACHER_ID = '2db424b4-08d2-4ad0-9dd0-971eaab960e1'; // Antonio Bispo
+
 export const useStudentTeacher = () => {
   const { user } = useAuthContext();
   const [teacherId, setTeacherId] = useState<string | null>(null);
@@ -12,9 +14,7 @@ export const useStudentTeacher = () => {
     
     if (!user?.id) {
       console.log('[useStudentTeacher] No user ID, using default teacher');
-      // Use default teacher when no user is authenticated
-      const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
-      setTeacherId(defaultTeacherId);
+      setTeacherId(DEFAULT_TEACHER_ID);
       setLoading(false);
       return;
     }
@@ -23,38 +23,48 @@ export const useStudentTeacher = () => {
       console.log('[useStudentTeacher] Fetching teacher for user:', user.id);
       setLoading(true);
       
-      const { data: studentData, error } = await supabase
+      // 1. Try to fetch from student-teacher relationship
+      const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('teacher_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('[useStudentTeacher] Error fetching student data:', error);
-        // Use default teacher when there's an error
-        const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
-        console.log('[useStudentTeacher] Using default teacher:', defaultTeacherId);
-        setTeacherId(defaultTeacherId);
+      if (!studentError && studentData?.teacher_id) {
+        console.log('[useStudentTeacher] Found teacher from students table:', studentData.teacher_id);
+        setTeacherId(studentData.teacher_id);
+        setLoading(false);
         return;
       }
 
-      console.log('[useStudentTeacher] Student data:', studentData);
-      
-      if (studentData?.teacher_id) {
-        console.log('[useStudentTeacher] Found teacher ID:', studentData.teacher_id);
-        setTeacherId(studentData.teacher_id);
-      } else {
-        // Use default teacher when no student record exists
-        const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
-        console.log('[useStudentTeacher] No student record found, using default teacher:', defaultTeacherId);
-        setTeacherId(defaultTeacherId);
+      // 2. Try to fetch from tenant's default teacher
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileData?.tenant_id) {
+        const { data: tenantData } = await supabase
+          .from('tenants')
+          .select('default_teacher_id')
+          .eq('id', profileData.tenant_id)
+          .maybeSingle();
+
+        if (tenantData?.default_teacher_id) {
+          console.log('[useStudentTeacher] Found teacher from tenant:', tenantData.default_teacher_id);
+          setTeacherId(tenantData.default_teacher_id);
+          setLoading(false);
+          return;
+        }
       }
+
+      // 3. Fallback to default teacher
+      console.log('[useStudentTeacher] Using fallback default teacher:', DEFAULT_TEACHER_ID);
+      setTeacherId(DEFAULT_TEACHER_ID);
     } catch (error) {
       console.error('[useStudentTeacher] Unexpected error:', error);
-      // Use default teacher when there's an unexpected error
-      const defaultTeacherId = '0d5398c2-278e-4853-b980-f36961795e52'; // Atlon Tech
-      console.log('[useStudentTeacher] Error occurred, using default teacher:', defaultTeacherId);
-      setTeacherId(defaultTeacherId);
+      setTeacherId(DEFAULT_TEACHER_ID);
     } finally {
       setLoading(false);
     }
