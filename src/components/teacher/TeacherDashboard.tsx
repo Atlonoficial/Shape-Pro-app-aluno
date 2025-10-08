@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, ShoppingCart, Users, FileText, Utensils, Bell, MessageSquare, CreditCard, Activity } from "lucide-react";
 import { CourseManagement } from "./CourseManagement";
@@ -10,6 +9,7 @@ import { NotificationManager } from "./NotificationManager";
 import { FeedbackManager } from "./FeedbackManager";
 import { PaymentGatewayConfig } from "./PaymentGatewayConfig";
 import { StravaStudentMonitoring } from "./StravaStudentMonitoring";
+import { TeacherStatsCards } from "./TeacherStatsCards";
 import { useAuth } from "@/hooks/useAuth";
 
 export const TeacherDashboard = () => {
@@ -27,28 +27,8 @@ export const TeacherDashboard = () => {
 
   return (
     <div className="p-4 pt-6 pb-24">
-      {/* Header Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-primary">Total de Cursos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 este mês</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-secondary/10 to-secondary/5 border-secondary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-secondary">Alunos Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">48</div>
-            <p className="text-xs text-muted-foreground">+5 esta semana</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Header Stats - Dados Reais */}
+      <TeacherStatsCards />
 
        {/* Tabs Navigation */}
         <Tabs defaultValue="courses" className="w-full">

@@ -1656,7 +1656,7 @@ export type Database = {
           points_workout: number
           reset_frequency: string | null
           streak_multiplier: number
-          teacher_id: string
+          teacher_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1677,7 +1677,7 @@ export type Database = {
           points_workout?: number
           reset_frequency?: string | null
           streak_multiplier?: number
-          teacher_id: string
+          teacher_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1698,7 +1698,7 @@ export type Database = {
           points_workout?: number
           reset_frequency?: string | null
           streak_multiplier?: number
-          teacher_id?: string
+          teacher_id?: string | null
           updated_at?: string
         }
         Relationships: []
