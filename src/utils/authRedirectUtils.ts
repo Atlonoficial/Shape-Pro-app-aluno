@@ -125,30 +125,55 @@ export const processAuthAction = async (actionData: AuthActionData) => {
         throw verifyError;
       }
       console.log('✅ processAuthAction: Email confirmado com sucesso');
+      
+      // 🔄 FASE 1: Esperar sessão ser estabelecida (até 5 segundos)
+      console.log('⏳ processAuthAction: Aguardando sessão ser estabelecida...');
+      let sessionFound = false;
+      for (let i = 0; i < 10; i++) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('✅ processAuthAction: Sessão estabelecida após verificação', {
+            attempt: i + 1,
+            userId: session.user.id
+          });
+          sessionFound = true;
+          break;
+        }
+        console.log(`⏳ processAuthAction: Tentativa ${i + 1}/10 - aguardando sessão...`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      if (!sessionFound) {
+        console.warn('⚠️ processAuthAction: Sessão não estabelecida automaticamente após verifyOtp');
+      }
       break;
 
     case 'recovery':
     case 'password_recovery':
       // For password recovery from fragment, the token is already an access_token
       // We don't need to exchange it, Supabase will handle it automatically
-      console.log('Processing recovery token from URL fragment');
+      console.log('🔐 processAuthAction: Processando token de recuperação');
       break;
 
     case 'email_change':
+      console.log('📧 processAuthAction: Verificando alteração de email');
       const { error: emailChangeError } = await supabase.auth.verifyOtp({
         token_hash,
         type: 'email_change'
       });
       if (emailChangeError) throw emailChangeError;
+      console.log('✅ processAuthAction: Email alterado com sucesso');
       break;
 
     case 'invite':
     case 'magiclink':
+      console.log('🔗 processAuthAction: Verificando magic link');
       const { error: magicLinkError } = await supabase.auth.verifyOtp({
         token_hash,
         type: 'magiclink'
       });
       if (magicLinkError) throw magicLinkError;
+      console.log('✅ processAuthAction: Magic link verificado com sucesso');
       break;
 
     default:

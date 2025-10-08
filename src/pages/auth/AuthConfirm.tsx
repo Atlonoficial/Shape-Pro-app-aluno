@@ -31,9 +31,43 @@ export const AuthConfirm = () => {
         await processAuthAction(actionData);
         console.log('✅ AuthConfirm: Ação processada com sucesso');
         
+        // 🔄 FASE 2: Esperar sessão ser estabelecida (até 10 segundos)
+        console.log('⏳ AuthConfirm: Aguardando sessão ser estabelecida...');
+        let sessionEstablished = false;
+        let currentSession = null;
+        
+        for (let i = 0; i < 20; i++) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            sessionEstablished = true;
+            currentSession = session;
+            console.log('✅ AuthConfirm: Sessão confirmada, usuário autenticado', {
+              attempt: i + 1,
+              userId: session.user.id,
+              userType: session.user.user_metadata?.user_type
+            });
+            break;
+          }
+          console.log(`⏳ AuthConfirm: Tentativa ${i + 1}/20 - aguardando sessão...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Fallback se sessão não for estabelecida
+        if (!sessionEstablished) {
+          console.error('❌ AuthConfirm: Sessão não estabelecida após timeout');
+          throw new Error('Email confirmado, mas falha ao estabelecer sessão. Por favor, faça login manualmente.');
+        }
+        
         // Buscar dados do usuário para determinar redirecionamento
         const { data: { user } } = await supabase.auth.getUser();
         const userType = user?.user_metadata?.user_type;
+        
+        console.log('📊 AuthConfirm: Dados completos da sessão:', {
+          userId: user?.id,
+          email: user?.email,
+          userType,
+          sessionActive: !!currentSession
+        });
         
         console.log('👤 AuthConfirm: user_type dos metadados:', userType);
         console.log('🎯 AuthConfirm: src da URL:', srcParam);
