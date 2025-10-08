@@ -2,15 +2,37 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
-import { MessageCircle, Instagram, Facebook, Phone, Youtube } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Phone, Youtube, Users } from "lucide-react";
 import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/components/auth/AuthProvider";
+import { useEffect, useRef } from "react";
 
 export const TeacherCard = () => {
   const { teacher, loading } = useTeacherProfile();
   const unreadCount = useUnreadMessages();
   const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const viewTracked = useRef(false);
+
+  // FASE 5: Rastrear visualização do perfil do professor
+  useEffect(() => {
+    if (teacher?.id && user?.id && !viewTracked.current) {
+      viewTracked.current = true;
+      supabase.from('profile_views').insert({
+        viewer_id: user.id,
+        profile_id: teacher.id
+      }).then(({ error }) => {
+        if (error) {
+          console.warn('[TeacherCard] Failed to track profile view:', error);
+        } else {
+          console.log('[TeacherCard] ✅ Profile view tracked');
+        }
+      });
+    }
+  }, [teacher?.id, user?.id]);
 
   if (loading) {
     return (
@@ -31,8 +53,27 @@ export const TeacherCard = () => {
     );
   }
 
+  // FASE 2: Fallback visual quando não há professor
   if (!teacher) {
-    return null;
+    console.log('[TeacherCard] No teacher data available');
+    return (
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-3 text-foreground">Meu Treinador</h3>
+        <Card className="border-dashed">
+          <CardContent className="p-6 text-center space-y-3">
+            <Users className="w-12 h-12 mx-auto text-muted-foreground/50" />
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Nenhum professor atribuído ainda
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Entre em contato com o suporte para vincular um professor
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const handleChatClick = () => {

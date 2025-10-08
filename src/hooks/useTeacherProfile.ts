@@ -22,19 +22,19 @@ export const useTeacherProfile = () => {
 
   console.log('[useTeacherProfile] Render - teacherId:', teacherId, 'teacherIdLoading:', teacherIdLoading);
 
+  // FASE 3: Logs avançados para debugging
   const fetchTeacherProfile = async () => {
-    console.log('[useTeacherProfile] fetchTeacherProfile called, teacherId:', teacherId);
-    
     if (!teacherId) {
-      console.log('[useTeacherProfile] No teacherId, setting teacher to null');
+      console.warn('[useTeacherProfile] ⚠️ No teacherId provided');
       setTeacher(null);
       return;
     }
 
     try {
-      console.log('[useTeacherProfile] Starting fetch for teacherId:', teacherId);
       setLoading(true);
+      console.log('[useTeacherProfile] 🔍 Fetching teacher profile:', teacherId);
       
+      // Buscar dados do professor
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -53,22 +53,38 @@ export const useTeacherProfile = () => {
         .eq('user_type', 'teacher')
         .maybeSingle();
 
-      console.log('[useTeacherProfile] Query result:', { data, error });
-
       if (error) {
-        console.error('[useTeacherProfile] Error fetching teacher profile:', error);
+        // Log detalhado do erro RLS ou de query
+        const currentUser = await supabase.auth.getUser();
+        console.error('[useTeacherProfile] ❌ RLS or Query Error:', {
+          error,
+          errorCode: error.code,
+          errorMessage: error.message,
+          teacherId,
+          currentUserId: currentUser.data.user?.id,
+          hint: 'Check if RLS policies allow student to view teacher profile'
+        });
+        setTeacher(null);
         return;
       }
 
       if (data) {
-        console.log('[useTeacherProfile] Teacher data found:', data);
+        console.log('[useTeacherProfile] ✅ Teacher profile loaded:', {
+          id: data.id,
+          name: data.name,
+          hasBio: !!data.bio,
+          hasAvatar: !!data.avatar_url,
+          hasSocials: !!(data.instagram_url || data.facebook_url || data.youtube_url || data.whatsapp_url),
+          specialtiesCount: Array.isArray(data.specialties) ? data.specialties.length : 0
+        });
         setTeacher(data);
       } else {
-        console.log('[useTeacherProfile] No teacher data returned');
+        console.warn('[useTeacherProfile] ⚠️ Teacher not found or RLS blocked access');
         setTeacher(null);
       }
     } catch (error) {
-      console.error('[useTeacherProfile] Unexpected error:', error);
+      console.error('[useTeacherProfile] 💥 Unexpected error:', error);
+      setTeacher(null);
     } finally {
       setLoading(false);
     }
