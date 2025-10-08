@@ -5210,6 +5210,15 @@ export type Database = {
           protein: number
         }[]
       }
+      get_next_workout: {
+        Args: { p_student_id: string }
+        Returns: {
+          scheduled_day: string
+          workout_description: string
+          workout_id: string
+          workout_name: string
+        }[]
+      }
       get_payment_system_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -5221,6 +5230,17 @@ export type Database = {
       get_plan_name_by_id: {
         Args: { plan_id: string }
         Returns: string
+      }
+      get_student_workouts_with_progress: {
+        Args: { p_student_id: string }
+        Returns: {
+          completed_exercises: number
+          progress_percentage: number
+          total_exercises: number
+          workout_description: string
+          workout_id: string
+          workout_name: string
+        }[]
       }
       get_teacher_chat_stats: {
         Args: { teacher_id_param: string }
@@ -5261,6 +5281,14 @@ export type Database = {
         Args: { teacher_id_param: string }
         Returns: string
       }
+      get_teacher_revenue: {
+        Args: { p_end_date: string; p_start_date: string; p_teacher_id: string }
+        Returns: number
+      }
+      get_teacher_student_count: {
+        Args: { p_teacher_id: string }
+        Returns: number
+      }
       get_tenant_by_domain: {
         Args: { p_domain: string }
         Returns: {
@@ -5280,6 +5308,17 @@ export type Database = {
       get_user_tenant_id: {
         Args: { user_uuid: string }
         Returns: string
+      }
+      get_workout_details_for_student: {
+        Args: { p_student_id: string }
+        Returns: {
+          exercises: Json
+          workout_created_at: string
+          workout_description: string
+          workout_id: string
+          workout_name: string
+          workout_status: string
+        }[]
       }
       has_role: {
         Args: {
@@ -5340,7 +5379,7 @@ export type Database = {
       }
       mark_multiple_conversations_as_read: {
         Args: { conversation_ids: string[]; user_type?: string }
-        Returns: Json
+        Returns: undefined
       }
       process_subscription_renewals: {
         Args: Record<PropertyKey, never>
