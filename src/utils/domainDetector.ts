@@ -69,12 +69,18 @@ export const detectOrigin = (
 
   // Domínio principal do sistema
   const MAIN_DOMAIN = 'shapepro.site';
+  const LOVABLE_DOMAINS = ['lovable.dev', 'lovableproject.com', 'lovable.app'];
   const KNOWN_DOMAINS = [MAIN_DOMAIN, 'localhost', '127.0.0.1'];
+
+  // Detectar se é preview do Lovable
+  const isLovablePreview = LOVABLE_DOMAINS.some(d => 
+    hostname === d || hostname.endsWith(`.${d}`)
+  );
 
   // Determinar tipo de origem BASEADO NA ROTA (pathname)
   const isAdminDashboard = pathname.includes('dashboard-professor');
   const isStudentApp = !isAdminDashboard;
-  const isCustomDomain = !KNOWN_DOMAINS.some(domain => hostname.includes(domain)) && !isMobile;
+  const isCustomDomain = !KNOWN_DOMAINS.some(domain => hostname.includes(domain)) && !isMobile && !isLovablePreview;
 
   // Determinar plataforma
   let signupPlatform: 'web' | 'mobile' | 'custom_domain' = 'web';
@@ -91,6 +97,13 @@ export const detectOrigin = (
   if (isMobile) {
     // Mobile: usar deep link com src
     redirectUrl = `shapepro://auth/confirm?src=${srcParam}`;
+  } else if (isLovablePreview) {
+    // 🔧 Lovable preview: FORÇAR produção
+    redirectUrl = `https://${MAIN_DOMAIN}/auth/confirm?src=${srcParam}`;
+    console.log('🔧 [Domain Detector] Lovable preview → forcing production', {
+      hostname,
+      redirectUrl
+    });
   } else if (isCustomDomain) {
     // Domínio customizado: redirecionar para próprio domínio + /auth/confirm
     redirectUrl = `${fullUrl}/auth/confirm?src=${srcParam}`;

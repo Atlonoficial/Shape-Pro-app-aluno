@@ -204,8 +204,22 @@ export const AuthVerify = () => {
     setSending(true);
     
     try {
+      // ✅ Recalcular redirectUrl usando detectOrigin
+      const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
+      const meta = detectOrigin('student');
+      const redirectUrl = calculateRedirectUrl(meta);
+      
       console.log('[AuthVerify] 📤 Reenviando para:', email);
-      const { error } = await supabase.auth.resend({ type: "signup", email });
+      console.log('[AuthVerify] 🎯 redirectUrl:', redirectUrl);
+      
+      // ✅ Passar emailRedirectTo nas options
+      const { error } = await supabase.auth.resend({ 
+        type: "signup", 
+        email,
+        options: { 
+          emailRedirectTo: redirectUrl 
+        }
+      });
       
       if (error) {
         console.error('[AuthVerify] ❌ Erro ao reenviar:', error);

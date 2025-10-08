@@ -138,10 +138,18 @@ export const signUpUser = async (
   // Calcular URL de redirecionamento inteligente
   const redirectUrl = calculateRedirectUrl(originMetadata);
   
+  // 🛡️ GUARD-RAIL: Forçar produção se detectar Lovable preview
+  const previewRegex = /(lovable\.dev|lovableproject\.com|\.lovable\.app)/i;
+  const srcParam = originMetadata.is_admin_dashboard ? 'dashboard' : 'app';
+  const finalRedirect = previewRegex.test(redirectUrl)
+    ? `https://shapepro.site/auth/confirm?src=${srcParam}`
+    : redirectUrl;
+  
   console.log('[signUpUser] 🎯 Smart Origin Detection:', {
     platform: originMetadata.signup_platform,
     userType,
     redirectUrl,
+    finalRedirect,
     isCustomDomain: originMetadata.is_custom_domain,
     isMobile: originMetadata.is_mobile,
   });
@@ -153,7 +161,7 @@ export const signUpUser = async (
     email,
     password,
     options: {
-      emailRedirectTo: redirectUrl,
+      emailRedirectTo: finalRedirect,
       data: {
         name,
         user_type: userType,
