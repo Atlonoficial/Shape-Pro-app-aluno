@@ -4101,6 +4101,7 @@ export type Database = {
           accent_color: string | null
           background_color: string | null
           created_at: string | null
+          default_teacher_id: string | null
           domain: string | null
           id: string
           is_active: boolean | null
@@ -4118,6 +4119,7 @@ export type Database = {
           accent_color?: string | null
           background_color?: string | null
           created_at?: string | null
+          default_teacher_id?: string | null
           domain?: string | null
           id?: string
           is_active?: boolean | null
@@ -4135,6 +4137,7 @@ export type Database = {
           accent_color?: string | null
           background_color?: string | null
           created_at?: string | null
+          default_teacher_id?: string | null
           domain?: string | null
           id?: string
           is_active?: boolean | null
@@ -4148,7 +4151,15 @@ export type Database = {
           slug?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenants_default_teacher_id_fkey"
+            columns: ["default_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_locations: {
         Row: {
@@ -5217,6 +5228,14 @@ export type Database = {
       get_teacher_name: {
         Args: { teacher_id_param: string }
         Returns: string
+      }
+      get_tenant_by_domain: {
+        Args: { p_domain: string }
+        Returns: {
+          default_teacher_id: string
+          tenant_id: string
+          tenant_slug: string
+        }[]
       }
       get_transaction_context: {
         Args: { p_authenticated_user_id: string; p_target_student_id?: string }
