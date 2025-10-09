@@ -29,6 +29,17 @@ const config: CapacitorConfig = {
     backgroundColor: '#000000',
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
+    
+    // ✅ Permissões de privacidade obrigatórias (ITMS-90683)
+    plist: {
+      // Obrigatórias pela Apple
+      NSPhotoLibraryUsageDescription: 'Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.',
+      NSLocationWhenInUseUsageDescription: 'Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.',
+      
+      // Recomendadas (plugins instalados)
+      NSCameraUsageDescription: 'Precisamos da câmera para tirar fotos dentro do app.',
+      NSPhotoLibraryAddUsageDescription: 'Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.'
+    }
   },
 
   android: {
