@@ -11,14 +11,7 @@ const config: CapacitorConfig = {
   backgroundColor: "#000000",
 
   // Em PRODUÇÃO deixe serverUrl vazio (só use em DEV/hot-reload)
-  ...(serverUrl
-    ? {
-        server: {
-          url: serverUrl,
-          cleartext: true,
-        },
-      }
-    : {}),
+  ...(serverUrl ? { server: { url: serverUrl, cleartext: true } } : {}),
 
   ios: {
     scheme: "ShapePro",
@@ -27,7 +20,7 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
 
-    // 🔑 Entradas que vão para o Info.plist do App (obrigatórias p/ Apple)
+    // Vai para o Info.plist do app
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
       NSPhotoLibraryUsageDescription:
@@ -37,16 +30,18 @@ const config: CapacitorConfig = {
       NSCameraUsageDescription: "Precisamos da câmera para tirar fotos dentro do app.",
       NSLocationWhenInUseUsageDescription:
         "Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.",
-      // Extra para silenciar scanners de localização
       NSLocationAlwaysAndWhenInUseUsageDescription:
         "Usamos sua localização somente quando necessário para recursos do app.",
 
-      // ---- Requisito do OneSignal (aviso que apareceu no build) ----
+      // OneSignal
       UIBackgroundModes: ["remote-notification"],
 
-      // ---- Forçar nova versão/build para o App Store Connect enxergar que é binário novo ----
-      CFBundleShortVersionString: "1.1.1", // versão de marketing (mude se quiser)
-      CFBundleVersion: "2", // número do build (sempre incremente)
+      // Criptografia (opcional, ajuda no compliance)
+      ITSAppUsesNonExemptEncryption: false,
+
+      // Força versão/build novos
+      CFBundleShortVersionString: "1.1.1",
+      CFBundleVersion: "2",
     },
   },
 
@@ -63,9 +58,7 @@ const config: CapacitorConfig = {
   },
 
   plugins: {
-    PushNotifications: {
-      presentationOptions: ["badge", "sound", "alert"],
-    },
+    PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 0,
@@ -76,18 +69,9 @@ const config: CapacitorConfig = {
       iosSpinnerStyle: "small",
       spinnerColor: "#999999",
     },
-    Keyboard: {
-      resize: "body",
-      style: "dark",
-      resizeOnFullScreen: true,
-    },
-    StatusBar: {
-      style: "dark",
-      backgroundColor: "#000000",
-    },
-    Camera: {
-      permissions: ["camera", "photos"],
-    },
+    Keyboard: { resize: "body", style: "dark", resizeOnFullScreen: true },
+    StatusBar: { style: "dark", backgroundColor: "#000000" },
+    Camera: { permissions: ["camera", "photos"] },
   },
 };
 
