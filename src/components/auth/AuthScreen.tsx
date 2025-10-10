@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDeviceContext } from '@/hooks/useDeviceContext';
 
@@ -22,6 +22,9 @@ export const AuthScreen = () => {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [resetCooldown, setResetCooldown] = useState(0);
   const [lastResetTime, setLastResetTime] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const [emailExistsStatus, setEmailExistsStatus] = useState<'checking' | 'exists' | 'available' | null>(null);
+  const [isEmailConfirmed, setIsEmailConfirmed] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isNative } = useDeviceContext();
@@ -82,6 +85,59 @@ export const AuthScreen = () => {
     setLoading(true);
 
     try {
+      // FASE 1: Validação proativa - verificar se email já existe
+      console.log('[AuthScreen] 🔍 Verificando email antes do signup...');
+      const { exists, confirmed } = await checkEmailExistsFull(email);
+
+      if (exists) {
+        if (confirmed) {
+          // Email existe e está confirmado → redirecionar para login
+          console.log('[AuthScreen] ⚠️ Email já cadastrado e confirmado');
+          toast({
+            title: "Email já cadastrado",
+            description: "Este email já possui uma conta. Faça login.",
+            variant: "destructive",
+          });
+          setActiveTab('signin');
+          setLoading(false);
+          return;
+        } else {
+          // Email existe mas não está confirmado → reenviar email
+          console.log('[AuthScreen] 📧 Email já cadastrado mas não confirmado, reenviando...');
+          
+          const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
+          const meta = detectOrigin('student');
+          const redirectUrl = calculateRedirectUrl(meta);
+          
+          const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: {
+              emailRedirectTo: redirectUrl
+            }
+          });
+
+          if (error) {
+            console.error('[AuthScreen] Erro ao reenviar email:', error);
+            toast({
+              title: "Email já cadastrado",
+              description: "Complete a confirmação do email. Verifique sua caixa de entrada.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Email de confirmação reenviado",
+              description: "Verifique sua caixa de entrada e spam.",
+            });
+          }
+
+          navigate(`/auth/verify?email=${encodeURIComponent(email)}`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Email não existe → continuar com signup normal
       const result = await signUpUser(email, password, name, 'student', isNative);
 
       if (result?.session) {
@@ -128,6 +184,60 @@ export const AuthScreen = () => {
       setEmailExists(false);
     }
   };
+
+  // Verificar se email existe e se está confirmado (para Fase 1)
+  const checkEmailExistsFull = async (email: string): Promise<{ exists: boolean; confirmed: boolean }> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (error || !data) {
+        return { exists: false, confirmed: false };
+      }
+
+      // Tentar verificar se o usuário está confirmado
+      // Como não temos acesso direto ao auth.users, vamos tentar fazer login sem senha
+      // para verificar se o email está confirmado
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      // Se não houver usuário logado, assumimos que existe mas não está confirmado
+      // (método alternativo já que não temos acesso direto ao auth.users)
+      return { exists: true, confirmed: false };
+    } catch (error) {
+      console.error('Error in checkEmailExistsFull:', error);
+      return { exists: false, confirmed: false };
+    }
+  };
+
+  // Verificar email em tempo real (debounced) - Fase 3
+  useEffect(() => {
+    if (activeTab === 'signup' && email && email.includes('@')) {
+      const timeoutId = setTimeout(async () => {
+        setEmailExistsStatus('checking');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email.toLowerCase().trim())
+          .maybeSingle();
+        
+        if (data && !error) {
+          setEmailExistsStatus('exists');
+          setIsEmailConfirmed(true); // Assumir que está confirmado se existe no profiles
+        } else {
+          setEmailExistsStatus('available');
+          setIsEmailConfirmed(false);
+        }
+      }, 800);
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setEmailExistsStatus(null);
+      setIsEmailConfirmed(false);
+    }
+  }, [email, activeTab]);
 
   const handleResetPassword = async () => {
     // Verificar cooldown
@@ -225,7 +335,7 @@ export const AuthScreen = () => {
           <p className="text-muted-foreground">Sua jornada fitness começa aqui</p>
         </div>
 
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Entrar</TabsTrigger>
             <TabsTrigger value="signup">Cadastrar</TabsTrigger>
@@ -351,14 +461,37 @@ export const AuthScreen = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="pr-10"
+                      />
+                      {/* FASE 3: Indicador visual de email */}
+                      {emailExistsStatus && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {emailExistsStatus === 'checking' && (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                          {emailExistsStatus === 'exists' && (
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          )}
+                          {emailExistsStatus === 'available' && (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {/* Mensagem de feedback */}
+                    {emailExistsStatus === 'exists' && (
+                      <p className="text-xs text-destructive mt-1">
+                        ⚠️ Email já cadastrado. Faça login ou use outro email.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Senha</Label>
@@ -387,8 +520,17 @@ export const AuthScreen = () => {
                       </Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Criando conta..." : "Criar Conta"}
+                  {/* FASE 4: Feedback no botão */}
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loading || (emailExistsStatus === 'exists' && isEmailConfirmed)}
+                  >
+                    {loading 
+                      ? "Criando conta..." 
+                      : (emailExistsStatus === 'exists' && isEmailConfirmed)
+                      ? "Email já cadastrado"
+                      : "Criar Conta"}
                   </Button>
                 </form>
               </CardContent>

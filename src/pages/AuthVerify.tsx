@@ -204,7 +204,37 @@ export const AuthVerify = () => {
     setSending(true);
     
     try {
-      // ✅ Recalcular redirectUrl usando detectOrigin
+      // FASE 2: Verificar se email já está confirmado antes de reenviar
+      console.log('[AuthVerify] 🔍 Verificando se email já está confirmado...');
+      
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (!profileError && profiles) {
+        // Email existe, verificar se está confirmado
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (!authError && user?.email_confirmed_at) {
+          console.log('[AuthVerify] ✅ Email já confirmado! Redirecionando...');
+          toast({
+            title: "✅ Email já confirmado!",
+            description: "Você já pode acessar o app.",
+          });
+          
+          setTimeout(async () => {
+            const redirectPath = await getRedirectPath();
+            navigate(redirectPath, { replace: true });
+          }, 1500);
+          
+          setSending(false);
+          return;
+        }
+      }
+
+      // Email não confirmado → continuar com resend normal
       const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
       const meta = detectOrigin('student');
       const redirectUrl = calculateRedirectUrl(meta);
@@ -212,7 +242,6 @@ export const AuthVerify = () => {
       console.log('[AuthVerify] 📤 Reenviando para:', email);
       console.log('[AuthVerify] 🎯 redirectUrl:', redirectUrl);
       
-      // ✅ Passar emailRedirectTo nas options
       const { error } = await supabase.auth.resend({ 
         type: "signup", 
         email,
