@@ -58,36 +58,46 @@ export const AuthConfirm = () => {
           throw new Error('Email confirmado, mas falha ao estabelecer sessão. Por favor, faça login manualmente.');
         }
         
-        // Buscar dados do usuário para determinar redirecionamento
+        // 🎯 FASE 2: ORDEM DE PRIORIDADE para determinar user_type
         const { data: { user } } = await supabase.auth.getUser();
-        const userType = user?.user_metadata?.user_type;
         
-        console.log('📊 AuthConfirm: Dados completos da sessão:', {
+        // Fontes de informação (por ordem de confiabilidade)
+        const userTypeFromMetadata = user?.user_metadata?.user_type;
+        const srcFromMetadata = user?.user_metadata?.src;
+        const srcFromUrl = srcParam;
+        
+        console.log('🔍 AuthConfirm: Fontes de user_type:', {
+          userTypeFromMetadata,
+          srcFromMetadata,
+          srcFromUrl,
           userId: user?.id,
-          email: user?.email,
-          userType,
-          sessionActive: !!currentSession
+          email: user?.email
         });
         
-        console.log('👤 AuthConfirm: user_type dos metadados:', userType);
-        console.log('🎯 AuthConfirm: src da URL:', srcParam);
+        // Determinar finalUserType com lógica de prioridade
+        let finalUserType: 'student' | 'teacher';
         
-        // ✅ NOVO: Usar src como fallback se user_type não existir
-        let finalUserType = userType;
-        if (!finalUserType && srcParam === 'dashboard') {
+        if (userTypeFromMetadata) {
+          finalUserType = userTypeFromMetadata;
+          console.log('✅ AuthConfirm: Usando user_type dos metadados:', finalUserType);
+        } else if (srcFromMetadata === 'dashboard' || srcFromUrl === 'dashboard') {
           finalUserType = 'teacher';
-          console.log('⚠️ AuthConfirm: user_type vazio, usando fallback src=dashboard → teacher');
-        } else if (!finalUserType) {
+          console.log('⚠️ AuthConfirm: user_type vazio, detectado dashboard → teacher');
+        } else if (srcFromMetadata === 'app' || srcFromUrl === 'app') {
           finalUserType = 'student';
-          console.log('⚠️ AuthConfirm: user_type vazio, usando fallback padrão → student');
+          console.log('⚠️ AuthConfirm: user_type vazio, detectado app → student');
+        } else {
+          finalUserType = 'student';
+          console.log('⚠️ AuthConfirm: Usando fallback padrão → student');
         }
         
         // Calcular path de redirecionamento
-        const path = await getRedirectPath(finalUserType as 'student' | 'teacher');
+        const path = await getRedirectPath(finalUserType);
         
         console.log('🎯 AuthConfirm: Redirecionamento final:', {
-          userType: finalUserType,
-          srcParam,
+          finalUserType,
+          srcFromMetadata,
+          srcFromUrl,
           redirectPath: path
         });
         

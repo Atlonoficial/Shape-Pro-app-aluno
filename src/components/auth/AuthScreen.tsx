@@ -47,6 +47,26 @@ export const AuthScreen = () => {
         description: "Bem-vindo de volta ao Shape Pro.",
       });
     } catch (error: any) {
+      // 🎯 FASE 4: Detectar erro de email não confirmado
+      if (error.message.includes('não confirmado')) {
+        toast({
+          title: "⚠️ Email não confirmado",
+          description: "Verifique sua caixa de entrada antes de fazer login.",
+          variant: "destructive",
+        });
+        
+        // ✅ Oferecer dica para reenviar email de confirmação
+        setTimeout(() => {
+          toast({
+            title: "💡 Dica",
+            description: "Não recebeu o email? Clique em 'Criar Conta' novamente para reenviar.",
+          });
+        }, 2000);
+        
+        return;
+      }
+      
+      // Erro genérico
       toast({
         title: "Erro no login",
         description: error.message || "Verifique suas credenciais e tente novamente.",

@@ -138,16 +138,19 @@ export const signUpUser = async (
   // Calcular URL de redirecionamento inteligente
   const redirectUrl = calculateRedirectUrl(originMetadata);
   
+  // ✅ NOVO: Adicionar parâmetro src baseado no userType
+  const srcParam = userType === 'teacher' ? 'dashboard' : 'app';
+  
   // 🛡️ GUARD-RAIL: Forçar produção se detectar Lovable preview
   const previewRegex = /(lovable\.dev|lovableproject\.com|\.lovable\.app)/i;
-  const srcParam = originMetadata.is_admin_dashboard ? 'dashboard' : 'app';
   const finalRedirect = previewRegex.test(redirectUrl)
     ? `https://shapepro.site/auth/confirm?src=${srcParam}`
-    : redirectUrl;
+    : `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
   
   console.log('[signUpUser] 🎯 Smart Origin Detection:', {
     platform: originMetadata.signup_platform,
     userType,
+    srcParam,
     redirectUrl,
     finalRedirect,
     isCustomDomain: originMetadata.is_custom_domain,
@@ -165,6 +168,7 @@ export const signUpUser = async (
       data: {
         name,
         user_type: userType,
+        src: srcParam, // ✅ Adicionar src também nos metadados
         // 🔥 Metadados Inteligentes armazenados automaticamente
         ...userMetadata,
       },
@@ -186,7 +190,30 @@ export const signInUser = async (email: string, password: string) => {
     password
   });
 
-  if (error) throw error;
+  if (error) {
+    // 🔍 FASE 3: Detectar se o erro é por email não confirmado
+    if (error.message === 'Invalid login credentials' || 
+        error.message.includes('Email not confirmed')) {
+      
+      // Verificar se o email existe no sistema (profiles)
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email.toLowerCase())
+        .limit(1);
+      
+      if (profiles && profiles.length > 0) {
+        // ✅ Email existe mas não foi confirmado
+        throw new Error('Email não confirmado. Verifique sua caixa de entrada e clique no link de confirmação.');
+      }
+      
+      // ❌ Email não existe ou senha incorreta
+      throw new Error('Email ou senha incorretos. Verifique suas credenciais.');
+    }
+    
+    throw error; // Outros erros
+  }
+  
   return data.user;
 };
 
@@ -198,23 +225,31 @@ export const signOutUser = async () => {
 export const resetPasswordForEmail = async (
   email: string, 
   isNative: boolean = false,
-  tenantId?: string
+  tenantId?: string,
+  userType?: 'student' | 'teacher' // ✅ NOVO parâmetro opcional
 ) => {
   console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
   
   // 🎯 FASE 1: Detecção Inteligente de Origem (mesma lógica do signup)
   const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
   
-  // Detectar origem automaticamente (sem userType pois ainda não sabemos)
-  const originMetadata = detectOrigin(undefined, tenantId);
+  // Detectar origem automaticamente
+  const originMetadata = detectOrigin(userType, tenantId);
   
   // Calcular URL de redirecionamento inteligente
   // Para recovery, usamos /auth/recovery em vez de /auth/confirm
   const baseRedirectUrl = calculateRedirectUrl(originMetadata);
-  const redirectUrl = baseRedirectUrl.replace('/auth/confirm', '/auth/recovery');
+  let redirectUrl = baseRedirectUrl.replace('/auth/confirm', '/auth/recovery');
+  
+  // ✅ NOVO: Adicionar src se userType fornecido
+  if (userType) {
+    const srcParam = userType === 'teacher' ? 'dashboard' : 'app';
+    redirectUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
+  }
   
   console.log('[resetPasswordForEmail] 🎯 Smart Origin Detection:', {
     platform: originMetadata.signup_platform,
+    userType,
     redirectUrl,
     isCustomDomain: originMetadata.is_custom_domain,
     isMobile: originMetadata.is_mobile,
