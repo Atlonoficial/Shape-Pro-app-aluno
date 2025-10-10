@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Shape Pro</string>
+	<string>Shape Pro</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -45,6 +45,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+
 	<!-- Deep Links -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -55,10 +56,33 @@
 			</array>
 		</dict>
 	</array>
+
 	<!-- Universal Links -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:shapepro.site</string>
+	</array>
+
+	<!-- ===================================== -->
+	<!--     PRIVACIDADE / PERMISSÕES iOS      -->
+	<!-- (resolve ITMS-90683 detectado pela Apple) -->
+	<!-- ===================================== -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Precisamos da câmera para tirar fotos dentro do app.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.</string>
+	<!-- opcional, ajuda a silenciar scanners de SDKs que referenciam localização -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Usamos sua localização somente quando necessário para recursos do app.</string>
+
+	<!-- Necessário para OneSignal (push em background) -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>
