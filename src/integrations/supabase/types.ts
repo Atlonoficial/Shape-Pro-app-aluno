@@ -3214,6 +3214,8 @@ export type Database = {
           onesignal_player_id: string | null
           phone: string | null
           platform: string | null
+          privacy_accepted_at: string | null
+          privacy_version: string | null
           professional_title: string | null
           profile_complete: boolean | null
           push_enabled: boolean | null
@@ -3223,6 +3225,8 @@ export type Database = {
           show_profile_to_students: boolean | null
           specialties: string | null
           tenant_id: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string | null
           user_type: string | null
           whatsapp_url: string | null
@@ -3245,6 +3249,8 @@ export type Database = {
           onesignal_player_id?: string | null
           phone?: string | null
           platform?: string | null
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
           professional_title?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
@@ -3254,6 +3260,8 @@ export type Database = {
           show_profile_to_students?: boolean | null
           specialties?: string | null
           tenant_id?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string | null
           user_type?: string | null
           whatsapp_url?: string | null
@@ -3276,6 +3284,8 @@ export type Database = {
           onesignal_player_id?: string | null
           phone?: string | null
           platform?: string | null
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
           professional_title?: string | null
           profile_complete?: boolean | null
           push_enabled?: boolean | null
@@ -3285,6 +3295,8 @@ export type Database = {
           show_profile_to_students?: boolean | null
           specialties?: string | null
           tenant_id?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string | null
           user_type?: string | null
           whatsapp_url?: string | null
@@ -3839,6 +3851,39 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          status: string | null
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

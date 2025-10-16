@@ -5,6 +5,7 @@ import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +26,7 @@ export const AuthScreen = () => {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [emailExistsStatus, setEmailExistsStatus] = useState<'checking' | 'exists' | 'available' | null>(null);
   const [isEmailConfirmed, setIsEmailConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isNative } = useDeviceContext();
@@ -82,6 +84,17 @@ export const AuthScreen = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar aceitação dos termos
+    if (!termsAccepted) {
+      toast({
+        title: "⚠️ Termos não aceitos",
+        description: "Você precisa aceitar os Termos de Uso e Política de Privacidade para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -520,11 +533,42 @@ export const AuthScreen = () => {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Checkbox de Termos de Uso */}
+                  <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                    <Checkbox 
+                      id="terms" 
+                      checked={termsAccepted}
+                      onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <Label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
+                      Li e concordo com os{' '}
+                      <a 
+                        href="https://shapepro.site/terms-of-service.html" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary underline hover:text-primary/80 font-medium"
+                      >
+                        Termos de Uso
+                      </a>
+                      {' '}e a{' '}
+                      <a 
+                        href="https://shapepro.site/privacy-policy.html" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary underline hover:text-primary/80 font-medium"
+                      >
+                        Política de Privacidade
+                      </a>
+                    </Label>
+                  </div>
+
                   {/* FASE 4: Feedback no botão */}
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={loading || (emailExistsStatus === 'exists' && isEmailConfirmed)}
+                    disabled={loading || !termsAccepted || (emailExistsStatus === 'exists' && isEmailConfirmed)}
                   >
                     {loading 
                       ? "Criando conta..." 

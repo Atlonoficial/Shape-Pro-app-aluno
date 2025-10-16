@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { TermsGuard } from "@/components/auth/TermsGuard";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
 import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
 import { SecurityProvider } from "@/components/security/SecurityProvider";
@@ -20,6 +21,7 @@ import { AuthInvite } from "./pages/auth/AuthInvite";
 import { AuthMagicLink } from "./pages/auth/AuthMagicLink";
 import { AuthChangeEmail } from "./pages/auth/AuthChangeEmail";
 import { AuthError } from "./pages/auth/AuthError";
+import { AcceptTerms } from "./pages/AcceptTerms";
 import { Anamnese } from "./pages/Anamnese";
 import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
@@ -87,25 +89,11 @@ const App = () => (
                 <NativeIntegration />
                 <GamificationProvider>
                   <GamificationIntegrator>
+                  <TermsGuard>
                   <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/cadastro-completo" element={<AuthGuard><CadastroCompleto /></AuthGuard>} />
-                <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
-                <Route path="/exames-medicos" element={<AuthGuard><ExamesMedicos /></AuthGuard>} />
-                <Route path="/fotos-progresso" element={<AuthGuard><FotosProgresso /></AuthGuard>} />
-                <Route path="/avaliacoes-fisicas" element={<AuthGuard><AvaliacoesFisicas /></AuthGuard>} />
-                <Route path="/configuracoes" element={<AuthGuard><Configuracoes /></AuthGuard>} />
-                <Route path="/conta-seguranca" element={<AuthGuard><ContaSeguranca /></AuthGuard>} />
-                <Route path="/assinaturas-planos" element={<AuthGuard><AssinaturasPlanos /></AuthGuard>} />
+                {/* Public routes (no AuthGuard) */}
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-                <Route path="/iniciar-treino" element={<AuthGuard><IniciarTreino /></AuthGuard>} />
-                <Route path="/registrar-refeicao" element={<AuthGuard><RegistrarRefeicao /></AuthGuard>} />
-                <Route path="/agenda" element={<AuthGuard><Agenda /></AuthGuard>} />
-                <Route path="/metas" element={<AuthGuard><Metas /></AuthGuard>} />
-                <Route path="/recompensas" element={<AuthGuard><Recompensas /></AuthGuard>} />
-                <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
-                <Route path="/dashboard-professor" element={<AuthGuard><DashboardProfessor /></AuthGuard>} />
-                <Route path="/teacher/edit-profile" element={<AuthGuard><EditProfile /></AuthGuard>} />
+                <Route path="/accept-terms" element={<AuthGuard><AcceptTerms /></AuthGuard>} />
                 
                 {/* Authentication Routes */}
                 <Route path="/auth/confirm" element={<AuthConfirm />} />
@@ -117,15 +105,34 @@ const App = () => (
                 <Route path="/auth/recovery" element={<AuthRecovery />} />
                 <Route path="/auth/invite" element={<AuthInvite />} />
                 <Route path="/auth/magic-link" element={<AuthMagicLink />} />
-              <Route path="/auth/change-email" element={<AuthChangeEmail />} />
-              <Route path="/auth/error" element={<AuthError />} />
+                <Route path="/auth/change-email" element={<AuthChangeEmail />} />
+                <Route path="/auth/error" element={<AuthError />} />
                 <Route path="/auth/verify" element={<AuthVerify />} />
                 <Route path="/auth/verified" element={<AuthVerified />} />
-                <Route path="/strava-callback" element={<StravaCallback />} />
                 
+                {/* Protected routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/cadastro-completo" element={<AuthGuard><CadastroCompleto /></AuthGuard>} />
+                <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
+                <Route path="/exames-medicos" element={<AuthGuard><ExamesMedicos /></AuthGuard>} />
+                <Route path="/fotos-progresso" element={<AuthGuard><FotosProgresso /></AuthGuard>} />
+                <Route path="/avaliacoes-fisicas" element={<AuthGuard><AvaliacoesFisicas /></AuthGuard>} />
+                <Route path="/configuracoes" element={<AuthGuard><Configuracoes /></AuthGuard>} />
+                <Route path="/conta-seguranca" element={<AuthGuard><ContaSeguranca /></AuthGuard>} />
+                <Route path="/assinaturas-planos" element={<AuthGuard><AssinaturasPlanos /></AuthGuard>} />
+                <Route path="/iniciar-treino" element={<AuthGuard><IniciarTreino /></AuthGuard>} />
+                <Route path="/registrar-refeicao" element={<AuthGuard><RegistrarRefeicao /></AuthGuard>} />
+                <Route path="/agenda" element={<AuthGuard><Agenda /></AuthGuard>} />
+                <Route path="/metas" element={<AuthGuard><Metas /></AuthGuard>} />
+                <Route path="/recompensas" element={<AuthGuard><Recompensas /></AuthGuard>} />
+                <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
+                <Route path="/dashboard-professor" element={<AuthGuard><DashboardProfessor /></AuthGuard>} />
+                <Route path="/teacher/edit-profile" element={<AuthGuard><EditProfile /></AuthGuard>} />
+                <Route path="/strava-callback" element={<StravaCallback />} />
                 
                 <Route path="*" element={<NotFound />} />
                   </Routes>
+                  </TermsGuard>
                 </GamificationIntegrator>
               </GamificationProvider>
             </AuthProvider>

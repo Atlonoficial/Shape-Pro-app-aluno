@@ -10,6 +10,10 @@ export interface UserProfile {
   profile_complete: boolean;
   avatar_url?: string;
   phone?: string;
+  terms_accepted_at?: string;
+  privacy_accepted_at?: string;
+  terms_version?: string;
+  privacy_version?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -168,7 +172,11 @@ export const signUpUser = async (
       data: {
         name,
         user_type: userType,
-        src: srcParam, // ✅ Adicionar src também nos metadados
+        src: srcParam,
+        terms_accepted_at: new Date().toISOString(),
+        privacy_accepted_at: new Date().toISOString(),
+        terms_version: '1.0',
+        privacy_version: '1.0',
         // 🔥 Metadados Inteligentes armazenados automaticamente
         ...userMetadata,
       },
