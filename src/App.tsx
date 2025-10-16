@@ -89,11 +89,10 @@ const App = () => (
                 <NativeIntegration />
                 <GamificationProvider>
                   <GamificationIntegrator>
-                  <TermsGuard>
                   <Routes>
-                {/* Public routes (no AuthGuard) */}
+                {/* Public routes (no AuthGuard, no TermsGuard) */}
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-                <Route path="/accept-terms" element={<AuthGuard><AcceptTerms /></AuthGuard>} />
+                <Route path="/accept-terms" element={<AcceptTerms />} />
                 
                 {/* Authentication Routes */}
                 <Route path="/auth/confirm" element={<AuthConfirm />} />
@@ -110,29 +109,28 @@ const App = () => (
                 <Route path="/auth/verify" element={<AuthVerify />} />
                 <Route path="/auth/verified" element={<AuthVerified />} />
                 
-                {/* Protected routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/cadastro-completo" element={<AuthGuard><CadastroCompleto /></AuthGuard>} />
-                <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
-                <Route path="/exames-medicos" element={<AuthGuard><ExamesMedicos /></AuthGuard>} />
-                <Route path="/fotos-progresso" element={<AuthGuard><FotosProgresso /></AuthGuard>} />
-                <Route path="/avaliacoes-fisicas" element={<AuthGuard><AvaliacoesFisicas /></AuthGuard>} />
-                <Route path="/configuracoes" element={<AuthGuard><Configuracoes /></AuthGuard>} />
-                <Route path="/conta-seguranca" element={<AuthGuard><ContaSeguranca /></AuthGuard>} />
-                <Route path="/assinaturas-planos" element={<AuthGuard><AssinaturasPlanos /></AuthGuard>} />
-                <Route path="/iniciar-treino" element={<AuthGuard><IniciarTreino /></AuthGuard>} />
-                <Route path="/registrar-refeicao" element={<AuthGuard><RegistrarRefeicao /></AuthGuard>} />
-                <Route path="/agenda" element={<AuthGuard><Agenda /></AuthGuard>} />
-                <Route path="/metas" element={<AuthGuard><Metas /></AuthGuard>} />
-                <Route path="/recompensas" element={<AuthGuard><Recompensas /></AuthGuard>} />
-                <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
-                <Route path="/dashboard-professor" element={<AuthGuard><DashboardProfessor /></AuthGuard>} />
-                <Route path="/teacher/edit-profile" element={<AuthGuard><EditProfile /></AuthGuard>} />
+                {/* Protected routes (with TermsGuard) */}
+                <Route path="/" element={<TermsGuard><Index /></TermsGuard>} />
+                <Route path="/cadastro-completo" element={<AuthGuard><TermsGuard><CadastroCompleto /></TermsGuard></AuthGuard>} />
+                <Route path="/anamnese" element={<AuthGuard><TermsGuard><Anamnese /></TermsGuard></AuthGuard>} />
+                <Route path="/exames-medicos" element={<AuthGuard><TermsGuard><ExamesMedicos /></TermsGuard></AuthGuard>} />
+                <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><FotosProgresso /></TermsGuard></AuthGuard>} />
+                <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><AvaliacoesFisicas /></TermsGuard></AuthGuard>} />
+                <Route path="/configuracoes" element={<AuthGuard><TermsGuard><Configuracoes /></TermsGuard></AuthGuard>} />
+                <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
+                <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
+                <Route path="/iniciar-treino" element={<AuthGuard><TermsGuard><IniciarTreino /></TermsGuard></AuthGuard>} />
+                <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
+                <Route path="/agenda" element={<AuthGuard><TermsGuard><Agenda /></TermsGuard></AuthGuard>} />
+                <Route path="/metas" element={<AuthGuard><TermsGuard><Metas /></TermsGuard></AuthGuard>} />
+                <Route path="/recompensas" element={<AuthGuard><TermsGuard><Recompensas /></TermsGuard></AuthGuard>} />
+                <Route path="/chat" element={<AuthGuard><TermsGuard><Chat /></TermsGuard></AuthGuard>} />
+                <Route path="/dashboard-professor" element={<AuthGuard><TermsGuard><DashboardProfessor /></TermsGuard></AuthGuard>} />
+                <Route path="/teacher/edit-profile" element={<AuthGuard><TermsGuard><EditProfile /></TermsGuard></AuthGuard>} />
                 <Route path="/strava-callback" element={<StravaCallback />} />
                 
                 <Route path="*" element={<NotFound />} />
                   </Routes>
-                  </TermsGuard>
                 </GamificationIntegrator>
               </GamificationProvider>
             </AuthProvider>

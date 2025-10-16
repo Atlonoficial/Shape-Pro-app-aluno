@@ -545,7 +545,7 @@ export const AuthScreen = () => {
                     <Label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
                       Li e concordo com os{' '}
                       <a 
-                        href="https://shapepro.site/terms-of-service.html" 
+                        href="https://shapepro.site/app/terms" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-primary underline hover:text-primary/80 font-medium"
@@ -554,7 +554,7 @@ export const AuthScreen = () => {
                       </a>
                       {' '}e a{' '}
                       <a 
-                        href="https://shapepro.site/privacy-policy.html" 
+                        href="https://shapepro.site/app/privacy" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-primary underline hover:text-primary/80 font-medium"

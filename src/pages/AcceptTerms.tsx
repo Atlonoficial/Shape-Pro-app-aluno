@@ -83,7 +83,7 @@ export const AcceptTerms = () => {
                 Os Termos de Uso definem as regras de utilização do aplicativo, suas responsabilidades e nossos compromissos.
               </p>
               <a
-                href="https://shapepro.site/terms-of-service.html"
+                href="https://shapepro.site/app/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline hover:text-primary/80 text-sm font-medium"
@@ -98,7 +98,7 @@ export const AcceptTerms = () => {
                 Nossa Política de Privacidade explica como coletamos, usamos e protegemos seus dados pessoais.
               </p>
               <a
-                href="https://shapepro.site/privacy-policy.html"
+                href="https://shapepro.site/app/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline hover:text-primary/80 text-sm font-medium"
