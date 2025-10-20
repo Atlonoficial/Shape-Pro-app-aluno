@@ -5276,6 +5276,10 @@ export type Database = {
         Args: { plan_id: string }
         Returns: string
       }
+      get_student_teacher_id: {
+        Args: { student_uid: string }
+        Returns: string
+      }
       get_student_workouts_with_progress: {
         Args: { p_student_id: string }
         Returns: {
