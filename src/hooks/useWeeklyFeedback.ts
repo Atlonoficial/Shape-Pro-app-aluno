@@ -414,8 +414,21 @@ export const useWeeklyFeedback = () => {
 
   // Submit weekly feedback with improved error handling
   const submitWeeklyFeedback = async (feedbackData: WeeklyFeedbackData): Promise<boolean> => {
+    console.log('🎯 [DEBUG] Starting feedback submission with:', {
+      userId: user?.id,
+      teacherId,
+      hasActiveSubscription,
+      feedbackData: {
+        overallRating: feedbackData.overallRating,
+        trainingRating: feedbackData.trainingRating,
+        dietRating: feedbackData.dietRating,
+        hasGeneralFeedback: !!feedbackData.generalFeedback,
+        hasCustomResponses: !!feedbackData.customResponses
+      }
+    });
+
     if (!user?.id || !teacherId) {
-      console.error('[Feedback] User ID or Teacher ID not available', { userId: user?.id, teacherId });
+      console.error('❌ [DEBUG] Missing required IDs', { userId: user?.id, teacherId });
       toast({
         title: "Erro",
         description: "Informações do usuário não disponíveis",
@@ -426,13 +439,15 @@ export const useWeeklyFeedback = () => {
 
     try {
       setLoading(true);
-      console.log('[Feedback] Starting feedback submission', { 
+      console.log('✅ [DEBUG] Preparing RPC call with:', { 
         studentId: user.id, 
-        teacherId, 
-        feedbackData 
+        teacherId,
+        currentWeek: getWeekNumber(new Date()),
+        currentYear: new Date().getFullYear()
       });
 
       // Usar função RPC corrigida v4 com logs detalhados
+      console.log('📞 [DEBUG] Calling RPC submit_feedback_with_points_v4...');
       const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v4', {
         p_student_id: user.id,
         p_teacher_id: teacherId,
@@ -454,19 +469,51 @@ export const useWeeklyFeedback = () => {
         }
       });
 
+      console.log('📊 [DEBUG] RPC response received:', { 
+        hasData: !!result, 
+        hasError: !!error,
+        error: error ? {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        } : null
+      });
+
       if (error) {
-        console.error('[Feedback] RPC error:', error);
+        console.error('❌ [DEBUG] RPC error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          fullError: error
+        });
         throw error;
       }
 
-      console.log('[Feedback] RPC result:', result);
+      console.log('✅ [DEBUG] RPC success! Result:', result);
       
       const resultData = result as any;
+      console.log('🔍 [DEBUG] Analyzing result data:', {
+        success: resultData?.success,
+        duplicate: resultData?.duplicate,
+        error_type: resultData?.error_type,
+        message: resultData?.message,
+        points_awarded: resultData?.points_awarded,
+        last_feedback_date: resultData?.last_feedback_date
+      });
+
       if (!resultData?.success) {
         const errorMessage = resultData?.message || 'Erro desconhecido ao enviar feedback';
-        console.warn('[Feedback] Operation failed:', resultData);
+        console.warn('⚠️ [DEBUG] Operation failed:', {
+          duplicate: resultData?.duplicate,
+          error_type: resultData?.error_type,
+          message: errorMessage,
+          fullData: resultData
+        });
         
         if (resultData?.duplicate) {
+          console.log('🔄 [DEBUG] Duplicate feedback detected');
           toast({
             title: "Feedback já enviado",
             description: errorMessage,
