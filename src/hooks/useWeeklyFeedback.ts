@@ -427,11 +427,41 @@ export const useWeeklyFeedback = () => {
       }
     });
 
-    if (!user?.id || !teacherId) {
-      console.error('❌ [DEBUG] Missing required IDs', { userId: user?.id, teacherId });
+    // ETAPA 1: Fallback robusto para buscar teacherId diretamente
+    let finalTeacherId = teacherId;
+    
+    if (!finalTeacherId && user?.id) {
+      console.log('🔄 [Feedback] Teacher ID not available from hook, fetching directly from students table...');
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('teacher_id')
+        .eq('user_id', user.id)
+        .eq('membership_status', 'active')
+        .maybeSingle();
+      
+      if (studentError) {
+        console.error('❌ [Feedback] Error fetching teacher_id from students:', studentError);
+      } else {
+        finalTeacherId = studentData?.teacher_id || null;
+        console.log('✅ [Feedback] Direct fetch result:', {
+          success: !!finalTeacherId,
+          teacherId: finalTeacherId,
+          fromFallback: true
+        });
+      }
+    }
+
+    if (!user?.id || !finalTeacherId) {
+      console.error('❌ [DEBUG] Missing required IDs after fallback', { 
+        userId: user?.id, 
+        teacherId: finalTeacherId,
+        fromHook: teacherId,
+        fromFallback: finalTeacherId !== teacherId,
+        fallbackUsed: !teacherId && !!finalTeacherId
+      });
       toast({
         title: "Erro",
-        description: "Informações do usuário não disponíveis",
+        description: "Não foi possível identificar seu professor. Tente novamente ou entre em contato com o suporte.",
         variant: "destructive"
       });
       return false;
@@ -447,10 +477,10 @@ export const useWeeklyFeedback = () => {
       });
 
       // Usar função RPC corrigida v4 com logs detalhados
-      console.log('📞 [DEBUG] Calling RPC submit_feedback_with_points_v4...');
+      console.log('📞 [DEBUG] Calling RPC submit_feedback_with_points_v4 with finalTeacherId...');
       const { data: result, error } = await supabase.rpc('submit_feedback_with_points_v4', {
         p_student_id: user.id,
-        p_teacher_id: teacherId,
+        p_teacher_id: finalTeacherId,
         p_feedback_data: {
           rating: feedbackData.overallRating,
           message: feedbackData.generalFeedback || '',

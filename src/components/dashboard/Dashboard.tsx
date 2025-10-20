@@ -38,8 +38,25 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     setShouldShowModal: setShouldShowFeedbackModal, 
     submitWeeklyFeedback, 
     loading: feedbackLoading,
-    feedbackSettings 
+    feedbackSettings,
+    teacherId: feedbackTeacherId,
+    hasActiveSubscription: feedbackHasActiveSub
   } = useWeeklyFeedback();
+
+  // ETAPA 3: Logs detalhados do sistema de feedback
+  useEffect(() => {
+    console.log('📊 [Dashboard] Feedback system status:', {
+      shouldShowFeedbackModal,
+      feedbackLoading,
+      hasSettings: !!feedbackSettings,
+      feedbackFrequency: feedbackSettings?.feedback_frequency,
+      feedbackDays: feedbackSettings?.feedback_days,
+      userId: user?.id,
+      teacherId: feedbackTeacherId,
+      hasActiveSub: feedbackHasActiveSub,
+      timestamp: new Date().toISOString()
+    });
+  }, [shouldShowFeedbackModal, feedbackLoading, feedbackSettings, user?.id, feedbackTeacherId, feedbackHasActiveSub]);
   
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
   const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 

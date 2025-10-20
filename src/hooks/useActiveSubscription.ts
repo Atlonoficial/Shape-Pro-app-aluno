@@ -104,7 +104,13 @@ export const useActiveSubscription = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      console.log('[useActiveSubscription] Student data:', studentData);
+      console.log('[useActiveSubscription] Student data:', {
+        hasData: !!studentData,
+        teacherId: studentData?.teacher_id,
+        membershipStatus: studentData?.membership_status,
+        activePlan: studentData?.active_plan,
+        error: studentError
+      });
 
       if (studentData?.membership_status === 'active' && 
           studentData.active_plan && 
@@ -196,9 +202,26 @@ export const useActiveSubscription = () => {
         return;
       }
 
-      // No active subscription found
-      console.log('ℹ️ [useActiveSubscription] No active subscription found');
-      setSubscription(null);
+      // ETAPA 2: Final fallback - if no subscription but student has teacher_id
+      if (studentData?.teacher_id) {
+        console.log('⚠️ [useActiveSubscription] No subscription but found teacher_id, creating minimal subscription object');
+        setSubscription({
+          id: 'student-teacher-only',
+          plan_id: 'free',
+          teacher_id: studentData.teacher_id,
+          status: 'active',
+          start_at: new Date().toISOString(),
+          end_at: null,
+          plan_name: 'free',
+          plan_features: [],
+          daysRemaining: -1,
+          expirationStatus: 'active'
+        });
+      } else {
+        // No active subscription found
+        console.log('ℹ️ [useActiveSubscription] No active subscription found');
+        setSubscription(null);
+      }
     } catch (error: any) {
       console.error('❌ [useActiveSubscription] Error fetching subscription:', error);
       setError(error.message);
