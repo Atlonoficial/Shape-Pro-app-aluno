@@ -236,7 +236,12 @@ export const useWeeklyFeedback = () => {
           feedbackWasMissed = daysSinceLastFeedback >= 14;
           break;
         case 'monthly':
-          feedbackWasMissed = daysSinceLastFeedback >= 30;
+          // Verificar se o último feedback foi em um mês diferente
+          const lastMonthValue = lastFeedbackDate.getMonth();
+          const lastYearValue = lastFeedbackDate.getFullYear();
+          const currentMonthValue = today.getMonth();
+          const currentYearValue = today.getFullYear();
+          feedbackWasMissed = !(lastMonthValue === currentMonthValue && lastYearValue === currentYearValue);
           break;
         default:
           feedbackWasMissed = daysSinceLastFeedback >= 7;
@@ -245,7 +250,12 @@ export const useWeeklyFeedback = () => {
       console.log('[Feedback] 📊 Missed feedback analysis:', {
         feedbackWasMissed,
         frequency: settings.feedback_frequency,
-        daysSinceLastFeedback
+        daysSinceLastFeedback,
+        lastFeedbackDate: lastFeedbackDate.toISOString(),
+        lastFeedbackMonth: lastFeedbackDate.getMonth(),
+        currentMonth: today.getMonth(),
+        lastFeedbackYear: lastFeedbackDate.getFullYear(),
+        currentYear: today.getFullYear()
       });
 
       if (feedbackWasMissed) {
