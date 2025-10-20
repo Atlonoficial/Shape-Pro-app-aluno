@@ -11,7 +11,7 @@ import { GamificationIntegrator } from "@/components/gamification/GamificationIn
 import { SecurityProvider } from "@/components/security/SecurityProvider";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { NativeIntegration } from "@/components/native/NativeIntegration";
-import AuthGuard from "@/components/AuthGuard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import Index from "./pages/Index";
 // Core application imports ready for production
 import NotFound from "./pages/NotFound";
