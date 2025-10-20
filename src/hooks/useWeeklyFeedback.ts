@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
@@ -30,6 +30,8 @@ export const useWeeklyFeedback = () => {
   const [loading, setLoading] = useState(false);
   const [shouldShowModal, setShouldShowModal] = useState(false);
   const [feedbackSettings, setFeedbackSettings] = useState<FeedbackSettings | null>(null);
+  const isCheckingRef = useRef(false);
+  const wasManuallyClosedRef = useRef(false);
 
   // Enhanced verification using direct student table check as fallback
   const verifyStudentStatus = async (): Promise<{ isActive: boolean; teacherId: string | null }> => {
@@ -283,6 +285,16 @@ export const useWeeklyFeedback = () => {
 
     if (!user?.id) {
       console.log('[Feedback] ❌ No user ID - aborting');
+      return false;
+    }
+
+    // PROTEÇÃO 1: Verificar localStorage ANTES de qualquer consulta ao banco
+    const today = new Date().toISOString().split('T')[0];
+    const feedbackKey = `feedback_sent_${user.id}_${today}`;
+    const wasSentToday = localStorage.getItem(feedbackKey);
+
+    if (wasSentToday === 'true') {
+      console.log('[Feedback] ❌ Feedback already sent today (localStorage check)');
       return false;
     }
 
@@ -554,12 +566,19 @@ export const useWeeklyFeedback = () => {
         
         if (resultData?.duplicate) {
           console.log('🔄 [DEBUG] Duplicate feedback detected');
+          
+          // PROTEÇÃO 2: Salvar no localStorage que feedback foi enviado
+          const today = new Date().toISOString().split('T')[0];
+          const feedbackKey = `feedback_sent_${user.id}_${today}`;
+          localStorage.setItem(feedbackKey, 'true');
+          
           toast({
             title: "Feedback já enviado",
             description: errorMessage,
             variant: "destructive"
           });
           setShouldShowModal(false); // Hide modal if already sent
+          wasManuallyClosedRef.current = true; // Marcar como fechado manualmente
           return false;
         }
 
@@ -579,6 +598,11 @@ export const useWeeklyFeedback = () => {
       const pointsAwarded = resultData.points_awarded || 0;
       console.log('[Feedback] Success! Points awarded:', pointsAwarded);
       
+      // PROTEÇÃO 3: Salvar no localStorage que feedback foi enviado com sucesso
+      const today = new Date().toISOString().split('T')[0];
+      const feedbackKey = `feedback_sent_${user.id}_${today}`;
+      localStorage.setItem(feedbackKey, 'true');
+      
       // Usar toast padrão do sistema de gamificação
       showPointsToast({
         points: pointsAwarded,
@@ -587,6 +611,7 @@ export const useWeeklyFeedback = () => {
       });
 
       setShouldShowModal(false);
+      wasManuallyClosedRef.current = true; // Marcar como fechado manualmente
       return true;
 
     } catch (error: any) {
@@ -664,6 +689,24 @@ export const useWeeklyFeedback = () => {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
+    // Limpar localStorage de dias anteriores
+    const cleanOldFeedbackFlags = () => {
+      const today = new Date().toISOString().split('T')[0];
+      const prefix = `feedback_sent_${user?.id}_`;
+      
+      // Verificar todas as chaves no localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(prefix)) {
+          const dateInKey = key.split('_').pop();
+          if (dateInKey !== today) {
+            console.log('[Feedback] Cleaning old localStorage key:', key);
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    };
+    
     const checkModalWithRetry = async (retryCount = 0) => {
       console.log('[Feedback] Effect triggered, retry count:', retryCount);
       
@@ -671,6 +714,25 @@ export const useWeeklyFeedback = () => {
         console.log('[Feedback] No user, waiting...');
         return;
       }
+
+      // Limpar flags antigos na primeira verificação
+      if (retryCount === 0) {
+        cleanOldFeedbackFlags();
+      }
+
+      // PROTEÇÃO 4: Não verificar se modal foi fechado manualmente
+      if (wasManuallyClosedRef.current) {
+        console.log('[Feedback] Modal was manually closed, skipping check');
+        return;
+      }
+
+      // PROTEÇÃO 5: Prevenir verificações concorrentes
+      if (isCheckingRef.current) {
+        console.log('[Feedback] Check already in progress, skipping...');
+        return;
+      }
+
+      isCheckingRef.current = true;
 
       try {
         const shouldShow = await checkShouldShowFeedbackModal();
@@ -685,6 +747,8 @@ export const useWeeklyFeedback = () => {
           console.log(`[Feedback] Retrying in ${delay}ms...`);
           timeoutId = setTimeout(() => checkModalWithRetry(retryCount + 1), delay);
         }
+      } finally {
+        isCheckingRef.current = false;
       }
     };
 
@@ -700,7 +764,17 @@ export const useWeeklyFeedback = () => {
 
   return {
     shouldShowModal,
-    setShouldShowModal,
+    setShouldShowModal: (value: boolean) => {
+      setShouldShowModal(value);
+      // Se estiver abrindo o modal programaticamente, resetar flag
+      if (value === true) {
+        wasManuallyClosedRef.current = false;
+      }
+      // Se estiver fechando manualmente, marcar flag
+      if (value === false) {
+        wasManuallyClosedRef.current = true;
+      }
+    },
     submitWeeklyFeedback,
     getFeedbackHistory,
     loading,
