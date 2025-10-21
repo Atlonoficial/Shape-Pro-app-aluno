@@ -9,7 +9,20 @@
 		"contentInset": "automatic",
 		"backgroundColor": "#000000",
 		"allowsLinkPreview": false,
-		"handleApplicationNotifications": false
+		"handleApplicationNotifications": false,
+		"plist": {
+			"NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.",
+			"NSPhotoLibraryAddUsageDescription": "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
+			"NSCameraUsageDescription": "Precisamos da câmera para tirar fotos dentro do app.",
+			"NSLocationWhenInUseUsageDescription": "Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.",
+			"NSLocationAlwaysAndWhenInUseUsageDescription": "Usamos sua localização somente quando necessário para recursos do app.",
+			"UIBackgroundModes": [
+				"remote-notification"
+			],
+			"ITSAppUsesNonExemptEncryption": false,
+			"CFBundleShortVersionString": "1.1.1",
+			"CFBundleVersion": "2"
+		}
 	},
 	"android": {
 		"backgroundColor": "#000000",
@@ -23,12 +36,19 @@
 		"networkSecurityConfig": true
 	},
 	"plugins": {
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		},
 		"SplashScreen": {
 			"launchAutoHide": true,
-			"launchShowDuration": 2000,
+			"launchShowDuration": 0,
 			"backgroundColor": "#000000",
 			"androidSplashResourceName": "splash",
-			"androidScaleType": "CENTER_CROP",
+			"androidScaleType": "CENTER",
 			"showSpinner": false,
 			"iosSpinnerStyle": "small",
 			"spinnerColor": "#999999"
