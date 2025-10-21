@@ -10,7 +10,8 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "prebuild": "node scripts/inject-google-services.cjs",
-        "resources": "node scripts/generate-resources.cjs"
+        "resources": "node scripts/generate-resources.cjs",
+        "postbuild": "npx cap sync ios"
     },
     "dependencies": {
         "@capacitor/android": "^7.4.3",
