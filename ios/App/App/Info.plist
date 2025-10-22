@@ -2,7 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-
   <key>CFBundleDevelopmentRegion</key>
   <string>$(DEVELOPMENT_LANGUAGE)</string>
 
@@ -15,19 +14,23 @@
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
 
+  <!-- Garante que o binário referenciado existe -->
+  <key>CFBundleExecutable</key>
+  <string>$(EXECUTABLE_NAME)</string>
+
   <key>CFBundleName</key>
   <string>App</string>
 
   <key>CFBundlePackageType</key>
   <string>APPL</string>
 
-  <!-- Versão que aparece na App Store -->
+  <!-- Versão de marketing -->
   <key>CFBundleShortVersionString</key>
-  <string>1.1.0</string>
+  <string>2.0.0</string>
 
-  <!-- Número do build (sempre crescente) -->
+  <!-- Número de build (inteiro, sempre maior que o anterior) -->
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>4</string>
 
   <key>LSRequiresIPhoneOS</key>
   <true/>
@@ -52,7 +55,7 @@
     <string>applinks:shapepro.site</string>
   </array>
 
-  <!-- Textos de privacidade -->
+  <!-- Privacidade -->
   <key>NSPhotoLibraryUsageDescription</key>
   <string>Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.</string>
 
@@ -62,11 +65,10 @@
   <key>NSCameraUsageDescription</key>
   <string>Precisamos da câmera para tirar fotos dentro do app.</string>
 
-  <!-- Necessário para push em background (OneSignal) -->
+  <!-- Push em background (OneSignal) -->
   <key>UIBackgroundModes</key>
   <array>
     <string>remote-notification</string>
   </array>
-
 </dict>
 </plist>
