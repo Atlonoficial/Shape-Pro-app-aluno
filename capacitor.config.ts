@@ -1,7 +1,19 @@
 // capacitor.config.ts
 import type { CapacitorConfig } from "@capacitor/cli";
 
-const serverUrl = (process.env.VITE_CAP_SERVER_URL || "").trim();
+// Detecta produção/CI (Appflow exporta CI/Appflow vars)
+const isCIOrProd =
+  process.env.NODE_ENV === "production" ||
+  process.env.CI === "true" ||
+  process.env.APPFLOW_BUILD === "true";
+
+// Em DEV você pode setar VITE_CAP_SERVER_URL para hot-reload;
+// em produção/CI isso será sempre ignorado.
+const serverUrlEnv = (process.env.VITE_CAP_SERVER_URL || "").trim();
+const maybeServer =
+  !isCIOrProd && serverUrlEnv
+    ? { server: { url: serverUrlEnv, cleartext: true } }
+    : {};
 
 const config: CapacitorConfig = {
   appId: "com.atlontech.shapepro.aluno",
@@ -10,8 +22,8 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   backgroundColor: "#000000",
 
-  // Em PRODUÇÃO deixe serverUrl vazio (só use em DEV/hot-reload)
-  ...(serverUrl ? { server: { url: serverUrl, cleartext: true } } : {}),
+  // Em PROD/CI não terá server.url
+  ...maybeServer,
 
   ios: {
     scheme: "ShapePro",
@@ -20,28 +32,48 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
 
-    // Vai para o Info.plist do app
+    // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
       NSPhotoLibraryUsageDescription:
         "Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.",
       NSPhotoLibraryAddUsageDescription:
         "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
-      NSCameraUsageDescription: "Precisamos da câmera para tirar fotos dentro do app.",
+      NSCameraUsageDescription:
+        "Precisamos da câmera para tirar fotos dentro do app.",
+
+      // *** Se o app OU SDKs referenciam localização, mantenha as duas abaixo.
+      // *** Se não usa nada de localização, pode remover depois.
       NSLocationWhenInUseUsageDescription:
-        "Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.",
+        "Usamos sua localização apenas enquanto o app está em uso para recursos relevantes.",
       NSLocationAlwaysAndWhenInUseUsageDescription:
         "Usamos sua localização somente quando necessário para recursos do app.",
 
-      // OneSignal
+      // Push em background (OneSignal)
       UIBackgroundModes: ["remote-notification"],
 
-      // Criptografia (opcional, ajuda no compliance)
+      // Criptografia
       ITSAppUsesNonExemptEncryption: false,
 
-      // Força versão/build novos
-      CFBundleShortVersionString: "1.1.1",
-      CFBundleVersion: "2",
+      // Orientações exigidas pelo iPad multitasking
+      UISupportedInterfaceOrientations: [
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight",
+      ],
+      "UISupportedInterfaceOrientations~ipad": [
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationPortraitUpsideDown",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight",
+      ],
+
+      // Launch screen baseado em storyboard (exigido pelo iPad multitasking)
+      UILaunchStoryboardName: "LaunchScreen",
+
+      // *** Versões – se você preferir controlar aqui:
+      // CFBundleShortVersionString: "2.0.1",
+      // CFBundleVersion: "5",
     },
   },
 

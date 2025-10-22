@@ -5,10 +5,27 @@ import App from './App.tsx'
 import { Capacitor } from '@capacitor/core';
 import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
 
-// Initialize deep links for native platforms
 if (Capacitor.isNativePlatform()) {
-  console.log('[main] 🔗 Initializing deep link handler...');
-  initializeDeepLinkHandler();
+  // Logs de falhas globais — aparecem no Device Log/TestFlight (e ajudam a sair da “tela preta”)
+  window.addEventListener('error', (e) => {
+    console.error('[boot] window.onerror:', e?.error || e?.message || e);
+  });
+  window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
+    console.error('[boot] unhandledrejection:', e?.reason);
+  });
+
+  // Inicializa deep links com segurança
+  try {
+    console.log('[main] 🔗 Initializing deep link handler...');
+    initializeDeepLinkHandler();
+  } catch (err) {
+    console.error('[main] deepLink init failed:', err);
+  }
+
+  // Garante esconder o splash cedo (além do autoHide do plugin)
+  import('@capacitor/splash-screen')
+    .then(({ SplashScreen }) => SplashScreen.hide())
+    .catch(() => {/* ignore */});
 }
 
 createRoot(document.getElementById('root')!).render(
