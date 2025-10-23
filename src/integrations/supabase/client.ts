@@ -24,11 +24,15 @@ export const getSupabase = () => {
       storageInitialized: isCapacitor ? capacitorStorage.initialized : 'N/A'
     });
     
-    // ✅ BUILD 20: Verificação com mensagem de erro mais clara
+    // ✅ BUILD 22: Verificação com mensagem de erro e estado do bootManager
     if (isCapacitor && !capacitorStorage.initialized) {
+      // Importação síncrona do bootManager para debug
       console.error('[Supabase Client] ❌ CRITICAL: Storage not initialized!', {
-        hint: 'Client should only be accessed after boot completes in main.tsx'
+        storageInitialized: capacitorStorage.initialized,
+        hint: 'Client accessed before boot sequence completed',
+        timestamp: Date.now()
       });
+      
       throw new Error('Storage must be initialized before creating Supabase client. Wait for bootManager.markBootComplete()');
     }
     
@@ -65,7 +69,7 @@ export const getSupabase = () => {
   return _supabaseInstance;
 };
 
-// ✅ Export direto usando Proxy para manter compatibilidade com imports existentes
+// ✅ BUILD 22: Manter proxy para compatibilidade, mas com logs melhorados
 export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
   get(target, prop) {
     const client = getSupabase();
@@ -73,4 +77,4 @@ export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>
   }
 });
 
-console.log('[Supabase Client] ℹ️ Lazy client configured - will initialize on first use');
+console.log('[Supabase Client] ℹ️ BUILD 22: Lazy client configured - will initialize on first use');

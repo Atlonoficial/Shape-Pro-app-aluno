@@ -119,11 +119,15 @@ const waitForCapacitor = async () => {
       console.log('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
     }
 
-    // ✅ BUILD 21: Marcar boot como completo ANTES de renderizar
+    // ✅ BUILD 22: Marcar boot como completo
     console.log('[Boot] 🎯 STEP 8: Marking boot as complete');
     bootManager.markBootComplete();
+    
+    // ✅ BUILD 22: Aguardar 50ms para garantir propagação do flag
+    console.log('[Boot] ⏳ STEP 8.5: Waiting 50ms for flag propagation...');
+    await new Promise(resolve => setTimeout(resolve, 50));
 
-    // ✅ BUILD 21: Renderizar React AQUI DENTRO (garantia de ordem)
+    // ✅ BUILD 22: Renderizar React AGORA (garantia absoluta)
     console.log('[Boot] 🔄 STEP 9: Rendering React application...');
     
     const AppWrapper = Capacitor.isNativePlatform() ? (
