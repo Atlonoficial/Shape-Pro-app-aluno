@@ -6,7 +6,8 @@ console.log('[supabase.ts] 📦 Module loaded (top-level)', {
   hasGetSupabase: typeof getSupabase === 'function'
 });
 
-// Helper interno para obter client (lazy loading)
+// ✅ BUILD 20: Helper síncrono para obter client (lazy)
+// Seguro porque bootManager garante que storage está pronto antes do React renderizar
 const getClient = () => {
   console.log('[supabase.ts] 🔄 Getting client instance', {
     timestamp: Date.now()

@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { Capacitor } from '@capacitor/core';
 import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
 import { createCapacitorStorage } from '@/lib/capacitorStorage';
+import { bootManager } from '@/lib/bootManager';
 
 console.log('[Boot] 🔄 STEP 0: main.tsx loaded');
 
@@ -104,8 +105,12 @@ if (Capacitor.isNativePlatform()) {
   console.log('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
 }
 
-console.log('[Boot] 🔄 STEP 6: Rendering React application...');
-})();
+// ✅ BUILD 20: Marcar boot como completo ANTES de renderizar
+console.log('[Boot] 🎯 STEP 8: Marking boot as complete');
+bootManager.markBootComplete();
+
+// ✅ BUILD 20: Só renderizar DEPOIS do boot completo
+console.log('[Boot] 🔄 STEP 9: Rendering React application...');
 
 // ✅ Desabilitar StrictMode em builds nativos para evitar dupla inicialização
 const AppWrapper = Capacitor.isNativePlatform() ? (
@@ -118,16 +123,17 @@ const AppWrapper = Capacitor.isNativePlatform() ? (
 
 createRoot(document.getElementById('root')!).render(AppWrapper);
 
-// ✅ FASE 3: Esconder loader nativo DEPOIS de React renderizar
-console.log('[Boot] 🔄 STEP 7: React rendered, hiding native loader...');
+// ✅ Esconder loader nativo DEPOIS de React renderizar
+console.log('[Boot] 🔄 STEP 10: React rendered, hiding native loader...');
 setTimeout(() => {
   const nativeLoader = document.getElementById('native-loader');
   if (nativeLoader) {
     nativeLoader.classList.add('hidden');
-    console.log('[Boot] ✅ STEP 8: Native loader hidden');
+    console.log('[Boot] ✅ STEP 11: Native loader hidden');
     setTimeout(() => {
       nativeLoader.remove();
-      console.log('[Boot] ✅ STEP 9: Native loader removed from DOM');
+      console.log('[Boot] ✅ STEP 12: Native loader removed from DOM');
     }, 500);
   }
 }, 100);
+})();

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
 import { useRealtimeManager } from './useRealtimeManager';
+import { bootManager } from '@/lib/bootManager';
 
 let initCount = 0;
 
@@ -34,72 +35,87 @@ export const useAuth = () => {
       platform: (window as any).Capacitor?.getPlatform?.() || 'web'
     });
     
-    // ✅ Safety timeout de 8 segundos com logging detalhado
-    const safetyTimeout = setTimeout(() => {
-      if (loadingRef.current) {
-        console.error('[useAuth] ⚠️ TIMEOUT after 8s:', {
-          user: user?.id || 'null',
-          session: !!session,
-          loading: loadingRef.current,
-          timestamp: Date.now(),
-          elapsedMs: Date.now() - initTime
+    // ✅ BUILD 20: Aguardar boot completo antes de inicializar
+    const initAuth = async () => {
+      try {
+        console.log('[useAuth] ⏳ Waiting for boot to complete...');
+        await bootManager.waitForBoot();
+        console.log('[useAuth] ✅ Boot complete, initializing auth...');
+        
+        // ✅ Safety timeout de 8 segundos com logging detalhado
+        const safetyTimeout = setTimeout(() => {
+          if (loadingRef.current) {
+            console.error('[useAuth] ⚠️ TIMEOUT after 8s:', {
+              user: user?.id || 'null',
+              session: !!session,
+              loading: loadingRef.current,
+              timestamp: Date.now(),
+              elapsedMs: Date.now() - initTime
+            });
+            setLoading(false);
+            setBootComplete(true);
+          }
+        }, 8000);
+        
+        const { data: { subscription } } = onAuthStateChange(async (user, session) => {
+          clearTimeout(safetyTimeout);
+          
+          console.log('[useAuth] 🔥 AUTH CHANGE:', {
+            event: 'auth_change',
+            userId: user?.id || 'null',
+            email: user?.email || 'null',
+            hasSession: !!session,
+            timestamp: Date.now(),
+            elapsedMs: Date.now() - initTime
+          });
+          
+          setUser(user);
+          setSession(session);
+          
+          if (user) {
+            try {
+              const profileStartTime = Date.now();
+              const profile = await getUserProfile(user.id);
+              setUserProfile(profile);
+              console.log('[useAuth] ✅ Profile loaded:', {
+                userType: profile?.user_type,
+                loadTimeMs: Date.now() - profileStartTime,
+                totalElapsedMs: Date.now() - initTime
+              });
+              
+              setBootComplete(true);
+              console.log('[useAuth] ✅ Boot complete, realtime enabled');
+            } catch (error) {
+              console.error('[useAuth] ❌ Error fetching profile:', error);
+              setUserProfile(null);
+              setBootComplete(true);
+            }
+          } else {
+            console.log('[useAuth] User logged out');
+            setUserProfile(null);
+            setBootComplete(false);
+          }
+          
+          setLoading(false);
+          console.log('[useAuth] ✅ Auth initialization complete:', {
+            totalTimeMs: Date.now() - initTime
+          });
         });
+
+        return () => {
+          console.log(`[useAuth] 🧹 CLEANUP #${initCount}`);
+          setupRef.current = false;
+          clearTimeout(safetyTimeout);
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('[useAuth] ❌ Boot wait error:', error);
         setLoading(false);
         setBootComplete(true);
       }
-    }, 8000);
-    
-    const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-      clearTimeout(safetyTimeout);
-      
-      console.log('[useAuth] 🔥 AUTH CHANGE:', {
-        event: 'auth_change',
-        userId: user?.id || 'null',
-        email: user?.email || 'null',
-        hasSession: !!session,
-        timestamp: Date.now(),
-        elapsedMs: Date.now() - initTime
-      });
-      
-      setUser(user);
-      setSession(session);
-      
-      if (user) {
-        try {
-          const profileStartTime = Date.now();
-          const profile = await getUserProfile(user.id);
-          setUserProfile(profile);
-          console.log('[useAuth] ✅ Profile loaded:', {
-            userType: profile?.user_type,
-            loadTimeMs: Date.now() - profileStartTime,
-            totalElapsedMs: Date.now() - initTime
-          });
-          
-          setBootComplete(true);
-          console.log('[useAuth] ✅ Boot complete, realtime enabled');
-        } catch (error) {
-          console.error('[useAuth] ❌ Error fetching profile:', error);
-          setUserProfile(null);
-          setBootComplete(true);
-        }
-      } else {
-        console.log('[useAuth] User logged out');
-        setUserProfile(null);
-        setBootComplete(false);
-      }
-      
-      setLoading(false);
-      console.log('[useAuth] ✅ Auth initialization complete:', {
-        totalTimeMs: Date.now() - initTime
-      });
-    });
-
-    return () => {
-      console.log(`[useAuth] 🧹 CLEANUP #${initCount}`);
-      setupRef.current = false;
-      clearTimeout(safetyTimeout);
-      subscription.unsubscribe();
     };
+    
+    initAuth();
   }, []); // ✅ Executar apenas no mount - SEM dependências
 
   // Use centralized realtime manager for profile changes

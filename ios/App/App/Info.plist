@@ -29,8 +29,8 @@
   <string>2.0.3</string>
 
   <!-- Número de build (inteiro, sempre maior que o anterior) -->
-  <key>CFBundleVersion</key>
-  <string>19</string>
+	<key>CFBundleVersion</key>
+	<string>20</string>
 
   <key>LSRequiresIPhoneOS</key>
   <true/>

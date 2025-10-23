@@ -24,10 +24,12 @@ export const getSupabase = () => {
       storageInitialized: isCapacitor ? capacitorStorage.initialized : 'N/A'
     });
     
-    // ✅ GUARD RAIL: Bloquear criação se storage não estiver pronto
+    // ✅ BUILD 20: Verificação com mensagem de erro mais clara
     if (isCapacitor && !capacitorStorage.initialized) {
-      console.error('[Supabase Client] ❌ CRITICAL: Storage not initialized!');
-      throw new Error('Storage must be initialized before creating Supabase client');
+      console.error('[Supabase Client] ❌ CRITICAL: Storage not initialized!', {
+        hint: 'Client should only be accessed after boot completes in main.tsx'
+      });
+      throw new Error('Storage must be initialized before creating Supabase client. Wait for bootManager.markBootComplete()');
     }
     
     _supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
