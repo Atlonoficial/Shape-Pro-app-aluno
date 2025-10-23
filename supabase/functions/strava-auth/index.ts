@@ -12,16 +12,50 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Strava auth request:', { method: req.method, url: req.url });
+    console.log('🔍 Strava auth request:', { method: req.method, url: req.url });
+    
+    // ✅ VALIDAÇÃO ANTECIPADA DE SECRETS (antes de tudo)
+    const clientId = Deno.env.get('STRAVA_CLIENT_ID');
+    const clientSecret = Deno.env.get('STRAVA_CLIENT_SECRET');
+    
+    console.log('🔑 Secret status:', {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      clientIdLength: clientId?.length || 0
+    });
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const requestBody = await req.json();
+    console.log('📦 Request body:', requestBody);
+    
+    const { action, code, state } = requestBody;
+
+    // ✅ HEALTH CHECK (sem autenticação necessária)
+    if (action === 'health_check') {
+      console.log('🏥 Health check requested');
+      return new Response(JSON.stringify({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        secrets: {
+          clientId: !!clientId,
+          clientSecret: !!clientSecret
+        },
+        message: (!clientId || !clientSecret) 
+          ? 'Strava secrets not configured. Please configure STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in Edge Function secrets.'
+          : 'All secrets configured correctly'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ✅ VALIDAÇÃO DE AUTENTICAÇÃO (para ações que precisam)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('Missing authorization header');
+      console.error('❌ Missing authorization header');
       throw new Error('No authorization header');
     }
 
@@ -30,31 +64,33 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
-      console.error('Authentication error:', authError);
+      console.error('❌ Authentication error:', authError);
       throw new Error('Invalid authentication');
     }
 
-    console.log('Authenticated user:', user.id);
-
-    const requestBody = await req.json();
-    console.log('Request body:', requestBody);
-    
-    const { action, code, state } = requestBody;
+    console.log('✅ Authenticated user:', user.id);
 
     if (action === 'get_auth_url') {
-      const clientId = Deno.env.get('STRAVA_CLIENT_ID');
-      
-      // Validação de configuração
+      // Validação de configuração (já validado no início)
       if (!clientId) {
-        console.error('STRAVA_CLIENT_ID not configured');
-        throw new Error('Strava integration not configured. Please contact administrator.');
+        console.error('❌ STRAVA_CLIENT_ID not configured');
+        return new Response(JSON.stringify({
+          error: 'Strava integration not configured',
+          details: 'STRAVA_CLIENT_ID is missing. Please configure it in Edge Function secrets.',
+          missingSecrets: ['STRAVA_CLIENT_ID']
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       
-      // Redirect URI dinâmico - detecta origem do request
-      const origin = new URL(req.url).origin;
       const redirectUri = `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback`;
       
-      console.log('Generating Strava auth URL:', { clientId: clientId.substring(0, 5) + '...', redirectUri });
+      console.log('🔗 Generating Strava auth URL:', { 
+        clientId: clientId.substring(0, 5) + '...', 
+        redirectUri,
+        userId: user.id 
+      });
       
       const authUrl = `https://www.strava.com/oauth/authorize?` +
         `client_id=${clientId}&` +
@@ -70,16 +106,24 @@ serve(async (req) => {
     }
 
     if (action === 'exchange_code') {
-      const clientId = Deno.env.get('STRAVA_CLIENT_ID');
-      const clientSecret = Deno.env.get('STRAVA_CLIENT_SECRET');
-      
-      // Validação de configuração
+      // Validação de configuração (já validado no início)
       if (!clientId || !clientSecret) {
-        console.error('Strava credentials not configured');
-        throw new Error('Strava integration not configured. Please contact administrator.');
+        console.error('❌ Strava credentials not configured');
+        const missingSecrets = [];
+        if (!clientId) missingSecrets.push('STRAVA_CLIENT_ID');
+        if (!clientSecret) missingSecrets.push('STRAVA_CLIENT_SECRET');
+        
+        return new Response(JSON.stringify({
+          error: 'Strava integration not configured',
+          details: `Missing secrets: ${missingSecrets.join(', ')}. Please configure them in Edge Function secrets.`,
+          missingSecrets
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       
-      console.log('Exchanging Strava code for token...');
+      console.log('🔄 Exchanging Strava code for token...');
       
       const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
         method: 'POST',

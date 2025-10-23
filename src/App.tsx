@@ -43,6 +43,7 @@ import Chat from "./pages/Chat";
 import { EditProfile } from "./pages/teacher/EditProfile";
 import DashboardProfessor from "./pages/DashboardProfessor";
 import StravaCallback from "./pages/StravaCallback";
+import StravaDebug from "./pages/StravaDebug";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -132,6 +133,7 @@ const App = () => {
                 <Route path="/dashboard-professor" element={<AuthGuard><TermsGuard><DashboardProfessor /></TermsGuard></AuthGuard>} />
                 <Route path="/teacher/edit-profile" element={<AuthGuard><TermsGuard><EditProfile /></TermsGuard></AuthGuard>} />
                 <Route path="/strava-callback" element={<StravaCallback />} />
+                <Route path="/strava-debug" element={<AuthGuard><StravaDebug /></AuthGuard>} />
                 
                 <Route path="*" element={<NotFound />} />
                   </Routes>

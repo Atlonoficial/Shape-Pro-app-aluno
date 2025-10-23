@@ -106,51 +106,95 @@ export const useStravaIntegration = () => {
 
     try {
       setConnecting(true);
+      console.log('🔗 [Strava] Iniciando conexão...');
+
+      // ✅ RETRY LOGIC: 3 tentativas com delay de 1s
+      let lastError: any = null;
       
-      const { data, error } = await supabase.functions.invoke('strava-auth', {
-        body: { action: 'get_auth_url' }
-      });
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`🔄 [Strava] Tentativa ${attempt}/3 de obter URL de autorização...`);
+          
+          const { data, error } = await supabase.functions.invoke('strava-auth', {
+            body: { action: 'get_auth_url' }
+          });
 
-      if (error) {
-        console.error('Error getting auth URL:', error);
-        
-        const errorMessage = error.message || "Não foi possível conectar com o Strava";
-        
-        // Mensagens específicas para diferentes tipos de erro
-        let title = "Erro ao conectar";
-        let description = errorMessage;
-        
-        if (errorMessage.includes("not configured")) {
-          title = "Strava não configurado";
-          description = "A integração com o Strava não está configurada. Entre em contato com o suporte.";
-        } else if (errorMessage.includes("Invalid authentication")) {
-          title = "Sessão expirada";
-          description = "Sua sessão expirou. Por favor, faça login novamente.";
+          console.log(`📊 [Strava] Tentativa ${attempt} - Resposta:`, { 
+            hasData: !!data, 
+            hasError: !!error,
+            errorMessage: error?.message 
+          });
+
+          if (error) {
+            lastError = error;
+            console.error(`❌ [Strava] Erro na tentativa ${attempt}:`, error);
+            
+            // Se for erro de configuração, não tentar novamente
+            if (error.message?.includes("not configured") || 
+                error.message?.includes("Missing secrets")) {
+              console.error('❌ [Strava] Erro de configuração detectado, abortando retries');
+              break;
+            }
+            
+            // Se não for a última tentativa, esperar 1s antes de tentar novamente
+            if (attempt < 3) {
+              console.log(`⏳ [Strava] Aguardando 1s antes da próxima tentativa...`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+          } else if (data?.authUrl) {
+            console.log('✅ [Strava] URL de autorização obtida com sucesso');
+            // Sucesso! Redirecionar
+            window.location.href = data.authUrl;
+            return;
+          } else {
+            console.error('❌ [Strava] Resposta sem authUrl:', data);
+            lastError = new Error('No auth URL returned');
+          }
+          
+        } catch (err: any) {
+          lastError = err;
+          console.error(`❌ [Strava] Exceção na tentativa ${attempt}:`, err);
+          
+          if (attempt < 3) {
+            console.log(`⏳ [Strava] Aguardando 1s antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
-        
-        toast.error(description, { description: title });
-        return;
       }
 
-      if (!data?.authUrl) {
-        toast.error('URL de autorização não recebida');
-        return;
+      // Se chegou aqui, todas as tentativas falharam
+      console.error('❌ [Strava] Todas as tentativas falharam. Último erro:', lastError);
+      
+      const errorMessage = lastError?.message || "Não foi possível conectar com o Strava";
+      
+      // Mensagens específicas para diferentes tipos de erro
+      if (errorMessage.includes("not configured") || errorMessage.includes("Missing secrets")) {
+        toast.error("Strava não configurado", {
+          description: "A integração com o Strava não está configurada. Entre em contato com o suporte."
+        });
+      } else if (errorMessage.includes("Invalid authentication") || errorMessage.includes("No authorization header")) {
+        toast.error("Sessão expirada", {
+          description: "Sua sessão expirou. Por favor, faça login novamente."
+        });
+      } else if (errorMessage.includes("Failed to send a request")) {
+        toast.error("Erro de conexão", {
+          description: "Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente."
+        });
+      } else {
+        toast.error("Erro ao conectar", {
+          description: errorMessage
+        });
       }
-
-      // Redirect to Strava authorization (instead of popup)
-      window.location.href = data.authUrl;
 
     } catch (error: any) {
-      console.error('Connect Strava error:', error);
-      const errorMessage = error?.message || "Falha ao conectar com Strava";
-      
-      if (errorMessage.includes("not configured")) {
-        toast.error("A integração com o Strava não está configurada. Entre em contato com o suporte.");
-      } else {
-        toast.error(errorMessage);
-      }
+      console.error('❌ [Strava] Erro fatal:', error);
+      toast.error("Erro inesperado", {
+        description: error?.message || "Falha ao conectar com Strava"
+      });
     } finally {
       setConnecting(false);
+      console.log('🏁 [Strava] Processo de conexão finalizado');
     }
   };
 
