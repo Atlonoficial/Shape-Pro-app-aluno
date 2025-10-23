@@ -19,7 +19,7 @@
 			],
 		"ITSAppUsesNonExemptEncryption": false,
 		"CFBundleShortVersionString": "2.0.3",
-		"CFBundleVersion": "20",
+		"CFBundleVersion": "21",
 		"OneSignal_app_id": "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
 		"NSLocationWhenInUseUsageDescription": "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.",
 		"NSLocationAlwaysAndWhenInUseUsageDescription": "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você."

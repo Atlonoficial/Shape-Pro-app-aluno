@@ -14,24 +14,41 @@ class CapacitorStorageAdapter {
   private initPromise: Promise<void> | null = null;
 
   async initialize() {
-    if (this.initialized) return;
-    if (this.initPromise) return this.initPromise;
+    if (this.initialized) {
+      console.log('[CapacitorStorage] ✅ Already initialized, skipping');
+      return;
+    }
+    
+    if (this.initPromise) {
+      console.log('[CapacitorStorage] ⏳ Init already in progress, waiting...');
+      return this.initPromise;
+    }
     
     this.initPromise = (async () => {
+      const startTime = Date.now();
+      
       try {
-        console.log('[CapacitorStorage] 🔄 STEP 1A: Starting initialization...');
-        console.log('[CapacitorStorage] 🔄 STEP 1B: Platform:', Capacitor.getPlatform());
-        console.log('[CapacitorStorage] 🔄 STEP 1C: Calling Preferences.keys()...');
+        console.log('[CapacitorStorage] 🔄 STEP 1A: Starting initialization...', {
+          platform: Capacitor.getPlatform(),
+          timestamp: startTime
+        });
+        
+        // ✅ BUILD 21: Testar se Preferences está disponível
+        if (!Preferences || typeof Preferences.keys !== 'function') {
+          throw new Error('Preferences plugin not available');
+        }
+        
+        console.log('[CapacitorStorage] 🔄 STEP 1B: Calling Preferences.keys()...');
         
         // Carregar TODAS as chaves do Supabase do storage nativo
         const { keys } = await Preferences.keys();
-        console.log('[CapacitorStorage] 🔄 STEP 1D: Total keys found:', keys.length);
+        console.log('[CapacitorStorage] 🔄 STEP 1C: Total keys found:', keys.length);
         
         const supabaseKeys = keys.filter(k => 
           k.startsWith('sb-') || k.includes('supabase')
         );
 
-        console.log('[CapacitorStorage] 📦 STEP 1E: Found', supabaseKeys.length, 'Supabase keys');
+        console.log('[CapacitorStorage] 📦 STEP 1D: Found', supabaseKeys.length, 'Supabase keys');
 
         for (const key of supabaseKeys) {
           const { value } = await Preferences.get({ key });
@@ -42,9 +59,17 @@ class CapacitorStorageAdapter {
         }
 
         this.initialized = true;
-        console.log('[CapacitorStorage] ✅ STEP 2: Initialization complete with', this.cache.size, 'cached keys');
+        console.log('[CapacitorStorage] ✅ STEP 2: Initialization complete!', {
+          cachedKeys: this.cache.size,
+          duration: `${Date.now() - startTime}ms`,
+          timestamp: Date.now()
+        });
+        
       } catch (error) {
-        console.error('[CapacitorStorage] ❌ Init failed:', error);
+        console.error('[CapacitorStorage] ❌ INIT FAILED:', error);
+        // ✅ BUILD 21: Não deixar em estado indefinido
+        this.initialized = false;
+        this.initPromise = null;
         throw error;
       }
     })();
