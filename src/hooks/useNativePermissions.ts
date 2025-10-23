@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Camera } from '@capacitor/camera';
-import { PushNotifications } from '@capacitor/push-notifications';
+// ✅ BUILD 24: Removido PushNotifications - OneSignal gerencia tudo
 import { toast } from 'sonner';
 
 interface PermissionsState {
   camera: 'granted' | 'denied' | 'prompt' | 'unknown';
-  push: 'granted' | 'denied' | 'prompt' | 'unknown';
+  push: 'granted' | 'denied' | 'prompt' | 'unknown'; // Mantido para compatibilidade
   loading: boolean;
 }
 
@@ -38,66 +38,24 @@ export const useNativePermissions = () => {
     }
   };
 
-  const requestPushPermission = async () => {
-    try {
-      console.log('[Permissions] 🔔 Requesting push notification permission...');
-      
-      // iOS: Mostrar explicação antes de solicitar
-      toast.info('🔔 Ative as notificações para receber lembretes de treino e atualizações!', {
-        duration: 4000,
-      });
+  // ✅ BUILD 24: Removido requestPushPermission - OneSignal gerencia
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const result = await PushNotifications.requestPermissions();
-      
-      if (result.receive === 'granted') {
-        console.log('[Permissions] ✅ Push notification permission granted');
-        setPermissions(prev => ({ ...prev, push: 'granted' }));
-        
-        // Registrar para receber notificações
-        await PushNotifications.register();
-        
-        toast.success('Notificações ativadas com sucesso!');
-        return true;
-      } else {
-        console.log('[Permissions] ❌ Push notification permission denied');
-        setPermissions(prev => ({ ...prev, push: 'denied' }));
-        toast.error('Permissão de notificações negada. Ative nas configurações do app.');
-        return false;
-      }
-    } catch (error) {
-      console.error('[Permissions] Push permission error:', error);
-      setPermissions(prev => ({ ...prev, push: 'denied' }));
-      return false;
-    }
-  };
-
+  // ✅ BUILD 24: checkPermissions simplificado (só câmera)
   const checkPermissions = async () => {
     try {
+      console.log('[Permissions] 🔍 Checking camera permission...');
       setPermissions(prev => ({ ...prev, loading: true }));
 
-      // Verificar permissão de câmera
-      const cameraResult = await Camera.checkPermissions();
-      setPermissions(prev => ({ 
-        ...prev, 
-        camera: cameraResult.camera as PermissionsState['camera'] 
-      }));
+      const cameraPermission = await Camera.checkPermissions();
+      console.log('[Permissions] Camera status:', cameraPermission);
 
-      // Verificar permissão de push
-      const pushResult = await PushNotifications.checkPermissions();
-      setPermissions(prev => ({ 
-        ...prev, 
-        push: pushResult.receive as PermissionsState['push'],
-        loading: false
-      }));
-
-      console.log('[Permissions] Current state:', {
-        camera: cameraResult.camera,
-        push: pushResult.receive,
+      setPermissions({
+        camera: (cameraPermission.camera || cameraPermission.photos) as PermissionsState['camera'] || 'unknown',
+        push: 'unknown', // OneSignal gerencia
+        loading: false,
       });
     } catch (error) {
-      console.error('[Permissions] Check error:', error);
+      console.error('[Permissions] Error checking permissions:', error);
       setPermissions(prev => ({ ...prev, loading: false }));
     }
   };
@@ -105,7 +63,6 @@ export const useNativePermissions = () => {
   return {
     permissions,
     requestCameraPermission,
-    requestPushPermission,
     checkPermissions,
   };
 };

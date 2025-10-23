@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const auth = useAuth();
   const location = useLocation();
   const { isNative } = useDeviceContext();
-  const { requestCameraPermission, requestPushPermission } = useNativePermissions();
+  const { requestCameraPermission } = useNativePermissions(); // ✅ BUILD 24: Push gerenciado por OneSignal
   const [forceRender, setForceRender] = useState(false);
   const [emergencyMode, setEmergencyMode] = useState(false);
   const [emergencyDetails, setEmergencyDetails] = useState<string[]>([]);
@@ -110,31 +110,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [auth.isAuthenticated, auth.user?.id, auth.loading]);
 
-  // ✅ BUILD 23: Solicitar permissões nativas após login (apenas em apps nativos)
-  useEffect(() => {
-    if (auth.isAuthenticated && auth.user && isNative && !permissionsRequested) {
-      console.log('[AuthProvider] 🔐 Requesting native permissions after login...');
-      
-      const requestPermissions = async () => {
-        // Aguardar 2 segundos após login para solicitar permissões
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Solicitar permissão de push primeiro (mais importante)
-        await requestPushPermission();
-        
-        // Aguardar 1 segundo antes de solicitar câmera
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Solicitar permissão de câmera
-        await requestCameraPermission();
-        
-        setPermissionsRequested(true);
-        console.log('[AuthProvider] ✅ Native permissions requested');
-      };
-      
-      requestPermissions();
-    }
-  }, [auth.isAuthenticated, auth.user, isNative, permissionsRequested, requestPushPermission, requestCameraPermission]);
+  // ✅ BUILD 24: Removido - OneSignal gerencia permissões automaticamente
 
   // ✅ FASE 3: Emergency mode UI melhorada com detalhes técnicos
   if (emergencyMode) {

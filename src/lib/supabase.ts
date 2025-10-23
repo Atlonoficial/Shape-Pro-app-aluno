@@ -208,7 +208,10 @@ export const signUpUser = async (
 };
 
 export const signInUser = async (email: string, password: string) => {
-  const client = getClient();
+  // ✅ BUILD 24: Importar dinamicamente para garantir storage pronto
+  const { getSupabase } = await import('@/integrations/supabase/client');
+  const client = getSupabase();
+  
   const { data, error } = await client.auth.signInWithPassword({
     email,
     password
