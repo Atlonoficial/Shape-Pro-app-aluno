@@ -43,6 +43,32 @@ export const AuthScreen = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // ✅ BUILD 25: Verificar boot completo antes de tentar login
+    if (isNative) {
+      const { bootManager } = await import('@/lib/bootManager');
+      
+      if (!bootManager.isBootComplete()) {
+        console.warn('[AuthScreen] ⏳ Boot not complete yet!');
+        toast({
+          title: "⏳ Aguarde...",
+          description: "Inicializando aplicativo...",
+        });
+        
+        // Aguardar até 3 segundos pelo boot
+        try {
+          await bootManager.waitForBoot(3000);
+        } catch (error) {
+          toast({
+            title: "❌ Erro de inicialização",
+            description: "Recarregue o app e tente novamente.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+    
     setLoading(true);
 
     try {

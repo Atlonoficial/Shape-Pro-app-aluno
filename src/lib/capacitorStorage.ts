@@ -62,7 +62,10 @@ class CapacitorStorageAdapter {
         console.log('[CapacitorStorage] ✅ STEP 2: Initialization complete!', {
           cachedKeys: this.cache.size,
           duration: `${Date.now() - startTime}ms`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          // ✅ BUILD 25: Confirmar flag está true
+          initializedFlag: this.initialized,
+          cacheContents: Array.from(this.cache.keys()).map(k => k.substring(0, 30))
         });
         
       } catch (error) {

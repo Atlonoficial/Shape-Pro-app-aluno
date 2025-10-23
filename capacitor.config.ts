@@ -31,8 +31,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 24: Splash + Storage + OneSignal unificado
-    CFBundleVersion: '24',
+    // ✅ BUILD 25: Storage pronto + Scrollbar removida em mobile
+    CFBundleVersion: '25',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -74,7 +74,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "24", // ✅ BUILD 24: Splash nativa removida + Storage corrigido + OneSignal unificado
+      CFBundleVersion: "25", // ✅ BUILD 25: Storage pronto + Scrollbar removida em mobile
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",

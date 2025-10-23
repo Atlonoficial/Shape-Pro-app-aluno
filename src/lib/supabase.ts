@@ -208,6 +208,15 @@ export const signUpUser = async (
 };
 
 export const signInUser = async (email: string, password: string) => {
+  // ✅ BUILD 25: Verificar storage ANTES de importar Supabase
+  if (typeof window !== 'undefined' && (window as any).Capacitor) {
+    const { capacitorStorage } = await import('@/lib/capacitorStorage');
+    if (!capacitorStorage.initialized) {
+      console.error('[signInUser] ❌ Storage not ready!');
+      throw new Error('Aguarde a inicialização do app antes de fazer login');
+    }
+  }
+  
   // ✅ BUILD 24: Importar dinamicamente para garantir storage pronto
   const { getSupabase } = await import('@/integrations/supabase/client');
   const client = getSupabase();
