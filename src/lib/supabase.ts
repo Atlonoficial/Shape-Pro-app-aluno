@@ -1,5 +1,18 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+
+console.log('[supabase.ts] 📦 Module loaded (top-level)', {
+  timestamp: Date.now(),
+  hasGetSupabase: typeof getSupabase === 'function'
+});
+
+// Helper interno para obter client (lazy loading)
+const getClient = () => {
+  console.log('[supabase.ts] 🔄 Getting client instance', {
+    timestamp: Date.now()
+  });
+  return getSupabase();
+};
 
 // Interfaces for Supabase
 export interface UserProfile {
@@ -164,7 +177,8 @@ export const signUpUser = async (
   // Extrair metadados para armazenar no user_metadata
   const userMetadata = extractUserMetadata(originMetadata);
   
-  const { data, error } = await supabase.auth.signUp({
+  const client = getClient();
+  const { data, error } = await client.auth.signUp({
     email,
     password,
     options: {
@@ -193,7 +207,8 @@ export const signUpUser = async (
 };
 
 export const signInUser = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const client = getClient();
+  const { data, error } = await client.auth.signInWithPassword({
     email,
     password
   });
@@ -204,7 +219,7 @@ export const signInUser = async (email: string, password: string) => {
         error.message.includes('Email not confirmed')) {
       
       // Verificar se o email existe no sistema (profiles)
-      const { data: profiles } = await supabase
+      const { data: profiles } = await client
         .from('profiles')
         .select('id, email')
         .eq('email', email.toLowerCase())
@@ -226,7 +241,8 @@ export const signInUser = async (email: string, password: string) => {
 };
 
 export const signOutUser = async () => {
-  const { error } = await supabase.auth.signOut();
+  const client = getClient();
+  const { error } = await client.auth.signOut();
   if (error) throw error;
 };
 
@@ -264,7 +280,8 @@ export const resetPasswordForEmail = async (
   });
   
   try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    const client = getClient();
+    const { data, error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
     
@@ -300,7 +317,8 @@ export const resetPasswordForEmail = async (
 };
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('profiles')
     .select('*')
     .eq('id', uid)
@@ -314,7 +332,8 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
 };
 
 export const updateUserProfile = async (uid: string, updates: Partial<UserProfile>) => {
-  const { error } = await supabase
+  const client = getClient();
+  const { error } = await client
     .from('profiles')
     .update(updates)
     .eq('id', uid);
@@ -323,14 +342,16 @@ export const updateUserProfile = async (uid: string, updates: Partial<UserProfil
 };
 
 export const onAuthStateChange = (callback: (user: User | null, session: Session | null) => void) => {
-  return supabase.auth.onAuthStateChange((event, session) => {
+  const client = getClient();
+  return client.auth.onAuthStateChange((event, session) => {
     callback(session?.user ?? null, session);
   });
 };
 
 // Student functions
 export const getStudentsByTeacher = (teacherId: string, callback: (students: any[]) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('teacher-students-changes')
     .on(
       'postgres_changes',
@@ -347,7 +368,7 @@ export const getStudentsByTeacher = (teacherId: string, callback: (students: any
     .subscribe();
 
   const fetchStudents = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('students')
       .select(`
         *,
@@ -366,12 +387,13 @@ export const getStudentsByTeacher = (teacherId: string, callback: (students: any
   fetchStudents();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
 export const getStudentAssessments = async (userId: string) => {
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('progress')
     .select('*')
     .eq('user_id', userId)
@@ -383,7 +405,8 @@ export const getStudentAssessments = async (userId: string) => {
 };
 
 export const getStudentByUserId = (userId: string, callback: (student: Student | null) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('student-changes')
     .on(
       'postgres_changes',
@@ -400,7 +423,7 @@ export const getStudentByUserId = (userId: string, callback: (student: Student |
     .subscribe();
 
   const fetchStudent = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('students')
       .select('*')
       .eq('user_id', userId)
@@ -417,12 +440,13 @@ export const getStudentByUserId = (userId: string, callback: (student: Student |
   fetchStudent();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
 export const createStudent = async (student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) => {
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('students')
     .insert(student)
     .select()
@@ -433,7 +457,8 @@ export const createStudent = async (student: Omit<Student, 'id' | 'created_at' |
 };
 
 export const updateStudentProfile = async (studentId: string, updates: Partial<Student>) => {
-  const { error } = await supabase
+  const client = getClient();
+  const { error } = await client
     .from('students')
     .update(updates)
     .eq('id', studentId);
@@ -443,7 +468,8 @@ export const updateStudentProfile = async (studentId: string, updates: Partial<S
 
 // Workout functions
 export const getWorkoutsByUser = (userId: string, callback: (workouts: Workout[]) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('workout-changes')
     .on(
       'postgres_changes',
@@ -459,7 +485,7 @@ export const getWorkoutsByUser = (userId: string, callback: (workouts: Workout[]
     .subscribe();
 
   const fetchWorkouts = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('workouts')
       .select('*')
       .contains('assigned_to', [userId])
@@ -476,13 +502,14 @@ export const getWorkoutsByUser = (userId: string, callback: (workouts: Workout[]
   fetchWorkouts();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
 // Nutrition functions
 export const getNutritionPlansByUser = (userId: string, callback: (plans: NutritionPlan[]) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('nutrition-changes')
     .on(
       'postgres_changes',
@@ -498,7 +525,7 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
     .subscribe();
 
   const fetchPlans = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('meal_plans')
       .select('*')
       .contains('assigned_students', [userId])
@@ -534,13 +561,14 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
   fetchPlans();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
 // Notifications functions
 export const getNotificationsByUser = (userId: string, callback: (notifications: Notification[]) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('notification-changes')
     .on(
       'postgres_changes',
@@ -556,7 +584,7 @@ export const getNotificationsByUser = (userId: string, callback: (notifications:
     .subscribe();
 
   const fetchNotifications = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('notifications')
       .select('*')
       .contains('target_users', [userId])
@@ -573,12 +601,13 @@ export const getNotificationsByUser = (userId: string, callback: (notifications:
   fetchNotifications();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
 export const markNotificationAsRead = async (notificationId: string) => {
-  const { error } = await supabase
+  const client = getClient();
+  const { error } = await client
     .from('notifications')
     .update({ 
       is_read: true, 
@@ -590,7 +619,8 @@ export const markNotificationAsRead = async (notificationId: string) => {
 };
 
 export const markAllNotificationsAsRead = async (userId: string) => {
-  const { error } = await supabase
+  const client = getClient();
+  const { error } = await client
     .from('notifications')
     .update({ 
       is_read: true, 
@@ -603,7 +633,8 @@ export const markAllNotificationsAsRead = async (userId: string) => {
 };
 
 export const clearAllNotifications = async (userId: string) => {
-  const { error } = await supabase
+  const client = getClient();
+  const { error } = await client
     .from('notifications')
     .delete()
     .contains('target_users', [userId]);
@@ -613,7 +644,8 @@ export const clearAllNotifications = async (userId: string) => {
 
 // Chat functions
 export const getChatMessages = (conversationId: string, callback: (messages: ChatMessage[]) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('chat-changes')
     .on(
       'postgres_changes',
@@ -630,7 +662,7 @@ export const getChatMessages = (conversationId: string, callback: (messages: Cha
     .subscribe();
 
   const fetchMessages = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('chat_messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -647,12 +679,13 @@ export const getChatMessages = (conversationId: string, callback: (messages: Cha
   fetchMessages();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
 export const sendChatMessage = async (message: Omit<ChatMessage, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('chat_messages')
     .insert(message)
     .select()
@@ -664,7 +697,8 @@ export const sendChatMessage = async (message: Omit<ChatMessage, 'id' | 'created
 
 // Meal logs functions
 export const getMealLogsByUserAndDate = (userId: string, date: string, callback: (logs: any[]) => void) => {
-  const channel = supabase
+  const client = getClient();
+  const channel = client
     .channel('meal-logs-changes')
     .on(
       'postgres_changes',
@@ -681,7 +715,7 @@ export const getMealLogsByUserAndDate = (userId: string, date: string, callback:
     .subscribe();
 
   const fetchMealLogs = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('meal_logs')
       .select('*')
       .eq('user_id', userId)
@@ -700,7 +734,7 @@ export const getMealLogsByUserAndDate = (userId: string, date: string, callback:
   fetchMealLogs();
 
   return () => {
-    supabase.removeChannel(channel);
+    client.removeChannel(channel);
   };
 };
 
@@ -722,7 +756,8 @@ export const createMealLog = async (mealLog: {
 }) => {
   console.log('[createMealLog] Creating meal log with data:', mealLog);
   
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('meal_logs')
     .insert(mealLog)
     .select()
@@ -738,7 +773,8 @@ export const createMealLog = async (mealLog: {
 };
 
 export const updateMealLog = async (logId: string, updates: any) => {
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('meal_logs')
     .update(updates)
     .eq('id', logId)
@@ -751,7 +787,8 @@ export const updateMealLog = async (logId: string, updates: any) => {
 
 // Anamnese functions for teachers
 export const getStudentAnamnese = async (studentUserId: string) => {
-  const { data, error } = await supabase
+  const client = getClient();
+  const { data, error } = await client
     .from('anamneses')
     .select('*')
     .eq('user_id', studentUserId)
