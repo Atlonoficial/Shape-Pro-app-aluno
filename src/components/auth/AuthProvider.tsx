@@ -80,10 +80,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const timer = setTimeout(() => {
       // Só ativar emergency mode se REALMENTE travou
       if (auth.loading && !auth.isAuthenticated && !auth.user) {
-        console.error('[AuthProvider] 🚨 EMERGENCY MODE: Auth travado há 15s');
+        console.error('[AuthProvider] 🚨 EMERGENCY MODE: Auth stuck for 8s');
         setEmergencyMode(true);
       }
-    }, 15000); // ✅ Aumentado de 10s → 15s
+    }, 8000); // ✅ FASE 4: Reduzido de 15s → 8s
     return () => clearTimeout(timer);
   }, [auth.loading, auth.isAuthenticated, auth.user]);
 

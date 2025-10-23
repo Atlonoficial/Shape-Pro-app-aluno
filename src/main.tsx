@@ -6,29 +6,30 @@ import { Capacitor } from '@capacitor/core';
 import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
 import { createCapacitorStorage } from '@/lib/capacitorStorage';
 
-console.log('[Boot] 🎯 CHECKPOINT 1: main.tsx loaded');
+console.log('[Boot] 🔄 STEP 0: main.tsx loaded');
 
 // Aguardar Capacitor estar completamente pronto
 const waitForCapacitor = async () => {
   if (Capacitor.isNativePlatform()) {
-    console.log('[Boot] 🔄 Waiting for Capacitor plugins...');
+    console.log('[Boot] 🔄 STEP 2: Native platform detected, initializing Capacitor plugins...');
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // ✅ CRÍTICO: Inicializar storage ANTES de qualquer código React
-    console.log('[Boot] 🔐 Initializing Capacitor storage...');
+    // ✅ FASE 1 CRÍTICO: Inicializar storage ANTES de qualquer código React
+    console.log('[Boot] 🔐 STEP 3: Initializing Capacitor storage...');
     try {
       await createCapacitorStorage();
-      console.log('[Boot] ✅ Storage ready and tested');
+      console.log('[Boot] ✅ STEP 4: Storage ready and tested');
     } catch (error) {
       console.error('[Boot] ❌ Storage initialization failed:', error);
       // Continuar mesmo com falha - web fallback
     }
     
-    console.log('[Boot] 🎯 CHECKPOINT 2: Capacitor plugins ready');
+    console.log('[Boot] 🎯 STEP 5: Capacitor plugins ready, proceeding to React render');
   }
 };
 
 (async () => {
+console.log('[Boot] 🔄 STEP 1: Starting boot sequence...');
 if (Capacitor.isNativePlatform()) {
   await waitForCapacitor();
   
@@ -69,11 +70,29 @@ if (Capacitor.isNativePlatform()) {
   }
 
   console.log('[Boot] ✅ Native initialization complete');
+} else {
+  console.log('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
 }
+
+console.log('[Boot] 🔄 STEP 6: Rendering React application...');
 })();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);
+
+// ✅ FASE 3: Esconder loader nativo DEPOIS de React renderizar
+console.log('[Boot] 🔄 STEP 7: React rendered, hiding native loader...');
+setTimeout(() => {
+  const nativeLoader = document.getElementById('native-loader');
+  if (nativeLoader) {
+    nativeLoader.classList.add('hidden');
+    console.log('[Boot] ✅ STEP 8: Native loader hidden');
+    setTimeout(() => {
+      nativeLoader.remove();
+      console.log('[Boot] ✅ STEP 9: Native loader removed from DOM');
+    }, 500);
+  }
+}, 100);

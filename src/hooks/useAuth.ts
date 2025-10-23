@@ -10,9 +10,9 @@ export const useAuth = () => {
   const [bootComplete, setBootComplete] = useState(false);
 
   useEffect(() => {
-    console.log('[useAuth] ⏰ Setting up auth state change subscription');
+    console.log('[useAuth] 🔄 STEP 1: Setting up auth state change subscription');
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-      console.log('[useAuth] 🔐 ✅ Auth state change FIRED:', {
+      console.log('[useAuth] 🔥 STEP 2: onAuthStateChange FIRED!', {
         userId: user?.id || 'null',
         email: user?.email || 'null',
         hasSession: !!session,
@@ -26,10 +26,11 @@ export const useAuth = () => {
         try {
           const profile = await getUserProfile(user.id);
           setUserProfile(profile);
-          console.log('[useAuth] ✅ Profile loaded:', profile?.user_type);
+          console.log('[useAuth] ✅ STEP 3: Profile loaded:', profile?.user_type);
           
-          // ✅ Ativar realtime APENAS quando user estiver carregado
+          // ✅ FASE 6: Ativar realtime APENAS quando user estiver carregado
           setBootComplete(true);
+          console.log('[useAuth] ✅ STEP 4: Boot complete, realtime enabled');
         } catch (error) {
           console.error('[useAuth] ❌ Error fetching profile:', error);
           setUserProfile(null);

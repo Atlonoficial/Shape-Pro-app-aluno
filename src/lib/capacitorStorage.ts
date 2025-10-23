@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core';
  */
 class CapacitorStorageAdapter {
   private cache: Map<string, string> = new Map();
-  private initialized = false;
+  public initialized = false; // ✅ PÚBLICO para verificação externa
   private initPromise: Promise<void> | null = null;
 
   async initialize() {
@@ -19,7 +19,7 @@ class CapacitorStorageAdapter {
     
     this.initPromise = (async () => {
       try {
-        console.log('[CapacitorStorage] 🔄 Initializing...');
+        console.log('[CapacitorStorage] 🔄 STEP 1: Starting initialization...');
         
         // Carregar TODAS as chaves do Supabase do storage nativo
         const { keys } = await Preferences.keys();
@@ -38,7 +38,7 @@ class CapacitorStorageAdapter {
         }
 
         this.initialized = true;
-        console.log('[CapacitorStorage] ✅ Initialization complete with', this.cache.size, 'cached keys');
+        console.log('[CapacitorStorage] ✅ STEP 2: Initialization complete with', this.cache.size, 'cached keys');
       } catch (error) {
         console.error('[CapacitorStorage] ❌ Init failed:', error);
         throw error;
@@ -50,6 +50,12 @@ class CapacitorStorageAdapter {
 
   // ✅ SÍNCRONO - Supabase consegue ler
   getItem(key: string): string | null {
+    // ✅ FASE 2: Se ainda está inicializando, avisar mas não bloquear
+    if (!this.initialized && this.initPromise) {
+      console.warn('[CapacitorStorage] ⚠️ getItem called during init, returning null for now:', key);
+      return null;
+    }
+    
     if (!this.initialized) {
       console.warn('[CapacitorStorage] ⚠️ getItem called before init:', key);
       return null;

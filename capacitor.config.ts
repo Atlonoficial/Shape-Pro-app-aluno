@@ -66,7 +66,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "13",
+      CFBundleVersion: "14", // ✅ FASE 6: Build atualizado
     },
   },
 

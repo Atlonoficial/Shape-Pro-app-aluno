@@ -19,7 +19,7 @@
 			],
 		"ITSAppUsesNonExemptEncryption": false,
 		"CFBundleShortVersionString": "2.0.3",
-		"CFBundleVersion": "13"
+		"CFBundleVersion": "14" // ✅ FASE 6: Build atualizado
 		}
 	},
 	"android": {

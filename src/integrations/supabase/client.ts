@@ -13,14 +13,20 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 const isCapacitor = typeof window !== 'undefined' && 
   (window as any).Capacitor !== undefined;
 
-console.log('[Supabase Client] Initializing with:', {
+console.log('[Supabase Client] 🔄 STEP 1: Initializing with:', {
   url: SUPABASE_URL,
   isCapacitor,
   platform: isCapacitor ? 'mobile' : 'web',
   protocol: 'wss://', // Force secure WebSocket
   detectSessionInUrl: !isCapacitor, // ✅ CRÍTICO: Desabilitado no iOS
-  storage: isCapacitor ? 'Capacitor Preferences' : 'localStorage'
+  storage: isCapacitor ? 'Capacitor Preferences' : 'localStorage',
+  storageInitialized: isCapacitor ? capacitorStorage.initialized : 'N/A'
 });
+
+// ✅ GUARD RAIL: Avisar se storage não está pronto ainda
+if (isCapacitor && !capacitorStorage.initialized) {
+  console.warn('[Supabase Client] ⚠️ Storage not initialized yet - client may fail to load session');
+}
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -46,11 +52,46 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
 });
 
-// ✅ Teste de storage no boot (apenas mobile)
+console.log('[Supabase Client] ✅ STEP 2: Client created');
+
+// ✅ FASE 1: Aguardar storage estar pronto e forçar reload de sessão
 if (isCapacitor && typeof window !== 'undefined') {
-  console.log('[Supabase Client] Testing storage adapter...');
-  const testResult = capacitorStorage.test();
-  if (!testResult) {
-    console.error('[Supabase Client] ❌ Storage adapter FAILED - auth may not work!');
-  }
+  const checkStorageAndLoadSession = async () => {
+    let attempts = 0;
+    console.log('[Supabase Client] 🔄 STEP 3: Waiting for storage to be ready...');
+    
+    while (!capacitorStorage.initialized && attempts < 20) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    if (capacitorStorage.initialized) {
+      console.log('[Supabase Client] ✅ STEP 4: Storage ready, testing adapter...');
+      const testResult = capacitorStorage.test();
+      
+      if (!testResult) {
+        console.error('[Supabase Client] ❌ Storage adapter FAILED - auth may not work!');
+        return;
+      }
+      
+      console.log('[Supabase Client] 🔄 STEP 5: Reloading session from storage...');
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('[Supabase Client] ❌ Session reload error:', error);
+        } else {
+          console.log('[Supabase Client] ✅ STEP 6: Session reload complete', {
+            hasSession: !!data.session,
+            userId: data.session?.user?.id || 'null'
+          });
+        }
+      } catch (err) {
+        console.error('[Supabase Client] ❌ Session reload failed:', err);
+      }
+    } else {
+      console.error('[Supabase Client] ❌ Storage failed to initialize after 2s');
+    }
+  };
+  
+  checkStorageAndLoadSession();
 }
