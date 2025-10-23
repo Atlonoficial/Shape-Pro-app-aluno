@@ -10,26 +10,38 @@ export const useAuth = () => {
   const [bootComplete, setBootComplete] = useState(false);
 
   useEffect(() => {
-    console.log('[useAuth] 🔄 STEP 1: Setting up auth state change subscription');
+    const initTime = Date.now();
+    console.log('[useAuth] 🔄 INIT:', {
+      timestamp: initTime,
+      hasSupabase: typeof onAuthStateChange === 'function',
+      platform: (window as any).Capacitor?.getPlatform?.() || 'web'
+    });
     
-    // ✅ FASE 5: Safety timeout de 8 segundos
+    // ✅ FASE 4: Safety timeout de 8 segundos com logging detalhado
     const safetyTimeout = setTimeout(() => {
       if (loading) {
-        console.error('[useAuth] ⚠️ SAFETY TIMEOUT: onAuthStateChange não disparou após 8s');
-        console.log('[useAuth] Forçando loading=false para desbloquear UI');
+        console.error('[useAuth] ⚠️ TIMEOUT after 8s:', {
+          user: user?.id || 'null',
+          session: !!session,
+          loading,
+          timestamp: Date.now(),
+          elapsedMs: Date.now() - initTime
+        });
         setLoading(false);
         setBootComplete(true);
       }
     }, 8000);
     
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-      clearTimeout(safetyTimeout); // Cancelar timeout se auth funcionar
+      clearTimeout(safetyTimeout);
       
-      console.log('[useAuth] 🔥 STEP 2: onAuthStateChange FIRED!', {
+      console.log('[useAuth] 🔥 AUTH CHANGE:', {
+        event: 'auth_change',
         userId: user?.id || 'null',
         email: user?.email || 'null',
         hasSession: !!session,
-        timestamp: new Date().toISOString()
+        timestamp: Date.now(),
+        elapsedMs: Date.now() - initTime
       });
       
       setUser(user);
@@ -37,12 +49,17 @@ export const useAuth = () => {
       
       if (user) {
         try {
+          const profileStartTime = Date.now();
           const profile = await getUserProfile(user.id);
           setUserProfile(profile);
-          console.log('[useAuth] ✅ STEP 3: Profile loaded:', profile?.user_type);
+          console.log('[useAuth] ✅ Profile loaded:', {
+            userType: profile?.user_type,
+            loadTimeMs: Date.now() - profileStartTime,
+            totalElapsedMs: Date.now() - initTime
+          });
           
           setBootComplete(true);
-          console.log('[useAuth] ✅ STEP 4: Boot complete, realtime enabled');
+          console.log('[useAuth] ✅ Boot complete, realtime enabled');
         } catch (error) {
           console.error('[useAuth] ❌ Error fetching profile:', error);
           setUserProfile(null);
@@ -55,9 +72,13 @@ export const useAuth = () => {
       }
       
       setLoading(false);
+      console.log('[useAuth] ✅ Auth initialization complete:', {
+        totalTimeMs: Date.now() - initTime
+      });
     });
 
     return () => {
+      console.log('[useAuth] 🧹 CLEANUP');
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };

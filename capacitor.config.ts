@@ -72,7 +72,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "16", // ✅ Build 16: OneSignal + Storage fix
+      CFBundleVersion: "17", // ✅ Build 17: Lazy Supabase + Emergency UI
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",

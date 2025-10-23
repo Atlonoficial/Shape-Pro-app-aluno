@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const location = useLocation();
   const [forceRender, setForceRender] = useState(false);
   const [emergencyMode, setEmergencyMode] = useState(false);
+  const [emergencyDetails, setEmergencyDetails] = useState<string[]>([]);
   
   // ✅ NOVO: Log detalhado do estado de auth a cada mudança
   useEffect(() => {
@@ -75,17 +76,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => clearTimeout(timeout);
   }, [auth.loading, forceRender]);
 
-  // FASE 5: Modo de emergência após 15 segundos E só se realmente travou
+  // ✅ FASE 3: Modo de emergência após 5 segundos (iOS é rápido!)
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Só ativar emergency mode se REALMENTE travou
-      if (auth.loading && !auth.isAuthenticated && !auth.user) {
-        console.error('[AuthProvider] 🚨 EMERGENCY MODE: Auth stuck for 8s');
+      if (auth.loading && !auth.isAuthenticated) {
+        console.error('[AuthProvider] 🚨 EMERGENCY MODE: Auth stuck for 5s');
+        setEmergencyDetails([
+          `Loading: ${auth.loading}`,
+          `User: ${auth.user?.id || 'null'}`,
+          `Profile: ${auth.userProfile ? 'loaded' : 'null'}`,
+          `Timestamp: ${new Date().toISOString()}`
+        ]);
         setEmergencyMode(true);
       }
-    }, 8000); // ✅ FASE 4: Reduzido de 15s → 8s
+    }, 5000); // ✅ Reduzido de 8s → 5s
     return () => clearTimeout(timer);
-  }, [auth.loading, auth.isAuthenticated, auth.user]);
+  }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile]);
 
   // Inicializar OneSignal quando usuário estiver autenticado
   useEffect(() => {
@@ -99,26 +105,52 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [auth.isAuthenticated, auth.user?.id, auth.loading]);
 
-  // FASE 6: Emergency mode fallback UI
+  // ✅ FASE 3: Emergency mode UI melhorada com detalhes técnicos
   if (emergencyMode) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="text-center space-y-4 max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-foreground">Problemas de Conexão</h1>
-          <p className="text-muted-foreground">
-            O app está tendo dificuldades para conectar. Tente:
+          <h1 className="text-2xl font-bold text-white">Falha ao Iniciar</h1>
+          <p className="text-gray-400 text-sm">
+            O app não conseguiu carregar em 5 segundos.
           </p>
-          <ul className="text-left space-y-2 text-sm text-muted-foreground">
-            <li>• Verificar sua conexão de internet</li>
-            <li>• Reiniciar o aplicativo</li>
-            <li>• Limpar cache e tentar novamente</li>
-          </ul>
+          
+          {/* Mostrar detalhes técnicos */}
+          <details className="text-left text-xs text-gray-500 bg-gray-900 p-3 rounded">
+            <summary className="cursor-pointer font-medium text-gray-400">Detalhes técnicos</summary>
+            <ul className="mt-2 space-y-1">
+              {emergencyDetails.map((detail, i) => (
+                <li key={i}>• {detail}</li>
+              ))}
+            </ul>
+          </details>
+          
           <Button 
-            onClick={() => window.location.reload()}
-            className="w-full mt-6"
+            onClick={() => {
+              console.log('[Emergency] User requested reload');
+              window.location.reload();
+            }}
+            className="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
           >
-            Recarregar App
+            🔄 Tentar Novamente
+          </Button>
+          
+          <Button 
+            onClick={() => {
+              console.log('[Emergency] User requested cache clear');
+              if ('caches' in window) {
+                caches.keys().then(names => {
+                  names.forEach(name => caches.delete(name));
+                });
+              }
+              localStorage.clear();
+              window.location.reload();
+            }}
+            variant="outline"
+            className="w-full text-white border-gray-700 hover:bg-gray-900"
+          >
+            🗑️ Limpar Cache e Tentar
           </Button>
         </div>
       </div>

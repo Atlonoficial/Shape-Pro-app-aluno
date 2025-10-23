@@ -14,33 +14,47 @@ const waitForCapacitor = async () => {
     console.log('[Boot] 🔄 STEP 2: Native platform detected, initializing Capacitor plugins...');
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // ✅ FASE 4: Inicializar storage PRIMEIRO
-    console.log('[Boot] 🔐 STEP 3: Initializing Capacitor storage...');
+    // ✅ FASE 1: Inicializar storage PRIMEIRO
+    console.log('[Boot] 🔐 STEP 3: Initializing Capacitor storage...', {
+      timestamp: Date.now()
+    });
     try {
       await createCapacitorStorage();
-      console.log('[Boot] ✅ STEP 4: Storage ready and tested');
+      console.log('[Boot] ✅ STEP 4: Storage ready and tested', {
+        timestamp: Date.now()
+      });
     } catch (error) {
       console.error('[Boot] ❌ Storage initialization failed:', error);
     }
     
-    // ✅ FASE 4: Aguardar adicional para garantir persistência
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // ✅ FASE 2: Forçar criação do Supabase client AGORA (não no import)
+    console.log('[Boot] 🔐 STEP 5: Creating Supabase client...', {
+      timestamp: Date.now()
+    });
     
-    // ✅ FASE 4: Forçar Supabase a carregar sessão AGORA
-    console.log('[Boot] 🔐 STEP 5: Loading Supabase session...');
-    const { supabase } = await import('@/integrations/supabase/client');
+    const { getSupabase } = await import('@/integrations/supabase/client');
+    const supabase = getSupabase(); // ✅ Força criação do client
+    
+    console.log('[Boot] 🔐 STEP 6: Loading Supabase session...', {
+      timestamp: Date.now()
+    });
+    
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
       console.error('[Boot] ❌ Session load error:', error);
     } else {
-      console.log('[Boot] ✅ STEP 6: Session loaded', {
+      console.log('[Boot] ✅ STEP 7: Session loaded', {
         hasSession: !!data.session,
-        userId: data.session?.user?.id || 'null'
+        userId: data.session?.user?.id || 'null',
+        timestamp: Date.now()
       });
     }
     
-    console.log('[Boot] 🎯 STEP 7: Ready to render React');
+    console.log('[Boot] 🎯 STEP 8: Ready to render React', {
+      timestamp: Date.now(),
+      totalTime: `${Date.now() - performance.now()}ms`
+    });
   }
 };
 

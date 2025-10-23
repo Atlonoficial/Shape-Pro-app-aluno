@@ -13,44 +13,62 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 const isCapacitor = typeof window !== 'undefined' && 
   (window as any).Capacitor !== undefined;
 
-console.log('[Supabase Client] 🔄 STEP 1: Initializing with:', {
-  url: SUPABASE_URL,
-  isCapacitor,
-  platform: isCapacitor ? 'mobile' : 'web',
-  protocol: 'wss://', // Force secure WebSocket
-  detectSessionInUrl: !isCapacitor, // ✅ CRÍTICO: Desabilitado no iOS
-  storage: isCapacitor ? 'Capacitor Preferences' : 'localStorage',
-  storageInitialized: isCapacitor ? capacitorStorage.initialized : 'N/A'
+// ✅ FASE 1: Lazy initialization - client só é criado quando requisitado
+let _supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
+
+export const getSupabase = () => {
+  if (!_supabaseInstance) {
+    console.log('[Supabase Client] 🔄 STEP 1: Creating client instance...', {
+      timestamp: Date.now(),
+      isCapacitor,
+      storageInitialized: isCapacitor ? capacitorStorage.initialized : 'N/A'
+    });
+    
+    // ✅ GUARD RAIL: Bloquear criação se storage não estiver pronto
+    if (isCapacitor && !capacitorStorage.initialized) {
+      console.error('[Supabase Client] ❌ CRITICAL: Storage not initialized!');
+      throw new Error('Storage must be initialized before creating Supabase client');
+    }
+    
+    _supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: isCapacitor ? capacitorStorage : localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        flowType: 'pkce',
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+        timeout: isCapacitor ? 15000 : 10000,
+        heartbeatIntervalMs: 30000,
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'shape-pro-mobile/1.0',
+          'X-Platform': isCapacitor ? 'capacitor' : 'web',
+        },
+      },
+    });
+    
+    console.log('[Supabase Client] ✅ STEP 2: Client created', {
+      timestamp: Date.now(),
+      hasAuth: !!_supabaseInstance.auth,
+      hasRealtime: !!_supabaseInstance.realtime
+    });
+  }
+  
+  return _supabaseInstance;
+};
+
+// ✅ Export direto usando Proxy para manter compatibilidade com imports existentes
+export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
+  get(target, prop) {
+    const client = getSupabase();
+    return client[prop as keyof ReturnType<typeof createClient<Database>>];
+  }
 });
 
-// ✅ GUARD RAIL: Avisar se storage não está pronto ainda
-if (isCapacitor && !capacitorStorage.initialized) {
-  console.warn('[Supabase Client] ⚠️ Storage not initialized yet - client may fail to load session');
-}
-
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: isCapacitor ? capacitorStorage : localStorage, // ✅ Storage síncrono
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false, // ✅ Desabilitado para iOS (já estava correto)
-    flowType: 'pkce', // ✅ CRÍTICO: Obrigatório para mobile
-  },
-  realtime: {
-    // Force secure WebSocket - Supabase handles wss:// automatically on https://
-    params: {
-      eventsPerSecond: 10,
-    },
-    timeout: isCapacitor ? 15000 : 10000,
-    heartbeatIntervalMs: 30000,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'shape-pro-mobile/1.0',
-      'X-Platform': isCapacitor ? 'capacitor' : 'web',
-    },
-  },
-});
-
-console.log('[Supabase Client] ✅ STEP 2: Client created');
-console.log('[Supabase Client] ℹ️ Session loading moved to main.tsx (FASE 4)');
+console.log('[Supabase Client] ℹ️ Lazy client configured - will initialize on first use');
