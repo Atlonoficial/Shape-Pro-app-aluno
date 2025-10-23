@@ -7,6 +7,8 @@ import { AuthScreen } from './AuthScreen';
 import { initPush, clearExternalUserId } from '@/lib/push';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useNativePermissions } from '@/hooks/useNativePermissions';
+import { useDeviceContext } from '@/hooks/useDeviceContext';
 
 interface AuthContextType {
   user: User | null;
@@ -35,9 +37,12 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const auth = useAuth();
   const location = useLocation();
+  const { isNative } = useDeviceContext();
+  const { requestCameraPermission, requestPushPermission } = useNativePermissions();
   const [forceRender, setForceRender] = useState(false);
   const [emergencyMode, setEmergencyMode] = useState(false);
   const [emergencyDetails, setEmergencyDetails] = useState<string[]>([]);
+  const [permissionsRequested, setPermissionsRequested] = useState(false);
   
   // ✅ NOVO: Log detalhado do estado de auth a cada mudança
   useEffect(() => {
@@ -104,6 +109,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('AuthProvider: OneSignal cleared for logout');
     }
   }, [auth.isAuthenticated, auth.user?.id, auth.loading]);
+
+  // ✅ BUILD 23: Solicitar permissões nativas após login (apenas em apps nativos)
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.user && isNative && !permissionsRequested) {
+      console.log('[AuthProvider] 🔐 Requesting native permissions after login...');
+      
+      const requestPermissions = async () => {
+        // Aguardar 2 segundos após login para solicitar permissões
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Solicitar permissão de push primeiro (mais importante)
+        await requestPushPermission();
+        
+        // Aguardar 1 segundo antes de solicitar câmera
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Solicitar permissão de câmera
+        await requestCameraPermission();
+        
+        setPermissionsRequested(true);
+        console.log('[AuthProvider] ✅ Native permissions requested');
+      };
+      
+      requestPermissions();
+    }
+  }, [auth.isAuthenticated, auth.user, isNative, permissionsRequested, requestPushPermission, requestCameraPermission]);
 
   // ✅ FASE 3: Emergency mode UI melhorada com detalhes técnicos
   if (emergencyMode) {

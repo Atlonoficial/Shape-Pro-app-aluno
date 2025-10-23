@@ -186,7 +186,9 @@ export const AuthScreen = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      const { getSupabase } = await import('@/integrations/supabase/client');
+      const supabaseClient = getSupabase();
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('id')
         .eq('email', emailToCheck.toLowerCase().trim())
@@ -201,7 +203,9 @@ export const AuthScreen = () => {
   // Verificar se email existe e se está confirmado (para Fase 1)
   const checkEmailExistsFull = async (email: string): Promise<{ exists: boolean; confirmed: boolean }> => {
     try {
-      const { data, error } = await supabase
+      const { getSupabase } = await import('@/integrations/supabase/client');
+      const supabaseClient = getSupabase();
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('id, email')
         .eq('email', email.toLowerCase().trim())
@@ -214,7 +218,7 @@ export const AuthScreen = () => {
       // Tentar verificar se o usuário está confirmado
       // Como não temos acesso direto ao auth.users, vamos tentar fazer login sem senha
       // para verificar se o email está confirmado
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
       
       // Se não houver usuário logado, assumimos que existe mas não está confirmado
       // (método alternativo já que não temos acesso direto ao auth.users)
@@ -230,7 +234,9 @@ export const AuthScreen = () => {
     if (activeTab === 'signup' && email && email.includes('@')) {
       const timeoutId = setTimeout(async () => {
         setEmailExistsStatus('checking');
-        const { data, error } = await supabase
+        const { getSupabase } = await import('@/integrations/supabase/client');
+        const supabaseClient = getSupabase();
+        const { data, error } = await supabaseClient
           .from('profiles')
           .select('id')
           .eq('email', email.toLowerCase().trim())

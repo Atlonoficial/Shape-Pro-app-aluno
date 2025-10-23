@@ -123,12 +123,16 @@ export const Profile = () => {
           <Button
             size="sm"
             variant="secondary"
-            className="absolute -bottom-2 -right-2 rounded-full w-9 h-9 p-0"
+            className={`absolute -bottom-2 -right-2 rounded-full w-9 h-9 p-0 ${uploading ? 'animate-pulse' : ''}`}
             onClick={triggerFileSelect}
             disabled={uploading}
             aria-label="Alterar foto de perfil"
           >
-            <Camera className="w-4 h-4" />
+            {uploading ? (
+              <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Camera className="w-4 h-4" />
+            )}
           </Button>
           <input
             ref={fileInputRef}

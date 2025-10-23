@@ -60,11 +60,15 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       
       OneSignal.setAppId(APP_ID);
 
-      // iOS: solicitar permissão explicitamente
+      // ✅ BUILD 23: iOS - solicitar permissão SEMPRE e adicionar fallback
       if (window.device?.platform === 'iOS') {
+        console.log('[OneSignal] 📱 iOS detected - requesting permission...');
+        
+        // Forçar solicitação de permissão com callback
         OneSignal.Notifications?.requestPermission?.(true, (accepted: boolean) => {
-          if (import.meta.env.DEV) {
-            console.log('OneSignal iOS: Permission explicitly requested:', accepted ? 'granted' : 'denied');
+          console.log('[OneSignal] iOS permission result:', accepted);
+          if (!accepted) {
+            console.warn('[OneSignal] ⚠️ User denied push notifications');
           }
         });
       }
@@ -131,7 +135,7 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       console.error('[OneSignal Mobile] ❌ Init failed (non-fatal):', error);
       // Não propagar erro - deixar app funcionar sem push
     }
-  }, 1000); // Aumentado de 500ms para 1000ms
+  }, 500); // ✅ BUILD 23: Reduzido de 1000ms → 500ms para boot mais rápido
 }
 
 // Inicialização Web Push

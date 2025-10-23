@@ -69,9 +69,20 @@ export const getSupabase = () => {
   return _supabaseInstance;
 };
 
-// ✅ BUILD 22: Manter proxy para compatibilidade, mas com logs melhorados
+// ✅ BUILD 23: Proxy com guard global para detectar acesso antes do boot
 export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
   get(target, prop) {
+    // ✅ Verificar se storage está inicializado antes de permitir acesso
+    if (isCapacitor && !capacitorStorage.initialized) {
+      const stack = new Error().stack?.split('\n').slice(2, 4).join('\n') || 'unknown';
+      console.error('[Supabase Proxy] ❌ CRITICAL: Accessed before storage init!', {
+        property: String(prop),
+        stack,
+        timestamp: Date.now()
+      });
+      throw new Error(`[Build 23] Supabase.${String(prop)} accessed before storage initialization. Call getSupabase() instead or wait for boot.`);
+    }
+    
     const client = getSupabase();
     return client[prop as keyof ReturnType<typeof createClient<Database>>];
   }

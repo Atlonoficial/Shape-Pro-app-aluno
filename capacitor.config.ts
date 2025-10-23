@@ -31,6 +31,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
+    // ✅ BUILD 23: Atualizado para build 23
+    CFBundleVersion: '23',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -72,7 +74,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "22", // ✅ Build 22: Aguarda boot no useAuth + delay 50ms de propagação
+      CFBundleVersion: "23", // ✅ BUILD 23: Correções cirúrgicas - storage init guard + permissões nativas
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
