@@ -30,7 +30,7 @@
 
   <!-- Número de build (inteiro, sempre maior que o anterior) -->
   <key>CFBundleVersion</key>
-  <string>14</string>
+  <string>15</string>
 
   <key>LSRequiresIPhoneOS</key>
   <true/>
@@ -64,6 +64,17 @@
 
   <key>NSCameraUsageDescription</key>
   <string>Precisamos da câmera para tirar fotos dentro do app.</string>
+
+  <!-- Localização (ITMS-90683) -->
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.</string>
+
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.</string>
+
+  <!-- OneSignal App ID -->
+  <key>OneSignal_app_id</key>
+  <string>be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82</string>
 
   <!-- Push em background (OneSignal) -->
   <key>UIBackgroundModes</key>

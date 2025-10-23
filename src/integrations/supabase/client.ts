@@ -53,45 +53,4 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 });
 
 console.log('[Supabase Client] ✅ STEP 2: Client created');
-
-// ✅ FASE 1: Aguardar storage estar pronto e forçar reload de sessão
-if (isCapacitor && typeof window !== 'undefined') {
-  const checkStorageAndLoadSession = async () => {
-    let attempts = 0;
-    console.log('[Supabase Client] 🔄 STEP 3: Waiting for storage to be ready...');
-    
-    while (!capacitorStorage.initialized && attempts < 20) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      attempts++;
-    }
-    
-    if (capacitorStorage.initialized) {
-      console.log('[Supabase Client] ✅ STEP 4: Storage ready, testing adapter...');
-      const testResult = capacitorStorage.test();
-      
-      if (!testResult) {
-        console.error('[Supabase Client] ❌ Storage adapter FAILED - auth may not work!');
-        return;
-      }
-      
-      console.log('[Supabase Client] 🔄 STEP 5: Reloading session from storage...');
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('[Supabase Client] ❌ Session reload error:', error);
-        } else {
-          console.log('[Supabase Client] ✅ STEP 6: Session reload complete', {
-            hasSession: !!data.session,
-            userId: data.session?.user?.id || 'null'
-          });
-        }
-      } catch (err) {
-        console.error('[Supabase Client] ❌ Session reload failed:', err);
-      }
-    } else {
-      console.error('[Supabase Client] ❌ Storage failed to initialize after 2s');
-    }
-  };
-  
-  checkStorageAndLoadSession();
-}
+console.log('[Supabase Client] ℹ️ Session loading moved to main.tsx (FASE 4)');

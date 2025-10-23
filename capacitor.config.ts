@@ -41,6 +41,12 @@ const config: CapacitorConfig = {
         "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
       NSCameraUsageDescription:
         "Precisamos da câmera para tirar fotos dentro do app.",
+      
+      // ---- Localização (ITMS-90683) ----
+      NSLocationWhenInUseUsageDescription:
+        "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.",
+      NSLocationAlwaysAndWhenInUseUsageDescription:
+        "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.",
 
       // Push em background (OneSignal)
       UIBackgroundModes: ["remote-notification"],
@@ -66,7 +72,10 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "14", // ✅ FASE 6: Build atualizado
+      CFBundleVersion: "15", // ✅ FASE 6: Build atualizado
+      
+      // ---- OneSignal App ID ----
+      OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
     },
   },
 
@@ -83,6 +92,9 @@ const config: CapacitorConfig = {
   },
 
   plugins: {
+    OneSignal: {
+      appId: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
+    },
     PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
     SplashScreen: {
       launchAutoHide: true,

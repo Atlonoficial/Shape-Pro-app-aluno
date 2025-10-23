@@ -14,17 +14,33 @@ const waitForCapacitor = async () => {
     console.log('[Boot] 🔄 STEP 2: Native platform detected, initializing Capacitor plugins...');
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // ✅ FASE 1 CRÍTICO: Inicializar storage ANTES de qualquer código React
+    // ✅ FASE 4: Inicializar storage PRIMEIRO
     console.log('[Boot] 🔐 STEP 3: Initializing Capacitor storage...');
     try {
       await createCapacitorStorage();
       console.log('[Boot] ✅ STEP 4: Storage ready and tested');
     } catch (error) {
       console.error('[Boot] ❌ Storage initialization failed:', error);
-      // Continuar mesmo com falha - web fallback
     }
     
-    console.log('[Boot] 🎯 STEP 5: Capacitor plugins ready, proceeding to React render');
+    // ✅ FASE 4: Aguardar adicional para garantir persistência
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // ✅ FASE 4: Forçar Supabase a carregar sessão AGORA
+    console.log('[Boot] 🔐 STEP 5: Loading Supabase session...');
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('[Boot] ❌ Session load error:', error);
+    } else {
+      console.log('[Boot] ✅ STEP 6: Session loaded', {
+        hasSession: !!data.session,
+        userId: data.session?.user?.id || 'null'
+      });
+    }
+    
+    console.log('[Boot] 🎯 STEP 7: Ready to render React');
   }
 };
 

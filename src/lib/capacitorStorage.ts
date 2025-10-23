@@ -19,21 +19,25 @@ class CapacitorStorageAdapter {
     
     this.initPromise = (async () => {
       try {
-        console.log('[CapacitorStorage] 🔄 STEP 1: Starting initialization...');
+        console.log('[CapacitorStorage] 🔄 STEP 1A: Starting initialization...');
+        console.log('[CapacitorStorage] 🔄 STEP 1B: Platform:', Capacitor.getPlatform());
+        console.log('[CapacitorStorage] 🔄 STEP 1C: Calling Preferences.keys()...');
         
         // Carregar TODAS as chaves do Supabase do storage nativo
         const { keys } = await Preferences.keys();
+        console.log('[CapacitorStorage] 🔄 STEP 1D: Total keys found:', keys.length);
+        
         const supabaseKeys = keys.filter(k => 
           k.startsWith('sb-') || k.includes('supabase')
         );
 
-        console.log('[CapacitorStorage] 📦 Found', supabaseKeys.length, 'Supabase keys');
+        console.log('[CapacitorStorage] 📦 STEP 1E: Found', supabaseKeys.length, 'Supabase keys');
 
         for (const key of supabaseKeys) {
           const { value } = await Preferences.get({ key });
           if (value) {
             this.cache.set(key, value);
-            console.log('[CapacitorStorage] ✅ Loaded:', key);
+            console.log('[CapacitorStorage] ✅ Loaded:', key.substring(0, 30) + '...');
           }
         }
 
