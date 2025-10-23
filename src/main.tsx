@@ -117,6 +117,7 @@ const waitForCapacitor = async () => {
       console.log('[Boot] ✅ Native initialization complete');
     } else {
       console.log('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
+      console.log('[Boot] 📝 Note: capacitorStorage will NOT be initialized (using localStorage)');
     }
 
     // ✅ BUILD 26: Marcar boot como completo (WEB + NATIVO)

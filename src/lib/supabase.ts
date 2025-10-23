@@ -208,12 +208,21 @@ export const signUpUser = async (
 };
 
 export const signInUser = async (email: string, password: string) => {
-  // ✅ BUILD 25: Verificar storage ANTES de importar Supabase
-  if (typeof window !== 'undefined' && (window as any).Capacitor) {
-    const { capacitorStorage } = await import('@/lib/capacitorStorage');
-    if (!capacitorStorage.initialized) {
-      console.error('[signInUser] ❌ Storage not ready!');
-      throw new Error('Aguarde a inicialização do app antes de fazer login');
+  // ✅ BUILD 27: Verificar storage APENAS em plataforma nativa
+  if (typeof window !== 'undefined') {
+    // Importar Capacitor para verificar plataforma
+    const { Capacitor } = await import('@capacitor/core');
+    
+    // ✅ CHAVE: Verificar se É PLATAFORMA NATIVA (não apenas se Capacitor existe)
+    if (Capacitor.isNativePlatform()) {
+      const { capacitorStorage } = await import('@/lib/capacitorStorage');
+      if (!capacitorStorage.initialized) {
+        console.error('[signInUser] ❌ Storage not ready on native platform!');
+        throw new Error('Aguarde a inicialização do app antes de fazer login');
+      }
+      console.log('[signInUser] ✅ Native storage verified and ready');
+    } else {
+      console.log('[signInUser] ℹ️ Web platform, using localStorage');
     }
   }
   
