@@ -119,11 +119,11 @@ const waitForCapacitor = async () => {
       console.log('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
     }
 
-    // ✅ BUILD 22: Marcar boot como completo
+    // ✅ BUILD 26: Marcar boot como completo (WEB + NATIVO)
     console.log('[Boot] 🎯 STEP 8: Marking boot as complete');
     bootManager.markBootComplete();
     
-    // ✅ BUILD 22: Aguardar 50ms para garantir propagação do flag
+    // ✅ BUILD 26: Aguardar 50ms para garantir propagação do flag
     console.log('[Boot] ⏳ STEP 8.5: Waiting 50ms for flag propagation...');
     await new Promise(resolve => setTimeout(resolve, 50));
 
