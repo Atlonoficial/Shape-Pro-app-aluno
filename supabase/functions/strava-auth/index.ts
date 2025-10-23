@@ -107,9 +107,10 @@ serve(async (req) => {
       throw new Error('Invalid authentication');
     }
 
-    console.log('✅ Authenticated user:', user.id);
+    console.log(`[${requestId}] ✅ Authenticated user:`, user.id);
 
     if (action === 'get_auth_url') {
+      console.log(`[${requestId}] 🎯 PROCESSING get_auth_url for user: ${user.id}`);
       // Validação de configuração (já validado no início)
       if (!clientId) {
         console.error('❌ STRAVA_CLIENT_ID not configured');
@@ -125,7 +126,7 @@ serve(async (req) => {
       
       const redirectUri = `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback`;
       
-      console.log('🔗 Generating Strava auth URL:', { 
+      console.log(`[${requestId}] 🔗 Generating Strava auth URL:`, { 
         clientId: clientId.substring(0, 5) + '...', 
         redirectUri,
         userId: user.id 
@@ -139,7 +140,10 @@ serve(async (req) => {
         `scope=read,activity:read_all&` +
         `state=${user.id}`;
 
-      return new Response(JSON.stringify({ authUrl }), {
+      console.log(`[${requestId}] ✅ Generated authUrl successfully`);
+      console.log(`[${requestId}] 🌐 URL: ${authUrl.substring(0, 80)}...`);
+
+      return new Response(JSON.stringify({ authUrl, requestId }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
