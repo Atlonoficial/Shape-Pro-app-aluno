@@ -51,7 +51,8 @@ export default defineConfig(({ mode }) => ({
       },
     },
     chunkSizeWarningLimit: 500,
-    minify: mode === 'production' ? 'terser' : false,
+    // Em development: usa esbuild (rápido), em production: terser (otimizado)
+    minify: mode === 'production' ? 'terser' : 'esbuild',
     terserOptions: mode === 'production' ? {
       compress: {
         drop_console: true,
