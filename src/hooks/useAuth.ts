@@ -9,19 +9,10 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [bootComplete, setBootComplete] = useState(false);
 
-  // Delay para permitir boot completo antes de ativar realtime
   useEffect(() => {
-    const timer = setTimeout(() => {
-      console.log('[useAuth] ✅ Boot complete, enabling realtime');
-      setBootComplete(true);
-    }, 2000); // ✅ FASE 4: Aumentado de 1000ms → 2000ms para iOS
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    console.log('[useAuth] ⏰ Attempting auth state change subscription');
+    console.log('[useAuth] ⏰ Setting up auth state change subscription');
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-      console.log('[useAuth] 🔐 ✅ Auth state change DISPAROU:', {
+      console.log('[useAuth] 🔐 ✅ Auth state change FIRED:', {
         userId: user?.id || 'null',
         email: user?.email || 'null',
         hasSession: !!session,
@@ -35,14 +26,19 @@ export const useAuth = () => {
         try {
           const profile = await getUserProfile(user.id);
           setUserProfile(profile);
-          console.log('[useAuth] Profile loaded:', profile);
+          console.log('[useAuth] ✅ Profile loaded:', profile?.user_type);
+          
+          // ✅ Ativar realtime APENAS quando user estiver carregado
+          setBootComplete(true);
         } catch (error) {
-          console.error('[useAuth] Error fetching user profile:', error);
+          console.error('[useAuth] ❌ Error fetching profile:', error);
           setUserProfile(null);
+          setBootComplete(true); // Ativar mesmo com erro
         }
       } else {
         console.log('[useAuth] User logged out');
         setUserProfile(null);
+        setBootComplete(false); // Desativar realtime no logout
       }
       
       setLoading(false);

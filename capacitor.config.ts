@@ -66,7 +66,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "12",
+      CFBundleVersion: "13",
     },
   },
 
@@ -86,10 +86,10 @@ const config: CapacitorConfig = {
     PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
     SplashScreen: {
       launchAutoHide: true,
-      launchShowDuration: 0,
+      launchShowDuration: 1500, // ✅ Auto-hide após 1.5s
       backgroundColor: "#000000",
       androidSplashResourceName: "splash",
-      androidScaleType: "CENTER",
+      androidScaleType: "CENTER_CROP",
       showSpinner: false,
       iosSpinnerStyle: "small",
       spinnerColor: "#999999",

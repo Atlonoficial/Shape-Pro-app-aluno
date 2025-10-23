@@ -4,13 +4,26 @@ import './index.css'
 import App from './App.tsx'
 import { Capacitor } from '@capacitor/core';
 import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
+import { createCapacitorStorage } from '@/lib/capacitorStorage';
 
 console.log('[Boot] 🎯 CHECKPOINT 1: main.tsx loaded');
 
 // Aguardar Capacitor estar completamente pronto
 const waitForCapacitor = async () => {
   if (Capacitor.isNativePlatform()) {
+    console.log('[Boot] 🔄 Waiting for Capacitor plugins...');
     await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // ✅ CRÍTICO: Inicializar storage ANTES de qualquer código React
+    console.log('[Boot] 🔐 Initializing Capacitor storage...');
+    try {
+      await createCapacitorStorage();
+      console.log('[Boot] ✅ Storage ready and tested');
+    } catch (error) {
+      console.error('[Boot] ❌ Storage initialization failed:', error);
+      // Continuar mesmo com falha - web fallback
+    }
+    
     console.log('[Boot] 🎯 CHECKPOINT 2: Capacitor plugins ready');
   }
 };
@@ -56,29 +69,11 @@ if (Capacitor.isNativePlatform()) {
   }
 
   console.log('[Boot] ✅ Native initialization complete');
-  // NOTE: Splash screen will be hidden by App component after React mounts
 }
 })();
 
-// Callback para esconder splash após React montar completamente
-const handleAppMounted = () => {
-  if (Capacitor.isNativePlatform()) {
-    import('@capacitor/splash-screen')
-      .then(({ SplashScreen }) => {
-        console.log('[Boot] 🎨 React mounted, hiding splash screen...');
-        return new Promise(resolve => {
-          setTimeout(() => {
-            SplashScreen.hide().then(resolve);
-          }, 1000); // ✅ FASE 4: Aumentado de 500ms → 1000ms
-        });
-      })
-      .then(() => console.log('[Boot] ✅ Splash screen hidden'))
-      .catch((err) => console.warn('[Boot] ⚠️ Could not hide splash:', err));
-  }
-};
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App onMount={handleAppMounted} />
+    <App />
   </StrictMode>,
 )

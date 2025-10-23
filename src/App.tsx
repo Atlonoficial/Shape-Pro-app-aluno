@@ -78,20 +78,8 @@ const RedirectToAuthConfirm = () => {
   return null; // Não renderiza nada durante o redirect
 };
 
-interface AppProps {
-  onMount?: () => void;
-}
-
-const App = ({ onMount }: AppProps = {}) => {
+const App = () => {
   console.log('[Boot] 🎯 CHECKPOINT 3: App component rendering');
-  
-  useEffect(() => {
-    console.log('[Boot] 🎯 CHECKPOINT 4: App mounted successfully');
-    if (onMount) {
-      onMount();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // ✅ Array vazio = executa APENAS UMA VEZ na montagem
   
   return (
   <ErrorBoundary>
