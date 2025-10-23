@@ -29,8 +29,8 @@ export const NativeIntegration = () => {
       // 2. Configure Keyboard
       await configureKeyboard();
 
-      // 3. Hide Splash Screen
-      await hideSplashScreen();
+      // 3. Splash screen gerenciado exclusivamente por main.tsx após React montar
+      // hideSplashScreen() REMOVIDO para evitar race condition
 
       // 4. Initialize Push Notifications
       await initPushNotifications();
@@ -71,16 +71,8 @@ export const NativeIntegration = () => {
     }
   };
 
-  const hideSplashScreen = async () => {
-    try {
-      // Hide splash screen after app is loaded
-      await SplashScreen.hide();
-      console.log('[NativeIntegration] Splash screen hidden');
-    } catch (error) {
-      // Ignorar erro - splash pode já estar oculto
-      console.warn('[NativeIntegration] Splash hide failed (non-fatal):', error);
-    }
-  };
+  // hideSplashScreen REMOVIDO - splash gerenciado exclusivamente por main.tsx
+  // para evitar race condition entre NativeIntegration e React mounting
 
   const initPushNotifications = async () => {
     // DESABILITADO: OneSignal gerencia push notifications completamente

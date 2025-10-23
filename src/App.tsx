@@ -87,8 +87,11 @@ const App = ({ onMount }: AppProps = {}) => {
   
   useEffect(() => {
     console.log('[Boot] 🎯 CHECKPOINT 4: App mounted successfully');
-    onMount?.();
-  }, [onMount]);
+    if (onMount) {
+      onMount();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ Array vazio = executa APENAS UMA VEZ na montagem
   
   return (
   <ErrorBoundary>

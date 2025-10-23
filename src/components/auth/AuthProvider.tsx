@@ -38,6 +38,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [forceRender, setForceRender] = useState(false);
   const [emergencyMode, setEmergencyMode] = useState(false);
   
+  // ✅ NOVO: Log detalhado do estado de auth a cada mudança
+  useEffect(() => {
+    console.log('[AuthProvider] 📊 Auth state update:', {
+      loading: auth.loading,
+      isAuthenticated: auth.isAuthenticated,
+      hasUser: !!auth.user,
+      hasProfile: !!auth.userProfile,
+      userType: auth.userProfile?.user_type || 'null',
+      pathname: location.pathname,
+      timestamp: new Date().toISOString()
+    });
+  }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, location.pathname]);
+  
   const PUBLIC_PATHS = [
     '/auth/verify', 
     '/auth/verified', 
