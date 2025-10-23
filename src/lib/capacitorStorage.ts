@@ -54,18 +54,14 @@ class CapacitorStorageAdapter {
 
   // ✅ SÍNCRONO - Supabase consegue ler
   getItem(key: string): string | null {
-    // ✅ FASE 2: Se ainda está inicializando, avisar mas não bloquear
-    if (!this.initialized && this.initPromise) {
-      console.warn('[CapacitorStorage] ⚠️ getItem called during init, returning null for now:', key);
-      return null;
-    }
-    
-    if (!this.initialized) {
-      console.warn('[CapacitorStorage] ⚠️ getItem called before init:', key);
-      return null;
-    }
-    
+    // ✅ Se ainda está inicializando, tentar ler do cache sem warning
+    // O cache pode já ter dados carregados mesmo durante init
     const value = this.cache.get(key) || null;
+    
+    if (!this.initialized && !this.initPromise) {
+      console.warn('[CapacitorStorage] ⚠️ getItem called before init started:', key);
+    }
+    
     console.log('[CapacitorStorage] GET:', key, '→', value ? '✅ HIT' : '❌ MISS');
     return value;
   }
