@@ -64,9 +64,9 @@ const config: CapacitorConfig = {
       // Launch screen baseado em storyboard (exigido pelo iPad multitasking)
       UILaunchStoryboardName: "LaunchScreen",
 
-      // *** Versões – se você preferir controlar aqui:
-      // CFBundleShortVersionString: "2.0.1",
-      // CFBundleVersion: "5",
+      // *** Versões (garantem sincronização em todos os builds)
+      CFBundleShortVersionString: "2.0.3",
+      CFBundleVersion: "12",
     },
   },
 
