@@ -208,21 +208,27 @@ export const signUpUser = async (
 };
 
 export const signInUser = async (email: string, password: string) => {
-  // ✅ BUILD 27: Verificar storage APENAS em plataforma nativa
+  // ✅ BUILD 28: Verificar storage APENAS em plataforma nativa
   if (typeof window !== 'undefined') {
-    // Importar Capacitor para verificar plataforma
     const { Capacitor } = await import('@capacitor/core');
     
-    // ✅ CHAVE: Verificar se É PLATAFORMA NATIVA (não apenas se Capacitor existe)
+    console.log('[signInUser] 🔍 BUILD 28: Platform check:', {
+      isNativePlatform: Capacitor.isNativePlatform(),
+      platform: Capacitor.getPlatform()
+    });
+    
     if (Capacitor.isNativePlatform()) {
       const { capacitorStorage } = await import('@/lib/capacitorStorage');
       if (!capacitorStorage.initialized) {
-        console.error('[signInUser] ❌ Storage not ready on native platform!');
+        console.error('[signInUser] ❌ Storage not ready on native platform!', {
+          initialized: capacitorStorage.initialized,
+          platform: Capacitor.getPlatform()
+        });
         throw new Error('Aguarde a inicialização do app antes de fazer login');
       }
       console.log('[signInUser] ✅ Native storage verified and ready');
     } else {
-      console.log('[signInUser] ℹ️ Web platform, using localStorage');
+      console.log('[signInUser] ✅ Web platform, using localStorage');
     }
   }
   

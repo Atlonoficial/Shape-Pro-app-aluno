@@ -118,6 +118,11 @@ const waitForCapacitor = async () => {
     } else {
       console.log('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
       console.log('[Boot] 📝 Note: capacitorStorage will NOT be initialized (using localStorage)');
+      console.log('[Boot] 🔍 BUILD 28: Capacitor detection:', {
+        isNativePlatform: Capacitor.isNativePlatform(),
+        platform: Capacitor.getPlatform(),
+        CapacitorExists: typeof (window as any).Capacitor !== 'undefined'
+      });
     }
 
     // ✅ BUILD 26: Marcar boot como completo (WEB + NATIVO)
