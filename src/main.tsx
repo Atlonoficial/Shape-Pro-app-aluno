@@ -107,11 +107,16 @@ if (Capacitor.isNativePlatform()) {
 console.log('[Boot] 🔄 STEP 6: Rendering React application...');
 })();
 
-createRoot(document.getElementById('root')!).render(
+// ✅ Desabilitar StrictMode em builds nativos para evitar dupla inicialização
+const AppWrapper = Capacitor.isNativePlatform() ? (
+  <App />
+) : (
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 );
+
+createRoot(document.getElementById('root')!).render(AppWrapper);
 
 // ✅ FASE 3: Esconder loader nativo DEPOIS de React renderizar
 console.log('[Boot] 🔄 STEP 7: React rendered, hiding native loader...');

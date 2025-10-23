@@ -1,29 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
 import { useRealtimeManager } from './useRealtimeManager';
+
+let initCount = 0;
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootComplete, setBootComplete] = useState(false);
+  
+  const setupRef = useRef(false);
+  const loadingRef = useRef(loading);
+  
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
+    if (setupRef.current) {
+      console.log('[useAuth] ⚠️ Prevented double initialization');
+      return;
+    }
+    setupRef.current = true;
+    
+    initCount++;
     const initTime = Date.now();
-    console.log('[useAuth] 🔄 INIT:', {
+    console.log(`[useAuth] 🔄 INIT #${initCount}:`, {
       timestamp: initTime,
       hasSupabase: typeof onAuthStateChange === 'function',
       platform: (window as any).Capacitor?.getPlatform?.() || 'web'
     });
     
-    // ✅ FASE 4: Safety timeout de 8 segundos com logging detalhado
+    // ✅ Safety timeout de 8 segundos com logging detalhado
     const safetyTimeout = setTimeout(() => {
-      if (loading) {
+      if (loadingRef.current) {
         console.error('[useAuth] ⚠️ TIMEOUT after 8s:', {
           user: user?.id || 'null',
           session: !!session,
-          loading,
+          loading: loadingRef.current,
           timestamp: Date.now(),
           elapsedMs: Date.now() - initTime
         });
@@ -78,11 +95,12 @@ export const useAuth = () => {
     });
 
     return () => {
-      console.log('[useAuth] 🧹 CLEANUP');
+      console.log(`[useAuth] 🧹 CLEANUP #${initCount}`);
+      setupRef.current = false;
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-  }, [loading]);
+  }, []); // ✅ Executar apenas no mount - SEM dependências
 
   // Use centralized realtime manager for profile changes
   // CRITICAL: Only enable after boot is complete to prevent initialization lockup
