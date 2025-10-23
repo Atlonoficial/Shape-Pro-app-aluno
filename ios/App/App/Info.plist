@@ -26,11 +26,11 @@
 
   <!-- Versão de marketing -->
   <key>CFBundleShortVersionString</key>
-  <string>2.0.1</string>
+  <string>1.1.0</string>
 
   <!-- Número de build (inteiro, sempre maior que o anterior) -->
   <key>CFBundleVersion</key>
-  <string>5</string>
+  <string>6</string>
 
   <key>LSRequiresIPhoneOS</key>
   <true/>
