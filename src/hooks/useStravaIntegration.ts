@@ -113,7 +113,22 @@ export const useStravaIntegration = () => {
 
       if (error) {
         console.error('Error getting auth URL:', error);
-        toast.error('Não foi possível obter URL de autorização do Strava');
+        
+        const errorMessage = error.message || "Não foi possível conectar com o Strava";
+        
+        // Mensagens específicas para diferentes tipos de erro
+        let title = "Erro ao conectar";
+        let description = errorMessage;
+        
+        if (errorMessage.includes("not configured")) {
+          title = "Strava não configurado";
+          description = "A integração com o Strava não está configurada. Entre em contato com o suporte.";
+        } else if (errorMessage.includes("Invalid authentication")) {
+          title = "Sessão expirada";
+          description = "Sua sessão expirou. Por favor, faça login novamente.";
+        }
+        
+        toast.error(description, { description: title });
         return;
       }
 
@@ -125,9 +140,15 @@ export const useStravaIntegration = () => {
       // Redirect to Strava authorization (instead of popup)
       window.location.href = data.authUrl;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Connect Strava error:', error);
-      toast.error('Falha ao conectar com Strava');
+      const errorMessage = error?.message || "Falha ao conectar com Strava";
+      
+      if (errorMessage.includes("not configured")) {
+        toast.error("A integração com o Strava não está configurada. Entre em contato com o suporte.");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setConnecting(false);
     }

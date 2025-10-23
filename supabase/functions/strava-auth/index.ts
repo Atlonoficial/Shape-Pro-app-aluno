@@ -43,7 +43,18 @@ serve(async (req) => {
 
     if (action === 'get_auth_url') {
       const clientId = Deno.env.get('STRAVA_CLIENT_ID');
-      const redirectUri = `https://bqbopkqzkavhmenjlhab.supabase.co/strava-callback`;
+      
+      // Validação de configuração
+      if (!clientId) {
+        console.error('STRAVA_CLIENT_ID not configured');
+        throw new Error('Strava integration not configured. Please contact administrator.');
+      }
+      
+      // Redirect URI dinâmico - detecta origem do request
+      const origin = new URL(req.url).origin;
+      const redirectUri = `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback`;
+      
+      console.log('Generating Strava auth URL:', { clientId: clientId.substring(0, 5) + '...', redirectUri });
       
       const authUrl = `https://www.strava.com/oauth/authorize?` +
         `client_id=${clientId}&` +
@@ -61,6 +72,14 @@ serve(async (req) => {
     if (action === 'exchange_code') {
       const clientId = Deno.env.get('STRAVA_CLIENT_ID');
       const clientSecret = Deno.env.get('STRAVA_CLIENT_SECRET');
+      
+      // Validação de configuração
+      if (!clientId || !clientSecret) {
+        console.error('Strava credentials not configured');
+        throw new Error('Strava integration not configured. Please contact administrator.');
+      }
+      
+      console.log('Exchanging Strava code for token...');
       
       const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
         method: 'POST',
