@@ -65,6 +65,15 @@ export const useRealtimeManager = ({
 
     console.log('[RealtimeManager] 🚀 Initializing with', subscriptions.length, 'subscriptions');
 
+    // Safety timeout: If connection doesn't establish in 5 seconds, abort
+    const safetyTimeout = setTimeout(() => {
+      if (!isConnectedRef.current && channelRef.current) {
+        console.error('[RealtimeManager] ⏱️ Safety timeout reached - aborting connection');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    }, 5000);
+
     // Create unique channel for this context with timestamp to prevent conflicts
     const uniqueChannelName = `${channelName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const channel = supabase.channel(uniqueChannelName);
@@ -111,6 +120,7 @@ export const useRealtimeManager = ({
     // Cleanup function
     return () => {
       console.log('[RealtimeManager] 🧹 Cleaning up subscriptions');
+      clearTimeout(safetyTimeout);
       clearDebouncedCallbacks();
       
       if (channelRef.current) {

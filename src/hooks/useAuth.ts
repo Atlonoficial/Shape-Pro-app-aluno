@@ -7,6 +7,16 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bootComplete, setBootComplete] = useState(false);
+
+  // Delay para permitir boot completo antes de ativar realtime
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('[useAuth] ✅ Boot complete, enabling realtime');
+      setBootComplete(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
@@ -38,6 +48,7 @@ export const useAuth = () => {
   }, []);
 
   // Use centralized realtime manager for profile changes
+  // CRITICAL: Only enable after boot is complete to prevent initialization lockup
   useRealtimeManager({
     subscriptions: user?.id ? [{
       table: 'profiles',
@@ -55,7 +66,7 @@ export const useAuth = () => {
         }
       }
     }] : [],
-    enabled: !!user?.id,
+    enabled: bootComplete && !!user?.id,
     channelName: 'auth-profile',
     debounceMs: 500
   });

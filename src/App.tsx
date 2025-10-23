@@ -51,6 +51,7 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 15, // 15 minutes (era cacheTime)
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
+      refetchOnMount: false, // CRITICAL: Prevent duplicate queries during boot
       retry: (failureCount, error: any) => {
         // Não tentar novamente para erros 4xx
         if (error?.status >= 400 && error?.status < 500) {
@@ -77,12 +78,17 @@ const RedirectToAuthConfirm = () => {
   return null; // Não renderiza nada durante o redirect
 };
 
-const App = () => {
+interface AppProps {
+  onMount?: () => void;
+}
+
+const App = ({ onMount }: AppProps = {}) => {
   console.log('[Boot] 🎯 CHECKPOINT 3: App component rendering');
   
   useEffect(() => {
     console.log('[Boot] 🎯 CHECKPOINT 4: App mounted successfully');
-  }, []);
+    onMount?.();
+  }, [onMount]);
   
   return (
   <ErrorBoundary>

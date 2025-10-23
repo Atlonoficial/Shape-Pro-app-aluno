@@ -55,21 +55,30 @@ if (Capacitor.isNativePlatform()) {
     console.error('[Boot] ❌ DeepLink init failed:', err);
   }
 
-  // Garante esconder o splash cedo (além do autoHide do plugin)
-  import('@capacitor/splash-screen')
-    .then(({ SplashScreen }) => {
-      console.log('[Boot] 🎨 Hiding splash screen...');
-      return SplashScreen.hide();
-    })
-    .then(() => console.log('[Boot] ✅ Splash screen hidden'))
-    .catch((err) => console.warn('[Boot] ⚠️ Could not hide splash:', err));
-  
   console.log('[Boot] ✅ Native initialization complete');
+  // NOTE: Splash screen will be hidden by App component after React mounts
 }
 })();
 
+// Callback para esconder splash após React montar completamente
+const handleAppMounted = () => {
+  if (Capacitor.isNativePlatform()) {
+    import('@capacitor/splash-screen')
+      .then(({ SplashScreen }) => {
+        console.log('[Boot] 🎨 React mounted, hiding splash screen...');
+        return new Promise(resolve => {
+          setTimeout(() => {
+            SplashScreen.hide().then(resolve);
+          }, 500); // Extra delay to ensure render is complete
+        });
+      })
+      .then(() => console.log('[Boot] ✅ Splash screen hidden'))
+      .catch((err) => console.warn('[Boot] ⚠️ Could not hide splash:', err));
+  }
+};
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <App onMount={handleAppMounted} />
   </StrictMode>,
 )
