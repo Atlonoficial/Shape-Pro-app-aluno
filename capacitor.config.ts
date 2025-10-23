@@ -41,8 +41,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 34: Correção definitiva com fetch direto
-    CFBundleVersion: '34',
+    // ✅ BUILD 35: Correção definitiva com URLs hardcoded e validação completa
+    CFBundleVersion: '35',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -84,7 +84,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "34", // ✅ BUILD 34: Correção definitiva com fetch direto
+      CFBundleVersion: "35", // ✅ BUILD 35: Correção definitiva com URLs hardcoded e validação completa
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -101,7 +101,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 34,
+    versionCode: 35,
     versionName: "2.0.3"
   },
 

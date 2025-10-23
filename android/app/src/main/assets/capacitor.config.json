@@ -4,7 +4,7 @@
 	"webDir": "dist",
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
-	"version": "34",
+	"version": "35",
 	"ios": {
 		"scheme": "ShapePro",
 		"contentInset": "automatic",

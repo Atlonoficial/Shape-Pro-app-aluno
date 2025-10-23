@@ -50,6 +50,29 @@ serve(async (req) => {
     const { action, code, state } = requestBody;
     console.log(`[${requestId}] 🎯 Action solicitada: ${action}`);
 
+    // ✅ DEBUG ENDPOINT (diagnóstico completo de requisição)
+    if (action === 'debug') {
+      console.log(`[${requestId}] 🐛 Processando DEBUG`);
+      const debugInfo = {
+        receivedAt: new Date().toISOString(),
+        requestId,
+        method: req.method,
+        url: req.url,
+        headers: Object.fromEntries(req.headers.entries()),
+        body: requestBody,
+        environment: {
+          hasClientId: !!clientId,
+          hasClientSecret: !!clientSecret,
+          supabaseUrl: !!Deno.env.get('SUPABASE_URL'),
+          serviceRoleKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        }
+      };
+      console.log(`[${requestId}] 📊 Debug info:`, JSON.stringify(debugInfo, null, 2));
+      return new Response(JSON.stringify(debugInfo), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // ✅ PING ENDPOINT (teste de conectividade básico)
     if (action === 'ping') {
       console.log(`[${requestId}] 🏓 Processando PING`);
@@ -57,7 +80,7 @@ serve(async (req) => {
         pong: true,
         timestamp: new Date().toISOString(),
         server: 'strava-auth',
-        version: 'build-33',
+        version: 'build-35',
         requestId
       };
       console.log(`[${requestId}] ✅ Respondendo PING:`, JSON.stringify(response, null, 2));

@@ -535,6 +535,94 @@ export default function StravaDebug() {
                 Verificar Conexão
               </Button>
             </div>
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Teste Direto POST</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p className="text-sm">Use este botão para testar se as requisições POST chegam até a Edge Function.</p>
+                <Button 
+                  onClick={async () => {
+                    setLoading(true);
+                    addTestResult({
+                      name: 'POST Debug Direto',
+                      status: 'pending',
+                      message: 'Enviando POST para endpoint /debug...'
+                    });
+
+                    try {
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const token = sessionData.session?.access_token;
+
+                      if (!token) {
+                        addTestResult({
+                          name: 'POST Debug Direto',
+                          status: 'error',
+                          message: 'Token não encontrado. Faça login novamente.'
+                        });
+                        setLoading(false);
+                        return;
+                      }
+
+                      const controller = new AbortController();
+                      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                      const response = await fetch(
+                        'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxYm9wa3F6a2F2aG1lbmpsa2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODIwNTIsImV4cCI6MjA2NTE1ODA1Mn0.Bm2Gy1vqLWexVy8EpVi-KcmRlvpZ60eO3jIiVPpJ1zE'
+                          },
+                          body: JSON.stringify({ action: 'debug' }),
+                          signal: controller.signal
+                        }
+                      );
+
+                      clearTimeout(timeoutId);
+
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+
+                      const data = await response.json();
+
+                      addTestResult({
+                        name: 'POST Debug Direto',
+                        status: 'success',
+                        message: '✅ POST chegou até a Edge Function!',
+                        details: data
+                      });
+                    } catch (err: any) {
+                      if (err.name === 'AbortError') {
+                        addTestResult({
+                          name: 'POST Debug Direto',
+                          status: 'error',
+                          message: 'Timeout após 30s'
+                        });
+                      } else {
+                        addTestResult({
+                          name: 'POST Debug Direto',
+                          status: 'error',
+                          message: `Erro: ${err.message}`,
+                          details: err
+                        });
+                      }
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  size="sm"
+                  variant="default"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Activity className="h-4 w-4 mr-2" />}
+                  Testar POST Direto
+                </Button>
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
 
