@@ -77,7 +77,14 @@ const RedirectToAuthConfirm = () => {
   return null; // Não renderiza nada durante o redirect
 };
 
-const App = () => (
+const App = () => {
+  console.log('[Boot] 🎯 CHECKPOINT 3: App component rendering');
+  
+  useEffect(() => {
+    console.log('[Boot] 🎯 CHECKPOINT 4: App mounted successfully');
+  }, []);
+  
+  return (
   <ErrorBoundary>
     <SecurityProvider>
       <QueryClientProvider client={queryClient}>
@@ -139,6 +146,7 @@ const App = () => (
       </QueryClientProvider>
     </SecurityProvider>
   </ErrorBoundary>
-);
+  );
+};
 
 export default App;

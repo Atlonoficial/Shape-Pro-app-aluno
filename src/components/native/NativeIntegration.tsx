@@ -77,7 +77,8 @@ export const NativeIntegration = () => {
       await SplashScreen.hide();
       console.log('[NativeIntegration] Splash screen hidden');
     } catch (error) {
-      console.error('[NativeIntegration] Error hiding splash screen:', error);
+      // Ignorar erro - splash pode já estar oculto
+      console.warn('[NativeIntegration] Splash hide failed (non-fatal):', error);
     }
   };
 

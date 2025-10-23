@@ -13,15 +13,13 @@
 		"plist": {
 			"NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.",
 			"NSPhotoLibraryAddUsageDescription": "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
-			"NSCameraUsageDescription": "Precisamos da câmera para tirar fotos dentro do app.",
-			"NSLocationWhenInUseUsageDescription": "Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.",
-			"NSLocationAlwaysAndWhenInUseUsageDescription": "Usamos sua localização somente quando necessário para recursos do app.",
-			"UIBackgroundModes": [
+		"NSCameraUsageDescription": "Precisamos da câmera para tirar fotos dentro do app.",
+		"UIBackgroundModes": [
 				"remote-notification"
 			],
-			"ITSAppUsesNonExemptEncryption": false,
-			"CFBundleShortVersionString": "1.1.1",
-			"CFBundleVersion": "2"
+		"ITSAppUsesNonExemptEncryption": false,
+		"CFBundleShortVersionString": "2.0.2",
+		"CFBundleVersion": "7"
 		}
 	},
 	"android": {

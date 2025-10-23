@@ -42,13 +42,6 @@ const config: CapacitorConfig = {
       NSCameraUsageDescription:
         "Precisamos da câmera para tirar fotos dentro do app.",
 
-      // *** Se o app OU SDKs referenciam localização, mantenha as duas abaixo.
-      // *** Se não usa nada de localização, pode remover depois.
-      NSLocationWhenInUseUsageDescription:
-        "Usamos sua localização apenas enquanto o app está em uso para recursos relevantes.",
-      NSLocationAlwaysAndWhenInUseUsageDescription:
-        "Usamos sua localização somente quando necessário para recursos do app.",
-
       // Push em background (OneSignal)
       UIBackgroundModes: ["remote-notification"],
 

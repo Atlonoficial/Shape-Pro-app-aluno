@@ -47,12 +47,12 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
   // CORREÇÃO: Não usar 'deviceready' no Capacitor - executar diretamente
   console.log('[OneSignal Mobile] Starting initialization...');
   
-  // Aguardar um pouco para garantir que plugins Capacitor estejam prontos
+  // Aguardar um pouco mais para garantir que plugins Capacitor estejam prontos
   setTimeout(async () => {
     try {
       if (!window.plugins?.OneSignal) {
-        console.warn('[OneSignal Mobile] Plugin not available - this is OK, push notifications will be disabled');
-        return;
+        console.warn('[OneSignal Mobile] Plugin not available - push disabled (non-fatal)');
+        return; // Não falhar, apenas desabilitar push
       }
 
       const OneSignal = window.plugins.OneSignal;
@@ -128,9 +128,10 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       console.log('[OneSignal Mobile] ✅ Initialized successfully');
 
     } catch (error) {
-      console.error('[OneSignal Mobile] ❌ Initialization error:', error);
+      console.error('[OneSignal Mobile] ❌ Init failed (non-fatal):', error);
+      // Não propagar erro - deixar app funcionar sem push
     }
-  }, 500); // Aguardar 500ms para plugins estarem prontos
+  }, 1000); // Aumentado de 500ms para 1000ms
 }
 
 // Inicialização Web Push

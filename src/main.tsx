@@ -5,7 +5,20 @@ import App from './App.tsx'
 import { Capacitor } from '@capacitor/core';
 import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
 
+console.log('[Boot] 🎯 CHECKPOINT 1: main.tsx loaded');
+
+// Aguardar Capacitor estar completamente pronto
+const waitForCapacitor = async () => {
+  if (Capacitor.isNativePlatform()) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    console.log('[Boot] 🎯 CHECKPOINT 2: Capacitor plugins ready');
+  }
+};
+
+(async () => {
 if (Capacitor.isNativePlatform()) {
+  await waitForCapacitor();
+  
   console.log('[Boot] 🚀 Starting native platform initialization...');
   console.log('[Boot] Platform:', Capacitor.getPlatform());
   
@@ -53,6 +66,7 @@ if (Capacitor.isNativePlatform()) {
   
   console.log('[Boot] ✅ Native initialization complete');
 }
+})();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
