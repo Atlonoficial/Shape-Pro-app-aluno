@@ -41,8 +41,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 32: Correção de conectividade Strava (CORS + timeout + ping)
-    CFBundleVersion: '32',
+    // ✅ BUILD 33: Correção de crash no debug e melhor tratamento de erros
+    CFBundleVersion: '33',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -84,7 +84,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "32", // ✅ BUILD 32: Correção de conectividade Strava (CORS + timeout + ping)
+      CFBundleVersion: "33", // ✅ BUILD 33: Correção de crash no debug e melhor tratamento de erros
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -101,7 +101,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 32,
+    versionCode: 33,
     versionName: "2.0.3"
   },
 

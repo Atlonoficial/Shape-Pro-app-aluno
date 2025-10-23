@@ -50,30 +50,68 @@ export default function StravaDebug() {
     const startTime = Date.now();
     
     try {
-      // Teste com fetch direto (mais confiável para diagnóstico)
-      const fetchResponse = await fetch(
-        'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'ping' })
-        }
-      );
+      // Criar AbortController para timeout de 30s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const latency = Date.now() - startTime;
-      const data = await fetchResponse.json();
+      try {
+        const fetchResponse = await fetch(
+          'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'ping' }),
+            signal: controller.signal
+          }
+        );
 
-      addTestResult({
-        name: 'Ping Test',
-        status: 'success',
-        message: `Conectividade OK! Latência: ${latency}ms`,
-        details: {
-          ...data,
-          latency: `${latency}ms`,
-          status: fetchResponse.status,
-          headers: Object.fromEntries(fetchResponse.headers.entries())
+        clearTimeout(timeoutId);
+        const latency = Date.now() - startTime;
+
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
         }
-      });
+
+        const data = await fetchResponse.json();
+
+        // Validar estrutura da resposta
+        if (!data || typeof data !== 'object') {
+          throw new Error('Resposta inválida: não é um objeto JSON');
+        }
+
+        addTestResult({
+          name: 'Ping Test',
+          status: data.pong ? 'success' : 'warning',
+          message: data.pong 
+            ? `Conectividade OK! Latência: ${latency}ms`
+            : `Resposta inesperada. Latência: ${latency}ms`,
+          details: {
+            ...data,
+            latency: `${latency}ms`,
+            status: fetchResponse.status,
+            headers: Object.fromEntries(fetchResponse.headers.entries())
+          }
+        });
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          const latency = Date.now() - startTime;
+          addTestResult({
+            name: 'Ping Test',
+            status: 'error',
+            message: 'Timeout: Servidor não respondeu em 30 segundos',
+            details: {
+              latency: `${latency}ms`,
+              error: 'Request timeout',
+              type: 'AbortError'
+            }
+          });
+          return;
+        }
+
+        throw fetchError;
+      }
     } catch (err: any) {
       const latency = Date.now() - startTime;
       console.error('Ping test error:', err);
@@ -84,7 +122,8 @@ export default function StravaDebug() {
         details: {
           latency: `${latency}ms`,
           error: err.message,
-          type: err.name
+          type: err.name,
+          stack: err.stack
         }
       });
     } finally {
@@ -103,70 +142,157 @@ export default function StravaDebug() {
         message: 'Verificando configuração dos secrets...'
       });
 
-      const { data, error } = await supabase.functions.invoke('strava-auth', {
-        body: { action: 'health_check' }
-      });
+      // Criar AbortController para timeout de 30s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      console.log('🏥 Health check response:', { data, error });
-
-      if (error) {
-        // Fallback: tentar com fetch direto
-        addTestResult({
-          name: 'Health Check',
-          status: 'warning',
-          message: 'Invoke falhou, tentando fetch direto...'
+      try {
+        const { data, error } = await supabase.functions.invoke('strava-auth', {
+          body: { action: 'health_check' }
         });
-        
-        const fetchResponse = await fetch(
-          'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'health_check' })
-          }
-        );
 
-        const fetchData = await fetchResponse.json();
-        setHealthCheck(fetchData);
-        
-        if (fetchData.secrets?.clientId && fetchData.secrets?.clientSecret) {
+        clearTimeout(timeoutId);
+        console.log('🏥 Health check response:', { data, error });
+
+        if (error) {
+          // Fallback: tentar com fetch direto
           addTestResult({
             name: 'Health Check',
-            status: 'success',
-            message: 'Secrets OK (via fetch direto)',
-            details: fetchData
+            status: 'warning',
+            message: 'Invoke falhou, tentando fetch direto...'
           });
-        } else {
+          
+          const fetchController = new AbortController();
+          const fetchTimeoutId = setTimeout(() => fetchController.abort(), 30000);
+
+          try {
+            const fetchResponse = await fetch(
+              'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'health_check' }),
+                signal: fetchController.signal
+              }
+            );
+
+            clearTimeout(fetchTimeoutId);
+
+            if (!fetchResponse.ok) {
+              throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
+            }
+
+            const fetchData = await fetchResponse.json();
+            console.log('✅ Fetch response:', fetchData);
+
+            // Validar estrutura da resposta
+            if (!fetchData || typeof fetchData !== 'object') {
+              throw new Error('Resposta inválida: não é um objeto JSON');
+            }
+
+            if (!fetchData.secrets || typeof fetchData.secrets !== 'object') {
+              throw new Error('Resposta inválida: campo "secrets" ausente ou inválido');
+            }
+
+            setHealthCheck(fetchData);
+            
+            const secrets = fetchData.secrets as { clientId?: boolean; clientSecret?: boolean };
+            
+            if (secrets.clientId && secrets.clientSecret) {
+              addTestResult({
+                name: 'Health Check',
+                status: 'success',
+                message: 'Secrets OK (via fetch direto)',
+                details: fetchData
+              });
+            } else {
+              const missing = [];
+              if (!secrets.clientId) missing.push('STRAVA_CLIENT_ID');
+              if (!secrets.clientSecret) missing.push('STRAVA_CLIENT_SECRET');
+              
+              addTestResult({
+                name: 'Health Check',
+                status: 'warning',
+                message: `Secrets faltando: ${missing.join(', ')} (via fetch direto)`,
+                details: fetchData
+              });
+            }
+            return;
+          } catch (fetchError) {
+            clearTimeout(fetchTimeoutId);
+            
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+              addTestResult({
+                name: 'Health Check',
+                status: 'error',
+                message: 'Timeout: Servidor não respondeu em 30 segundos',
+                details: 'A requisição foi cancelada por timeout. Verifique sua conexão.'
+              });
+              return;
+            }
+
+            throw fetchError;
+          }
+        }
+
+        // Validar estrutura da resposta
+        if (!data || typeof data !== 'object') {
           addTestResult({
             name: 'Health Check',
             status: 'error',
-            message: 'Secrets não configurados',
-            details: fetchData
+            message: 'Resposta inválida do servidor',
+            details: 'A resposta não é um objeto JSON válido'
+          });
+          return;
+        }
+
+        if (!data.secrets || typeof data.secrets !== 'object') {
+          addTestResult({
+            name: 'Health Check',
+            status: 'error',
+            message: 'Resposta inválida: campo "secrets" ausente',
+            details: data
+          });
+          return;
+        }
+
+        setHealthCheck(data);
+
+        const secrets = data.secrets as { clientId?: boolean; clientSecret?: boolean };
+
+        if (secrets.clientId && secrets.clientSecret) {
+          addTestResult({
+            name: 'Health Check',
+            status: 'success',
+            message: 'Todos os secrets estão configurados corretamente!',
+            details: data
+          });
+        } else {
+          const missing = [];
+          if (!secrets.clientId) missing.push('STRAVA_CLIENT_ID');
+          if (!secrets.clientSecret) missing.push('STRAVA_CLIENT_SECRET');
+          
+          addTestResult({
+            name: 'Health Check',
+            status: 'warning',
+            message: `Secrets faltando: ${missing.join(', ')}`,
+            details: data
           });
         }
-        return;
-      }
-
-      setHealthCheck(data);
-
-      if (data.secrets.clientId && data.secrets.clientSecret) {
-        addTestResult({
-          name: 'Health Check',
-          status: 'success',
-          message: 'Todos os secrets estão configurados corretamente!',
-          details: data
-        });
-      } else {
-        const missing = [];
-        if (!data.secrets.clientId) missing.push('STRAVA_CLIENT_ID');
-        if (!data.secrets.clientSecret) missing.push('STRAVA_CLIENT_SECRET');
+      } catch (invokeError) {
+        clearTimeout(timeoutId);
         
-        addTestResult({
-          name: 'Health Check',
-          status: 'warning',
-          message: `Secrets faltando: ${missing.join(', ')}`,
-          details: data
-        });
+        if (invokeError instanceof Error && invokeError.name === 'AbortError') {
+          addTestResult({
+            name: 'Health Check',
+            status: 'error',
+            message: 'Timeout: Servidor não respondeu em 30 segundos',
+            details: 'A requisição foi cancelada por timeout.'
+          });
+          return;
+        }
+
+        throw invokeError;
       }
 
     } catch (err: any) {
@@ -175,7 +301,7 @@ export default function StravaDebug() {
         name: 'Health Check',
         status: 'error',
         message: `Exceção durante health check: ${err.message}`,
-        details: err
+        details: err instanceof Error ? `${err.name}: ${err.message}\n${err.stack || ''}` : String(err)
       });
     } finally {
       setLoading(false);

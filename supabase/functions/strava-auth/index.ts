@@ -9,16 +9,16 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Log de TODAS as requisições recebidas
+  const requestId = crypto.randomUUID().substring(0, 8);
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] 📨 Requisição recebida:`, {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries()),
-  });
+  
+  console.log(`[${timestamp}] [${requestId}] 📨 NOVA REQUISIÇÃO`);
+  console.log(`[${requestId}] 🔍 Método: ${req.method}`);
+  console.log(`[${requestId}] 🔍 URL: ${req.url}`);
+  console.log(`[${requestId}] 🔍 Headers:`, JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
 
   if (req.method === 'OPTIONS') {
-    console.log('✅ Respondendo OPTIONS (CORS preflight)');
+    console.log(`[${requestId}] ✅ Respondendo OPTIONS (CORS preflight)`);
     return new Response(null, { 
       status: 200,
       headers: corsHeaders 
@@ -26,13 +26,13 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔍 Processando Strava auth request:', { method: req.method, url: req.url });
+    console.log(`[${requestId}] 🔍 Iniciando processamento...`);
     
     // ✅ VALIDAÇÃO ANTECIPADA DE SECRETS (antes de tudo)
     const clientId = Deno.env.get('STRAVA_CLIENT_ID');
     const clientSecret = Deno.env.get('STRAVA_CLIENT_SECRET');
     
-    console.log('🔑 Secret status:', {
+    console.log(`[${requestId}] 🔑 Secret status:`, {
       hasClientId: !!clientId,
       hasClientSecret: !!clientSecret,
       clientIdLength: clientId?.length || 0
@@ -43,28 +43,36 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    console.log(`[${requestId}] 📖 Lendo body da requisição...`);
     const requestBody = await req.json();
-    console.log('📦 Request body:', requestBody);
+    console.log(`[${requestId}] 📦 Body recebido:`, JSON.stringify(requestBody, null, 2));
     
     const { action, code, state } = requestBody;
+    console.log(`[${requestId}] 🎯 Action solicitada: ${action}`);
 
     // ✅ PING ENDPOINT (teste de conectividade básico)
     if (action === 'ping') {
-      console.log('🏓 Ping requested');
-      return new Response(JSON.stringify({
+      console.log(`[${requestId}] 🏓 Processando PING`);
+      const response = {
         pong: true,
         timestamp: new Date().toISOString(),
         server: 'strava-auth',
-        version: 'build-32'
-      }), {
+        version: 'build-33',
+        requestId
+      };
+      console.log(`[${requestId}] ✅ Respondendo PING:`, JSON.stringify(response, null, 2));
+      return new Response(JSON.stringify(response), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     // ✅ HEALTH CHECK (sem autenticação necessária)
     if (action === 'health_check') {
-      console.log('🏥 Health check requested');
-      return new Response(JSON.stringify({
+      console.log(`[${requestId}] 🏥 Processando HEALTH CHECK`);
+      console.log(`[${requestId}] 🔑 STRAVA_CLIENT_ID presente: ${!!clientId}`);
+      console.log(`[${requestId}] 🔑 STRAVA_CLIENT_SECRET presente: ${!!clientSecret}`);
+      
+      const response = {
         status: 'ok',
         timestamp: new Date().toISOString(),
         secrets: {
@@ -73,8 +81,12 @@ serve(async (req) => {
         },
         message: (!clientId || !clientSecret) 
           ? 'Strava secrets not configured. Please configure STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in Edge Function secrets.'
-          : 'All secrets configured correctly'
-      }), {
+          : 'All secrets configured correctly',
+        requestId
+      };
+      
+      console.log(`[${requestId}] ✅ Respondendo HEALTH CHECK:`, JSON.stringify(response, null, 2));
+      return new Response(JSON.stringify(response), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -214,16 +226,25 @@ serve(async (req) => {
     throw new Error('Invalid action');
 
   } catch (error: any) {
-    console.error('❌ Strava auth error:', {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      cause: error?.cause
-    });
-    return new Response(JSON.stringify({ 
+    const errorId = crypto.randomUUID().substring(0, 8);
+    console.error(`[${errorId}] ❌ ERRO CRÍTICO na função strava-auth`);
+    console.error(`[${errorId}] 📊 Tipo: ${error?.constructor?.name}`);
+    console.error(`[${errorId}] 📊 Nome: ${error?.name}`);
+    console.error(`[${errorId}] 📊 Mensagem: ${error?.message}`);
+    console.error(`[${errorId}] 📊 Stack trace:`, error instanceof Error ? error.stack : 'N/A');
+    console.error(`[${errorId}] 📊 Causa:`, error?.cause);
+    
+    const errorResponse = {
       error: error?.message || 'Internal server error',
-      timestamp: new Date().toISOString()
-    }), {
+      timestamp: new Date().toISOString(),
+      errorId,
+      type: error?.name || 'UnknownError',
+      details: error instanceof Error ? error.stack : undefined
+    };
+    
+    console.error(`[${errorId}] 📤 Respondendo com erro:`, JSON.stringify(errorResponse, null, 2));
+    
+    return new Response(JSON.stringify(errorResponse), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
