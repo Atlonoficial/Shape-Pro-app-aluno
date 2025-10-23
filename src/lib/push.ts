@@ -24,13 +24,15 @@ const isMobileApp = () => {
 };
 
 export async function initPush(externalUserId?: string) {
-  const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
+  // Hardcoded temporariamente para garantir disponibilidade em produção
+  const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82";
+  
   if (!APP_ID) {
-    if (import.meta.env.DEV) {
-      console.warn('OneSignal: APP_ID not configured');
-    }
+    console.warn('[OneSignal] APP_ID not configured');
     return;
   }
+
+  console.log('[OneSignal] Initializing push notifications...');
 
   // Inicializar Web ou Mobile baseado no ambiente
   if (isMobileApp()) {
@@ -42,19 +44,19 @@ export async function initPush(externalUserId?: string) {
 
 // Inicialização Mobile (Cordova/Capacitor)
 function initMobilePush(APP_ID: string, externalUserId?: string) {
-  document.addEventListener('deviceready', async () => {
+  // CORREÇÃO: Não usar 'deviceready' no Capacitor - executar diretamente
+  console.log('[OneSignal Mobile] Starting initialization...');
+  
+  // Aguardar um pouco para garantir que plugins Capacitor estejam prontos
+  setTimeout(async () => {
     try {
       if (!window.plugins?.OneSignal) {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal: Plugin not available');
-        }
+        console.warn('[OneSignal Mobile] Plugin not available - this is OK, push notifications will be disabled');
         return;
       }
 
       const OneSignal = window.plugins.OneSignal;
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Native: Initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
-      }
+      console.log('[OneSignal Mobile] Plugin found, initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
       
       OneSignal.setAppId(APP_ID);
 
@@ -123,11 +125,12 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       });
 
       isInitialized = true;
+      console.log('[OneSignal Mobile] ✅ Initialized successfully');
 
     } catch (error) {
-      console.error('OneSignal Native: Initialization error:', error);
+      console.error('[OneSignal Mobile] ❌ Initialization error:', error);
     }
-  }, { once: true });
+  }, 500); // Aguardar 500ms para plugins estarem prontos
 }
 
 // Inicialização Web Push

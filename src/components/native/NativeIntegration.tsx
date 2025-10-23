@@ -82,6 +82,12 @@ export const NativeIntegration = () => {
   };
 
   const initPushNotifications = async () => {
+    // DESABILITADO: OneSignal gerencia push notifications completamente
+    // Usar @capacitor/push-notifications junto com OneSignal causa conflitos
+    console.log('[NativeIntegration] Push notifications managed by OneSignal - skipping Capacitor plugin');
+    return;
+    
+    /* CÓDIGO ORIGINAL COMENTADO PARA EVITAR CONFLITO COM ONESIGNAL
     try {
       // Request permissions for push notifications
       const permission = await PushNotifications.requestPermissions();
@@ -117,6 +123,7 @@ export const NativeIntegration = () => {
     } catch (error) {
       console.error('[NativeIntegration] Error initializing push notifications:', error);
     }
+    */
   };
 
   // This component doesn't render anything - it's just for side effects

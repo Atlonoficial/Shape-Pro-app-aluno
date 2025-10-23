@@ -4,7 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
-    <!-- Security Headers for WebSocket -->
+    <!-- Detectar ambiente nativo e relaxar CSP se necessário -->
+    <script>
+      // CORREÇÃO CRÍTICA: CSP restritiva pode bloquear recursos no iOS nativo
+      (function() {
+        // Verificar se está rodando no Capacitor (ambiente nativo)
+        const isCapacitor = window.Capacitor !== undefined || 
+                           window.webkit?.messageHandlers?.bridge !== undefined ||
+                           document.location.protocol === 'capacitor:';
+        
+        if (isCapacitor) {
+          console.log('[Boot] 📱 Native environment detected - relaxing CSP');
+          // Remover CSP restritiva em ambiente nativo
+          const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+          if (cspMeta) {
+            cspMeta.remove();
+            console.log('[Boot] ✅ CSP removed for native environment');
+          }
+        } else {
+          console.log('[Boot] 🌐 Web environment - keeping CSP');
+        }
+      })();
+    </script>
+    
+    <!-- Security Headers for WebSocket (será removida em ambiente nativo) -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.onesignal.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.onesignal.com wss://cdn.onesignal.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
