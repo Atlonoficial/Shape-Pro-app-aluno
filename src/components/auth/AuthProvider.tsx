@@ -75,16 +75,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => clearTimeout(timeout);
   }, [auth.loading, forceRender]);
 
-  // FASE 6: Modo de emergência após 10 segundos
+  // FASE 5: Modo de emergência após 15 segundos E só se realmente travou
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (auth.loading && !auth.isAuthenticated) {
-        console.error('[AuthProvider] 🚨 EMERGENCY MODE ACTIVATED (10s timeout)');
+      // Só ativar emergency mode se REALMENTE travou
+      if (auth.loading && !auth.isAuthenticated && !auth.user) {
+        console.error('[AuthProvider] 🚨 EMERGENCY MODE: Auth travado há 15s');
         setEmergencyMode(true);
       }
-    }, 10000);
+    }, 15000); // ✅ Aumentado de 10s → 15s
     return () => clearTimeout(timer);
-  }, [auth.loading, auth.isAuthenticated]);
+  }, [auth.loading, auth.isAuthenticated, auth.user]);
 
   // Inicializar OneSignal quando usuário estiver autenticado
   useEffect(() => {
@@ -124,7 +125,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
   }
 
-  if (auth.loading && !forceRender) {
+  // FASE 3: Sempre mostrar LoadingScreen quando loading, mesmo com forceRender
+  if (auth.loading) {
+    if (forceRender) {
+      console.warn('[AuthProvider] ⚠️ Force render ativado mas auth ainda loading');
+    }
     return <LoadingScreen />;
   }
 

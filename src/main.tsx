@@ -69,7 +69,7 @@ const handleAppMounted = () => {
         return new Promise(resolve => {
           setTimeout(() => {
             SplashScreen.hide().then(resolve);
-          }, 500); // Extra delay to ensure render is complete
+          }, 1000); // ✅ FASE 4: Aumentado de 500ms → 1000ms
         });
       })
       .then(() => console.log('[Boot] ✅ Splash screen hidden'))

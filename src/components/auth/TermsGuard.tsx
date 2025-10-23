@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuthContext } from './AuthProvider';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { LoadingScreen } from './LoadingScreen';
 
 interface TermsGuardProps {
   children: React.ReactNode;
@@ -25,7 +26,7 @@ export const TermsGuard = ({ children }: TermsGuardProps) => {
     }
   }, [userProfile, loading, navigate, location.pathname]);
   
-  if (loading) return null;
+  if (loading) return <LoadingScreen />;
   
   // Se não aceitou os termos e não está na página de aceitar, não renderiza
   if (userProfile && (!userProfile.terms_accepted_at || !userProfile.privacy_accepted_at) && location.pathname !== '/accept-terms') {

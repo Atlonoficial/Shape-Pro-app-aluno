@@ -14,13 +14,14 @@ export const useAuth = () => {
     const timer = setTimeout(() => {
       console.log('[useAuth] ✅ Boot complete, enabling realtime');
       setBootComplete(true);
-    }, 1000); // ✅ Reduzido de 3000ms → 1000ms
+    }, 2000); // ✅ FASE 4: Aumentado de 1000ms → 2000ms para iOS
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
+    console.log('[useAuth] ⏰ Attempting auth state change subscription');
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-      console.log('[useAuth] 🔐 Auth state changed:', {
+      console.log('[useAuth] 🔐 ✅ Auth state change DISPAROU:', {
         userId: user?.id || 'null',
         email: user?.email || 'null',
         hasSession: !!session,
