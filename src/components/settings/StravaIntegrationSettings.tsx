@@ -39,24 +39,36 @@ export const StravaIntegrationSettings = () => {
         {!isConnected ? (
           <div className="text-center py-6">
             <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Conectar Strava</h3>
+            <h3 className="text-lg font-semibold mb-2">Strava não conectado</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Sincronize automaticamente suas atividades e ganhe pontos por cada exercício
+              Conecte sua conta Strava para sincronizar automaticamente suas atividades de corrida, ciclismo e outros exercícios. 
+              <strong className="block mt-2">Ganhe pontos automaticamente por cada atividade!</strong>
             </p>
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg mb-4 text-left">
+              <p className="text-xs text-blue-800 dark:text-blue-300 font-medium mb-1">
+                ✨ Benefícios da integração:
+              </p>
+              <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                <li>• Sincronização automática de atividades</li>
+                <li>• Pontos de gamificação por distância, tempo e calorias</li>
+                <li>• Estatísticas semanais no dashboard</li>
+                <li>• Visibilidade para seu professor</li>
+              </ul>
+            </div>
             <Button 
               onClick={connectStrava}
               disabled={connecting}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              className="bg-orange-600 hover:bg-orange-700 text-white w-full"
             >
               {connecting ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Conectando...
+                  Conectando ao Strava...
                 </>
               ) : (
                 <>
                   <Activity className="h-4 w-4 mr-2" />
-                  Conectar com Strava
+                  Conectar conta Strava
                 </>
               )}
             </Button>

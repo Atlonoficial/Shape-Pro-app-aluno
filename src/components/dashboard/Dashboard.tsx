@@ -10,8 +10,10 @@ import { DashboardStats } from "./DashboardStats";
 import { StravaIntegrationCard } from "./StravaIntegrationCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useCurrentWorkoutSession } from "@/hooks/useCurrentWorkoutSession";
+import { useOptimizedAvatar } from "@/hooks/useOptimizedAvatar";
 
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useWeightProgress } from "@/hooks/useWeightProgress";
@@ -26,6 +28,7 @@ interface DashboardProps {
 
 export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const { userProfile, user, isAuthenticated } = useAuthContext();
+  const { avatarUrl, avatarFallback } = useOptimizedAvatar();
   const progressActions = useProgressActions();
   const { logWeight } = progressActions;
   const navigate = useNavigate();
@@ -147,9 +150,12 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
       {/* Profile Section */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-variant rounded-full flex items-center justify-center">
-          <span className="text-white font-bold text-lg">A</span>
-        </div>
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={avatarUrl ?? undefined} alt={firstName} />
+          <AvatarFallback className="bg-gradient-to-br from-primary to-primary-variant text-white font-bold text-lg">
+            {avatarFallback}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">
             Olá, <span className="text-gradient-primary">{firstName}!</span>

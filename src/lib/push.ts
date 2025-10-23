@@ -270,11 +270,15 @@ export function getDeviceState(): Promise<any> {
 
 // Atualizar Player ID no Supabase
 async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRetries = 3) {
+  console.log(`[OneSignal] 🔄 BUILD 29: Starting player ID update`, {
+    playerId,
+    userId,
+    timestamp: new Date().toISOString()
+  });
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      if (import.meta.env.DEV) {
-        console.log(`OneSignal Native: Updating player ID in Supabase (attempt ${attempt}):`, playerId);
-      }
+      console.log(`[OneSignal] 📝 Attempt ${attempt}/${maxRetries}: Updating Supabase...`);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -283,23 +287,40 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
         .select();
       
       if (error) {
-        console.error(`OneSignal Native: Error updating player ID (attempt ${attempt}):`, error);
+        console.error(`[OneSignal] ❌ Error on attempt ${attempt}:`, {
+          error: error.message,
+          code: error.code,
+          details: error.details
+        });
+        
         if (attempt === maxRetries) {
+          console.error('[OneSignal] 🚨 All retry attempts failed!');
           throw error;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        
+        const waitTime = 1000 * attempt;
+        console.log(`[OneSignal] ⏳ Waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
         continue;
       }
       
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Native: Player ID successfully saved to Supabase:', data);
-      }
+      console.log('[OneSignal] ✅ Player ID successfully saved to Supabase:', {
+        playerId,
+        userId,
+        data,
+        attempt
+      });
       return;
       
     } catch (error) {
-      console.error(`OneSignal Native: Error updating player ID in Supabase (attempt ${attempt}):`, error);
+      console.error(`[OneSignal] 💥 Exception on attempt ${attempt}:`, error);
+      
       if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        const waitTime = 1000 * attempt;
+        console.log(`[OneSignal] ⏳ Waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      } else {
+        console.error('[OneSignal] 🚨 Final attempt failed - giving up');
       }
     }
   }

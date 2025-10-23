@@ -101,12 +101,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Inicializar OneSignal quando usuário estiver autenticado
   useEffect(() => {
     if (auth.isAuthenticated && auth.user?.id) {
-      console.log('AuthProvider: Initializing OneSignal for user:', auth.user.id);
+      console.log('[AuthProvider] ✅ BUILD 29: User authenticated, initializing OneSignal', {
+        userId: auth.user.id,
+        timestamp: new Date().toISOString()
+      });
       initPush(auth.user.id);
     } else if (!auth.isAuthenticated && !auth.loading) {
       // Limpar configurações OneSignal no logout
+      console.log('[AuthProvider] 🚪 Clearing OneSignal on logout');
       clearExternalUserId();
-      console.log('AuthProvider: OneSignal cleared for logout');
     }
   }, [auth.isAuthenticated, auth.user?.id, auth.loading]);
 
