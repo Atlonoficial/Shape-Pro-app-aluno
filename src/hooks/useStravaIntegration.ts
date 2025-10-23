@@ -116,7 +116,9 @@ export const useStravaIntegration = () => {
           console.log(`🔄 [Strava] Tentativa ${attempt}/3 de obter URL de autorização...`);
           
           const { data, error } = await supabase.functions.invoke('strava-auth', {
-            body: { action: 'get_auth_url' }
+            body: { action: 'get_auth_url' },
+            // @ts-ignore - timeout não está tipado mas funciona no Supabase client
+            timeout: 30000 // 30 segundos
           });
 
           console.log(`📊 [Strava] Tentativa ${attempt} - Resposta:`, { 

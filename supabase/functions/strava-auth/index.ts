@@ -4,15 +4,29 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
+  // Log de TODAS as requisições recebidas
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] 📨 Requisição recebida:`, {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries()),
+  });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    console.log('✅ Respondendo OPTIONS (CORS preflight)');
+    return new Response(null, { 
+      status: 200,
+      headers: corsHeaders 
+    });
   }
 
   try {
-    console.log('🔍 Strava auth request:', { method: req.method, url: req.url });
+    console.log('🔍 Processando Strava auth request:', { method: req.method, url: req.url });
     
     // ✅ VALIDAÇÃO ANTECIPADA DE SECRETS (antes de tudo)
     const clientId = Deno.env.get('STRAVA_CLIENT_ID');
@@ -33,6 +47,19 @@ serve(async (req) => {
     console.log('📦 Request body:', requestBody);
     
     const { action, code, state } = requestBody;
+
+    // ✅ PING ENDPOINT (teste de conectividade básico)
+    if (action === 'ping') {
+      console.log('🏓 Ping requested');
+      return new Response(JSON.stringify({
+        pong: true,
+        timestamp: new Date().toISOString(),
+        server: 'strava-auth',
+        version: 'build-32'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // ✅ HEALTH CHECK (sem autenticação necessária)
     if (action === 'health_check') {
@@ -187,9 +214,15 @@ serve(async (req) => {
     throw new Error('Invalid action');
 
   } catch (error: any) {
-    console.error('Strava auth error:', error);
+    console.error('❌ Strava auth error:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      cause: error?.cause
+    });
     return new Response(JSON.stringify({ 
-      error: error?.message || 'Internal server error'
+      error: error?.message || 'Internal server error',
+      timestamp: new Date().toISOString()
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -38,6 +38,60 @@ export default function StravaDebug() {
     setHealthCheck(null);
   };
 
+  const runPingTest = async () => {
+    setLoading(true);
+    
+    addTestResult({
+      name: 'Ping Test',
+      status: 'pending',
+      message: 'Testando conectividade básica com Edge Function...'
+    });
+
+    const startTime = Date.now();
+    
+    try {
+      // Teste com fetch direto (mais confiável para diagnóstico)
+      const fetchResponse = await fetch(
+        'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ping' })
+        }
+      );
+
+      const latency = Date.now() - startTime;
+      const data = await fetchResponse.json();
+
+      addTestResult({
+        name: 'Ping Test',
+        status: 'success',
+        message: `Conectividade OK! Latência: ${latency}ms`,
+        details: {
+          ...data,
+          latency: `${latency}ms`,
+          status: fetchResponse.status,
+          headers: Object.fromEntries(fetchResponse.headers.entries())
+        }
+      });
+    } catch (err: any) {
+      const latency = Date.now() - startTime;
+      console.error('Ping test error:', err);
+      addTestResult({
+        name: 'Ping Test',
+        status: 'error',
+        message: `Falha na conectividade: ${err.message}`,
+        details: {
+          latency: `${latency}ms`,
+          error: err.message,
+          type: err.name
+        }
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const runHealthCheck = async () => {
     try {
       setLoading(true);
@@ -56,12 +110,40 @@ export default function StravaDebug() {
       console.log('🏥 Health check response:', { data, error });
 
       if (error) {
+        // Fallback: tentar com fetch direto
         addTestResult({
           name: 'Health Check',
-          status: 'error',
-          message: `Erro ao verificar health check: ${error.message}`,
-          details: error
+          status: 'warning',
+          message: 'Invoke falhou, tentando fetch direto...'
         });
+        
+        const fetchResponse = await fetch(
+          'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'health_check' })
+          }
+        );
+
+        const fetchData = await fetchResponse.json();
+        setHealthCheck(fetchData);
+        
+        if (fetchData.secrets?.clientId && fetchData.secrets?.clientSecret) {
+          addTestResult({
+            name: 'Health Check',
+            status: 'success',
+            message: 'Secrets OK (via fetch direto)',
+            details: fetchData
+          });
+        } else {
+          addTestResult({
+            name: 'Health Check',
+            status: 'error',
+            message: 'Secrets não configurados',
+            details: fetchData
+          });
+        }
         return;
       }
 
@@ -214,6 +296,8 @@ export default function StravaDebug() {
 
   const testFullFlow = async () => {
     clearResults();
+    await runPingTest();
+    await new Promise(resolve => setTimeout(resolve, 500));
     await testAuthentication();
     await new Promise(resolve => setTimeout(resolve, 500));
     await runHealthCheck();
@@ -287,7 +371,16 @@ export default function StravaDebug() {
 
             <Separator />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <Button 
+                onClick={runPingTest} 
+                disabled={loading}
+                variant="secondary"
+                size="sm"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Ping Test
+              </Button>
               <Button 
                 onClick={testAuthentication} 
                 disabled={loading}
