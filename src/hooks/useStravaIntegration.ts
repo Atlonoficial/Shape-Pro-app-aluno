@@ -205,10 +205,10 @@ export const useStravaIntegration = () => {
             'Authorization': `Bearer ${token}`,
             'apikey': ANON_KEY
           },
-          body: JSON.stringify({ 
-            action: 'get_auth_url',
-            platform: platform
-          }),
+        body: JSON.stringify({
+          action: 'get_auth_url',
+          platform: Capacitor.isNativePlatform() ? 'mobile' : 'web'
+        }),
           signal: controller.signal
         };
 
