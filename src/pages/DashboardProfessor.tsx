@@ -1,10 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MobileContainer } from "@/components/layout/MobileContainer";
-import { TeacherDashboard } from "@/components/teacher/TeacherDashboard";
 import { NotificationManager } from "@/components/teacher/NotificationManager";
-import { NotificationStatus } from "@/components/notifications/NotificationStatus";
-import { NotificationDebug } from "@/components/notifications/NotificationDebug";
 import { Button } from "@/components/ui/button";
 
 const DashboardProfessor = () => {
@@ -28,9 +25,7 @@ const DashboardProfessor = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4 space-y-6">
-          <NotificationDebug />
           <NotificationManager />
-          <NotificationStatus />
         </div>
       </div>
     </MobileContainer>

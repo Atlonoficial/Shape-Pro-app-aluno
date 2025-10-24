@@ -84,8 +84,6 @@ const RedirectToAuthConfirm = () => {
 };
 
 const App = () => {
-  console.log('[Boot] 🎯 CHECKPOINT 3: App component rendering');
-  
   return (
   <ErrorBoundary>
     <SecurityProvider>
