@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle2, XCircle, AlertCircle, Loader2, Activity, Database, Key } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Loader2, Activity, Database, Key, Wifi } from 'lucide-react';
 
 interface HealthCheckResult {
   status: string;

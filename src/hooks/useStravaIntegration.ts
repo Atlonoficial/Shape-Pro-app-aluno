@@ -31,6 +31,8 @@ export const useStravaIntegration = () => {
   });
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [circuitBreakerOpen, setCircuitBreakerOpen] = useState(false);
+  const [failureCount, setFailureCount] = useState(0);
 
   // Buscar conexão existente
   const fetchConnection = async () => {
@@ -102,206 +104,177 @@ export const useStravaIntegration = () => {
 
   // Conectar com Strava
   const connectStrava = async () => {
-    if (!user?.id) return;
-
     try {
+      // Circuit breaker check
+      if (circuitBreakerOpen) {
+        toast.error("Sistema temporariamente indisponível", {
+          description: "Muitas tentativas falharam. Aguarde alguns minutos antes de tentar novamente.",
+          duration: 5000
+        });
+        return;
+      }
+
       setConnecting(true);
-      console.log('🔗 [Strava] Iniciando conexão...');
-
-      // ✅ CONFIGURAÇÃO HARDCODED
+      
       const EDGE_FUNCTION_URL = 'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/strava-auth';
-      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxYm9wa3F6a2F2aG1lbmpsa2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODIwNTIsImV4cCI6MjA2NTE1ODA1Mn0.Bm2Gy1vqLWexVy8EpVi-KcmRlvpZ60eO3jIiVPpJ1zE';
+      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxYm9wa3F6a2F2aG1lbmpsa2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzNDk3NDgsImV4cCI6MjA1MTkyNTc0OH0.eqhLLEGaWdqy1JHb4iqS9GxSf3dLMD-ggj3b6sZz2Gg';
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-      // ✅ Validar session antes de conectar
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session) {
-        toast.error("Sessão expirada", {
-          description: "Por favor, saia e entre novamente no aplicativo."
+      if (!token) {
+        toast.error("Erro de autenticação", {
+          description: "Por favor, faça login novamente"
         });
+        setFailureCount(prev => prev + 1);
         return;
       }
 
-      const token = sessionData.session.access_token;
-
-      // ✅ VALIDAÇÃO DE CONFIGURAÇÃO
-      if (!token || !EDGE_FUNCTION_URL || !ANON_KEY) {
-        console.error('❌ Configuração incompleta:', {
-          hasToken: !!token,
-          hasUrl: !!EDGE_FUNCTION_URL,
-          hasKey: !!ANON_KEY
+      // Validar configuração antes de fazer requests
+      if (!EDGE_FUNCTION_URL || !ANON_KEY) {
+        console.error('❌ [Strava] Configuração incompleta');
+        toast.error("Erro de configuração", {
+          description: "Sistema não está configurado corretamente"
         });
-        toast.error("Configuração incompleta", {
-          description: "Faltam parâmetros necessários para conectar."
-        });
+        setFailureCount(prev => prev + 1);
         return;
       }
 
-      console.log('✅ Sessão válida e configuração OK');
-      console.log('🔍 URL:', EDGE_FUNCTION_URL);
-      console.log('🔍 Token presente:', !!token);
-      console.log('🔍 API Key presente:', !!ANON_KEY);
+      console.log('🔍 [Strava] Configuração validada:', {
+        url: EDGE_FUNCTION_URL,
+        tokenPresent: !!token,
+        apiKeyPresent: !!ANON_KEY
+      });
 
-      // ✅ Testar conectividade primeiro (ping)
-      console.log('📡 Testando conectividade com servidor...');
-      try {
-        const pingController = new AbortController();
-        const pingTimeoutId = setTimeout(() => pingController.abort(), 30000);
+      // GET AUTH URL - Obter URL de autorização (com retry e backoff exponencial)
+      console.log('🔐 [Strava] Solicitando URL de autorização...');
+      
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        console.log(`🔄 [Strava] Tentativa ${attempt} de 3...`);
+        
+        const startTime = performance.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const pingResponse = await fetch(EDGE_FUNCTION_URL, {
+        const requestConfig = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
             'apikey': ANON_KEY
           },
-          body: JSON.stringify({ action: 'ping' }),
-          signal: pingController.signal
+          body: JSON.stringify({ action: 'get_auth_url' }),
+          signal: controller.signal
+        };
+
+        console.log('📤 [Strava] Enviando requisição:', {
+          url: EDGE_FUNCTION_URL,
+          method: requestConfig.method,
+          headers: {
+            'Content-Type': requestConfig.headers['Content-Type'],
+            'Authorization': 'Bearer ***',
+            'apikey': '***'
+          },
+          bodyAction: 'get_auth_url'
         });
 
-        clearTimeout(pingTimeoutId);
-
-        if (!pingResponse.ok) {
-          toast.error("Servidor indisponível", {
-            description: "Não foi possível conectar ao servidor. Tente novamente mais tarde."
-          });
-          return;
-        }
-        console.log('✅ Servidor acessível');
-      } catch (pingError: any) {
-        if (pingError.name === 'AbortError') {
-          console.error('⏱️ Timeout no ping após 30s');
-          toast.error("Timeout", {
-            description: "Servidor demorou muito para responder."
-          });
-        } else if (pingError.message?.includes('Failed to fetch')) {
-          console.error('🌐 Erro de rede no ping');
-          toast.error("Sem conexão", {
-            description: "Verifique sua conexão com a internet."
-          });
-        } else {
-          console.error('❌ Erro no ping:', pingError);
-          toast.error("Erro ao conectar", {
-            description: "Não foi possível verificar conectividade."
-          });
-        }
-        return;
-      }
-
-      // ✅ RETRY LOGIC: 3 tentativas com delay de 1s usando fetch direto
-      let lastError: any = null;
-      
-      for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          console.log(`🔄 [Strava] Tentativa ${attempt}/3 de obter URL de autorização...`);
-          
-          // ✅ CONFIGURAÇÃO DO REQUEST COM TIMEOUT
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-          const requestConfig = {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-              'apikey': ANON_KEY
-            },
-            body: JSON.stringify({ action: 'get_auth_url' }),
-            signal: controller.signal
-          };
-
-          // ✅ LOGGING DETALHADO DO REQUEST
-          console.log('📤 Enviando requisição:', {
-            url: EDGE_FUNCTION_URL,
-            method: requestConfig.method,
-            headers: {
-              'Content-Type': requestConfig.headers['Content-Type'],
-              'Authorization': 'Bearer ***',
-              'apikey': '***'
-            },
-            bodyAction: 'get_auth_url'
-          });
-
           const response = await fetch(EDGE_FUNCTION_URL, requestConfig);
           clearTimeout(timeoutId);
+          
+          const endTime = performance.now();
+          const duration = Math.round(endTime - startTime);
 
-          console.log(`📊 [Strava] Tentativa ${attempt} - Status:`, response.status);
+          console.log(`📊 [Strava] Tentativa ${attempt} - Status: ${response.status}, Tempo: ${duration}ms`);
 
           if (!response.ok) {
-            if (response.status === 401) {
-              toast.error("Sessão expirada", {
-                description: "Por favor, saia e entre novamente no aplicativo."
+            const errorText = await response.text();
+            console.error(`❌ [Strava] Erro na tentativa ${attempt}:`, {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorText,
+              duration: `${duration}ms`
+            });
+            
+            if (attempt === 3) {
+              setFailureCount(prev => {
+                const newCount = prev + 1;
+                if (newCount >= 3) {
+                  setCircuitBreakerOpen(true);
+                  setTimeout(() => {
+                    setCircuitBreakerOpen(false);
+                    setFailureCount(0);
+                  }, 60000); // Reabre após 1 minuto
+                }
+                return newCount;
               });
-              return;
-            } else if (response.status === 500) {
-              const errorData = await response.json().catch(() => ({}));
-              if (errorData.missingSecrets) {
-                toast.error("Configuração pendente", {
-                  description: "O Strava ainda não foi configurado pelo administrador."
-                });
-                return;
-              }
-            } else if (response.status === 0) {
-              toast.error("Sem conexão", {
-                description: "Não foi possível conectar ao servidor."
+              
+              toast.error("Falha na conexão", {
+                description: "Verifique: 1) Sua conexão com internet, 2) Se o app está atualizado, 3) Tente novamente em alguns minutos",
+                duration: 5000
               });
               return;
             }
             
-            lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
-            
-            if (attempt < 3) {
-              console.log(`⏳ [Strava] Aguardando 1s antes da próxima tentativa...`);
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              continue;
-            }
-            throw lastError;
+            // Backoff exponencial: 1s, 2s, 4s
+            const delay = Math.pow(2, attempt - 1) * 1000;
+            console.log(`⏳ [Strava] Aguardando ${delay/1000}s antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
           }
 
           const data = await response.json();
-          console.log('✅ [Strava] Resposta recebida:', { hasAuthUrl: !!data?.authUrl });
+          console.log('✅ [Strava] URL de autorização recebida:', data);
 
-          if (!data?.authUrl) {
-            throw new Error('URL de autorização não recebida');
+          // Resetar failure count em caso de sucesso
+          setFailureCount(0);
+
+          if (data.authUrl) {
+            console.log('🚀 [Strava] Redirecionando para Strava...');
+            window.location.href = data.authUrl;
+            return;
+          } else {
+            console.error('❌ [Strava] authUrl não encontrado na resposta');
+            toast.error("Erro", {
+              description: "URL de autorização não foi gerada"
+            });
+            return;
           }
-
-          console.log('🚀 [Strava] Redirecionando para Strava...');
-          window.location.href = data.authUrl;
-          return;
-          
         } catch (err: any) {
-          lastError = err;
+          setFailureCount(prev => {
+            const newCount = prev + 1;
+            if (newCount >= 3) {
+              setCircuitBreakerOpen(true);
+              setTimeout(() => {
+                setCircuitBreakerOpen(false);
+                setFailureCount(0);
+              }, 60000);
+            }
+            return newCount;
+          });
 
-          // ✅ TRATAMENTO MELHORADO DE ERROS DE REDE
           if (err.name === 'AbortError') {
-            console.error('⏱️ Timeout após 30s');
+            console.error('⏱️ [Strava] Timeout após 30s');
             toast.error("Timeout", {
-              description: "Servidor demorou muito para responder"
+              description: "Servidor demorou muito para responder. Verifique sua conexão e tente novamente.",
+              duration: 5000
             });
-            return;
           } else if (err.message?.includes('Failed to fetch')) {
-            console.error('🌐 Erro de rede');
+            console.error('🌐 [Strava] Erro de rede:', err);
             toast.error("Sem conexão", {
-              description: "Não foi possível conectar ao servidor"
+              description: "Não foi possível conectar ao servidor. Verifique: 1) Se você está online, 2) Se tem acesso à internet.",
+              duration: 5000
             });
-            return;
+          } else {
+            console.error('❌ [Strava] Erro desconhecido:', err);
+            toast.error("Erro inesperado", {
+              description: err.message || "Ocorreu um erro ao conectar com o Strava. Tente novamente.",
+              duration: 5000
+            });
           }
-
-          console.error(`❌ [Strava] Exceção na tentativa ${attempt}:`, err);
-          
-          if (attempt < 3) {
-            console.log(`⏳ [Strava] Aguardando 1s antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
+          break;
         }
       }
-
-      // Se chegou aqui, todas as tentativas falharam
-      console.error('❌ [Strava] Todas as tentativas falharam. Último erro:', lastError);
-      
-      const errorMessage = lastError?.message || "Não foi possível conectar com o Strava";
-      
-      toast.error("Erro ao conectar", {
-        description: errorMessage
-      });
 
     } catch (error: any) {
       console.error('❌ [Strava] Erro fatal:', error);
@@ -310,7 +283,6 @@ export const useStravaIntegration = () => {
       });
     } finally {
       setConnecting(false);
-      console.log('🏁 [Strava] Processo de conexão finalizado');
     }
   };
 

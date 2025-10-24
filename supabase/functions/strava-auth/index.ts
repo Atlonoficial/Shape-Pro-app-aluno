@@ -3,8 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -16,6 +16,21 @@ serve(async (req) => {
   console.log(`[${requestId}] 🔍 Método: ${req.method}`);
   console.log(`[${requestId}] 🔍 URL: ${req.url}`);
   console.log(`[${requestId}] 🔍 Headers:`, JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+
+  // Public status endpoint (no authentication required)
+  if (req.method === 'GET' && new URL(req.url).pathname.endsWith('/status')) {
+    return new Response(JSON.stringify({
+      status: 'online',
+      timestamp: new Date().toISOString(),
+      version: 'build-36',
+      message: 'Edge Function is running'
+    }), {
+      headers: { 
+        ...corsHeaders,
+        'Content-Type': 'application/json' 
+      },
+    });
+  }
 
   if (req.method === 'OPTIONS') {
     console.log(`[${requestId}] ✅ Respondendo OPTIONS (CORS preflight)`);
@@ -80,7 +95,7 @@ serve(async (req) => {
         pong: true,
         timestamp: new Date().toISOString(),
         server: 'strava-auth',
-        version: 'build-35',
+        version: 'build-36',
         requestId
       };
       console.log(`[${requestId}] ✅ Respondendo PING:`, JSON.stringify(response, null, 2));

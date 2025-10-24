@@ -42,7 +42,7 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
     // ✅ BUILD 35: Correção definitiva com URLs hardcoded e validação completa
-    CFBundleVersion: '35',
+    CFBundleVersion: '36',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -101,7 +101,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 35,
+    versionCode: 36,
     versionName: "2.0.3"
   },
 
