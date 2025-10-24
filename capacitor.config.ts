@@ -31,18 +31,23 @@ const config: CapacitorConfig = {
     allowNavigation: [
       'https://bqbopkqzkavhmenjlhab.supabase.co',
       'https://www.strava.com',
-      '*.lovableproject.com'
+      '*.lovableproject.com',
+      'https://*.lovable.app'
     ]
+  },
+  
+  deepLinkingConfig: {
+    customURLScheme: 'shapepro'
   },
 
   ios: {
-    scheme: "ShapePro",
+    scheme: "shapepro",
     contentInset: "automatic",
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 35: Correção definitiva com URLs hardcoded e validação completa
-    CFBundleVersion: '36',
+    // ✅ BUILD 37: Correção do redirect com Capacitor Browser
+    CFBundleVersion: '37',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -83,8 +88,8 @@ const config: CapacitorConfig = {
       UILaunchStoryboardName: "LaunchScreen",
 
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "2.0.3",
-      CFBundleVersion: "35", // ✅ BUILD 35: Correção definitiva com URLs hardcoded e validação completa
+      CFBundleShortVersionString: "2.0.4",
+      CFBundleVersion: "37", // ✅ BUILD 37: Correção do redirect com Capacitor Browser
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -101,8 +106,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 36,
-    versionName: "2.0.3"
+    versionCode: 37,
+    versionName: "2.0.4"
   },
 
   plugins: {

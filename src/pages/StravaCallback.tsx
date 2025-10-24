@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 
 export default function StravaCallback() {
   const [searchParams] = useSearchParams();
@@ -15,23 +17,44 @@ export default function StravaCallback() {
   useEffect(() => {
     const processCallback = async () => {
       try {
+        console.log('[StravaCallback] 🔄 Processando callback...');
+        console.log('[StravaCallback] 📱 Platform:', Capacitor.getPlatform());
+        console.log('[StravaCallback] 🌐 URL:', window.location.href);
+        
         const code = searchParams.get('code');
         const state = searchParams.get('state');
         const error = searchParams.get('error');
+        
+        console.log('[StravaCallback] 📦 Params:', { code: code?.substring(0, 10) + '...', state, error });
 
         if (error) {
+          console.error('[StravaCallback] ❌ Erro no callback:', error);
+          // Close browser on mobile
+          if (Capacitor.isNativePlatform()) {
+            await Browser.close();
+          }
           throw new Error(`Strava OAuth error: ${error}`);
         }
 
         if (!code) {
+          console.error('[StravaCallback] ❌ Código não encontrado');
+          // Close browser on mobile
+          if (Capacitor.isNativePlatform()) {
+            await Browser.close();
+          }
           throw new Error('Código de autorização não encontrado');
         }
 
         if (!user || state !== user.id) {
+          console.error('[StravaCallback] ❌ Estado inválido');
+          // Close browser on mobile
+          if (Capacitor.isNativePlatform()) {
+            await Browser.close();
+          }
           throw new Error('Estado inválido - usuário não autenticado');
         }
 
-        console.log('Processing Strava callback with code:', code);
+        console.log('[StravaCallback] ✅ Processando código com edge function...');
 
         const { data, error: functionError } = await supabase.functions.invoke('strava-auth', {
           body: {
@@ -52,8 +75,15 @@ export default function StravaCallback() {
         }
 
         if (data?.success) {
+          console.log('[StravaCallback] ✅ Sucesso!');
           setStatus('success');
           setMessage('Conta Strava conectada com sucesso!');
+          
+          // Close browser on mobile
+          if (Capacitor.isNativePlatform()) {
+            console.log('[StravaCallback] 📱 Fechando Capacitor Browser...');
+            await Browser.close();
+          }
           
           // Redirecionar para configurações após 2 segundos
           setTimeout(() => {
@@ -64,9 +94,14 @@ export default function StravaCallback() {
         }
 
       } catch (error) {
-        console.error('Strava callback error:', error);
+        console.error('[StravaCallback] ❌ Erro no processamento:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Erro desconhecido');
+        
+        // Close browser on mobile
+        if (Capacitor.isNativePlatform()) {
+          await Browser.close();
+        }
         
         // Redirecionar para configurações após 3 segundos
         setTimeout(() => {

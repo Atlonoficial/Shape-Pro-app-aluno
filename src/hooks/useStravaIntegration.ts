@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { toast } from 'sonner';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 
 interface StravaConnection {
   id: string;
@@ -231,7 +233,18 @@ export const useStravaIntegration = () => {
 
           if (data.authUrl) {
             console.log('🚀 [Strava] Redirecionando para Strava...');
-            window.location.href = data.authUrl;
+            
+            // Use Capacitor Browser on mobile, window.location on web
+            if (Capacitor.isNativePlatform()) {
+              console.log('📱 [Strava] Abrindo Strava via Capacitor Browser (mobile)');
+              await Browser.open({ 
+                url: data.authUrl,
+                presentationStyle: 'popover'
+              });
+            } else {
+              console.log('🌐 [Strava] Abrindo Strava via window.location (web)');
+              window.location.href = data.authUrl;
+            }
             return;
           } else {
             console.error('❌ [Strava] authUrl não encontrado na resposta');

@@ -22,7 +22,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       status: 'online',
       timestamp: new Date().toISOString(),
-      version: 'build-36',
+      version: 'build-37',
       message: 'Edge Function is running'
     }), {
       headers: { 
@@ -95,7 +95,7 @@ serve(async (req) => {
         pong: true,
         timestamp: new Date().toISOString(),
         server: 'strava-auth',
-        version: 'build-36',
+        version: 'build-37',
         requestId
       };
       console.log(`[${requestId}] ✅ Respondendo PING:`, JSON.stringify(response, null, 2));
@@ -162,12 +162,21 @@ serve(async (req) => {
         });
       }
       
-      const redirectUri = `https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback`;
+      // Detect if request is from mobile app or web
+      const origin = req.headers.get('origin') || '';
+      const userAgent = req.headers.get('user-agent') || '';
+      const isMobile = userAgent.includes('Shape Pro') || userAgent.includes('Mobile App');
+      
+      // Use appropriate redirect URI based on platform
+      const redirectUri = isMobile 
+        ? 'shapepro://strava-callback'
+        : 'https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback';
       
       console.log(`[${requestId}] 🔗 Generating Strava auth URL:`, { 
         clientId: clientId.substring(0, 5) + '...', 
         redirectUri,
-        userId: user.id 
+        userId: user.id,
+        platform: isMobile ? 'mobile' : 'web'
       });
       
       const authUrl = `https://www.strava.com/oauth/authorize?` +
