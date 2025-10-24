@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useEffect, useRef } from "react";
+import { openExternalLink } from "@/utils/openExternalLink";
 
 export const TeacherCard = () => {
   const { teacher, loading } = useTeacherProfile();
@@ -83,26 +84,26 @@ export const TeacherCard = () => {
 
   const handleInstagramClick = () => {
     if (teacher.instagram_url) {
-      window.open(teacher.instagram_url, '_blank');
+      openExternalLink(teacher.instagram_url);
     }
   };
 
   const handleFacebookClick = () => {
     if (teacher.facebook_url) {
-      window.open(teacher.facebook_url, '_blank');
+      openExternalLink(teacher.facebook_url);
     }
   };
 
   const handleYouTubeClick = () => {
     if (teacher.youtube_url) {
-      window.open(teacher.youtube_url, '_blank');
+      openExternalLink(teacher.youtube_url);
     }
   };
 
   const handleWhatsAppClick = () => {
     // Prioriza whatsapp_url sobre whatsapp_number
     if (teacher.whatsapp_url) {
-      window.open(teacher.whatsapp_url, '_blank');
+      openExternalLink(teacher.whatsapp_url);
     }
   };
 

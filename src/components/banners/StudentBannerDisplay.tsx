@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { useBannerTracking } from '@/hooks/useBannerTracking'
+import { openExternalLink } from '@/utils/openExternalLink'
 
 interface Banner {
   id: string
@@ -55,7 +56,7 @@ export function StudentBannerDisplay({ placement }: { placement: string }) {
     trackClick(banner.id, { placement, actionUrl: banner.action_url })
     
     if (banner.action_url) {
-      window.open(banner.action_url, '_blank')
+      openExternalLink(banner.action_url)
     }
   }
 

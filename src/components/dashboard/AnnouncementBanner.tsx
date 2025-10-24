@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ExternalLink, ChevronDown, ChevronUp } from 
 import { useAuth } from "@/hooks/useAuth";
 import { useBanners } from "@/hooks/useBanners";
 import { useBannerTracking } from "@/hooks/useBannerTracking";
+import { openExternalLink } from "@/utils/openExternalLink";
 
 export const AnnouncementBanner = () => {
   const { user } = useAuth();
@@ -43,7 +44,7 @@ export const AnnouncementBanner = () => {
       trackClick(current.id, { actionUrl: linkUrl });
       // Pequeno delay para garantir que o tracking seja enviado
       setTimeout(() => {
-        window.open(linkUrl, '_blank');
+        openExternalLink(linkUrl);
       }, 100);
     }
   };

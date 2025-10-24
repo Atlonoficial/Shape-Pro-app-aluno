@@ -7,6 +7,7 @@ import { useCoursePaymentSync } from '@/hooks/useCoursePaymentSync';
 import { useTeacherGatewayStatus } from '@/hooks/useTeacherGatewayStatus';
 import { useCheckout } from '@/hooks/useCheckout';
 import { toast } from 'sonner';
+import { openExternalLink } from '@/utils/openExternalLink';
 
 interface Course {
   id: string;
@@ -65,7 +66,7 @@ export const UnlockCourseDialog = ({ course, onClose }: UnlockCourseDialogProps)
       }]);
 
       if (checkoutData?.checkout_url) {
-        window.open(checkoutData.checkout_url, '_blank');
+        openExternalLink(checkoutData.checkout_url);
         toast.success("Redirecionando para pagamento...");
         onClose();
       } else {
