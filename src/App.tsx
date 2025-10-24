@@ -26,6 +26,10 @@ import { Anamnese } from "./pages/Anamnese";
 import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
 import AssinaturasPlanos from "./pages/AssinaturasPlanos";
+import { LazySettings } from "./pages/lazy/LazySettings";
+import { LazyChat } from "./pages/lazy/LazyChat";
+import { LazyAgenda } from "./pages/lazy/LazyAgenda";
+import { LazyMetas } from "./pages/lazy/LazyMetas";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import { IniciarTreino } from "./pages/IniciarTreino";
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
@@ -121,15 +125,15 @@ const App = () => {
                 <Route path="/exames-medicos" element={<AuthGuard><TermsGuard><ExamesMedicos /></TermsGuard></AuthGuard>} />
                 <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><FotosProgresso /></TermsGuard></AuthGuard>} />
                 <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><AvaliacoesFisicas /></TermsGuard></AuthGuard>} />
-                <Route path="/configuracoes" element={<AuthGuard><TermsGuard><Configuracoes /></TermsGuard></AuthGuard>} />
+                <Route path="/configuracoes" element={<AuthGuard><TermsGuard><LazySettings /></TermsGuard></AuthGuard>} />
                 <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
                 <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
                 <Route path="/iniciar-treino" element={<AuthGuard><TermsGuard><IniciarTreino /></TermsGuard></AuthGuard>} />
                 <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
-                <Route path="/agenda" element={<AuthGuard><TermsGuard><Agenda /></TermsGuard></AuthGuard>} />
-                <Route path="/metas" element={<AuthGuard><TermsGuard><Metas /></TermsGuard></AuthGuard>} />
+                <Route path="/agenda" element={<AuthGuard><TermsGuard><LazyAgenda /></TermsGuard></AuthGuard>} />
+                <Route path="/metas" element={<AuthGuard><TermsGuard><LazyMetas /></TermsGuard></AuthGuard>} />
                 <Route path="/recompensas" element={<AuthGuard><TermsGuard><Recompensas /></TermsGuard></AuthGuard>} />
-                <Route path="/chat" element={<AuthGuard><TermsGuard><Chat /></TermsGuard></AuthGuard>} />
+                <Route path="/chat" element={<AuthGuard><TermsGuard><LazyChat /></TermsGuard></AuthGuard>} />
                 <Route path="/dashboard-professor" element={<AuthGuard><TermsGuard><DashboardProfessor /></TermsGuard></AuthGuard>} />
                 <Route path="/teacher/edit-profile" element={<AuthGuard><TermsGuard><EditProfile /></TermsGuard></AuthGuard>} />
                 <Route path="/strava-callback" element={<StravaCallback />} />

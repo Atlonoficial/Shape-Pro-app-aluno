@@ -4,7 +4,7 @@
 	"webDir": "dist",
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
-	"version": "38",
+	"version": "26",
 	"ios": {
 		"scheme": "shapepro",
 		"contentInset": "automatic",
@@ -22,8 +22,8 @@
 		"hideLogs": true,
 		"cleartext": true,
 		"networkSecurityConfig": true,
-		"versionCode": 38,
-		"versionName": "2.0.5"
+		"versionCode": 26,
+		"versionName": "3.0.0"
 	},
 	"plugins": {
 		"SplashScreen": {

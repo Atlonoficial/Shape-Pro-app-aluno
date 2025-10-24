@@ -268,8 +268,8 @@ export function getDeviceState(): Promise<any> {
   });
 }
 
-// Atualizar Player ID no Supabase
-async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRetries = 3) {
+// Atualizar Player ID no Supabase - Build 26: 5 retries com feedback melhor
+async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRetries = 5) {
   console.log(`[OneSignal] 🔄 BUILD 29: Starting player ID update`, {
     playerId,
     userId,

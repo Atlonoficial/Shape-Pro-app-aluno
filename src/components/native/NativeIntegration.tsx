@@ -3,7 +3,6 @@ import { Capacitor } from '@capacitor/core';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
-import { PushNotifications } from '@capacitor/push-notifications';
 
 /**
  * Shape Pro - Native Integration Component

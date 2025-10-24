@@ -30,7 +30,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
       {...(isMobileApp ? gestures : {})}
       className={`
         bottom-nav-container
-        fixed bottom-0 left-0 right-0 z-50
+        fixed bottom-0 left-0 right-0 z-bottom-nav
         transition-transform duration-300 ease-smooth
         ${keyboardVisible ? 'translate-y-full' : 'translate-y-0'}
       `}

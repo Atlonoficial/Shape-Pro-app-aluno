@@ -22,8 +22,8 @@ const waitForCapacitor = async () => {
       timestamp: Date.now()
     });
     
-    // ✅ iOS pode precisar de mais tempo para plugins estarem prontos
-    const waitTime = isIOS ? 500 : 300;
+    // ✅ Build 26: Tempos otimizados
+    const waitTime = isIOS ? 300 : 150;
     console.log(`[Boot] ⏳ Waiting ${waitTime}ms for plugins...`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
     

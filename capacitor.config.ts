@@ -21,6 +21,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
+  version: "26",
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
@@ -46,8 +47,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 38: Correção com detecção correta de plataforma
-    CFBundleVersion: '38',
+    // ✅ BUILD 26: Version 3.0.0
+    CFBundleVersion: '26',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -88,8 +89,8 @@ const config: CapacitorConfig = {
       UILaunchStoryboardName: "LaunchScreen",
 
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "2.0.5",
-      CFBundleVersion: "38", // ✅ BUILD 38: Correção com detecção correta de plataforma
+      CFBundleShortVersionString: "3.0.0",
+      CFBundleVersion: "26", // ✅ BUILD 26: Version 3.0.0 Production Ready
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -106,8 +107,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 38,
-    versionName: "2.0.5"
+    versionCode: 26,
+    versionName: "3.0.0"
   },
 
   plugins: {
