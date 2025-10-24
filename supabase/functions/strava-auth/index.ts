@@ -168,7 +168,7 @@ serve(async (req) => {
         });
       }
       
-      // Detect platform from request body (explicit detection)
+      // ALWAYS use web callback with platform query param for mobile deep link
       const platform = requestBody.platform || 'web';
       const isMobile = platform === 'mobile';
       
@@ -178,10 +178,8 @@ serve(async (req) => {
         isMobile
       });
 
-      // Use appropriate redirect URI based on platform
-      const redirectUri = isMobile 
-        ? 'shapepro://strava-callback'
-        : 'https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback';
+      // Use web callback for both web and mobile (mobile will be deep linked)
+      const redirectUri = 'https://d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com/strava-callback';
       
       console.log(`[${requestId}] 🔗 Generating Strava auth URL:`, { 
         clientId: clientId.substring(0, 5) + '...', 
@@ -191,10 +189,15 @@ serve(async (req) => {
         explicitPlatform: requestBody.platform
       });
       
+      // Add platform as query param to redirect URI for mobile detection
+      const finalRedirectUri = isMobile 
+        ? `${redirectUri}?platform=mobile`
+        : redirectUri;
+      
       const authUrl = `https://www.strava.com/oauth/authorize?` +
         `client_id=${clientId}&` +
         `response_type=code&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `redirect_uri=${encodeURIComponent(finalRedirectUri)}&` +
         `approval_prompt=force&` +
         `scope=read,activity:read_all&` +
         `state=${user.id}`;

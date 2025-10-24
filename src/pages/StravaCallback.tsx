@@ -24,8 +24,9 @@ export default function StravaCallback() {
         const code = searchParams.get('code');
         const state = searchParams.get('state');
         const error = searchParams.get('error');
+        const platform = searchParams.get('platform'); // Detect if mobile
         
-        console.log('[StravaCallback] 📦 Params:', { code: code?.substring(0, 10) + '...', state, error });
+        console.log('[StravaCallback] 📦 Params:', { code: code?.substring(0, 10) + '...', state, error, platform });
 
         if (error) {
           console.error('[StravaCallback] ❌ Erro no callback:', error);
@@ -79,16 +80,27 @@ export default function StravaCallback() {
           setStatus('success');
           setMessage('Conta Strava conectada com sucesso!');
           
-          // Close browser on mobile
-          if (Capacitor.isNativePlatform()) {
-            console.log('[StravaCallback] 📱 Fechando Capacitor Browser...');
-            await Browser.close();
+          // Close browser and redirect to app on mobile
+          if (Capacitor.isNativePlatform() || platform === 'mobile') {
+            console.log('[StravaCallback] 📱 Mobile detected, closing browser...');
+            
+            // Close browser first (if opened via Browser.open)
+            try {
+              await Browser.close();
+            } catch (e) {
+              console.log('[StravaCallback] Browser already closed or not opened via Browser API');
+            }
+            
+            // Redirect internally to settings (app will handle this)
+            setTimeout(() => {
+              window.location.href = 'shapepro://app/configuracoes';
+            }, 500);
+          } else {
+            // Web: redirect normally
+            setTimeout(() => {
+              navigate('/configuracoes');
+            }, 2000);
           }
-          
-          // Redirecionar para configurações após 2 segundos
-          setTimeout(() => {
-            navigate('/configuracoes');
-          }, 2000);
         } else {
           throw new Error('Resposta inesperada do servidor');
         }

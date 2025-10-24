@@ -30,14 +30,24 @@
                 <data android:scheme="shapepro" android:host="app" />
             </intent-filter>
 
-            <!-- Universal Links -->
+            <!-- App Links for Strava Callback -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" 
+                      android:host="d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com" 
+                      android:pathPrefix="/strava-callback" />
+            </intent-filter>
+            
+            <!-- App Links for shapepro.site -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" 
                       android:host="shapepro.site" 
-                      android:pathPrefix="/app" />
+                      android:pathPrefix="/strava-callback" />
             </intent-filter>
 
         </activity>

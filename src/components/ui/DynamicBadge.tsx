@@ -94,7 +94,7 @@ export const DynamicBadge = ({
         <Badge 
           variant="outline"
           className={cn(
-            "absolute -top-2 -right-2 border-primary text-primary bg-primary/10 text-xs px-1.5 py-0 h-5 rounded-full",
+            "absolute top-1 right-1 border-primary text-primary bg-primary/10 text-xs px-1.5 py-0 h-5 rounded-full",
             size === 'sm' && "text-[10px] h-4",
             size === 'lg' && "h-6", 
             className
@@ -128,7 +128,7 @@ export const DynamicBadge = ({
         <Badge 
           variant="outline"
           className={cn(
-            "absolute -top-2 -right-2 border-primary text-primary bg-primary/10 text-xs px-1.5 py-0 h-5 rounded-full",
+            "absolute top-1 right-1 border-primary text-primary bg-primary/10 text-xs px-1.5 py-0 h-5 rounded-full",
             size === 'sm' && "text-[10px] h-4",
             size === 'lg' && "h-6",
             className

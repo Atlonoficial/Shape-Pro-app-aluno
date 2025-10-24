@@ -93,7 +93,7 @@ export const MessageInput = ({
   }, []);
 
   return (
-    <div className="border-t border-border bg-card p-4">
+    <div className="border-t border-border bg-card p-4 pb-safe">
       <div className="flex items-end gap-2">
         {/* Botão de anexo (futuro) */}
         <Button

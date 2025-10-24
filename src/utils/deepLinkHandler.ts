@@ -35,6 +35,13 @@ export async function initializeDeepLinkHandler() {
         return;
       }
 
+      // shapepro://app/configuracoes (from Strava callback)
+      if (urlObj.pathname.includes('/app/configuracoes')) {
+        console.log('[DeepLink] ✅ Redirecting to settings after Strava');
+        window.location.href = '/configuracoes';
+        return;
+      }
+
       console.log('[DeepLink] ⚠️ Unhandled deep link:', url);
 
     } catch (error) {

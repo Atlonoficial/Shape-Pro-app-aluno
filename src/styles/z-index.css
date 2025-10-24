@@ -10,6 +10,7 @@
   --z-sticky: 20;
   --z-fixed: 30;
   --z-bottom-nav: 40;
+  --z-message-input: 45; /* Above bottom nav */
   
   /* Overlays */
   --z-modal-backdrop: 50;

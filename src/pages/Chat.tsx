@@ -97,22 +97,28 @@ export default function Chat() {
           isReconnecting={reconnecting}
         />
         
-        <ChatInterface 
-          messages={messages}
-          currentUserId={user?.id}
-          connectionStatus={connectionStatus}
-          isReconnecting={reconnecting}
-          onMessagesRead={markAsRead}
-          onRetryMessage={retryMessage}
-          onMessageVisible={markMessageAsRead}
-        />
+        {/* Chat messages with padding for fixed input */}
+        <div className="flex-1 overflow-hidden pb-[80px]">
+          <ChatInterface 
+            messages={messages}
+            currentUserId={user?.id}
+            connectionStatus={connectionStatus}
+            isReconnecting={reconnecting}
+            onMessagesRead={markAsRead}
+            onRetryMessage={retryMessage}
+            onMessageVisible={markMessageAsRead}
+          />
+        </div>
         
-        <MessageInput 
-          onSendMessage={handleSendMessage}
-          onTyping={handleTyping}
-          disabled={!conversation}
-          connectionStatus={connectionStatus}
-        />
+        {/* Fixed input at bottom with higher z-index than bottom nav */}
+        <div className="fixed bottom-0 left-0 right-0 z-[var(--z-message-input)]">
+          <MessageInput 
+            onSendMessage={handleSendMessage}
+            onTyping={handleTyping}
+            disabled={!conversation}
+            connectionStatus={connectionStatus}
+          />
+        </div>
       </div>
     </MobileContainer>
   );

@@ -128,9 +128,9 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   });
 
   return (
-    <div className="p-4 pt-8 pb-24">
+    <div className="p-4 pt-safe pb-24">
       {/* Logo Header */}
-      <div className="mb-4 text-center">
+      <div className="mb-4 text-center pt-2">
         <img 
           src="/lovable-uploads/2133926f-121d-45ce-8cff-80c84a1a0856.png" 
           alt="Shape Pro Logo" 
@@ -148,7 +148,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         {user && <NotificationCenter userId={user.id} />}
       </div>
 
-      {/* Profile Section */}
+      {/* Profile Section with safe area */}
       <div className="flex items-center gap-4 mb-6">
         <Avatar className="w-12 h-12">
           <AvatarImage src={avatarUrl ?? undefined} alt={firstName} />
