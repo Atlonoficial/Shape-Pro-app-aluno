@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversation } from '@/hooks/useConversation';
 import { useEnhancedPresence } from '@/hooks/useEnhancedPresence';
@@ -8,9 +9,11 @@ import { ChatInterface } from '@/components/chat/ChatInterface';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MobileContainer } from '@/components/layout/MobileContainer';
+import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { Loader2 } from 'lucide-react';
 
 export default function Chat() {
+  const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const [isTyping, setIsTyping] = useState(false);
   
@@ -63,6 +66,10 @@ export default function Chat() {
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    navigate(`/?tab=${tab}`);
+  };
+
   if (loading) {
     return (
       <MobileContainer>
@@ -97,8 +104,8 @@ export default function Chat() {
           isReconnecting={reconnecting}
         />
         
-        {/* Chat messages with padding for fixed input */}
-        <div className="flex-1 overflow-hidden pb-[80px]">
+        {/* Chat messages with padding for input + bottom nav */}
+        <div className="flex-1 overflow-hidden pb-[168px]">
           <ChatInterface 
             messages={messages}
             currentUserId={user?.id}
@@ -110,8 +117,8 @@ export default function Chat() {
           />
         </div>
         
-        {/* Fixed input at bottom with higher z-index than bottom nav */}
-        <div className="fixed bottom-0 left-0 right-0 z-[var(--z-message-input)]">
+        {/* Fixed input above bottom navigation */}
+        <div className="fixed bottom-[72px] left-0 right-0 z-[var(--z-message-input)]">
           <MessageInput 
             onSendMessage={handleSendMessage}
             onTyping={handleTyping}
@@ -119,6 +126,12 @@ export default function Chat() {
             connectionStatus={connectionStatus}
           />
         </div>
+
+        {/* Bottom Navigation fixed at bottom */}
+        <BottomNavigation 
+          activeTab="assistant" 
+          onTabChange={handleTabChange} 
+        />
       </div>
     </MobileContainer>
   );
