@@ -22,7 +22,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       status: 'online',
       timestamp: new Date().toISOString(),
-      version: 'build-37',
+      version: 'build-38',
       message: 'Edge Function is running'
     }), {
       headers: { 
@@ -88,21 +88,27 @@ serve(async (req) => {
       });
     }
 
-    // ✅ PING ENDPOINT (teste de conectividade básico)
-    if (action === 'ping') {
-      console.log(`[${requestId}] 🏓 Processando PING`);
-      const response = {
-        pong: true,
-        timestamp: new Date().toISOString(),
-        server: 'strava-auth',
-        version: 'build-37',
-        requestId
-      };
-      console.log(`[${requestId}] ✅ Respondendo PING:`, JSON.stringify(response, null, 2));
-      return new Response(JSON.stringify(response), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+  // ✅ PING ENDPOINT (teste de conectividade básico)
+  if (action === 'ping') {
+    console.log(`[${requestId}] 🏓 Processando PING`);
+    const response = {
+      pong: true,
+      timestamp: new Date().toISOString(),
+      server: 'strava-auth',
+      version: 'build-38',
+      requestId,
+      secretsConfigured: !!(clientId && clientSecret),
+      secretsDetails: {
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret,
+        clientIdLength: clientId?.length || 0
+      }
+    };
+    console.log(`[${requestId}] ✅ Respondendo PING:`, JSON.stringify(response, null, 2));
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
     // ✅ HEALTH CHECK (sem autenticação necessária)
     if (action === 'health_check') {
@@ -162,11 +168,16 @@ serve(async (req) => {
         });
       }
       
-      // Detect if request is from mobile app or web
-      const origin = req.headers.get('origin') || '';
-      const userAgent = req.headers.get('user-agent') || '';
-      const isMobile = userAgent.includes('Shape Pro') || userAgent.includes('Mobile App');
+      // Detect platform from request body (explicit detection)
+      const platform = requestBody.platform || 'web';
+      const isMobile = platform === 'mobile';
       
+      console.log(`[${requestId}] 📱 Platform detection:`, {
+        receivedPlatform: requestBody.platform,
+        detectedPlatform: platform,
+        isMobile
+      });
+
       // Use appropriate redirect URI based on platform
       const redirectUri = isMobile 
         ? 'shapepro://strava-callback'
@@ -176,7 +187,8 @@ serve(async (req) => {
         clientId: clientId.substring(0, 5) + '...', 
         redirectUri,
         userId: user.id,
-        platform: isMobile ? 'mobile' : 'web'
+        platform: isMobile ? 'mobile' : 'web',
+        explicitPlatform: requestBody.platform
       });
       
       const authUrl = `https://www.strava.com/oauth/authorize?` +

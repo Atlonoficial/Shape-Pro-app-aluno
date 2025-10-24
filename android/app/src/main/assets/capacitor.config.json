@@ -4,9 +4,9 @@
 	"webDir": "dist",
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
-	"version": "37",
+	"version": "38",
 	"ios": {
-		"scheme": "ShapePro",
+		"scheme": "shapepro",
 		"contentInset": "automatic",
 		"backgroundColor": "#000000",
 		"allowsLinkPreview": false,
@@ -21,7 +21,9 @@
 		"overrideUserAgent": "Shape Pro/1.0 Mobile App",
 		"hideLogs": true,
 		"cleartext": true,
-		"networkSecurityConfig": true
+		"networkSecurityConfig": true,
+		"versionCode": 38,
+		"versionName": "2.0.5"
 	},
 	"plugins": {
 		"SplashScreen": {

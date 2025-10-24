@@ -148,6 +148,43 @@ export const useStravaIntegration = () => {
         apiKeyPresent: !!ANON_KEY
       });
 
+      // Validate secrets first
+      console.log('🔐 [Strava] Validating secrets...');
+      try {
+        const pingResponse = await fetch(EDGE_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': ANON_KEY
+          },
+          body: JSON.stringify({ action: 'ping' })
+        });
+
+        const pingData = await pingResponse.json();
+        console.log('🔐 [Strava] Secrets validation:', pingData);
+
+        if (!pingData?.secretsConfigured) {
+          console.error('❌ [Strava] Secrets not configured');
+          toast.error("Configuração incompleta", {
+            description: "Secrets do Strava não estão configurados. Entre em contato com o suporte.",
+            duration: 5000
+          });
+          setFailureCount(prev => prev + 1);
+          return;
+        }
+
+        console.log('✅ [Strava] Secrets validated successfully');
+      } catch (pingErr) {
+        console.error('❌ [Strava] Error validating secrets:', pingErr);
+        toast.error("Erro ao validar configuração", {
+          description: "Não foi possível verificar a configuração do Strava",
+          duration: 5000
+        });
+        setFailureCount(prev => prev + 1);
+        return;
+      }
+
       // GET AUTH URL - Obter URL de autorização (com retry e backoff exponencial)
       console.log('🔐 [Strava] Solicitando URL de autorização...');
       
@@ -158,6 +195,9 @@ export const useStravaIntegration = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+        // Detect platform explicitly
+        const platform = Capacitor.isNativePlatform() ? 'mobile' : 'web';
+        
         const requestConfig = {
           method: 'POST',
           headers: {
@@ -165,7 +205,10 @@ export const useStravaIntegration = () => {
             'Authorization': `Bearer ${token}`,
             'apikey': ANON_KEY
           },
-          body: JSON.stringify({ action: 'get_auth_url' }),
+          body: JSON.stringify({ 
+            action: 'get_auth_url',
+            platform: platform
+          }),
           signal: controller.signal
         };
 
@@ -177,7 +220,8 @@ export const useStravaIntegration = () => {
             'Authorization': 'Bearer ***',
             'apikey': '***'
           },
-          bodyAction: 'get_auth_url'
+          bodyAction: 'get_auth_url',
+          platform: platform
         });
 
         try {

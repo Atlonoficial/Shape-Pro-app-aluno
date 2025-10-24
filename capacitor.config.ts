@@ -46,8 +46,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 37: Correção do redirect com Capacitor Browser
-    CFBundleVersion: '37',
+    // ✅ BUILD 38: Correção com detecção correta de plataforma
+    CFBundleVersion: '38',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -88,8 +88,8 @@ const config: CapacitorConfig = {
       UILaunchStoryboardName: "LaunchScreen",
 
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "2.0.4",
-      CFBundleVersion: "37", // ✅ BUILD 37: Correção do redirect com Capacitor Browser
+      CFBundleShortVersionString: "2.0.5",
+      CFBundleVersion: "38", // ✅ BUILD 38: Correção com detecção correta de plataforma
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -106,8 +106,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 37,
-    versionName: "2.0.4"
+    versionCode: 38,
+    versionName: "2.0.5"
   },
 
   plugins: {

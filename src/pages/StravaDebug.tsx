@@ -131,6 +131,59 @@ export default function StravaDebug() {
     }
   };
 
+  const testSecrets = async () => {
+    setLoading(true);
+    
+    addTestResult({
+      name: 'Verificação de Secrets',
+      status: 'pending',
+      message: 'Verificando configuração dos secrets...'
+    });
+
+    try {
+      const { data, error } = await supabase.functions.invoke('strava-auth', {
+        body: { action: 'ping' }
+      });
+
+      if (error) {
+        console.error('[StravaDebug] Error from ping:', error);
+        addTestResult({
+          name: 'Verificação de Secrets',
+          status: 'error',
+          message: 'Erro ao conectar com Edge Function',
+          details: error.message
+        });
+        return;
+      }
+
+      if (data?.secretsConfigured) {
+        addTestResult({
+          name: 'Verificação de Secrets',
+          status: 'success',
+          message: '✅ Secrets configurados corretamente!',
+          details: JSON.stringify(data.secretsDetails, null, 2)
+        });
+      } else {
+        addTestResult({
+          name: 'Verificação de Secrets',
+          status: 'error',
+          message: '❌ Secrets NÃO estão configurados!',
+          details: 'Configure STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET nas variáveis de ambiente do Supabase.'
+        });
+      }
+    } catch (err: any) {
+      console.error('[StravaDebug] Secret verification error:', err);
+      addTestResult({
+        name: 'Verificação de Secrets',
+        status: 'error',
+        message: 'Erro ao verificar secrets',
+        details: err.message
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const runHealthCheck = async () => {
     try {
       setLoading(true);
@@ -515,6 +568,15 @@ export default function StravaDebug() {
               >
                 <Key className="h-4 w-4 mr-2" />
                 Testar Auth
+              </Button>
+              <Button 
+                onClick={testSecrets} 
+                disabled={loading}
+                variant="secondary"
+                size="sm"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Verificar Secrets
               </Button>
               <Button 
                 onClick={runHealthCheck} 
