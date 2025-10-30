@@ -1,0 +1,116 @@
+/**
+ * GUIA DE USO - Safe Area Classes (ATUALIZADO 2025)
+ * 
+ * pb-safe (100px + safe-area):
+ * - Usar em páginas SEM botões fixos no final
+ * - Exemplos: Páginas muito simples sem listas
+ * 
+ * pb-safe-xl (220px + safe-area):
+ * - Usar em páginas COM cards médios ou botões fixos no final
+ * - Exemplos: ExerciseDetail, WorkoutDetail
+ * 
+ * pb-safe-2xl (260px + safe-area):
+ * - Usar em páginas com cards EXTENSOS ou múltiplos elementos fixos
+ * - Exemplos: Dashboard (Treino de Hoje), Anamnese
+ * 
+ * pb-safe-3xl (320px + safe-area):
+ * - Usar em páginas com conteúdo muito extenso
+ * - Exemplos: Chat com muitas mensagens
+ * 
+ * pb-safe-4xl (400px + safe-area):
+ * - PADRÃO RECOMENDADO para TODAS as páginas principais com listas longas
+ * - Garante que bottom nav nunca cubra conteúdo em qualquer device
+ * - Exemplos: Profile, Nutrition, Workouts, Settings, Metas, etc.
+ * 
+ * bottom-safe (100px + safe-area):
+ * - Usar em botões/inputs fixos na parte inferior
+ * - Sempre calcular: 100px (bottom-nav height) + safe-area
+ * - Garante que elemento fixo fique acima da bottom navigation
+ * 
+ * bottom-nav-safe:
+ * - Usar APENAS na bottom navigation
+ * - Adiciona padding inferior considerando notch/home indicator
+ */
+
+/* Safe Area Insets for devices with notch */
+
+/* Padding bottom considering navigation bar + safe area */
+.pb-safe {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+}
+
+.pb-safe-xl {
+  padding-bottom: calc(220px + env(safe-area-inset-bottom));
+}
+
+.pb-safe-2xl {
+  padding-bottom: calc(260px + env(safe-area-inset-bottom));
+}
+
+.pb-safe-3xl {
+  padding-bottom: calc(320px + env(safe-area-inset-bottom));
+}
+
+/* ✅ BUILD 34: Para conteúdo muito longo - aumentado para 180px */
+.pb-safe-4xl {
+  padding-bottom: calc(180px + env(safe-area-inset-bottom));
+}
+
+/* Bottom positioning considering navigation bar + safe area */
+.bottom-safe {
+  bottom: calc(100px + env(safe-area-inset-bottom));
+}
+
+/* Navigation bar safe area */
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Smooth slide down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scale in animation */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation classes */
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}

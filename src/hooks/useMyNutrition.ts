@@ -1,0 +1,394 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeManager } from './useRealtimeManager';
+
+export interface MealLog {
+  id: string;
+  user_id: string;
+  meal_plan_id?: string;
+  meal_plan_item_id?: string;
+  meal_name?: string;
+  meal_id?: string;
+  nutrition_plan_id?: string;
+  date: string;
+  consumed: boolean;
+  actual_time?: string;
+  notes?: string;
+  photo_url?: string;
+  rating?: number;
+  custom_portion_amount?: number;
+  custom_portion_unit?: string;
+  created_at: string;
+}
+
+export interface TodayMeal {
+  meal_plan_item_id: string;
+  meal_name: string;
+  meal_time: string;
+  meal_type: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  foods: any;
+  is_logged: boolean;
+  log_id?: string;
+  meal_plan_id: string;
+}
+
+export interface Meal {
+  id: string;
+  name: string;
+  time: string;
+  meal_type: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  foods: Array<{
+    id?: string;
+    name: string;
+    quantity: number;
+    unit?: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }>;
+}
+
+export interface DailyStats {
+  consumed: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  target: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  percentage: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+}
+
+export const useMyNutrition = () => {
+  const { user } = useAuth();
+  const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [todaysMeals, setTodaysMeals] = useState<TodayMeal[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStats>({
+    consumed: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+    target: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+    percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  });
+
+  // Função para buscar refeições do dia usando a nova função do banco
+  const getTodayMeals = useCallback(async (userId: string) => {
+    try {
+      console.log(`[useMyNutrition] Fetching today's meals for user ${userId}`);
+      
+      const { data, error } = await supabase.rpc('get_meals_for_today_v2', {
+        p_user_id: userId
+      });
+
+      if (error) {
+        console.error('[useMyNutrition] Error fetching today meals:', error);
+        return [];
+      }
+
+      console.log(`[useMyNutrition] Successfully fetched ${data?.length || 0} meals for today`);
+      return data || [];
+    } catch (error) {
+      console.error('[useMyNutrition] Exception in getTodayMeals:', error);
+      return [];
+    }
+  }, []);
+
+  // Função para buscar os logs de refeição do usuário (mantida para compatibilidade)
+  const getMealLogsByUserAndDate = useCallback(async (userId: string, date: string) => {
+    try {
+      console.log(`[useMyNutrition] Fetching meal logs for user ${userId} on date ${date}`);
+      
+      const { data, error } = await supabase
+        .from('meal_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', `${date}T00:00:00`)
+        .lt('date', `${date}T23:59:59`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[useMyNutrition] Error fetching meal logs:', error);
+        return [];
+      }
+
+      console.log(`[useMyNutrition] Successfully fetched ${data?.length || 0} meal logs`);
+      return data || [];
+    } catch (error) {
+      console.error('[useMyNutrition] Exception in getMealLogsByUserAndDate:', error);
+      return [];
+    }
+  }, []);
+
+  // Buscar refeições do dia
+  const fetchData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      console.log('[useMyNutrition] Starting data fetch for user:', user.id);
+      
+      const todayMealsData = await getTodayMeals(user.id);
+      setTodaysMeals(todayMealsData);
+      
+      const today = new Date().toISOString().split('T')[0];
+      const logs = await getMealLogsByUserAndDate(user.id, today);
+      setMealLogs(logs);
+      
+      console.log('[useMyNutrition] Data fetch completed successfully');
+    } catch (error) {
+      console.error('[useMyNutrition] Error in data fetch:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Usar useRealtimeManager para subscriptions consolidadas
+  useRealtimeManager({
+    subscriptions: user?.id ? [{
+      table: 'meal_logs',
+      event: '*',
+      filter: `user_id=eq.${user.id}`,
+      callback: () => fetchData(),
+    }] : [],
+    enabled: !!user?.id,
+    channelName: 'meal-logs',
+    debounceMs: 1000,
+  });
+
+  // Função auxiliar para calcular valores nutricionais de uma refeição
+  const calculateMealNutrition = useCallback((meal: TodayMeal) => {
+    // Se a refeição já tem valores nutricionais não-zero, usar eles
+    if (meal.calories > 0 || meal.protein > 0 || meal.carbs > 0 || meal.fat > 0) {
+      return {
+        calories: meal.calories || 0,
+        protein: meal.protein || 0,
+        carbs: meal.carbs || 0,
+        fat: meal.fat || 0
+      };
+    }
+
+    // Se não, calcular a partir dos alimentos individuais
+    let foods = [];
+    try {
+      foods = Array.isArray(meal.foods) ? meal.foods : 
+              (meal.foods && typeof meal.foods === 'object') ? 
+              (meal.foods.foods || []) : [];
+    } catch (e) {
+      console.warn('[useMyNutrition] Error parsing foods for meal:', meal.meal_name, e);
+      foods = [];
+    }
+
+    if (!foods.length) {
+      return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    }
+
+    return foods.reduce((acc, food) => ({
+      calories: acc.calories + (food.calories || 0),
+      protein: acc.protein + (food.protein || 0),
+      carbs: acc.carbs + (food.carbs || 0),
+      fat: acc.fat + (food.fat || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }, []);
+
+  // Calcular estatísticas diárias baseadas nas refeições do dia
+  useEffect(() => {
+    if (!todaysMeals.length) {
+      setDailyStats({
+        consumed: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        target: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      });
+      return;
+    }
+
+    console.log('[useMyNutrition] Calculating daily stats for meals:', todaysMeals);
+
+    // Calcular totais alvo usando valores corretos
+    const target = todaysMeals.reduce(
+      (acc, meal) => {
+        const mealNutrition = calculateMealNutrition(meal);
+        console.log(`[useMyNutrition] Meal ${meal.meal_name} nutrition:`, mealNutrition);
+        return {
+          calories: acc.calories + mealNutrition.calories,
+          protein: acc.protein + mealNutrition.protein,
+          carbs: acc.carbs + mealNutrition.carbs,
+          fat: acc.fat + mealNutrition.fat
+        };
+      },
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+
+    // Calcular totais consumidos (apenas refeições marcadas como consumidas)
+    const consumed = todaysMeals
+      .filter(meal => meal.is_logged)
+      .reduce(
+        (acc, meal) => {
+          const mealNutrition = calculateMealNutrition(meal);
+          return {
+            calories: acc.calories + mealNutrition.calories,
+            protein: acc.protein + mealNutrition.protein,
+            carbs: acc.carbs + mealNutrition.carbs,
+            fat: acc.fat + mealNutrition.fat
+          };
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      );
+
+    // Calcular percentuais
+    const percentage = {
+      calories: target.calories > 0 ? (consumed.calories / target.calories) * 100 : 0,
+      protein: target.protein > 0 ? (consumed.protein / target.protein) * 100 : 0,
+      carbs: target.carbs > 0 ? (consumed.carbs / target.carbs) * 100 : 0,
+      fat: target.fat > 0 ? (consumed.fat / target.fat) * 100 : 0,
+    };
+
+    console.log('[useMyNutrition] Daily stats calculated - Target:', target, 'Consumed:', consumed, 'Percentage:', percentage);
+
+    setDailyStats({ consumed, target, percentage });
+  }, [todaysMeals, calculateMealNutrition]);
+
+  // Função para registrar uma refeição usando a nova estrutura
+  const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
+    if (!user?.id) {
+      console.error('[useMyNutrition] User ID not available for meal logging');
+      return false;
+    }
+
+    try {
+      console.log(`[useMyNutrition] Logging meal: ${mealPlanItemId}, consumed: ${consumed}`);
+
+      // Buscar as refeições do dia para obter informações completas
+      const todayMealsData = await getTodayMeals(user.id);
+      const mealData = todayMealsData.find(meal => meal.meal_plan_item_id === mealPlanItemId);
+
+      if (!mealData) {
+        console.error('[useMyNutrition] Meal data not found for item ID:', mealPlanItemId);
+        return false;
+      }
+
+      console.log('[useMyNutrition] Found meal data:', mealData);
+
+      // Se já existe um log e está marcado como consumido, não permitir desmarcar
+      if (mealData.is_logged && mealData.log_id && !consumed) {
+        console.warn('[useMyNutrition] Cannot uncheck a consumed meal');
+        return false;
+      }
+
+      if (mealData.log_id) {
+        // Atualizar log existente
+        console.log('[useMyNutrition] Updating existing meal log:', mealData.log_id);
+        
+        const { error } = await supabase
+          .from('meal_logs')
+          .update({
+            consumed,
+            notes,
+            actual_time: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', mealData.log_id);
+
+        if (error) {
+          console.error('[useMyNutrition] Error updating meal log:', error);
+          return false;
+        }
+      } else {
+        // Criar novo log usando a nova estrutura
+        console.log('[useMyNutrition] Creating new meal log');
+        
+        const mealLogData = {
+          user_id: user.id,
+          meal_plan_id: mealData.meal_plan_id,
+          meal_plan_item_id: mealPlanItemId,
+          meal_name: mealData.meal_name,
+          date: new Date().toISOString(),
+          consumed,
+          notes,
+          actual_time: new Date().toISOString()
+        };
+
+        console.log('[useMyNutrition] Meal log data to insert:', mealLogData);
+
+        const { error } = await supabase
+          .from('meal_logs')
+          .insert(mealLogData);
+
+        if (error) {
+          console.error('[useMyNutrition] Error creating meal log:', error);
+          return false;
+        }
+      }
+
+      // Refresh data após operação
+      const refreshedData = await getTodayMeals(user.id);
+      setTodaysMeals(refreshedData);
+      
+      const today = new Date().toISOString().split('T')[0];
+      const logs = await getMealLogsByUserAndDate(user.id, today);
+      setMealLogs(logs);
+
+      console.log('[useMyNutrition] Meal logging completed successfully');
+      return true;
+    } catch (error) {
+      console.error('[useMyNutrition] Exception in logMeal:', error);
+      return false;
+    }
+  }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
+
+  const addMealLog = logMeal; // Alias para compatibilidade
+
+  return {
+    nutritionPlans: [], // Deprecated - usar todaysMeals
+    mealLogs,
+    // CORRIGIDO: Retornar activePlan baseado nas refeições disponíveis
+    activePlan: todaysMeals.length > 0 ? { 
+      id: todaysMeals[0]?.meal_plan_id || 'active-plan',
+      name: 'Plano Nutricional Ativo',
+      meals: todaysMeals.length 
+    } : null,
+    todaysMeals,
+    planMeals: todaysMeals.map(meal => {
+      const nutrition = calculateMealNutrition(meal);
+      return {
+        id: meal.meal_plan_item_id,
+        name: meal.meal_name,
+        time: meal.meal_time,
+        meal_type: meal.meal_type,
+        calories: nutrition.calories,
+        protein: nutrition.protein,
+        carbs: nutrition.carbs,
+        fat: nutrition.fat,
+        foods: Array.isArray(meal.foods) ? meal.foods : []
+      };
+    }), // Para compatibilidade
+    dailyStats,
+    loading,
+    logMeal,
+    addMealLog,
+    // Função adicional para verificar se tem acesso nutricional
+    hasNutritionAccess: () => todaysMeals.length > 0
+  };
+};

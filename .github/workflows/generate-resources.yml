@@ -1,0 +1,109 @@
+name: Generate Mobile Resources
+
+on:
+  # Permite execução manual via GitHub UI
+  workflow_dispatch:
+  
+  # Auto-executa quando splash screens são atualizados
+  push:
+    paths:
+      - 'public/splash-source-*.png'
+      - 'public/icon-source.png'
+    branches:
+      - main
+
+jobs:
+  generate:
+    name: Generate Android & iOS Resources
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: |
+          npm ci
+          npm install -g cordova-res
+
+      - name: 📁 Setup resources directory
+        run: |
+          mkdir -p resources/ios
+          mkdir -p resources/android
+
+      - name: 🖼️ Copy source images
+        run: |
+          cp public/splash-source-black.png resources/splash.png
+          cp public/splash-source-black.png resources/icon.png
+          cp public/splash-source-black.png resources/ios/splash.png
+          echo "✅ Imagens copiadas"
+          ls -lh resources/
+
+      - name: 🤖 Generate Android resources
+        run: |
+          echo "🤖 Gerando resources Android..."
+          cordova-res android --skip-config --copy
+          echo "✅ Android resources gerados"
+
+      - name: 🍎 Generate iOS resources
+        run: |
+          echo "🍎 Gerando resources iOS..."
+          cordova-res ios --skip-config --copy
+          echo "✅ iOS resources gerados"
+
+      - name: 🏗️ Build project
+        run: |
+          echo "🏗️ Building project..."
+          npm run build
+          echo "✅ Build concluído"
+
+      - name: 🔄 Sync Capacitor
+        run: |
+          echo "🔄 Syncing Capacitor..."
+          npx cap sync android
+          npx cap sync ios
+          echo "✅ Capacitor synced"
+
+      - name: 📊 Show generated files
+        run: |
+          echo "📊 Arquivos gerados:"
+          echo ""
+          echo "Android:"
+          find android/app/src/main/res -name "*.png" | head -10
+          echo ""
+          echo "iOS:"
+          find ios/App/App/Assets.xcassets -name "*.png" | head -10
+
+      - name: 💾 Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: auto-generate mobile resources [skip ci]'
+          file_pattern: |
+            android/app/src/main/res/**
+            ios/App/App/Assets.xcassets/**
+            resources/**
+          commit_user_name: Shape Pro Bot
+          commit_user_email: bot@shapepro.app
+          commit_author: Shape Pro Bot <bot@shapepro.app>
+
+      - name: ✅ Success notification
+        if: success()
+        run: |
+          echo "🎉 Resources gerados e commitados com sucesso!"
+          echo "📱 Próximos passos:"
+          echo "   1. git pull origin main"
+          echo "   2. npx cap run android (ou ios)"
+
+      - name: ❌ Failure notification
+        if: failure()
+        run: |
+          echo "❌ Falha ao gerar resources"
+          echo "Verifique os logs acima para mais detalhes"
