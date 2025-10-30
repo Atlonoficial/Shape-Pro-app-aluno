@@ -1,0 +1,8 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+    <!-- ✅ BUILD 30: Transparent foreground - actual app icon is in mipmap folders -->
+    <!-- This removes the green Android robot that was showing as a border -->
+</vector>

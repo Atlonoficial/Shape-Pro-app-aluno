@@ -1,0 +1,77 @@
+{
+  "name": "Shape Pro",
+  "short_name": "Shape Pro",
+  "description": "Aplicativo fitness profissional Shape Pro com treinos personalizados, Coach IA e gamificação",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#F59E0B",
+  "orientation": "portrait-primary",
+  "gcm_sender_id": "123456789012",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["fitness", "health", "lifestyle", "sports"],
+  "screenshots": [
+    {
+      "src": "/splash-1080x1920.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Shape Pro App"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-1024x1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Iniciar Treino",
+      "short_name": "Treino",
+      "description": "Começar treino rapidamente",
+      "url": "/?tab=workouts",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Chat com IA",
+      "short_name": "Chat IA",
+      "description": "Conversar com o Coach IA",
+      "url": "/?tab=ai-assistant",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=app.lovable.d46ecb0f56a1441da5d5bac293c0288a",
+      "id": "app.lovable.d46ecb0f56a1441da5d5bac293c0288a"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/shape-pro/id6738294756"
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -1,0 +1,55 @@
+project_id = "bqbopkqzkavhmenjlhab"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://bqbopkqzkavhmenjlhab.supabase.co"]
+jwt_expiry = 3600
+# Enhanced security improvements for authentication
+enable_signup = true
+password_min_length = 12
+enable_anonymous_sign_ins = false
+# Reduced OTP expiry for better security (5 minutes instead of 1 hour)
+external_email_otp_expiry = 300
+# Enable password breach protection
+enable_password_breach_protection = true
+# Rate limiting for authentication
+rate_limit_for_anonymous_emails = 30
+rate_limit_for_authenticated_users = 100
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.ai-assistant]
+verify_jwt = true
+
+[functions.cleanup-old-conversations]
+verify_jwt = false
+
+[functions.strava-auth]
+verify_jwt = true
+
+[functions.strava-sync]
+verify_jwt = true
+
+[functions.test-gateway-credentials]
+verify_jwt = true
+
+[realtime]
+enabled = true
+# Force secure WebSocket connections
+secure = true
+# Maximum number of concurrent connections
+max_connections = 1000
+# Connection timeout in seconds
+timeout = 30
+# Enable compression for better performance
+compression = true

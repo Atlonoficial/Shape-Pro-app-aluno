@@ -1,0 +1,19 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "24559K2799.app.lovable.d46ecb0f56a1441da5d5bac293c0288a",
+        "paths": [
+          "/strava-callback",
+          "/auth/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "24559K2799.app.lovable.d46ecb0f56a1441da5d5bac293c0288a"
+    ]
+  }
+}
