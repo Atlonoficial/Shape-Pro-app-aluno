@@ -28,9 +28,9 @@ export const useRealtimeManager = ({
   subscriptions,
   enabled = true,
   channelName = 'realtime-manager',
-  debounceMs = 500, // Build 26: Optimized from 1500ms to 500ms
-  maxRetries = 5, // Build 32: Max reconnection attempts
-  retryDelay = 5000, // Build 32: Increased to 5s base delay (less aggressive)
+  debounceMs = 2000, // ✅ BUILD 40.3: Aumentado de 500ms → 2000ms (menos chamadas)
+  maxRetries = 3, // ✅ BUILD 40.3: Reduzido de 5 → 3 (menos retries agressivos)
+  retryDelay = 8000, // ✅ BUILD 40.3: Aumentado de 5s → 8s (mais conservador)
 }: RealtimeManagerOptions) => {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const debouncedCallbacksRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
@@ -88,14 +88,14 @@ export const useRealtimeManager = ({
     logger.info('RealtimeManager', `Initializing with ${subscriptions.length} subscriptions`);
     logger.debug('RealtimeManager', `Retry count: ${retryCountRef.current}`);
 
-    // ✅ BUILD 32: Safety timeout increased to 20s (less aggressive)
+    // ✅ BUILD 40.3: Safety timeout aumentado para 30s (menos agressivo)
     const safetyTimeout = setTimeout(() => {
       if (!isConnectedRef.current && channelRef.current) {
-        logger.warn('RealtimeManager', 'Safety timeout reached');
+        logger.warn('RealtimeManager', 'Safety timeout reached (30s)');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
-    }, 20000);
+    }, 30000);
 
     // Create unique channel for this context with timestamp to prevent conflicts
     const uniqueChannelName = `${channelName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

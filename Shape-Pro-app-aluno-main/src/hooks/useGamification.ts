@@ -337,21 +337,33 @@ export const useGamification = () => {
     };
   };
 
-  // Inicializar dados e configurar subscriptions em tempo real
+  // ✅ BUILD 40.3: Inicialização LAZY - só carrega dados quando realmente necessário
+  const hasLoadedRef = useRef(false);
+  
   useEffect(() => {
     const loadData = async () => {
-      if (!user?.id) return;
+      if (!user?.id || hasLoadedRef.current) return;
       
+      hasLoadedRef.current = true;
       setLoading(true);
+      
       try {
+        // ✅ BUILD 40.3: Carregar apenas dados essenciais primeiro
         await Promise.all([
           fetchUserPoints(),
-          fetchActivities(),
-          fetchAchievements(),
-          fetchUserAchievements(),
-          fetchRankings(),
-          fetchChallenges()
+          fetchActivities(10), // Apenas 10 em vez de 20
         ]);
+        
+        // ✅ BUILD 40.3: Dados secundários carregam depois (não bloqueia render)
+        setTimeout(() => {
+          Promise.all([
+            fetchAchievements(),
+            fetchUserAchievements(),
+            fetchRankings(),
+            fetchChallenges()
+          ]);
+        }, 1000); // Aguardar 1s antes de carregar resto
+        
       } finally {
         setLoading(false);
       }
@@ -362,60 +374,24 @@ export const useGamification = () => {
     }
   }, [user?.id]);
 
-  // Centralized realtime subscriptions for gamification
+  // ✅ BUILD 40.3: Realtime subscriptions APENAS para dados críticos
+  // Removido user_achievements e activities para reduzir carga
   useRealtimeManager({
     subscriptions: user?.id ? [
       {
         table: 'user_points',
-        event: '*',
+        event: 'UPDATE', // ✅ Apenas UPDATE, não INSERT/DELETE
         filter: `user_id=eq.${user.id}`,
         callback: (payload) => {
-          console.log('Points updated:', payload);
           if (payload.new) {
             setUserPoints(payload.new as UserPoints);
-          }
-        },
-      },
-      {
-        table: 'gamification_activities',
-        event: 'INSERT',
-        filter: `user_id=eq.${user.id}`,
-        callback: (payload) => {
-          console.log('New activity:', payload);
-          if (payload.new) {
-            const newActivity = payload.new as GamificationActivity;
-            setActivities(prev => [newActivity, ...prev.slice(0, 19)]);
-            
-            // Show points toast for new activity
-            import("@/components/gamification/PointsToast").then(({ showPointsToast }) => {
-              showPointsToast({
-                points: newActivity.points_earned,
-                activity: newActivity.description,
-                description: newActivity.metadata?.description
-              });
-            });
-          }
-        },
-      },
-      {
-        table: 'user_achievements',
-        event: 'INSERT',
-        filter: `user_id=eq.${user.id}`,
-        callback: (payload) => {
-          console.log('New achievement:', payload);
-          fetchUserAchievements();
-          
-          if (payload.new) {
-            toast.success(`🏆 Nova conquista desbloqueada! +${payload.new.points_earned} pontos`, {
-              duration: 5000
-            });
           }
         },
       },
     ] : [],
     enabled: !!user?.id,
     channelName: 'gamification-realtime',
-    debounceMs: 500,
+    debounceMs: 2000, // ✅ BUILD 40.3: Aumentado para 2s
   });
 
   return {

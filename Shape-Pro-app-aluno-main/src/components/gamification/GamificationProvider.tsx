@@ -71,16 +71,23 @@ export const GamificationProvider: React.FC<GamificationProviderProps> = ({ chil
   
   const { awardPointsForAction, updateStreak } = useRealtimeGamification();
 
-  // ✅ BUILD 31: Inicialização única do daily check-in
+  // ✅ BUILD 40.3: Daily check-in LAZY - aguardar 3s após login
   useEffect(() => {
     if (user?.id) {
       const sessionKey = `gamification_initialized_${user.id}_${new Date().toISOString().split('T')[0]}`;
       const alreadyInitialized = sessionStorage.getItem(sessionKey);
       
       if (!alreadyInitialized) {
-        console.log('[GamificationProvider] First initialization for user today:', user.id);
-        updateStreak();
-        sessionStorage.setItem(sessionKey, 'true');
+        console.log('[GamificationProvider] Scheduling daily check-in in 3s...');
+        
+        // ✅ BUILD 40.3: Aguardar 3s antes de fazer check-in (não bloquear boot)
+        const timer = setTimeout(() => {
+          console.log('[GamificationProvider] Executing daily check-in');
+          updateStreak();
+          sessionStorage.setItem(sessionKey, 'true');
+        }, 3000);
+        
+        return () => clearTimeout(timer);
       }
     }
   }, [user?.id, updateStreak]);

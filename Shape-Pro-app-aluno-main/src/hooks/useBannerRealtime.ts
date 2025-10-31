@@ -72,7 +72,8 @@ export const useBannerRealtime = () => {
     fetchInitialData();
   }, []);
 
-  // Use centralized realtime manager
+  // ✅ BUILD 40.3: Realtime DESABILITADO por padrão para banners
+  // Banners não precisam de atualização em tempo real tão agressiva
   const { isConnected } = useRealtimeManager({
     subscriptions: [
       {
@@ -88,17 +89,10 @@ export const useBannerRealtime = () => {
           }));
         }
       },
-      {
-        table: 'banner_analytics',
-        event: '*',
-        callback: () => {
-          console.log('[BannerRealtime] Analytics update received');
-        }
-      }
     ],
-    enabled: true,
+    enabled: false, // ✅ BUILD 40.3: DESABILITADO para reduzir carga
     channelName: 'banner-realtime',
-    debounceMs: 500
+    debounceMs: 3000 // ✅ BUILD 40.3: 3s em vez de 500ms
   });
 
   useEffect(() => {
