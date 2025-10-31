@@ -13,7 +13,7 @@ interface RealtimeManagerOptions {
   subscriptions: RealtimeSubscription[];
   enabled?: boolean;
   channelName?: string;
-  debounceMs?: number; // Increased default to 1500ms for better performance
+  debounceMs?: number; // Otimizado para 2000ms para melhor performance
 }
 
 /**
@@ -25,7 +25,7 @@ export const useRealtimeManager = ({
   subscriptions,
   enabled = true,
   channelName = 'realtime-manager',
-  debounceMs = 1500, // Increased default from 300ms to 1500ms
+  debounceMs = 2000, // Otimizado de 1500ms para 2000ms (Fase 4)
 }: RealtimeManagerOptions) => {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const debouncedCallbacksRef = useRef<Map<string, NodeJS.Timeout>>(new Map());

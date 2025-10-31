@@ -47,16 +47,16 @@ import StravaCallback from "./pages/StravaCallback";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 15, // 15 minutes (era cacheTime)
+      staleTime: 10 * 60 * 1000, // 10 minutes (otimizado de 5 min)
+      gcTime: 20 * 60 * 1000, // 20 minutes (otimizado de 15 min)
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
+      refetchOnReconnect: false, // Otimizado - não refetch ao reconectar
       retry: (failureCount, error: any) => {
         // Não tentar novamente para erros 4xx
         if (error?.status >= 400 && error?.status < 500) {
           return false;
         }
-        return failureCount < 3;
+        return failureCount < 2; // Otimizado de 3 para 2 tentativas
       },
     },
   },

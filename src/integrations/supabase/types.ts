@@ -298,6 +298,33 @@ export type Database = {
           },
         ]
       }
+      ai_usage_stats: {
+        Row: {
+          created_at: string | null
+          daily_count: number
+          id: string
+          updated_at: string | null
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_count?: number
+          id?: string
+          updated_at?: string | null
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_count?: number
+          id?: string
+          updated_at?: string | null
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anamneses: {
         Row: {
           alergias: string[]
@@ -1177,6 +1204,7 @@ export type Database = {
           id: string
           instructor: string | null
           is_free: boolean
+          is_public: boolean | null
           is_published: boolean | null
           level: string | null
           modules: Json | null
@@ -1206,6 +1234,7 @@ export type Database = {
           id?: string
           instructor?: string | null
           is_free?: boolean
+          is_public?: boolean | null
           is_published?: boolean | null
           level?: string | null
           modules?: Json | null
@@ -1235,6 +1264,7 @@ export type Database = {
           id?: string
           instructor?: string | null
           is_free?: boolean
+          is_public?: boolean | null
           is_published?: boolean | null
           level?: string | null
           modules?: Json | null
@@ -2643,7 +2673,7 @@ export type Database = {
           action: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_data: Json | null
           old_data: Json | null
           record_id: string | null
@@ -2655,7 +2685,7 @@ export type Database = {
           action: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_data?: Json | null
           old_data?: Json | null
           record_id?: string | null
@@ -2667,7 +2697,7 @@ export type Database = {
           action?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_data?: Json | null
           old_data?: Json | null
           record_id?: string | null
@@ -3126,6 +3156,7 @@ export type Database = {
           image_url: string | null
           instructor_id: string
           is_digital: boolean
+          is_public: boolean | null
           is_published: boolean
           name: string
           price: number
@@ -3141,6 +3172,7 @@ export type Database = {
           image_url?: string | null
           instructor_id: string
           is_digital?: boolean
+          is_public?: boolean | null
           is_published?: boolean
           name: string
           price: number
@@ -3156,6 +3188,7 @@ export type Database = {
           image_url?: string | null
           instructor_id?: string
           is_digital?: boolean
+          is_public?: boolean | null
           is_published?: boolean
           name?: string
           price?: number
@@ -3543,7 +3576,7 @@ export type Database = {
           description: string | null
           device_info: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           success: boolean | null
           user_id: string | null
         }
@@ -3553,7 +3586,7 @@ export type Database = {
           description?: string | null
           device_info?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean | null
           user_id?: string | null
         }
@@ -3563,7 +3596,7 @@ export type Database = {
           description?: string | null
           device_info?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean | null
           user_id?: string | null
         }
@@ -4312,6 +4345,30 @@ export type Database = {
           },
         ]
       }
+      user_daily_activity: {
+        Row: {
+          activity_date: string
+          created_at: string
+          id: string
+          last_active_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_date?: string
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_goals: {
         Row: {
           category: string
@@ -4963,12 +5020,12 @@ export type Database = {
       }
     }
     Functions: {
-      accept_invitation: {
-        Args:
-          | { code: string }
-          | { invitation_code: string; user_id_param?: string }
-        Returns: string
-      }
+      accept_invitation:
+        | { Args: { code: string }; Returns: string }
+        | {
+            Args: { invitation_code: string; user_id_param?: string }
+            Returns: string
+          }
       activate_student_plan: {
         Args: {
           p_plan_catalog_id: string
@@ -4977,10 +5034,7 @@ export type Database = {
         }
         Returns: Json
       }
-      aggregate_banner_interactions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      aggregate_banner_interactions: { Args: never; Returns: undefined }
       aggregate_banner_metrics_realtime: {
         Args: { p_banner_id: string }
         Returns: undefined
@@ -5027,9 +5081,24 @@ export type Database = {
         }
         Returns: Json
       }
-      book_appointment: {
-        Args:
-          | {
+      book_appointment:
+        | {
+            Args: {
+              p_description?: string
+              p_duration?: number
+              p_is_manual_creation?: boolean
+              p_scheduled_time: string
+              p_student_notes?: string
+              p_student_objectives?: string
+              p_student_title?: string
+              p_teacher_id: string
+              p_title?: string
+              p_type?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
               p_description?: string
               p_duration?: number
               p_is_manual_creation?: boolean
@@ -5042,19 +5111,10 @@ export type Database = {
               p_title?: string
               p_type?: string
             }
-          | {
-              p_description?: string
-              p_duration?: number
-              p_is_manual_creation?: boolean
-              p_scheduled_time: string
-              p_student_notes?: string
-              p_student_objectives?: string
-              p_student_title?: string
-              p_teacher_id: string
-              p_title?: string
-              p_type?: string
-            }
-          | {
+            Returns: string
+          }
+        | {
+            Args: {
               p_description?: string
               p_duration?: number
               p_location_id?: string
@@ -5066,7 +5126,10 @@ export type Database = {
               p_title?: string
               p_type?: string
             }
-          | {
+            Returns: string
+          }
+        | {
+            Args: {
               p_description?: string
               p_duration?: number
               p_scheduled_time: string
@@ -5078,8 +5141,8 @@ export type Database = {
               p_title?: string
               p_type?: string
             }
-        Returns: string
-      }
+            Returns: string
+          }
       calculate_meal_plan_totals: {
         Args: { meals_data_param: Json }
         Returns: {
@@ -5103,10 +5166,7 @@ export type Database = {
           total_pending: number
         }[]
       }
-      calculate_user_level: {
-        Args: { points: number }
-        Returns: number
-      }
+      calculate_user_level: { Args: { points: number }; Returns: number }
       calculate_user_segment_membership: {
         Args: { p_criteria: Json; p_segment_id: string }
         Returns: number
@@ -5118,6 +5178,15 @@ export type Database = {
       check_and_award_achievements: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      check_dead_rows: {
+        Args: never
+        Returns: {
+          dead_ratio: number
+          dead_rows: number
+          live_rows: number
+          tablename: string
+        }[]
       }
       check_item_reference_flexible: {
         Args: {
@@ -5136,38 +5205,15 @@ export type Database = {
         }
         Returns: boolean
       }
-      clean_old_appointments: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      clean_test_banner_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_expired_transactions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_chat_messages: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_notifications: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_presence: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_rate_limit_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      check_subscription_access: { Args: { user_id: string }; Returns: boolean }
+      clean_old_appointments: { Args: never; Returns: undefined }
+      clean_test_banner_data: { Args: never; Returns: undefined }
+      cleanup_expired_transactions: { Args: never; Returns: undefined }
+      cleanup_old_chat_messages: { Args: never; Returns: undefined }
+      cleanup_old_data: { Args: never; Returns: undefined }
+      cleanup_old_notifications: { Args: never; Returns: undefined }
+      cleanup_old_presence: { Args: never; Returns: undefined }
+      cleanup_rate_limit_logs: { Args: never; Returns: undefined }
       clear_conversation_messages: {
         Args: { p_conversation_id: string }
         Returns: undefined
@@ -5182,16 +5228,13 @@ export type Database = {
         }
         Returns: string
       }
-      ensure_student_record: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      ensure_student_record: { Args: never; Returns: string }
       execute_marketing_campaign: {
         Args: { p_campaign_id: string }
         Returns: Json
       }
       fix_corrupted_multi_tenant_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_tenants: number
           errors: string[]
@@ -5199,10 +5242,7 @@ export type Database = {
           fixed_students: number
         }[]
       }
-      generate_backup_codes: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
+      generate_backup_codes: { Args: never; Returns: string[] }
       get_banner_metrics_direct: {
         Args: {
           p_banner_id: string
@@ -5218,10 +5258,7 @@ export type Database = {
           unique_users: number
         }[]
       }
-      get_current_plan_week: {
-        Args: { plan_id: string }
-        Returns: number
-      }
+      get_current_plan_week: { Args: { plan_id: string }; Returns: number }
       get_meals_for_today: {
         Args: { p_user_id: string }
         Returns: {
@@ -5264,22 +5301,13 @@ export type Database = {
           workout_name: string
         }[]
       }
-      get_payment_system_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_payment_system_stats: { Args: never; Returns: Json }
       get_plan_id_by_name: {
         Args: { plan_name: string; teacher_id_param: string }
         Returns: string
       }
-      get_plan_name_by_id: {
-        Args: { plan_id: string }
-        Returns: string
-      }
-      get_student_teacher_id: {
-        Args: { student_uid: string }
-        Returns: string
-      }
+      get_plan_name_by_id: { Args: { plan_id: string }; Returns: string }
+      get_student_teacher_id: { Args: { student_uid: string }; Returns: string }
       get_student_workouts_with_progress: {
         Args: { p_student_id: string }
         Returns: {
@@ -5326,10 +5354,7 @@ export type Database = {
           total_revenue: number
         }[]
       }
-      get_teacher_name: {
-        Args: { teacher_id_param: string }
-        Returns: string
-      }
+      get_teacher_name: { Args: { teacher_id_param: string }; Returns: string }
       get_teacher_revenue: {
         Args: { p_end_date: string; p_start_date: string; p_teacher_id: string }
         Returns: number
@@ -5354,10 +5379,8 @@ export type Database = {
         Args: { p_teacher_id: string; p_user_id: string }
         Returns: Json
       }
-      get_user_tenant_id: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
+      get_user_teacher_id: { Args: { student_id: string }; Returns: string }
+      get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }
       get_workout_details_for_student: {
         Args: { p_student_id: string }
         Returns: {
@@ -5376,10 +5399,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_teacher: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      is_teacher: { Args: { user_id: string }; Returns: boolean }
       is_teacher_of: {
         Args: { _student_user_id: string; _teacher_id: string }
         Returns: boolean
@@ -5430,14 +5450,17 @@ export type Database = {
         Args: { conversation_ids: string[]; user_type?: string }
         Returns: undefined
       }
-      process_subscription_renewals: {
-        Args: Record<PropertyKey, never>
+      process_subscription_renewals: { Args: never; Returns: undefined }
+      record_gamification_activity: {
+        Args: {
+          p_activity_type: string
+          p_points_earned?: number
+          p_user_id: string
+        }
         Returns: undefined
       }
-      redeem_reward: {
-        Args: { _reward_id: string }
-        Returns: Json
-      }
+      redeem_reward: { Args: { _reward_id: string }; Returns: Json }
+      register_daily_activity: { Args: never; Returns: undefined }
       reset_all_student_points: {
         Args: { p_reason?: string; p_teacher_id: string }
         Returns: Json
@@ -5446,18 +5469,9 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: Json
       }
-      safe_delete_user: {
-        Args: { user_id_to_delete: string }
-        Returns: Json
-      }
-      sanitize_chat_input: {
-        Args: { input_text: string }
-        Returns: boolean
-      }
-      seed_banner_test_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      safe_delete_user: { Args: { user_id_to_delete: string }; Returns: Json }
+      sanitize_chat_input: { Args: { input_text: string }; Returns: boolean }
+      seed_banner_test_data: { Args: never; Returns: undefined }
       submit_feedback_with_points_v2: {
         Args: {
           p_feedback_data: Json
@@ -5486,10 +5500,7 @@ export type Database = {
         Args: { teacher_id_param: string; user_id_param: string }
         Returns: undefined
       }
-      teacher_link_students: {
-        Args: { _emails: string[] }
-        Returns: Json
-      }
+      teacher_link_students: { Args: { _emails: string[] }; Returns: Json }
       teacher_sync_student_plan: {
         Args: { p_student_user_id: string }
         Returns: string
@@ -5517,18 +5528,12 @@ export type Database = {
         }
         Returns: Json
       }
-      trigger_cleanup_rate_limits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      trigger_cleanup_rate_limits: { Args: never; Returns: undefined }
       update_goal_progress: {
         Args: { p_category: string; p_user_id: string; p_value: number }
         Returns: undefined
       }
-      update_monthly_rankings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_monthly_rankings: { Args: never; Returns: undefined }
       update_redemption_status: {
         Args: {
           _admin_notes?: string
@@ -5548,10 +5553,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_user_streak: {
-        Args: { p_user_id: string }
-        Returns: undefined
-      }
+      update_user_streak: { Args: { p_user_id: string }; Returns: undefined }
       user_belongs_to_tenant: {
         Args: { tenant_uuid: string; user_uuid: string }
         Returns: boolean
@@ -5564,12 +5566,15 @@ export type Database = {
         Args: { p_course_id: string; p_user_id?: string }
         Returns: boolean
       }
-      user_has_feature_access: {
-        Args:
-          | { p_feature: string; p_teacher_id: string; p_user_id: string }
-          | { p_feature_key: string; p_user_id: string }
-        Returns: boolean
-      }
+      user_has_feature_access:
+        | {
+            Args: { p_feature_key: string; p_user_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: { p_feature: string; p_teacher_id: string; p_user_id: string }
+            Returns: boolean
+          }
       validate_input: {
         Args: { allow_html?: boolean; input_text: string; max_length?: number }
         Returns: boolean
