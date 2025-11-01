@@ -54,19 +54,18 @@ export const useProfileStats = (): ProfileStats => {
             .eq('user_id', user.id)
             .maybeSingle(),
 
-          // Workout sessions count
+          // Workout sessions count - include completed sessions
           supabase
             .from('workout_sessions')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', user.id),
 
-          // Workout dates for active days calculation
+          // Active days from user_daily_activity table
           supabase
-            .from('workout_sessions')
-            .select('start_time')
+            .from('user_daily_activity')
+            .select('activity_date')
             .eq('user_id', user.id)
-            .not('start_time', 'is', null)
-            .order('start_time', { ascending: false }),
+            .order('activity_date', { ascending: false }),
 
           // Medical exams - check if table exists first
           supabase
@@ -88,11 +87,10 @@ export const useProfileStats = (): ProfileStats => {
             .eq('type', 'physical_assessment')
         ]);
 
-        // Process active days calculation
+        // Process active days from user_daily_activity
         const activeDaysSet = new Set(
           (workoutDatesResult.data || [])
-            .filter((session: any) => session.start_time)
-            .map((session: any) => new Date(session.start_time).toISOString().slice(0, 10))
+            .map((activity: any) => activity.activity_date)
         );
 
         // Process assessments unique dates

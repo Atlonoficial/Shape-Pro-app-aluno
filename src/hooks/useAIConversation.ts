@@ -75,7 +75,7 @@ export const useAIConversation = () => {
 
   // Send message to AI assistant
   const sendMessage = async (message: string): Promise<string> => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) throw new Error('Usuário não autenticado');
 
     setLoading(true);
     setError(null);
@@ -91,15 +91,37 @@ export const useAIConversation = () => {
       
       setMessages(prev => [...prev, userMessage]);
 
-      // Call AI assistant edge function
-      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+      // Call AI assistant edge function with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tempo esgotado. Tente novamente.')), 30000)
+      );
+
+      const invokePromise = supabase.functions.invoke('ai-assistant', {
         body: {
           message,
           conversationId: currentConversation?.id
         }
       });
 
-      if (error) throw error;
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+
+      if (error) {
+        // Handle specific error types
+        if (error.message?.includes('429')) {
+          throw new Error('Você atingiu o limite diário de 3 perguntas. Volte amanhã! 💪');
+        }
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          throw new Error('Sessão expirada. Faça login novamente.');
+        }
+        if (error.message?.includes('OPENAI_API_KEY') || error.message?.includes('OPENAI_ASSISTANT_ID')) {
+          throw new Error('Assistente de IA não configurado. Entre em contato com o suporte.');
+        }
+        throw error;
+      }
+
+      if (!data?.response) {
+        throw new Error('Resposta inválida do assistente. Tente novamente.');
+      }
 
       const response = data.response;
       const conversationId = data.conversationId;
@@ -138,11 +160,11 @@ export const useAIConversation = () => {
 
     } catch (err) {
       console.error('Error sending message:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+      const errorMessage = err instanceof Error ? err.message : 'Falha ao enviar mensagem. Tente novamente.';
       setError(errorMessage);
       
       // Remove temp user message on error
-      setMessages(prev => prev.filter(msg => msg.id !== `temp-${Date.now()}`));
+      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
       
       throw new Error(errorMessage);
     } finally {

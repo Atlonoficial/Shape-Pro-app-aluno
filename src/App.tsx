@@ -12,6 +12,7 @@ import { SecurityProvider } from "@/components/security/SecurityProvider";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { NativeIntegration } from "@/components/native/NativeIntegration";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { KeyboardProvider } from "@/contexts/KeyboardContext";
 import Index from "./pages/Index";
 // Core application imports ready for production
 import NotFound from "./pages/NotFound";
@@ -84,6 +85,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <KeyboardProvider>
             <BrowserRouter>
               <AuthProvider>
                 <NativeIntegration />
@@ -135,6 +137,7 @@ const App = () => (
               </GamificationProvider>
             </AuthProvider>
           </BrowserRouter>
+          </KeyboardProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </SecurityProvider>

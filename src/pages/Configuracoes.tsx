@@ -6,31 +6,91 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { signOutUser } from "@/lib/supabase";
+import { enablePush, disablePush, clearExternalUserId } from "@/lib/push";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/components/auth/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const queryClient = useQueryClient();
   const [notificacoes, setNotificacoes] = useState(true);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   useEffect(() => {
-    // Demonstração de notificação ao carregar as configurações
-    const timer = setTimeout(() => {
-      toast({
-        title: "🔔 Hora do treino!",
-        description: "Você tem um treino agendado para hoje às 18:00",
-      });
-    }, 2000);
+    // Load push notification preference from profile
+    const loadNotificationPreference = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('push_enabled')
+        .eq('id', user.id)
+        .single();
+      
+      if (data) {
+        setNotificacoes(data.push_enabled ?? true);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    loadNotificationPreference();
+  }, [user?.id]);
+
+  const handleNotificationsToggle = async (checked: boolean) => {
+    if (!user?.id || loadingNotifications) return;
+    
+    setLoadingNotifications(true);
+    try {
+      if (checked) {
+        await enablePush();
+      } else {
+        await disablePush();
+      }
+      
+      // Save preference to Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({ push_enabled: checked })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      setNotificacoes(checked);
+      toast({
+        title: checked ? "🔥 Notificações ativadas!" : "Notificações desativadas",
+        description: checked 
+          ? "Você receberá lembretes de treinos e dicas personalizadas"
+          : "Você não receberá mais notificações push",
+      });
+    } catch (error) {
+      console.error("Erro ao alterar notificações:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar as notificações. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
 
   const handleSair = async () => {
     try {
+      // Clear OneSignal external user ID
+      await clearExternalUserId();
+      
+      // Clear React Query cache
+      queryClient.clear();
+      
+      // Sign out from Supabase
       await signOutUser();
+      
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      // A navegação será automática pela AuthProvider
+      // Navigation will be automatic via AuthProvider
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast({
@@ -53,15 +113,8 @@ const Configuracoes = () => {
       action: (
         <Switch 
           checked={notificacoes}
-          onCheckedChange={(checked) => {
-            setNotificacoes(checked);
-            if (checked) {
-              toast({
-                title: "🔥 Notificações ativadas!",
-                description: "Você receberá lembretes de treinos e dicas personalizadas",
-              });
-            }
-          }}
+          onCheckedChange={handleNotificationsToggle}
+          disabled={loadingNotifications}
         />
       )
     },

@@ -17,7 +17,15 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		extend: {
+    extend: {
+      spacing: {
+        'safe': 'var(--safe-area-inset-bottom)',
+        'safe-top': 'var(--safe-area-inset-top)',
+      },
+      padding: {
+        'safe': 'var(--safe-area-inset-bottom)',
+        'safe-top': 'var(--safe-area-inset-top)',
+      },
 			screens: {
 				'xs': '475px',
 			},
