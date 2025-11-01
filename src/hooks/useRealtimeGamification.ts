@@ -16,6 +16,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
   const { user } = useAuthContext();
   const { isDuplicateAction, generateActionKey } = useGamificationDebounce();
   const { settings, teacherId } = useTeacherGamificationSettings();
+  const processingRef = useRef<Set<string>>(new Set());
 
   const awardPointsForAction = useCallback(async (action: string, description?: string, metadata: any = {}) => {
     if (!user?.id) {
@@ -29,6 +30,15 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       console.log('[Gamification] Duplicate action prevented:', action);
       return;
     }
+
+    // Check if already processing this action
+    if (processingRef.current.has(actionKey)) {
+      console.log('[Gamification] Action already processing:', action);
+      return;
+    }
+
+    // Mark as processing
+    processingRef.current.add(actionKey);
 
     try {
       console.log('[Gamification] Awarding points for action:', action, 'metadata:', metadata);
@@ -56,6 +66,11 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       console.log('[Gamification] Points awarded successfully for action:', action, 'Result:', data);
     } catch (error) {
       console.error('[Gamification] Error awarding points:', error);
+    } finally {
+      // Remove from processing set after a delay
+      setTimeout(() => {
+        processingRef.current.delete(actionKey);
+      }, 2000);
     }
   }, [user?.id, isDuplicateAction, generateActionKey]);
 

@@ -6,7 +6,7 @@ import { useCallback, useRef } from "react";
  */
 export const useGamificationDebounce = () => {
   const recentActions = useRef<Map<string, number>>(new Map());
-  const DEBOUNCE_TIME = 5000; // 5 seconds
+  const DEBOUNCE_TIME = 10000; // 10 seconds - increased to prevent duplicates
 
   const isDuplicateAction = useCallback((actionKey: string): boolean => {
     const now = Date.now();

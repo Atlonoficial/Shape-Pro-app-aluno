@@ -47,12 +47,20 @@ export const useAIUsageLimit = () => {
     setCanAsk(dailyCount + 1 < DAILY_LIMIT);
   };
 
+  const getResetTime = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
   return {
     dailyCount,
     dailyLimit: DAILY_LIMIT,
     canAsk,
     loading,
     remainingQuestions: Math.max(0, DAILY_LIMIT - dailyCount),
+    resetTime: getResetTime(),
     refresh: fetchUsage,
     incrementUsage
   };
