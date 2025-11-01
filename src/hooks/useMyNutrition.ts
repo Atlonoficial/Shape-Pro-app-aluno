@@ -273,33 +273,44 @@ export const useMyNutrition = () => {
   // Função para registrar uma refeição usando a nova estrutura
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
     if (!user?.id) {
-      console.error('[useMyNutrition] User ID not available for meal logging');
+      console.error('[useMyNutrition] ❌ User ID not available');
       return false;
     }
 
-    try {
-      console.log(`[useMyNutrition] Logging meal: ${mealPlanItemId}, consumed: ${consumed}`);
+    console.log('[useMyNutrition] 📝 Starting meal log:', {
+      mealPlanItemId,
+      consumed,
+      userId: user.id,
+      timestamp: new Date().toISOString()
+    });
 
+    try {
       // Buscar as refeições do dia para obter informações completas
       const todayMealsData = await getTodayMeals(user.id);
       const mealData = todayMealsData.find(meal => meal.meal_plan_item_id === mealPlanItemId);
 
       if (!mealData) {
-        console.error('[useMyNutrition] Meal data not found for item ID:', mealPlanItemId);
+        console.error('[useMyNutrition] ❌ Meal not found:', mealPlanItemId);
         return false;
       }
 
-      console.log('[useMyNutrition] Found meal data:', mealData);
+      console.log('[useMyNutrition] ✅ Meal data found:', mealData);
+
+      // Validar dados obrigatórios
+      if (!mealData.meal_plan_id) {
+        console.error('[useMyNutrition] ❌ Missing meal_plan_id');
+        return false;
+      }
 
       // Se já existe um log e está marcado como consumido, não permitir desmarcar
       if (mealData.is_logged && mealData.log_id && !consumed) {
-        console.warn('[useMyNutrition] Cannot uncheck a consumed meal');
+        console.warn('[useMyNutrition] ⚠️ Cannot uncheck a consumed meal');
         return false;
       }
 
       if (mealData.log_id) {
         // Atualizar log existente
-        console.log('[useMyNutrition] Updating existing meal log:', mealData.log_id);
+        console.log('[useMyNutrition] 🔄 Updating existing meal log:', mealData.log_id);
         
         const { error } = await supabase
           .from('meal_logs')
@@ -312,12 +323,17 @@ export const useMyNutrition = () => {
           .eq('id', mealData.log_id);
 
         if (error) {
-          console.error('[useMyNutrition] Error updating meal log:', error);
+          console.error('[useMyNutrition] ❌ Update error:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
           return false;
         }
       } else {
         // Criar novo log usando a nova estrutura
-        console.log('[useMyNutrition] Creating new meal log');
+        console.log('[useMyNutrition] ➕ Creating new meal log');
         
         const mealLogData = {
           user_id: user.id,
@@ -330,16 +346,25 @@ export const useMyNutrition = () => {
           actual_time: new Date().toISOString()
         };
 
-        console.log('[useMyNutrition] Meal log data to insert:', mealLogData);
+        console.log('[useMyNutrition] 📤 Inserting meal log:', mealLogData);
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('meal_logs')
-          .insert(mealLogData);
+          .insert(mealLogData)
+          .select()
+          .single();
 
         if (error) {
-          console.error('[useMyNutrition] Error creating meal log:', error);
+          console.error('[useMyNutrition] ❌ Insert error:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
           return false;
         }
+
+        console.log('[useMyNutrition] ✅ Meal log created:', data);
       }
 
       // Refresh data após operação
@@ -350,10 +375,13 @@ export const useMyNutrition = () => {
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
 
-      console.log('[useMyNutrition] Meal logging completed successfully');
+      console.log('[useMyNutrition] ✅ Meal logging completed successfully');
       return true;
-    } catch (error) {
-      console.error('[useMyNutrition] Exception in logMeal:', error);
+    } catch (error: any) {
+      console.error('[useMyNutrition] ❌ Exception:', {
+        message: error?.message,
+        stack: error?.stack
+      });
       return false;
     }
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
