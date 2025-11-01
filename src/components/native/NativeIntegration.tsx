@@ -4,6 +4,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
 import { logger } from '@/utils/logger';
+import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
 
 /**
  * Shape Pro - Native Integration Component
@@ -18,6 +19,9 @@ export const NativeIntegration = () => {
     }
 
     initNativeFeatures();
+    
+    // Inicializar deep links após native features estarem prontas
+    initializeDeepLinkHandler();
   }, []);
 
   const initNativeFeatures = async () => {

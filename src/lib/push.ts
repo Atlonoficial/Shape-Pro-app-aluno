@@ -195,13 +195,14 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
       logger.log('OneSignal Web: Initialized successfully');
     });
 
-    // Carregar script do OneSignal se ainda não estiver carregado
-    if (!document.getElementById('onesignal-sdk')) {
+    // Carregar script do OneSignal APENAS no WEB (nunca em mobile)
+    if (!document.getElementById('onesignal-sdk') && !isMobileApp()) {
       const script = document.createElement('script');
       script.id = 'onesignal-sdk';
       script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
       script.defer = true;
       document.head.appendChild(script);
+      logger.log('OneSignal Web: SDK script loaded');
     }
 
   } catch (error) {

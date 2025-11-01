@@ -28,10 +28,6 @@ const config: CapacitorConfig = {
       NSPhotoLibraryAddUsageDescription:
         "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
       NSCameraUsageDescription: "Precisamos da câmera para tirar fotos dentro do app.",
-      NSLocationWhenInUseUsageDescription:
-        "Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.",
-      NSLocationAlwaysAndWhenInUseUsageDescription:
-        "Usamos sua localização somente quando necessário para recursos do app.",
 
       // OneSignal
       UIBackgroundModes: ["remote-notification"],
@@ -61,7 +57,7 @@ const config: CapacitorConfig = {
     PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
     SplashScreen: {
       launchAutoHide: true,
-      launchShowDuration: 0,
+      launchShowDuration: 1500,
       backgroundColor: "#000000",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER",

@@ -1,6 +1,38 @@
+import { useState, useEffect } from 'react';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 export const LoadingScreen = () => {
+  const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setShowError(true);
+      logger.error('[LoadingScreen] Timeout: App não carregou em 10s');
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (showError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Erro ao Carregar</h2>
+          <p className="text-muted-foreground mb-4">
+            O aplicativo está demorando muito para iniciar.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">

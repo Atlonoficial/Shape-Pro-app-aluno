@@ -1,16 +1,17 @@
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { logger } from '@/utils/logger';
 
 export async function initializeDeepLinkHandler() {
   if (!Capacitor.isNativePlatform()) {
-    console.log('[DeepLink] ⚠️ Not a native platform, skipping initialization');
+    logger.log('[DeepLink] ⚠️ Not a native platform, skipping initialization');
     return;
   }
 
-  console.log('[DeepLink] 🚀 Initializing handler for native platform');
+  logger.log('[DeepLink] 🚀 Initializing handler for native platform');
 
   CapacitorApp.addListener('appUrlOpen', async ({ url }) => {
-    console.log('[DeepLink] 🔗 Received URL:', url);
+    logger.log('[DeepLink] 🔗 Received URL:', url);
 
     try {
       const urlObj = new URL(url);
@@ -20,7 +21,7 @@ export async function initializeDeepLinkHandler() {
         const params = urlObj.searchParams.toString();
         const targetUrl = `/auth/confirm?${params}`;
         
-        console.log('[DeepLink] ✅ Redirecting to:', targetUrl);
+        logger.log('[DeepLink] ✅ Redirecting to:', targetUrl);
         window.location.href = targetUrl;
         return;
       }
@@ -30,17 +31,17 @@ export async function initializeDeepLinkHandler() {
         const params = urlObj.searchParams.toString();
         const targetUrl = `/auth/recovery?${params}`;
         
-        console.log('[DeepLink] ✅ Redirecting to:', targetUrl);
+        logger.log('[DeepLink] ✅ Redirecting to:', targetUrl);
         window.location.href = targetUrl;
         return;
       }
 
-      console.log('[DeepLink] ⚠️ Unhandled deep link:', url);
+      logger.log('[DeepLink] ⚠️ Unhandled deep link:', url);
 
     } catch (error) {
-      console.error('[DeepLink] ❌ Error processing URL:', error);
+      logger.error('[DeepLink] ❌ Error processing URL:', error);
     }
   });
 
-  console.log('[DeepLink] ✅ Handler initialized successfully');
+  logger.log('[DeepLink] ✅ Handler initialized successfully');
 }
