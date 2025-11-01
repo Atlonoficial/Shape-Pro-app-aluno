@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 import { useConversation } from '@/hooks/useConversation';
 import { useEnhancedPresence } from '@/hooks/useEnhancedPresence';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
@@ -11,7 +11,7 @@ import { MobileContainer } from '@/components/layout/MobileContainer';
 import { Loader2 } from 'lucide-react';
 
 export default function Chat() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile } = useAuthContext();
   const [isTyping, setIsTyping] = useState(false);
   
   // Inicializar notificações de chat

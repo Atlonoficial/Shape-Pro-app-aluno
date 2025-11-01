@@ -112,14 +112,16 @@ export const useAIConversation = () => {
         if (errorMsg === 'TIMEOUT') {
           throw new Error('A resposta está demorando muito. Tente uma pergunta mais simples ou aguarde alguns segundos.');
         }
+        if (errorMsg.includes('Missing required environment variables') || 
+            errorMsg.includes('OPENAI_API_KEY') || 
+            errorMsg.includes('OPENAI_ASSISTANT_ID')) {
+          throw new Error('Coach IA não configurado. Contate o suporte para ativar.');
+        }
         if (errorMsg.includes('429') || error.status === 429) {
           throw new Error('Você atingiu o limite diário de 3 perguntas. Volte amanhã às 00h! 💪');
         }
         if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || error.status === 401) {
           throw new Error('Sessão expirada. Faça login novamente.');
-        }
-        if (errorMsg.includes('OPENAI_API_KEY') || errorMsg.includes('OPENAI_ASSISTANT_ID') || errorMsg.includes('Missing required environment variables')) {
-          throw new Error('Coach IA não está configurado. Entre em contato com o administrador.');
         }
         if (errorMsg.includes('network') || errorMsg.includes('fetch') || errorMsg.includes('Failed to fetch')) {
           throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
