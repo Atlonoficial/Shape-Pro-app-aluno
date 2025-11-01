@@ -22,7 +22,7 @@ export const AIAssistant = () => {
     sendMessage 
   } = useAIConversation();
   
-  const { dailyCount, dailyLimit, canAsk, remainingQuestions, loading: limitLoading, incrementUsage } = useAIUsageLimit();
+  const { dailyCount, dailyLimit, canAsk, remainingQuestions, resetTime, loading: limitLoading, incrementUsage } = useAIUsageLimit();
   const { isVisible: keyboardVisible, height: keyboardHeight } = useKeyboard();
   
   const [inputText, setInputText] = useState('');
@@ -115,7 +115,7 @@ export const AIAssistant = () => {
             <Sparkles className="w-3 h-3" />
             {remainingQuestions > 0 
               ? `${remainingQuestions} ${remainingQuestions === 1 ? 'pergunta disponível' : 'perguntas disponíveis'} hoje`
-              : 'Limite diário atingido (reinicia à meia-noite)'
+              : `Limite diário atingido (reinicia às ${resetTime})`
             }
           </div>
         )}
@@ -211,7 +211,7 @@ export const AIAssistant = () => {
           <div className="flex items-center gap-2 mb-2 mx-auto max-w-lg p-3 bg-warning/10 border border-warning/20 rounded-lg">
             <AlertCircle className="w-4 h-4 text-warning" />
             <p className="text-xs text-warning font-medium">
-              Você atingiu o limite de 3 perguntas diárias. Volte amanhã! 💪
+              Você atingiu o limite de 3 perguntas diárias. Reinicia às {resetTime} 💪
             </p>
           </div>
         )}

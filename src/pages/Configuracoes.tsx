@@ -40,6 +40,16 @@ const Configuracoes = () => {
   const handleNotificationsToggle = async (checked: boolean) => {
     if (!user?.id || loadingNotifications) return;
     
+    // Check if OneSignal is available
+    if (!window.plugins?.OneSignal) {
+      toast({
+        title: "Serviço indisponível",
+        description: "Notificações não estão disponíveis neste dispositivo",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoadingNotifications(true);
     try {
       if (checked) {

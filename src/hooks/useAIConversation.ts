@@ -106,9 +106,13 @@ export const useAIConversation = () => {
       const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) {
-        // Handle specific error types
+        console.error('[AI Assistant] Error:', error);
+        // Handle specific error types with user-friendly messages
         if (error.message?.includes('429')) {
-          throw new Error('Você atingiu o limite diário de 3 perguntas. Volte amanhã! 💪');
+          throw new Error('Você atingiu o limite diário de 3 perguntas. Volte amanhã às 00h! 💪');
+        }
+        if (error.message?.includes('timeout') || error.message?.includes('Tempo esgotado')) {
+          throw new Error('A resposta está demorando muito. Tente uma pergunta mais simples.');
         }
         if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
           throw new Error('Sessão expirada. Faça login novamente.');
@@ -116,7 +120,10 @@ export const useAIConversation = () => {
         if (error.message?.includes('OPENAI_API_KEY') || error.message?.includes('OPENAI_ASSISTANT_ID')) {
           throw new Error('Assistente de IA não configurado. Entre em contato com o suporte.');
         }
-        throw error;
+        if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+        }
+        throw new Error('Não foi possível conectar ao assistente. Tente novamente.');
       }
 
       if (!data?.response) {
