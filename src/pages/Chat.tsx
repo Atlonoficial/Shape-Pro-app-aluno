@@ -11,8 +11,21 @@ import { MobileContainer } from '@/components/layout/MobileContainer';
 import { Loader2 } from 'lucide-react';
 
 export default function Chat() {
-  const { user, userProfile } = useAuthContext();
+  const auth = useAuthContext();
   const [isTyping, setIsTyping] = useState(false);
+  
+  // Aguardar auth inicializar para prevenir race condition
+  if (auth.loading) {
+    return (
+      <MobileContainer>
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MobileContainer>
+    );
+  }
+  
+  const { user, userProfile } = auth;
   
   // Inicializar notificações de chat
   useChatNotifications();

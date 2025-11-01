@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
 import { TermsGuard } from "@/components/auth/TermsGuard";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
 import { GamificationIntegrator } from "@/components/gamification/GamificationIntegrator";
@@ -88,10 +89,11 @@ const App = () => (
           <KeyboardProvider>
             <BrowserRouter>
               <AuthProvider>
-                <NativeIntegration />
-                <GamificationProvider>
-                  <GamificationIntegrator>
-                  <Routes>
+                <AuthErrorBoundary>
+                  <NativeIntegration />
+                  <GamificationProvider>
+                    <GamificationIntegrator>
+                    <Routes>
                 {/* Public routes (no AuthGuard, no TermsGuard) */}
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
                 <Route path="/accept-terms" element={<AcceptTerms />} />
@@ -132,9 +134,10 @@ const App = () => (
                 <Route path="/strava-callback" element={<StravaCallback />} />
                 
                 <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </GamificationIntegrator>
-              </GamificationProvider>
+                    </Routes>
+                  </GamificationIntegrator>
+                </GamificationProvider>
+              </AuthErrorBoundary>
             </AuthProvider>
           </BrowserRouter>
           </KeyboardProvider>
