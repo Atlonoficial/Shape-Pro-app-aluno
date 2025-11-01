@@ -240,47 +240,126 @@ serve(async (req) => {
         content: message
       });
 
-    // Add message to OpenAI thread with context
-    const contextualMessage = `CONTEXTO COMPLETO DO ALUNO:
+    // Helper functions for rich formatting
+    const formatWorkouts = (workouts: any[]) => {
+      if (!workouts || workouts.length === 0) return "Nenhum treino ativo";
+      return workouts.map(w => {
+        const exercisesText = w.exercises?.map((e: any) => 
+          `      • ${e.exercise_name} (${e.sets}x${e.reps}${e.rest_seconds ? `, ${e.rest_seconds}s descanso` : ''})`
+        ).join('\n') || '      Sem exercícios definidos';
+        return `  📋 ${w.name} (${w.difficulty || 'N/A'})\n${exercisesText}`;
+      }).join('\n\n');
+    };
 
-📋 PERFIL:
-- Nome: ${studentContext.profile?.name || 'Não informado'}
-- Idade: ${studentContext.profile?.age || 'N/A'} anos
-- Peso: ${studentContext.profile?.weight || 'N/A'} kg
-- Altura: ${studentContext.profile?.height || 'N/A'} cm
-- Objetivo: ${studentContext.profile?.goal || 'Não definido'}
-- Status: ${studentContext.student?.membership_status || 'N/A'}
+    const formatNutrition = (plans: any[]) => {
+      if (!plans || plans.length === 0) return "Nenhum plano nutricional";
+      return plans.map(n => {
+        const mealsText = n.meals?.map((m: any) => 
+          `      • ${m.meal_name} (${m.meal_time}) - ${m.calories || 0}kcal (P:${m.protein || 0}g C:${m.carbs || 0}g F:${m.fat || 0}g)`
+        ).join('\n') || '      Sem refeições definidas';
+        const totalCal = n.daily_calories || n.total_calories || 'N/A';
+        return `  🥗 ${n.name} (${totalCal}kcal/dia)\n${mealsText}`;
+      }).join('\n\n');
+    };
 
-🏥 ANAMNESE:
-${studentContext.anamnese ? `- Doenças: ${studentContext.anamnese.doencas?.join(', ') || 'Nenhuma'}
-- Alergias: ${studentContext.anamnese.alergias?.join(', ') || 'Nenhuma'}
-- Medicações: ${studentContext.anamnese.medicacoes?.join(', ') || 'Nenhuma'}
-- Qualidade do Sono: ${studentContext.anamnese.qualidade_sono || 'Não informado'} (${studentContext.anamnese.horas_sono || 'N/A'} horas)
-- Lesões: ${studentContext.anamnese.lesoes || 'Nenhuma'}` : 'Não preenchida'}
+    const formatProgress = (progress: any[]) => {
+      if (!progress || progress.length === 0) return "Sem registros de progresso";
+      return progress.slice(0, 5).map(p => {
+        const date = new Date(p.date).toLocaleDateString('pt-BR');
+        const value = p.weight ? `${p.weight}kg` : `${p.value}${p.unit || ''}`;
+        const bodyFat = p.body_fat ? ` (${p.body_fat}% gordura)` : '';
+        return `  • ${date}: ${value}${bodyFat}`;
+      }).join('\n');
+    };
 
-💪 TREINOS ATIVOS (${studentContext.workouts.length}):
-${studentContext.workouts.length > 0 ? studentContext.workouts.map(w => `
-  - ${w.name} (${w.difficulty || 'N/A'})
-    Exercícios: ${w.exercises?.map((e: any) => `${e.exercise_name} (${e.sets}x${e.reps})`).join(', ') || 'Nenhum'}`).join('\n') : 'Nenhum treino ativo'}
+    const formatGamification = (points: any, activities: any[]) => {
+      const level = points?.level || 1;
+      const totalPoints = points?.total_points || 0;
+      const streak = points?.current_streak || 0;
+      const bestStreak = points?.best_streak || 0;
+      
+      let gamifText = `Pontos Totais: ${totalPoints} XP\nNível: ${level}`;
+      if (streak > 0) gamifText += `\nStreak Atual: ${streak} dias consecutivos`;
+      if (bestStreak > 0) gamifText += `\n🔥 Melhor Streak: ${bestStreak} dias`;
+      
+      if (activities && activities.length > 0) {
+        const recentActs = activities.slice(0, 3).map(a => 
+          `${a.activity_type} (+${a.points_earned} pts)`
+        ).join(', ');
+        gamifText += `\nAtividades recentes: ${recentActs}`;
+      }
+      
+      return gamifText;
+    };
 
-🍎 NUTRIÇÃO (${studentContext.nutritionPlans.length} planos):
-${studentContext.nutritionPlans.length > 0 ? studentContext.nutritionPlans.map(n => `
-  - ${n.name} (${n.daily_calories || 'N/A'} kcal/dia)
-    Refeições:
-${n.meals?.map((m: any) => `      • ${m.meal_name} (${m.meal_time}) - ${m.calories || 0} kcal, P: ${m.protein || 0}g, C: ${m.carbs || 0}g, G: ${m.fat || 0}g`).join('\n') || '      Nenhuma'}`).join('\n') : 'Nenhum plano nutricional'}
+    // Get user points for gamification context
+    const { data: userPoints } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-📊 PROGRESSO RECENTE:
-${studentContext.progress.length > 0 ? studentContext.progress.slice(0, 3).map(p => `- ${p.type || 'Medida'}: ${p.value}${p.unit || ''} em ${new Date(p.date).toLocaleDateString('pt-BR')}`).join('\n') : 'Sem registros de progresso'}
+    // Build rich contextual message
+    const contextualMessage = `
+🎯 CONTEXTO COMPLETO DO ALUNO
 
-🍽️ ALIMENTAÇÃO (últimos 7 dias):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 PERFIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nome: ${studentContext.profile?.name || 'Não informado'}
+Idade: ${studentContext.profile?.age || 'N/A'} anos
+Peso: ${studentContext.profile?.weight || 'N/A'}kg | Altura: ${studentContext.profile?.height || 'N/A'}cm
+${studentContext.profile?.goal ? `🎯 Objetivo: ${studentContext.profile.goal}` : ''}
+Status: ${studentContext.student?.membership_status || 'N/A'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏥 ANAMNESE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${studentContext.anamnese ? `Doenças: ${studentContext.anamnese.doencas?.join(', ') || 'Nenhuma'}
+Alergias: ${studentContext.anamnese.alergias?.join(', ') || 'Nenhuma'}
+Medicações: ${studentContext.anamnese.medicacoes?.join(', ') || 'Nenhuma'}
+Qualidade do Sono: ${studentContext.anamnese.qualidade_sono || 'Não informado'} (${studentContext.anamnese.horas_sono || 'N/A'}h)
+Lesões: ${studentContext.anamnese.lesoes || 'Nenhuma'}` : 'Anamnese não preenchida'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💪 TREINOS ATIVOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${formatWorkouts(studentContext.workouts)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🍎 NUTRIÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${formatNutrition(studentContext.nutritionPlans)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 PROGRESSO RECENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${formatProgress(studentContext.progress)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🍽️ ALIMENTAÇÃO (últimos 7 dias)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${studentContext.mealLogs.length > 0 ? `${studentContext.mealLogs.length} refeições registradas` : 'Sem registros de refeições'}
 
-🏆 GAMIFICAÇÃO:
-${studentContext.recentActivities.length > 0 ? `Atividades recentes: ${studentContext.recentActivities.slice(0, 3).map(a => `${a.activity_type} (+${a.points_earned} pts)`).join(', ')}` : 'Sem atividades recentes'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏆 GAMIFICAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${formatGamification(userPoints, studentContext.recentActivities)}
 
-MENSAGEM DO ALUNO: ${message}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💬 MENSAGEM DO ALUNO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${message}
 
-IMPORTANTE: Use TODOS esses dados detalhados para dar respostas personalizadas, motivadoras e baseadas no perfil real do aluno. Mencione exercícios específicos, refeições do plano, progresso registrado e contexto médico quando relevante.`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTRUÇÕES:
+- Responda de forma PERSONALIZADA baseando-se nos dados acima
+- Mencione exercícios, refeições e progressos ESPECÍFICOS do aluno
+- Use dados da anamnese quando relevante
+- Seja motivacional e técnico ao mesmo tempo
+- Cite números reais (pesos, repetições, calorias, etc.)
+`;
 
     await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       method: 'POST',
