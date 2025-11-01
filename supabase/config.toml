@@ -37,6 +37,9 @@ verify_jwt = true
 [functions.strava-sync]
 verify_jwt = true
 
+[functions.ai-assistant-test]
+verify_jwt = false
+
 [realtime]
 enabled = true
 # Force secure WebSocket connections

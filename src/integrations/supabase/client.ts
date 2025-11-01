@@ -12,12 +12,8 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 const isCapacitor = typeof window !== 'undefined' && 
   (window as any).Capacitor !== undefined;
 
-console.log('[Supabase Client] Initializing with:', {
-  url: SUPABASE_URL,
-  isCapacitor,
-  platform: isCapacitor ? 'mobile' : 'web',
-  protocol: 'wss://' // Force secure WebSocket
-});
+// Supabase client initialization
+// Development logs only
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -31,8 +27,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     params: {
       eventsPerSecond: 10,
     },
-    timeout: isCapacitor ? 15000 : 10000,
-    heartbeatIntervalMs: 30000,
+    timeout: 30000, // Increased for stability
+    heartbeatIntervalMs: 15000, // Reduced for faster detection
+    log_level: 'info',
   },
   global: {
     headers: {

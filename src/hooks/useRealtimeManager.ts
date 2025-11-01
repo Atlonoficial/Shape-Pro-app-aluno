@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
 interface RealtimeSubscription {
   table: string;
@@ -59,15 +60,14 @@ export const useRealtimeManager = ({
 
   useEffect(() => {
     if (!enabled || subscriptions.length === 0) {
-      console.log('[RealtimeManager] Disabled or no subscriptions');
+      logger.log('[RealtimeManager] Disabled or no subscriptions');
       return;
     }
 
-    console.log('[RealtimeManager] 🚀 Initializing with', subscriptions.length, 'subscriptions');
+    logger.log('[RealtimeManager] 🚀 Initializing with', subscriptions.length, 'subscriptions');
 
-    // Create unique channel for this context with timestamp to prevent conflicts
-    const uniqueChannelName = `${channelName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const channel = supabase.channel(uniqueChannelName);
+    // Consolidate channels by using stable channel name (no timestamp/random)
+    const channel = supabase.channel(channelName);
 
     channelRef.current = channel;
 
@@ -86,36 +86,61 @@ export const useRealtimeManager = ({
         config.filter = sub.filter;
       }
 
-      console.log('[RealtimeManager] 📡 Subscribing to:', config);
+      logger.log('[RealtimeManager] 📡 Subscribing to:', config);
 
       channel.on('postgres_changes', config, (payload) => {
-        console.log('[RealtimeManager] 📨 Received event:', sub.table, sub.event, payload);
+        logger.log('[RealtimeManager] 📨 Received event:', sub.table, sub.event, payload);
         debouncedCallback(payload);
       });
     });
 
-    // Subscribe to channel with status callback
+    // Subscribe to channel with status callback and auto-reconnect
     channel.subscribe((status) => {
-      console.log('[RealtimeManager] Channel status:', status);
+      logger.log('[RealtimeManager] Channel status:', status);
       isConnectedRef.current = status === 'SUBSCRIBED';
 
       if (status === 'SUBSCRIBED') {
-        console.log('[RealtimeManager] ✅ All subscriptions active');
+        logger.log('[RealtimeManager] ✅ All subscriptions active');
       } else if (status === 'CHANNEL_ERROR') {
-        console.error('[RealtimeManager] ❌ Channel error - connection failed');
+        logger.error('[RealtimeManager] ❌ Channel error - attempting reconnect in 5s');
+        
+        // Auto-reconnect after 5 seconds
+        setTimeout(() => {
+          logger.log('[RealtimeManager] 🔄 Reconnecting after error...');
+          if (channelRef.current) {
+            channelRef.current.subscribe();
+          }
+        }, 5000);
+        
       } else if (status === 'TIMED_OUT') {
-        console.error('[RealtimeManager] ⏱️ Channel timeout');
+        logger.error('[RealtimeManager] ⏱️ Channel timeout - attempting reconnect in 3s');
+        
+        // Faster reconnect on timeout
+        setTimeout(() => {
+          logger.log('[RealtimeManager] 🔄 Reconnecting after timeout...');
+          if (channelRef.current) {
+            channelRef.current.subscribe();
+          }
+        }, 3000);
       }
     });
 
-    // Cleanup function
+    // Cleanup function with explicit unsubscribe
     return () => {
-      console.log('[RealtimeManager] 🧹 Cleaning up subscriptions');
+      logger.log('[RealtimeManager] 🧹 Cleaning up subscriptions');
       clearDebouncedCallbacks();
       
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+        // Explicitly unsubscribe before removing channel
+        channelRef.current.unsubscribe();
+        
+        // Wait 100ms to ensure disconnect completes
+        setTimeout(() => {
+          if (channelRef.current) {
+            supabase.removeChannel(channelRef.current);
+            channelRef.current = null;
+          }
+        }, 100);
       }
       
       isConnectedRef.current = false;
