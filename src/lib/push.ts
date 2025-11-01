@@ -1,5 +1,6 @@
 // src/lib/push.ts
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 declare global {
   interface Window {
@@ -18,6 +19,9 @@ declare global {
 let isInitialized = false;
 let currentExternalUserId: string | null = null;
 
+const PUSH_PERMISSION_KEY = 'push_permission_asked';
+const PUSH_PROMPT_DELAY = 5000; // 5 seconds
+
 // Detectar se é mobile (Capacitor/Cordova) ou web
 const isMobileApp = () => {
   return !!window.device || !!window.cordova;
@@ -26,9 +30,7 @@ const isMobileApp = () => {
 export async function initPush(externalUserId?: string) {
   const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
   if (!APP_ID) {
-    if (import.meta.env.DEV) {
-      console.warn('OneSignal: APP_ID not configured');
-    }
+    logger.warn('OneSignal: APP_ID not configured');
     return;
   }
 
@@ -40,46 +42,64 @@ export async function initPush(externalUserId?: string) {
   }
 }
 
+// Solicitar permissão de notificação automaticamente no primeiro acesso
+export async function promptForPermissionOnFirstAccess() {
+  const hasAsked = localStorage.getItem(PUSH_PERMISSION_KEY);
+  if (hasAsked) {
+    logger.log('Push permission already asked, skipping prompt');
+    return;
+  }
+
+  // Aguardar 5 segundos após o login
+  await new Promise(resolve => setTimeout(resolve, PUSH_PROMPT_DELAY));
+
+  try {
+    if (isMobileApp() && window.plugins?.OneSignal) {
+      const OneSignal = window.plugins.OneSignal;
+      
+      // iOS: solicitar permissão explicitamente
+      if (window.device?.platform === 'iOS') {
+        OneSignal.Notifications?.requestPermission?.(true, (accepted: boolean) => {
+          logger.log(`Push permission ${accepted ? 'granted' : 'denied'}`);
+          localStorage.setItem(PUSH_PERMISSION_KEY, 'true');
+        });
+      } else {
+        // Android: usar método padrão
+        OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+          logger.log(`Push permission ${accepted ? 'granted' : 'denied'}`);
+          localStorage.setItem(PUSH_PERMISSION_KEY, 'true');
+        });
+      }
+    } else if (window.OneSignal) {
+      // Web: solicitar permissão
+      const permission = await window.OneSignal.Notifications.requestPermission();
+      logger.log(`Push permission ${permission ? 'granted' : 'denied'}`);
+      localStorage.setItem(PUSH_PERMISSION_KEY, 'true');
+    }
+  } catch (error) {
+    logger.error('Error requesting push permission:', error);
+    localStorage.setItem(PUSH_PERMISSION_KEY, 'true'); // Não pedir novamente mesmo em caso de erro
+  }
+}
+
 // Inicialização Mobile (Cordova/Capacitor)
 function initMobilePush(APP_ID: string, externalUserId?: string) {
   document.addEventListener('deviceready', async () => {
     try {
       if (!window.plugins?.OneSignal) {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal: Plugin not available');
-        }
+        logger.warn('OneSignal: Plugin not available');
         return;
       }
 
       const OneSignal = window.plugins.OneSignal;
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Native: Initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
-      }
+      logger.log('OneSignal Native: Initializing...');
       
       OneSignal.setAppId(APP_ID);
-
-      // iOS: solicitar permissão explicitamente
-      if (window.device?.platform === 'iOS') {
-        OneSignal.Notifications?.requestPermission?.(true, (accepted: boolean) => {
-          if (import.meta.env.DEV) {
-            console.log('OneSignal iOS: Permission explicitly requested:', accepted ? 'granted' : 'denied');
-          }
-        });
-      }
-
-      // Fallback para método anterior
-      OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Native: Push permission:', accepted ? 'granted' : 'denied');
-        }
-      });
 
       // Definir external user ID se disponível
       if (externalUserId) {
         currentExternalUserId = externalUserId;
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Native: Setting external user ID:', externalUserId);
-        }
+        logger.log('OneSignal Native: Setting external user ID');
         OneSignal.setExternalUserId(String(externalUserId));
       }
 
@@ -87,27 +107,21 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       OneSignal.getDeviceState((state: any) => {
         const playerId = state?.userId;
         if (playerId && externalUserId) {
-          if (import.meta.env.DEV) {
-            console.log('OneSignal Native: Got Player ID:', playerId);
-          }
+          logger.log('OneSignal Native: Got Player ID');
           updatePlayerIdInSupabase(playerId, externalUserId);
         }
       });
 
       // Handler para notificações em foreground
       OneSignal.setNotificationWillShowInForegroundHandler((notificationReceivedEvent: any) => {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Native: Notification received in foreground:', notificationReceivedEvent);
-        }
+        logger.log('OneSignal Native: Notification received in foreground');
         const notification = notificationReceivedEvent.getNotification();
         notificationReceivedEvent.complete(notification);
       });
 
       // Handler para quando notificação é tocada
       OneSignal.setNotificationOpenedHandler((result: any) => {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Native: Notification opened:', result);
-        }
+        logger.log('OneSignal Native: Notification opened');
         const { notification } = result;
         handleNotificationAction(notification.additionalData);
       });
@@ -115,9 +129,7 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       // Listener para mudanças de subscription
       OneSignal.addSubscriptionObserver((event: any) => {
         if (event.to.userId && externalUserId) {
-          if (import.meta.env.DEV) {
-            console.log('OneSignal Native: Subscription changed, updating Player ID');
-          }
+          logger.log('OneSignal Native: Subscription changed');
           updatePlayerIdInSupabase(event.to.userId, externalUserId);
         }
       });
@@ -125,7 +137,7 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       isInitialized = true;
 
     } catch (error) {
-      console.error('OneSignal Native: Initialization error:', error);
+      logger.error('OneSignal Native: Initialization error:', error);
     }
   }, { once: true });
 }
@@ -133,9 +145,7 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
 // Inicialização Web Push
 async function initWebPush(APP_ID: string, externalUserId?: string) {
   try {
-    if (import.meta.env.DEV) {
-      console.log('OneSignal Web: Initializing with APP_ID:', APP_ID.substring(0, 8) + '...');
-    }
+    logger.log('OneSignal Web: Initializing...');
 
     // Carregar SDK Web do OneSignal
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -156,43 +166,33 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
       // Configurar external user ID
       if (externalUserId) {
         currentExternalUserId = externalUserId;
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Web: Setting external user ID:', externalUserId);
-        }
+        logger.log('OneSignal Web: Setting external user ID');
         await OneSignal.login(externalUserId);
       }
 
       // Obter player ID e salvar no Supabase
       const playerId = await OneSignal.User.PushSubscription.id;
       if (playerId && externalUserId) {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Web: Got Player ID:', playerId);
-        }
+        logger.log('OneSignal Web: Got Player ID');
         updatePlayerIdInSupabase(playerId, externalUserId);
       }
 
       // Listener para mudanças de subscription
       OneSignal.User.PushSubscription.addEventListener('change', (event: any) => {
         if (event.current.id && externalUserId) {
-          if (import.meta.env.DEV) {
-            console.log('OneSignal Web: Subscription changed, updating Player ID');
-          }
+          logger.log('OneSignal Web: Subscription changed');
           updatePlayerIdInSupabase(event.current.id, externalUserId);
         }
       });
 
       // Listener para notificações clicadas
       OneSignal.Notifications.addEventListener('click', (event: any) => {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Web: Notification clicked:', event);
-        }
+        logger.log('OneSignal Web: Notification clicked');
         handleNotificationAction(event.notification.additionalData);
       });
 
       isInitialized = true;
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Web: Initialized successfully');
-      }
+      logger.log('OneSignal Web: Initialized successfully');
     });
 
     // Carregar script do OneSignal se ainda não estiver carregado
@@ -205,7 +205,7 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
     }
 
   } catch (error) {
-    console.error('OneSignal Web: Initialization error:', error);
+    logger.error('OneSignal Web: Initialization error:', error);
   }
 }
 
@@ -216,11 +216,9 @@ export function enablePush(): void {
   try {
     const OneSignal = window.plugins.OneSignal;
     OneSignal.setPushSubscription?.(true);
-    if (import.meta.env.DEV) {
-      console.log('OneSignal Native: Push enabled');
-    }
+    logger.log('Push enabled');
   } catch (error) {
-    console.error('OneSignal Native: Error enabling push:', error);
+    logger.error('Error enabling push:', error);
   }
 }
 
@@ -230,11 +228,9 @@ export function disablePush(): void {
   try {
     const OneSignal = window.plugins.OneSignal;
     OneSignal.setPushSubscription?.(false);
-    if (import.meta.env.DEV) {
-      console.log('OneSignal Native: Push disabled');
-    }
+    logger.log('Push disabled');
   } catch (error) {
-    console.error('OneSignal Native: Error disabling push:', error);
+    logger.error('Error disabling push:', error);
   }
 }
 
@@ -245,18 +241,14 @@ export function clearExternalUserId(): void {
     if (isMobileApp() && window.plugins?.OneSignal) {
       const OneSignal = window.plugins.OneSignal;
       OneSignal.removeExternalUserId?.();
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Native: External user ID cleared');
-      }
+      logger.log('External user ID cleared');
     } else if (window.OneSignal) {
       window.OneSignal.logout();
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Web: User logged out');
-      }
+      logger.log('User logged out');
     }
     currentExternalUserId = null;
   } catch (error) {
-    console.error('OneSignal: Error clearing external user ID:', error);
+    logger.error('Error clearing external user ID:', error);
   }
 }
 
@@ -270,13 +262,11 @@ export function getDeviceState(): Promise<any> {
     try {
       const OneSignal = window.plugins.OneSignal;
       OneSignal.getDeviceState((state: any) => {
-        if (import.meta.env.DEV) {
-          console.log('OneSignal Native: Device state:', state);
-        }
+        logger.log('Device state retrieved');
         resolve(state);
       });
     } catch (error) {
-      console.error('OneSignal Native: Error getting device state:', error);
+      logger.error('Error getting device state:', error);
       reject(error);
     }
   });
@@ -286,9 +276,7 @@ export function getDeviceState(): Promise<any> {
 async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      if (import.meta.env.DEV) {
-        console.log(`OneSignal Native: Updating player ID in Supabase (attempt ${attempt}):`, playerId);
-      }
+      logger.log(`Updating player ID in Supabase (attempt ${attempt})`);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -297,7 +285,7 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
         .select();
       
       if (error) {
-        console.error(`OneSignal Native: Error updating player ID (attempt ${attempt}):`, error);
+        logger.error(`Error updating player ID (attempt ${attempt}):`, error);
         if (attempt === maxRetries) {
           throw error;
         }
@@ -305,13 +293,11 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
         continue;
       }
       
-      if (import.meta.env.DEV) {
-        console.log('OneSignal Native: Player ID successfully saved to Supabase:', data);
-      }
+      logger.log('Player ID successfully saved to Supabase');
       return;
       
     } catch (error) {
-      console.error(`OneSignal Native: Error updating player ID in Supabase (attempt ${attempt}):`, error);
+      logger.error(`Error updating player ID in Supabase (attempt ${attempt}):`, error);
       if (attempt < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }

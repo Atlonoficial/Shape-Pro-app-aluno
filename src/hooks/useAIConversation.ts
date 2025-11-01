@@ -91,9 +91,9 @@ export const useAIConversation = () => {
       
       setMessages(prev => [...prev, userMessage]);
 
-      // Call AI assistant edge function with timeout
+      // Call AI assistant edge function with 45s timeout
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tempo esgotado. Tente novamente.')), 30000)
+        setTimeout(() => reject(new Error('TIMEOUT')), 45000)
       );
 
       const invokePromise = supabase.functions.invoke('ai-assistant', {
@@ -106,24 +106,29 @@ export const useAIConversation = () => {
       const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) {
-        console.error('[AI Assistant] Error:', error);
         // Handle specific error types with user-friendly messages
-        if (error.message?.includes('429')) {
+        const errorMsg = error.message || '';
+        
+        if (errorMsg === 'TIMEOUT') {
+          throw new Error('A resposta está demorando muito. Tente uma pergunta mais simples ou aguarde alguns segundos.');
+        }
+        if (errorMsg.includes('429') || error.status === 429) {
           throw new Error('Você atingiu o limite diário de 3 perguntas. Volte amanhã às 00h! 💪');
         }
-        if (error.message?.includes('timeout') || error.message?.includes('Tempo esgotado')) {
-          throw new Error('A resposta está demorando muito. Tente uma pergunta mais simples.');
-        }
-        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || error.status === 401) {
           throw new Error('Sessão expirada. Faça login novamente.');
         }
-        if (error.message?.includes('OPENAI_API_KEY') || error.message?.includes('OPENAI_ASSISTANT_ID')) {
-          throw new Error('Assistente de IA não configurado. Entre em contato com o suporte.');
+        if (errorMsg.includes('OPENAI_API_KEY') || errorMsg.includes('OPENAI_ASSISTANT_ID') || errorMsg.includes('Missing required environment variables')) {
+          throw new Error('Coach IA não está configurado. Entre em contato com o administrador.');
         }
-        if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        if (errorMsg.includes('network') || errorMsg.includes('fetch') || errorMsg.includes('Failed to fetch')) {
           throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
         }
-        throw new Error('Não foi possível conectar ao assistente. Tente novamente.');
+        if (error.status === 500) {
+          throw new Error('Erro no servidor. Tente novamente em alguns instantes.');
+        }
+        
+        throw new Error('Não foi possível conectar ao Coach IA. Tente novamente.');
       }
 
       if (!data?.response) {

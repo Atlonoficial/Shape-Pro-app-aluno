@@ -41,13 +41,14 @@ serve(async (req) => {
     // Get client IP for rate limiting
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     
-    // Rate limiting: 10 requests per minute per IP
+    // Rate limiting: 20 requests per minute per IP
     const now = Date.now();
     const windowStart = now - 60000; // 1 minute window
     const clientRequests = rateLimitMap.get(clientIP) || [];
     const validRequests = clientRequests.filter((time: number) => time > windowStart);
     
-    if (validRequests.length >= 10) {
+    if (validRequests.length >= 20) {
+      console.log(`[Rate Limit] IP ${clientIP} exceeded limit: ${validRequests.length} requests`);
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
         headers: securityHeaders,
@@ -328,11 +329,17 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
     });
 
   } catch (error: any) {
-    console.error('Error in AI assistant:', error);
+    console.error('[AI Assistant] Error:', error);
+    console.error('[AI Assistant] Error stack:', error?.stack);
+    
+    // Return detailed error for debugging
+    const errorMessage = error?.message || 'Internal server error';
+    console.error('[AI Assistant] Returning error to client:', errorMessage);
+    
     return new Response(JSON.stringify({ 
-      error: error?.message || 'Internal server error' 
+      error: errorMessage
     }), {
-      status: 500,
+      status: error?.status || 500,
       headers: securityHeaders,
     });
   }

@@ -3,16 +3,17 @@ import { Capacitor } from '@capacitor/core';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { logger } from '@/utils/logger';
 
 /**
  * Shape Pro - Native Integration Component
- * Gerencia todas as integrações nativas do Capacitor
+ * Gerencia integrações nativas do Capacitor (exceto notificações)
+ * NOTA: Notificações são gerenciadas pelo OneSignal via src/lib/push.ts
  */
 export const NativeIntegration = () => {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
-      console.log('[NativeIntegration] Running on web platform');
+      logger.log('[NativeIntegration] Running on web platform');
       return;
     }
 
@@ -21,7 +22,7 @@ export const NativeIntegration = () => {
 
   const initNativeFeatures = async () => {
     try {
-      console.log('[NativeIntegration] Initializing native features...');
+      logger.log('[NativeIntegration] Initializing native features...');
 
       // 1. Configure Status Bar
       await configureStatusBar();
@@ -32,12 +33,9 @@ export const NativeIntegration = () => {
       // 3. Hide Splash Screen
       await hideSplashScreen();
 
-      // 4. Initialize Push Notifications
-      await initPushNotifications();
-
-      console.log('[NativeIntegration] All native features initialized successfully');
+      logger.log('[NativeIntegration] All native features initialized successfully');
     } catch (error) {
-      console.error('[NativeIntegration] Error initializing native features:', error);
+      logger.error('[NativeIntegration] Error initializing native features:', error);
     }
   };
 
@@ -48,9 +46,9 @@ export const NativeIntegration = () => {
       await StatusBar.setBackgroundColor({ color: '#000000' });
       await StatusBar.show();
       
-      console.log('[NativeIntegration] Status bar configured');
+      logger.log('[NativeIntegration] Status bar configured');
     } catch (error) {
-      console.error('[NativeIntegration] Error configuring status bar:', error);
+      logger.error('[NativeIntegration] Error configuring status bar:', error);
     }
   };
 
@@ -65,9 +63,9 @@ export const NativeIntegration = () => {
         document.body.classList.remove('keyboard-open');
       });
 
-      console.log('[NativeIntegration] Keyboard listeners configured');
+      logger.log('[NativeIntegration] Keyboard listeners configured');
     } catch (error) {
-      console.error('[NativeIntegration] Error configuring keyboard:', error);
+      logger.error('[NativeIntegration] Error configuring keyboard:', error);
     }
   };
 
@@ -75,47 +73,9 @@ export const NativeIntegration = () => {
     try {
       // Hide splash screen after app is loaded
       await SplashScreen.hide();
-      console.log('[NativeIntegration] Splash screen hidden');
+      logger.log('[NativeIntegration] Splash screen hidden');
     } catch (error) {
-      console.error('[NativeIntegration] Error hiding splash screen:', error);
-    }
-  };
-
-  const initPushNotifications = async () => {
-    try {
-      // Request permissions for push notifications
-      const permission = await PushNotifications.requestPermissions();
-      
-      if (permission.receive === 'granted') {
-        // Register for push notifications
-        await PushNotifications.register();
-
-        // Add listeners for push notification events
-        PushNotifications.addListener('registration', (token) => {
-          console.log('[NativeIntegration] Push registration token:', token.value);
-          // TODO: Send token to your backend server
-        });
-
-        PushNotifications.addListener('registrationError', (error) => {
-          console.error('[NativeIntegration] Push registration error:', error);
-        });
-
-        PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          console.log('[NativeIntegration] Push notification received:', notification);
-          // TODO: Handle notification received while app is open
-        });
-
-        PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-          console.log('[NativeIntegration] Push notification action performed:', notification);
-          // TODO: Handle notification tap/action
-        });
-
-        console.log('[NativeIntegration] Push notifications initialized');
-      } else {
-        console.log('[NativeIntegration] Push notification permission denied');
-      }
-    } catch (error) {
-      console.error('[NativeIntegration] Error initializing push notifications:', error);
+      logger.error('[NativeIntegration] Error hiding splash screen:', error);
     }
   };
 

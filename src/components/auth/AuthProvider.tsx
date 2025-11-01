@@ -4,8 +4,9 @@ import { User, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/lib/supabase';
 import { LoadingScreen } from './LoadingScreen';
 import { AuthScreen } from './AuthScreen';
-import { initPush, clearExternalUserId } from '@/lib/push';
+import { initPush, clearExternalUserId, promptForPermissionOnFirstAccess } from '@/lib/push';
 import { useLocation } from 'react-router-dom';
+import { logger } from '@/utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -51,12 +52,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Inicializar OneSignal quando usuário estiver autenticado
   useEffect(() => {
     if (auth.isAuthenticated && auth.user?.id) {
-      console.log('AuthProvider: Initializing OneSignal for user:', auth.user.id);
+      logger.log('Initializing OneSignal for user');
       initPush(auth.user.id);
+      
+      // Solicitar permissão de notificação automaticamente no primeiro acesso
+      promptForPermissionOnFirstAccess();
     } else if (!auth.isAuthenticated && !auth.loading) {
       // Limpar configurações OneSignal no logout
       clearExternalUserId();
-      console.log('AuthProvider: OneSignal cleared for logout');
+      logger.log('OneSignal cleared for logout');
     }
   }, [auth.isAuthenticated, auth.user?.id, auth.loading]);
 
