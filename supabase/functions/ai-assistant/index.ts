@@ -110,6 +110,32 @@ serve(async (req) => {
 
     console.log('Processing AI request for user:', user.id);
 
+    // Check daily usage limit (3 questions per day)
+    const today = new Date().toISOString().split('T')[0];
+    const DAILY_LIMIT = 3;
+
+    const { data: usageData, error: usageError } = await supabase
+      .from('ai_usage_stats')
+      .select('daily_count')
+      .eq('user_id', user.id)
+      .eq('usage_date', today)
+      .maybeSingle();
+
+    if (usageError && usageError.code !== 'PGRST116') {
+      console.error('Error checking usage limit:', usageError);
+    }
+
+    const currentCount = usageData?.daily_count || 0;
+    
+    if (currentCount >= DAILY_LIMIT) {
+      return new Response(JSON.stringify({ 
+        error: 'Você atingiu o limite diário de 3 perguntas. Volte amanhã! 💪' 
+      }), {
+        status: 429,
+        headers: securityHeaders,
+      });
+    }
+
     // Get or create conversation
     let conversation;
     if (conversationId) {
@@ -273,6 +299,25 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       .from('ai_conversations')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', conversation.id);
+
+    // Increment usage count
+    if (usageData) {
+      // Update existing record
+      await supabase
+        .from('ai_usage_stats')
+        .update({ daily_count: currentCount + 1 })
+        .eq('user_id', user.id)
+        .eq('usage_date', today);
+    } else {
+      // Create new record
+      await supabase
+        .from('ai_usage_stats')
+        .insert({
+          user_id: user.id,
+          usage_date: today,
+          daily_count: 1
+        });
+    }
 
     return new Response(JSON.stringify({
       response: responseContent,
