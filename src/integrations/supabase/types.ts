@@ -5156,6 +5156,7 @@ export type Database = {
         Args: { plan_interval: string }
         Returns: string
       }
+      calculate_streak: { Args: { p_user_id: string }; Returns: number }
       calculate_student_payment_status: {
         Args: { p_student_id: string; p_teacher_id: string }
         Returns: {
@@ -5227,6 +5228,18 @@ export type Database = {
           p_week_number: number
         }
         Returns: string
+      }
+      create_or_update_feedback: {
+        Args: {
+          p_feedback_text?: string
+          p_feedback_type?: string
+          p_nutrition_log_id?: string
+          p_rating?: number
+          p_student_id: string
+          p_user_id: string
+          p_workout_session_id?: string
+        }
+        Returns: Json
       }
       ensure_student_record: { Args: never; Returns: string }
       execute_marketing_campaign: {
