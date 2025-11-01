@@ -37,7 +37,7 @@ const config: CapacitorConfig = {
 
       // Força versão/build novos
       CFBundleShortVersionString: "4.0.0",
-      CFBundleVersion: "41",
+      CFBundleVersion: "42",
     },
   },
 

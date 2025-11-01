@@ -4,6 +4,10 @@
 	"webDir": "dist",
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
+	"version": {
+		"code": 42,
+		"name": "4.0.0"
+	},
 	"ios": {
 		"scheme": "ShapePro",
 		"contentInset": "automatic",

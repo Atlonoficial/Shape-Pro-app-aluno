@@ -14,14 +14,12 @@
 			"NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.",
 			"NSPhotoLibraryAddUsageDescription": "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
 			"NSCameraUsageDescription": "Precisamos da câmera para tirar fotos dentro do app.",
-			"NSLocationWhenInUseUsageDescription": "Usamos sua localização apenas enquanto o app está em uso para enviar notificações relevantes na sua região.",
-			"NSLocationAlwaysAndWhenInUseUsageDescription": "Usamos sua localização somente quando necessário para recursos do app.",
 			"UIBackgroundModes": [
 				"remote-notification"
 			],
 			"ITSAppUsesNonExemptEncryption": false,
-			"CFBundleShortVersionString": "1.1.1",
-			"CFBundleVersion": "2"
+			"CFBundleShortVersionString": "4.0.0",
+			"CFBundleVersion": "42"
 		}
 	},
 	"android": {
@@ -45,7 +43,7 @@
 		},
 		"SplashScreen": {
 			"launchAutoHide": true,
-			"launchShowDuration": 0,
+			"launchShowDuration": 1500,
 			"backgroundColor": "#000000",
 			"androidSplashResourceName": "splash",
 			"androidScaleType": "CENTER",
