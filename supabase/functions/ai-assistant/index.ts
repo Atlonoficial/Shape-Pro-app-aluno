@@ -248,10 +248,16 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
     const run = await runResponse.json();
     console.log('OpenAI run created:', run.id);
 
-    // Poll for completion
+    // Poll for completion with timeout (40s max, polling every 2s)
     let runStatus = run;
-    while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    let pollCount = 0;
+    const MAX_POLLS = 20; // 20 * 2s = 40s timeout
+    
+    console.log('[OpenAI] Starting polling with timeout:', { maxPolls: MAX_POLLS, intervalMs: 2000 });
+    
+    while ((runStatus.status === 'queued' || runStatus.status === 'in_progress') && pollCount < MAX_POLLS) {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Otimizado: 1s → 2s
+      pollCount++;
       
       const statusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${run.id}`, {
         headers: {
@@ -261,12 +267,20 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       });
       
       runStatus = await statusResponse.json();
-      console.log('Run status:', runStatus.status);
+      console.log(`[OpenAI] Run status (poll ${pollCount}/${MAX_POLLS}):`, runStatus.status);
+    }
+
+    if (pollCount >= MAX_POLLS) {
+      console.error('[OpenAI] Timeout after', pollCount * 2, 'seconds');
+      throw new Error('OpenAI assistant timeout after 40 seconds. Try a simpler question.');
     }
 
     if (runStatus.status !== 'completed') {
+      console.error('[OpenAI] Run failed with status:', runStatus.status);
       throw new Error(`Assistant run failed with status: ${runStatus.status}`);
     }
+
+    console.log('[OpenAI] Run completed successfully in', pollCount * 2, 'seconds');
 
     // Get messages
     const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
@@ -329,17 +343,32 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
     });
 
   } catch (error: any) {
-    console.error('[AI Assistant] Error:', error);
+    console.error('[AI Assistant] ===== ERROR START =====');
+    console.error('[AI Assistant] Error type:', error?.constructor?.name);
+    console.error('[AI Assistant] Error message:', error?.message);
+    console.error('[AI Assistant] Error status:', error?.status);
+    console.error('[AI Assistant] Error code:', error?.code);
     console.error('[AI Assistant] Error stack:', error?.stack);
+    console.error('[AI Assistant] Full error object:', JSON.stringify({
+      name: error?.name,
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+      details: error?.details
+    }, null, 2));
+    console.error('[AI Assistant] ===== ERROR END =====');
     
     // Return detailed error for debugging
     const errorMessage = error?.message || 'Internal server error';
-    console.error('[AI Assistant] Returning error to client:', errorMessage);
+    const errorStatus = error?.status || 500;
+    
+    console.error('[AI Assistant] Returning to client:', { status: errorStatus, message: errorMessage });
     
     return new Response(JSON.stringify({ 
-      error: errorMessage
+      error: errorMessage,
+      details: error?.details || null
     }), {
-      status: error?.status || 500,
+      status: errorStatus,
       headers: securityHeaders,
     });
   }

@@ -26,14 +26,20 @@ export const useWeightProgress = (userId: string) => {
 
       console.log('🔍 Fetching weight progress for user:', userId);
 
-      // Use SQL date functions to filter by current month (more reliable)
+      // Mostrar últimos 30 dias ao invés de apenas mês atual
+      // Isso evita que o gráfico fique vazio no início do mês
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+      console.log('📅 Date range:', { from: thirtyDaysAgoStr, to: new Date().toISOString().split('T')[0] });
+
       const { data, error: fetchError } = await supabase
         .from('progress')
         .select('*')
         .eq('user_id', userId)
         .eq('type', 'weight')
-        .gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
-        .lt('date', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0])
+        .gte('date', thirtyDaysAgoStr)
         .order('date', { ascending: true });
 
       if (fetchError) {
@@ -43,7 +49,7 @@ export const useWeightProgress = (userId: string) => {
 
       console.log('📊 Raw weight data from DB:', data);
 
-      // Format data for the chart - current month only
+      // Format data for the chart - últimos 30 dias
       const formattedData = (data || []).map(entry => {
         const entryDate = new Date(entry.date);
         return {

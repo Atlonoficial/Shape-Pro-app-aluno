@@ -103,39 +103,79 @@ export const useAIConversation = () => {
         }
       });
 
+      console.log('[Coach IA] 📤 Sending request to Edge Function...', {
+        userId: user.id,
+        messageLength: message.length,
+        conversationId: currentConversation?.id,
+        timestamp: new Date().toISOString()
+      });
+
       const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
+      console.log('[Coach IA] 📥 Response received:', {
+        hasData: !!data,
+        hasError: !!error,
+        errorStatus: error?.status,
+        errorMessage: error?.message,
+        dataKeys: data ? Object.keys(data) : [],
+        timestamp: new Date().toISOString()
+      });
+
       if (error) {
-        // Handle specific error types with user-friendly messages
         const errorMsg = error.message || '';
+        const errorStatus = error.status;
         
+        console.error('[Coach IA] ❌ Error details:', {
+          message: errorMsg,
+          status: errorStatus,
+          fullError: JSON.stringify(error, null, 2)
+        });
+        
+        // Erros específicos com mensagens amigáveis e emojis
         if (errorMsg === 'TIMEOUT') {
-          throw new Error('A resposta está demorando muito. Tente uma pergunta mais simples ou aguarde alguns segundos.');
+          throw new Error('⏱️ Resposta demorando muito. Tente uma pergunta mais simples.');
         }
+        
         if (errorMsg.includes('Missing required environment variables') || 
             errorMsg.includes('OPENAI_API_KEY') || 
             errorMsg.includes('OPENAI_ASSISTANT_ID')) {
-          throw new Error('Coach IA não configurado. Contate o suporte para ativar.');
-        }
-        if (errorMsg.includes('429') || error.status === 429) {
-          throw new Error('Você atingiu o limite diário de 3 perguntas. Volte amanhã às 00h! 💪');
-        }
-        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || error.status === 401) {
-          throw new Error('Sessão expirada. Faça login novamente.');
-        }
-        if (errorMsg.includes('network') || errorMsg.includes('fetch') || errorMsg.includes('Failed to fetch')) {
-          throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
-        }
-        if (error.status === 500) {
-          throw new Error('Erro no servidor. Tente novamente em alguns instantes.');
+          throw new Error('🔧 Coach IA não configurado. Configure as credenciais OpenAI no Supabase.');
         }
         
-        throw new Error('Não foi possível conectar ao Coach IA. Tente novamente.');
+        if (errorMsg.includes('429') || errorStatus === 429) {
+          throw new Error('⏰ Você atingiu o limite diário de 3 perguntas. Volte amanhã às 00h! 💪');
+        }
+        
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorStatus === 401) {
+          throw new Error('🔐 Sessão expirada. Faça login novamente.');
+        }
+        
+        if (errorMsg.includes('403') || errorStatus === 403) {
+          throw new Error('🚫 Sem permissão para acessar Coach IA.');
+        }
+        
+        if (errorMsg.includes('network') || errorMsg.includes('fetch') || errorMsg.includes('Failed to fetch')) {
+          throw new Error('📡 Erro de conexão. Verifique sua internet.');
+        }
+        
+        if (errorStatus === 500) {
+          throw new Error('⚙️ Erro interno do servidor. Tente novamente em alguns instantes.');
+        }
+        
+        // Erro genérico com detalhes
+        throw new Error(`❌ ${errorMsg || 'Não foi possível conectar ao Coach IA. Tente novamente.'}`);
       }
 
       if (!data?.response) {
-        throw new Error('Resposta inválida do assistente. Tente novamente.');
+        console.error('[Coach IA] ❌ Empty response from assistant');
+        throw new Error('📭 Resposta vazia do assistente. Tente novamente.');
       }
+
+      console.log('[Coach IA] ✅ Success! Response received:', {
+        responseLength: data.response.length,
+        conversationId: data.conversationId,
+        threadId: data.threadId
+      });
 
       const response = data.response;
       const conversationId = data.conversationId;
