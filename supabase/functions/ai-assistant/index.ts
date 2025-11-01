@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-platform',
 };
 
 const securityHeaders = {
@@ -291,7 +291,7 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
     // Poll for completion with timeout (40s max, polling every 2s)
     let runStatus = run;
     let pollCount = 0;
-    const MAX_POLLS = 20; // 20 * 2s = 40s timeout
+    const MAX_POLLS = 25; // 25 * 2s = 50s timeout
     
     console.log('[OpenAI] Starting polling with timeout:', { maxPolls: MAX_POLLS, intervalMs: 2000 });
     

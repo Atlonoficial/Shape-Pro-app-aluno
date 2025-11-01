@@ -34,7 +34,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   global: {
     headers: {
       'X-Client-Info': 'shape-pro-mobile/1.0',
-      'X-Platform': isCapacitor ? 'capacitor' : 'web',
+      // X-Platform removido para evitar problemas de CORS
     },
   },
 });

@@ -135,7 +135,9 @@ export const useAIConversation = () => {
         console.error('[Coach IA] 🔥 Invoke failed immediately:', {
           error: invokeError,
           message: invokeError?.message,
-          stack: invokeError?.stack
+          stack: invokeError?.stack,
+          name: invokeError?.name,
+          cause: invokeError?.cause // Adiciona causa raiz para melhor debug de erros CORS/network
         });
         throw invokeError;
       }
