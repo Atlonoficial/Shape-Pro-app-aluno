@@ -5152,6 +5152,7 @@ export type Database = {
           total_protein: number
         }[]
       }
+      calculate_monthly_rankings: { Args: never; Returns: undefined }
       calculate_plan_expiry: {
         Args: { plan_interval: string }
         Returns: string

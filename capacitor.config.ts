@@ -40,8 +40,8 @@ const config: CapacitorConfig = {
       ITSAppUsesNonExemptEncryption: false,
 
       // Força versão/build novos
-      CFBundleShortVersionString: "1.1.1",
-      CFBundleVersion: "2",
+      CFBundleShortVersionString: "4.0.0",
+      CFBundleVersion: "41",
     },
   },
 

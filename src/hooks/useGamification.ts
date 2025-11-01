@@ -72,7 +72,14 @@ interface Challenge {
 
 export const useGamification = () => {
   const { user } = useAuthContext();
-  const [userPoints, setUserPoints] = useState<UserPoints | null>(null);
+  const [userPoints, setUserPoints] = useState<UserPoints | null>(() => {
+    // Cache inicial do localStorage
+    if (typeof window !== 'undefined' && user?.id) {
+      const cached = localStorage.getItem(`points_${user.id}`);
+      return cached ? JSON.parse(cached) : null;
+    }
+    return null;
+  });
   const [activities, setActivities] = useState<GamificationActivity[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
@@ -336,6 +343,13 @@ export const useGamification = () => {
       progress: Math.min(progress, 100)
     };
   };
+
+  // Salvar pontos no cache quando atualizar
+  useEffect(() => {
+    if (userPoints && user?.id && typeof window !== 'undefined') {
+      localStorage.setItem(`points_${user.id}`, JSON.stringify(userPoints));
+    }
+  }, [userPoints, user?.id]);
 
   // Inicializar dados e configurar subscriptions em tempo real
   useEffect(() => {

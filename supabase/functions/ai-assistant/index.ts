@@ -241,23 +241,46 @@ serve(async (req) => {
       });
 
     // Add message to OpenAI thread with context
-    const contextualMessage = `DADOS DO ALUNO PARA CONTEXTO (use essas informações para personalizar suas respostas):
+    const contextualMessage = `CONTEXTO COMPLETO DO ALUNO:
 
-PERFIL: ${studentContext.profile ? `Nome: ${studentContext.profile.name}, Email: ${studentContext.profile.email}` : 'Não disponível'}
+📋 PERFIL:
+- Nome: ${studentContext.profile?.name || 'Não informado'}
+- Idade: ${studentContext.profile?.age || 'N/A'} anos
+- Peso: ${studentContext.profile?.weight || 'N/A'} kg
+- Altura: ${studentContext.profile?.height || 'N/A'} cm
+- Objetivo: ${studentContext.profile?.goal || 'Não definido'}
+- Status: ${studentContext.student?.membership_status || 'N/A'}
 
-INFORMAÇÕES DO ESTUDANTE: ${studentContext.student ? `Status: ${studentContext.student.membership_status}, Plano: ${studentContext.student.active_plan}, Objetivos: ${studentContext.student.goals?.join(', ') || 'Não definidos'}` : 'Não disponível'}
+🏥 ANAMNESE:
+${studentContext.anamnese ? `- Doenças: ${studentContext.anamnese.doencas?.join(', ') || 'Nenhuma'}
+- Alergias: ${studentContext.anamnese.alergias?.join(', ') || 'Nenhuma'}
+- Medicações: ${studentContext.anamnese.medicacoes?.join(', ') || 'Nenhuma'}
+- Qualidade do Sono: ${studentContext.anamnese.qualidade_sono || 'Não informado'} (${studentContext.anamnese.horas_sono || 'N/A'} horas)
+- Lesões: ${studentContext.anamnese.lesoes || 'Nenhuma'}` : 'Não preenchida'}
 
-ANAMNESE: ${studentContext.anamnese ? `Doenças: ${studentContext.anamnese.doencas?.join(', ') || 'Nenhuma'}, Alergias: ${studentContext.anamnese.alergias?.join(', ') || 'Nenhuma'}, Medicações: ${studentContext.anamnese.medicacoes?.join(', ') || 'Nenhuma'}, Sono: ${studentContext.anamnese.qualidade_sono || 'Não informado'}, Lesões: ${studentContext.anamnese.lesoes || 'Nenhuma'}` : 'Não preenchida'}
+💪 TREINOS ATIVOS (${studentContext.workouts.length}):
+${studentContext.workouts.length > 0 ? studentContext.workouts.map(w => `
+  - ${w.name} (${w.difficulty || 'N/A'})
+    Exercícios: ${w.exercises?.map((e: any) => `${e.exercise_name} (${e.sets}x${e.reps})`).join(', ') || 'Nenhum'}`).join('\n') : 'Nenhum treino ativo'}
 
-TREINOS ATIVOS: ${studentContext.workouts.length > 0 ? studentContext.workouts.map(w => `${w.name} (${w.difficulty})`).join(', ') : 'Nenhum treino ativo'}
+🍎 NUTRIÇÃO (${studentContext.nutritionPlans.length} planos):
+${studentContext.nutritionPlans.length > 0 ? studentContext.nutritionPlans.map(n => `
+  - ${n.name} (${n.daily_calories || 'N/A'} kcal/dia)
+    Refeições:
+${n.meals?.map((m: any) => `      • ${m.meal_name} (${m.meal_time}) - ${m.calories || 0} kcal, P: ${m.protein || 0}g, C: ${m.carbs || 0}g, G: ${m.fat || 0}g`).join('\n') || '      Nenhuma'}`).join('\n') : 'Nenhum plano nutricional'}
 
-PLANOS NUTRICIONAIS: ${studentContext.nutritionPlans.length > 0 ? studentContext.nutritionPlans.map(p => `${p.name} - ${p.daily_calories} cal`).join(', ') : 'Nenhum plano nutricional'}
+📊 PROGRESSO RECENTE:
+${studentContext.progress.length > 0 ? studentContext.progress.slice(0, 3).map(p => `- ${p.type || 'Medida'}: ${p.value}${p.unit || ''} em ${new Date(p.date).toLocaleDateString('pt-BR')}`).join('\n') : 'Sem registros de progresso'}
 
-PROGRESSO RECENTE: ${studentContext.progress.length > 0 ? studentContext.progress.slice(-3).map(p => `${p.type}: ${p.value}${p.unit} (${new Date(p.date).toLocaleDateString('pt-BR')})`).join(', ') : 'Sem dados de progresso'}
+🍽️ ALIMENTAÇÃO (últimos 7 dias):
+${studentContext.mealLogs.length > 0 ? `${studentContext.mealLogs.length} refeições registradas` : 'Sem registros de refeições'}
 
-PERGUNTA DO ALUNO: ${message}
+🏆 GAMIFICAÇÃO:
+${studentContext.recentActivities.length > 0 ? `Atividades recentes: ${studentContext.recentActivities.slice(0, 3).map(a => `${a.activity_type} (+${a.points_earned} pts)`).join(', ')}` : 'Sem atividades recentes'}
 
-IMPORTANTE: Use essas informações para dar respostas personalizadas e específicas para o aluno. Seja empático, motivador e use os dados reais para dar conselhos precisos.`;
+MENSAGEM DO ALUNO: ${message}
+
+IMPORTANTE: Use TODOS esses dados detalhados para dar respostas personalizadas, motivadoras e baseadas no perfil real do aluno. Mencione exercícios específicos, refeições do plano, progresso registrado e contexto médico quando relevante.`;
 
     await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       method: 'POST',
@@ -441,18 +464,39 @@ async function collectStudentContext(supabase: any, userId: string): Promise<Stu
       .limit(1)
       .single();
 
-    // Get workouts (last 5)
+    // Get workouts (last 5) with exercises
     const { data: workouts } = await supabase
       .from('workouts')
-      .select('*')
+      .select(`
+        *,
+        exercises:workout_exercises(
+          exercise_name,
+          sets,
+          reps,
+          rest_seconds,
+          notes
+        )
+      `)
       .contains('assigned_to', [userId])
       .order('created_at', { ascending: false })
       .limit(5);
 
-    // Get nutrition plans (active ones)
+    // Get nutrition plans (active ones) with meals
     const { data: nutritionPlans } = await supabase
       .from('nutrition_plans')
-      .select('*')
+      .select(`
+        *,
+        meals:meal_plan_items(
+          meal_name,
+          meal_time,
+          meal_type,
+          calories,
+          protein,
+          carbs,
+          fat,
+          foods
+        )
+      `)
       .contains('assigned_to', [userId])
       .order('created_at', { ascending: false })
       .limit(3);
