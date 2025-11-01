@@ -33,9 +33,17 @@ interface StudentContextData {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Log incoming request
+  console.log('[AI Assistant] 📨 Request received:', {
+    method: req.method,
+    hasAuthHeader: !!req.headers.get('authorization'),
+    timestamp: new Date().toISOString()
+  });
 
   try {
     // Get client IP for rate limiting
@@ -95,21 +103,53 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user from JWT token
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    // Authenticate user
+    let userId: string;
+    try {
+      const authHeader = req.headers.get('authorization');
+      
+      if (!authHeader) {
+        console.error('[AI Assistant] ❌ No authorization header');
+        return new Response(JSON.stringify({ 
+          error: 'Missing authorization header',
+          details: 'Please ensure you are logged in'
+        }), {
+          status: 401,
+          headers: securityHeaders,
+        });
+      }
+      
+      console.log('[AI Assistant] 🔐 Verifying JWT...');
+      
+      const jwt = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+
+      if (authError || !user) {
+        console.error('[AI Assistant] ❌ Auth failed:', authError);
+        return new Response(JSON.stringify({ 
+          error: 'Unauthorized: ' + (authError?.message || 'Invalid token'),
+          details: 'Please check your session and try logging in again'
+        }), {
+          status: 401,
+          headers: securityHeaders,
+        });
+      }
+
+      userId = user.id;
+      console.log('[AI Assistant] ✅ User authenticated:', userId);
+      
+    } catch (error: any) {
+      console.error('[AI Assistant] 🔥 Authentication error:', error);
+      return new Response(JSON.stringify({ 
+        error: error.message || 'Authentication failed',
+        details: 'Please check your session and try logging in again'
+      }), {
+        status: 401,
+        headers: securityHeaders,
+      });
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
-
-    console.log('Processing AI request for user:', user.id);
+    console.log('Processing AI request for user:', userId);
 
     // Check daily usage limit (3 questions per day)
     const today = new Date().toISOString().split('T')[0];
@@ -118,7 +158,7 @@ serve(async (req) => {
     const { data: usageData, error: usageError } = await supabase
       .from('ai_usage_stats')
       .select('daily_count')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('usage_date', today)
       .maybeSingle();
 
@@ -144,7 +184,7 @@ serve(async (req) => {
         .from('ai_conversations')
         .select('*')
         .eq('id', conversationId)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
       conversation = data;
     }
@@ -153,7 +193,7 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from('ai_conversations')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           title: message.substring(0, 50) + '...'
         })
         .select()
@@ -164,7 +204,7 @@ serve(async (req) => {
     }
 
     // Collect student contextual data
-    const studentContext = await collectStudentContext(supabase, user.id);
+    const studentContext = await collectStudentContext(supabase, userId);
     
     // Create OpenAI thread if not exists
     let threadId = conversation.thread_id;
@@ -177,7 +217,7 @@ serve(async (req) => {
           'OpenAI-Beta': 'assistants=v2'
         },
         body: JSON.stringify({
-          metadata: { user_id: user.id }
+          metadata: { user_id: userId }
         })
       });
 
@@ -321,14 +361,14 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       await supabase
         .from('ai_usage_stats')
         .update({ daily_count: currentCount + 1 })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('usage_date', today);
     } else {
       // Create new record
       await supabase
         .from('ai_usage_stats')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           usage_date: today,
           daily_count: 1
         });

@@ -81,6 +81,19 @@ export const useAIConversation = () => {
     setError(null);
 
     try {
+      // Verificar sessão ANTES de enviar
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !sessionData?.session) {
+        console.error('[Coach IA] 🔐 Session error:', sessionError);
+        throw new Error('🔐 Sessão expirada. Faça login novamente.');
+      }
+
+      console.log('[Coach IA] ✅ Session valid:', {
+        userId: sessionData.session.user.id,
+        expiresAt: sessionData.session.expires_at ? new Date(sessionData.session.expires_at * 1000).toISOString() : 'unknown'
+      });
+
       // Add user message immediately to UI
       const userMessage: AIMessage = {
         id: `temp-${Date.now()}`,
@@ -96,19 +109,36 @@ export const useAIConversation = () => {
         setTimeout(() => reject(new Error('TIMEOUT')), 45000)
       );
 
-      const invokePromise = supabase.functions.invoke('ai-assistant', {
-        body: {
-          message,
-          conversationId: currentConversation?.id
-        }
-      });
-
-      console.log('[Coach IA] 📤 Sending request to Edge Function...', {
+      console.log('[Coach IA] 🔍 Pre-flight checks:', {
+        supabaseUrl: (supabase as any).supabaseUrl,
+        hasAuth: !!supabase.auth,
         userId: user.id,
         messageLength: message.length,
         conversationId: currentConversation?.id,
         timestamp: new Date().toISOString()
       });
+
+      let invokePromise;
+      try {
+        invokePromise = supabase.functions.invoke('ai-assistant', {
+          body: {
+            message,
+            conversationId: currentConversation?.id
+          },
+          headers: {
+            Authorization: `Bearer ${sessionData.session.access_token}`
+          }
+        });
+        
+        console.log('[Coach IA] 📤 Request sent successfully');
+      } catch (invokeError: any) {
+        console.error('[Coach IA] 🔥 Invoke failed immediately:', {
+          error: invokeError,
+          message: invokeError?.message,
+          stack: invokeError?.stack
+        });
+        throw invokeError;
+      }
 
       const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
@@ -131,7 +161,77 @@ export const useAIConversation = () => {
           fullError: JSON.stringify(error, null, 2)
         });
         
-        // Erros específicos com mensagens amigáveis e emojis
+        // Se erro 401, tentar refresh e retry UMA VEZ
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorStatus === 401) {
+          console.log('[Coach IA] 🔄 Attempting token refresh...');
+          
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData?.session) {
+            console.error('[Coach IA] ❌ Refresh failed:', refreshError);
+            throw new Error('🔐 Sessão expirada. Faça login novamente.');
+          }
+          
+          console.log('[Coach IA] ✅ Token refreshed, retrying...');
+          
+          // RETRY com novo token
+          const retryResult = await supabase.functions.invoke('ai-assistant', {
+            body: { message, conversationId: currentConversation?.id },
+            headers: {
+              Authorization: `Bearer ${refreshData.session.access_token}`
+            }
+          });
+          
+          if (retryResult.error) {
+            console.error('[Coach IA] ❌ Retry failed:', retryResult.error);
+            throw new Error(`❌ ${retryResult.error.message || 'Falha após refresh do token'}`);
+          }
+          
+          // Usar resultado do retry e continuar o fluxo normal
+          console.log('[Coach IA] ✅ Retry successful!');
+          const retryData = retryResult.data;
+          
+          if (!retryData?.response) {
+            throw new Error('📭 Resposta vazia do assistente. Tente novamente.');
+          }
+          
+          const response = retryData.response;
+          const conversationId = retryData.conversationId;
+
+          // If this is a new conversation, update current conversation
+          if (!currentConversation) {
+            const { data: newConversation } = await supabase
+              .from('ai_conversations')
+              .select('*')
+              .eq('id', conversationId)
+              .single();
+
+            if (newConversation) {
+              setCurrentConversation(newConversation);
+            }
+          }
+
+          // Add assistant response to UI
+          const assistantMessage: AIMessage = {
+            id: `ai-${Date.now()}`,
+            role: 'assistant',
+            content: response,
+            timestamp: new Date()
+          };
+
+          // Remove temp user message and add both real messages
+          setMessages(prev => {
+            const withoutTemp = prev.filter(msg => msg.id !== userMessage.id);
+            return [...withoutTemp, userMessage, assistantMessage];
+          });
+
+          // Reload conversations to update the list
+          loadConversations();
+
+          return response;
+        }
+        
+        // Resto dos erros específicos
         if (errorMsg === 'TIMEOUT') {
           throw new Error('⏱️ Resposta demorando muito. Tente uma pergunta mais simples.');
         }
@@ -146,10 +246,6 @@ export const useAIConversation = () => {
           throw new Error('⏰ Você atingiu o limite diário de 3 perguntas. Volte amanhã às 00h! 💪');
         }
         
-        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorStatus === 401) {
-          throw new Error('🔐 Sessão expirada. Faça login novamente.');
-        }
-        
         if (errorMsg.includes('403') || errorStatus === 403) {
           throw new Error('🚫 Sem permissão para acessar Coach IA.');
         }
@@ -162,7 +258,7 @@ export const useAIConversation = () => {
           throw new Error('⚙️ Erro interno do servidor. Tente novamente em alguns instantes.');
         }
         
-        // Erro genérico com detalhes
+        // Incluir erro original na mensagem para debug
         throw new Error(`❌ ${errorMsg || 'Não foi possível conectar ao Coach IA. Tente novamente.'}`);
       }
 
