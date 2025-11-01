@@ -31,6 +31,8 @@ export const useRealtimeManager = ({
   const channelRef = useRef<RealtimeChannel | null>(null);
   const debouncedCallbacksRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const isConnectedRef = useRef(false);
+  const reconnectAttemptsRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 3;
 
   // Cleanup debounced callbacks
   const clearDebouncedCallbacks = useCallback(() => {
@@ -101,27 +103,38 @@ export const useRealtimeManager = ({
 
       if (status === 'SUBSCRIBED') {
         logger.log('[RealtimeManager] ✅ All subscriptions active');
+        reconnectAttemptsRef.current = 0; // Reset on success
       } else if (status === 'CHANNEL_ERROR') {
-        logger.error('[RealtimeManager] ❌ Channel error - attempting reconnect in 5s');
+        reconnectAttemptsRef.current += 1;
         
-        // Auto-reconnect after 5 seconds
-        setTimeout(() => {
-          logger.log('[RealtimeManager] 🔄 Reconnecting after error...');
-          if (channelRef.current) {
-            channelRef.current.subscribe();
-          }
-        }, 5000);
+        if (reconnectAttemptsRef.current <= MAX_RECONNECT_ATTEMPTS) {
+          logger.warn('[RealtimeManager] ❌ Channel error - attempt', reconnectAttemptsRef.current, 'of', MAX_RECONNECT_ATTEMPTS);
+          
+          setTimeout(() => {
+            logger.log('[RealtimeManager] 🔄 Reconnecting after error...');
+            if (channelRef.current) {
+              channelRef.current.subscribe();
+            }
+          }, 5000);
+        } else {
+          logger.error('[RealtimeManager] 🚫 Max reconnect attempts reached. Connection failed.');
+        }
         
       } else if (status === 'TIMED_OUT') {
-        logger.error('[RealtimeManager] ⏱️ Channel timeout - attempting reconnect in 3s');
+        reconnectAttemptsRef.current += 1;
         
-        // Faster reconnect on timeout
-        setTimeout(() => {
-          logger.log('[RealtimeManager] 🔄 Reconnecting after timeout...');
-          if (channelRef.current) {
-            channelRef.current.subscribe();
-          }
-        }, 3000);
+        if (reconnectAttemptsRef.current <= MAX_RECONNECT_ATTEMPTS) {
+          logger.warn('[RealtimeManager] ⏱️ Channel timeout - attempt', reconnectAttemptsRef.current, 'of', MAX_RECONNECT_ATTEMPTS);
+          
+          setTimeout(() => {
+            logger.log('[RealtimeManager] 🔄 Reconnecting after timeout...');
+            if (channelRef.current) {
+              channelRef.current.subscribe();
+            }
+          }, 3000);
+        } else {
+          logger.error('[RealtimeManager] 🚫 Max reconnect attempts reached. Connection failed.');
+        }
       }
     });
 

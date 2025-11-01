@@ -111,7 +111,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     subscriptions: [
       {
         table: 'user_points',
-        event: '*',
+        event: 'UPDATE', // Apenas updates para reduzir carga
         filter: `user_id=eq.${user?.id}`,
         callback: (payload) => {
           console.log('[Gamification] Real-time points update:', payload);
@@ -119,7 +119,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       },
       {
         table: 'gamification_activities',
-        event: '*',
+        event: 'INSERT', // Apenas inserts para reduzir carga
         filter: `user_id=eq.${user?.id}`,
         callback: (payload) => {
           console.log('[Gamification] Real-time activity update:', payload);
@@ -134,8 +134,8 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       }
     ],
     enabled: !!user?.id,
-    channelName: `gamification-${user?.id}`,
-    debounceMs: 2000
+    channelName: 'gamification-global', // Canal global consolidado
+    debounceMs: 1000 // Reduzido de 2000ms para 1000ms
   });
 
   // Controle de inicialização para evitar duplicações usando sessionStorage
