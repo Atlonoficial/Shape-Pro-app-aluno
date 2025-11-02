@@ -6,6 +6,7 @@ import { showPointsToast } from "@/components/gamification/PointsToast";
 import { useGamificationDebounce } from "@/hooks/useGamificationDebounce";
 import { useTeacherGamificationSettings } from "@/hooks/useTeacherGamificationSettings";
 import { useRealtimeManager } from "@/hooks/useRealtimeManager";
+import { logger } from "@/utils/logger";
 
 interface RealtimeGamificationHook {
   awardPointsForAction: (action: string, description?: string, metadata?: any) => Promise<void>;
@@ -20,20 +21,20 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
 
   const awardPointsForAction = useCallback(async (action: string, description?: string, metadata: any = {}) => {
     if (!user?.id) {
-      console.warn('[Gamification] User not authenticated');
+      logger.warn('[Gamification] User not authenticated');
       return;
     }
 
     // Verificar se é uma ação duplicada
     const actionKey = generateActionKey(action, user.id, metadata);
     if (isDuplicateAction(actionKey)) {
-      console.log('[Gamification] Duplicate action prevented:', action);
+      logger.log('[Gamification] Duplicate action prevented:', action);
       return;
     }
 
     // Check if already processing this action
     if (processingRef.current.has(actionKey)) {
-      console.log('[Gamification] Action already processing:', action);
+      logger.log('[Gamification] Action already processing:', action);
       return;
     }
 
@@ -41,7 +42,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
     processingRef.current.add(actionKey);
 
     try {
-      console.log('[Gamification] Awarding points for action:', action, 'metadata:', metadata);
+      logger.log('[Gamification] Awarding points for action:', action, 'metadata:', metadata);
       
       // USAR FUNÇÃO V3 EXISTENTE QUE PREVINE DUPLICAÇÕES
       const { data, error } = await supabase.rpc('award_points_enhanced_v3', {
@@ -53,19 +54,19 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       });
 
       if (error) {
-        console.error('[Gamification] Error awarding points:', error);
+        logger.error('[Gamification] Error awarding points:', error);
         return;
       }
 
       // Verificar se a função retornou indicação de duplicação
       if (data && typeof data === 'object' && 'duplicate' in data && data.duplicate) {
-        console.log('[Gamification] Duplicate action detected by server:', (data as any).message);
+        logger.log('[Gamification] Duplicate action detected by server:', (data as any).message);
         return;
       }
 
-      console.log('[Gamification] Points awarded successfully for action:', action, 'Result:', data);
+      logger.log('[Gamification] Points awarded successfully for action:', action, 'Result:', data);
     } catch (error) {
-      console.error('[Gamification] Error awarding points:', error);
+      logger.error('[Gamification] Error awarding points:', error);
     } finally {
       // Remove from processing set after a delay
       setTimeout(() => {
@@ -91,18 +92,18 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
         .maybeSingle(); // Use maybeSingle em vez de single para evitar erro quando não encontra
 
       if (checkError) {
-        console.error('[Gamification] Error checking existing checkin:', checkError);
+        logger.error('[Gamification] Error checking existing checkin:', checkError);
         return;
       }
 
       if (!existingActivity) {
-        console.log('[Gamification] No checkin today, awarding points');
+        logger.log('[Gamification] No checkin today, awarding points');
         await awardPointsForAction('daily_checkin', 'Check-in diário');
       } else {
-        console.log('[Gamification] Checkin already exists today, skipping');
+        logger.log('[Gamification] Checkin already exists today, skipping');
       }
     } catch (error) {
-      console.error('[Gamification] Error updating streak:', error);
+      logger.error('[Gamification] Error updating streak:', error);
     }
   }, [user?.id, awardPointsForAction]);
 
@@ -114,7 +115,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
         event: 'UPDATE', // Apenas updates para reduzir carga
         filter: `user_id=eq.${user?.id}`,
         callback: (payload) => {
-          console.log('[Gamification] Real-time points update:', payload);
+          logger.log('[Gamification] Real-time points update:', payload);
         }
       },
       {
@@ -122,7 +123,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
         event: 'INSERT', // Apenas inserts para reduzir carga
         filter: `user_id=eq.${user?.id}`,
         callback: (payload) => {
-          console.log('[Gamification] Real-time activity update:', payload);
+          logger.log('[Gamification] Real-time activity update:', payload);
           
           if (payload.eventType === 'INSERT' && payload.new) {
             const activity = payload.new as any;
@@ -146,11 +147,11 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       const alreadyInitialized = sessionStorage.getItem(sessionKey);
       
       if (!alreadyInitialized) {
-        console.log('[Gamification] First initialization for user today:', user.id);
+        logger.log('[Gamification] First initialization for user today:', user.id);
         updateStreak();
         sessionStorage.setItem(sessionKey, 'true');
       } else {
-        console.log('[Gamification] Already initialized for user today:', user.id);
+        logger.log('[Gamification] Already initialized for user today:', user.id);
       }
     }
   }, [user?.id, updateStreak]);
@@ -158,7 +159,7 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
   // Log current settings for debugging
   useEffect(() => {
     if (settings) {
-      console.log('[Gamification] Current teacher settings:', settings);
+      logger.log('[Gamification] Current teacher settings:', settings);
     }
   }, [settings]);
 

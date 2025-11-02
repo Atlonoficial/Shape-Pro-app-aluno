@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useRealtimeGamification } from "@/hooks/useRealtimeGamification";
+import { logger } from "@/utils/logger";
 
 /**
  * Component that integrates gamification throughout the app
@@ -13,7 +14,7 @@ export const GamificationIntegrator = ({ children }: { children: React.ReactNode
   // Não há necessidade de duplicar a inicialização aqui
   useEffect(() => {
     if (user?.id) {
-      console.log('[GamificationIntegrator] User authenticated, gamification will auto-initialize:', user.id);
+      logger.log('[GamificationIntegrator] User authenticated, gamification will auto-initialize:', user.id);
     }
   }, [user?.id]);
 

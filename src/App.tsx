@@ -81,7 +81,14 @@ const RedirectToAuthConfirm = () => {
 };
 
 const App = () => {
-  logger.log('[App.tsx] 🚀 Mounting App component');
+  logger.log('[App.tsx] 🚀 Initializing App component');
+  logger.log('[App.tsx] Platform:', (window as any).Capacitor?.getPlatform());
+  logger.log('[App.tsx] Environment:', import.meta.env.MODE);
+  
+  useEffect(() => {
+    logger.log('[App.tsx] ✅ App mounted successfully');
+    return () => logger.log('[App.tsx] 🧹 App unmounting');
+  }, []);
   
   return (
     <ErrorBoundary>

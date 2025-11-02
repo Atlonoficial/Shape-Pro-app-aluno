@@ -32,7 +32,7 @@ export const useRealtimeManager = ({
   const debouncedCallbacksRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const isConnectedRef = useRef(false);
   const reconnectAttemptsRef = useRef(0);
-  const MAX_RECONNECT_ATTEMPTS = 3;
+  const MAX_RECONNECT_ATTEMPTS = 5;
 
   // Cleanup debounced callbacks
   const clearDebouncedCallbacks = useCallback(() => {
@@ -115,9 +115,16 @@ export const useRealtimeManager = ({
             if (channelRef.current) {
               channelRef.current.subscribe();
             }
-          }, 5000);
+          }, 10000);
         } else {
-          logger.error('[RealtimeManager] 🚫 Max reconnect attempts reached. Connection failed.');
+          logger.error('[RealtimeManager] 🚫 Max reconnect attempts reached. Continuing without realtime.');
+          // ✅ Fallback graceful - não bloquear o app
+          if (channelRef.current) {
+            channelRef.current.unsubscribe();
+            supabase.removeChannel(channelRef.current);
+            channelRef.current = null;
+          }
+          isConnectedRef.current = false;
         }
         
       } else if (status === 'TIMED_OUT') {
@@ -131,9 +138,16 @@ export const useRealtimeManager = ({
             if (channelRef.current) {
               channelRef.current.subscribe();
             }
-          }, 3000);
+          }, 8000);
         } else {
-          logger.error('[RealtimeManager] 🚫 Max reconnect attempts reached. Connection failed.');
+          logger.error('[RealtimeManager] 🚫 Max reconnect attempts reached. Continuing without realtime.');
+          // ✅ Fallback graceful - não bloquear o app
+          if (channelRef.current) {
+            channelRef.current.unsubscribe();
+            supabase.removeChannel(channelRef.current);
+            channelRef.current = null;
+          }
+          isConnectedRef.current = false;
         }
       }
     });

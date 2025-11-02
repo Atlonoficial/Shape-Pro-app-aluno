@@ -10,8 +10,8 @@ export const LoadingScreen = () => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setShowError(true);
-      logger.error('[LoadingScreen] Timeout: App não carregou em 10s');
-    }, 10000);
+      logger.error('[LoadingScreen] Timeout: App não carregou em 8s. Possível problema de rede ou auth.');
+    }, 8000);
 
     return () => clearTimeout(timeout);
   }, []);

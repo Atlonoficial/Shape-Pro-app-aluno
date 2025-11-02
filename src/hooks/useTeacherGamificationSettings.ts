@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentTeacher } from './useStudentTeacher';
 import { useRealtimeManager } from '@/hooks/useRealtimeManager';
+import { logger } from '@/utils/logger';
 
 interface GamificationSettings {
   id: string;
@@ -59,16 +60,16 @@ export const useTeacherGamificationSettings = () => {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('[useTeacherGamificationSettings] Error fetching settings:', fetchError);
+        logger.error('[useTeacherGamificationSettings] Error fetching settings:', fetchError);
         setError(fetchError.message);
         return;
       }
 
       if (data) {
-        console.log('[useTeacherGamificationSettings] Settings loaded:', data);
+        logger.log('[useTeacherGamificationSettings] Settings loaded:', data);
         setSettings(data);
       } else {
-        console.log('[useTeacherGamificationSettings] No settings found, using in-memory defaults');
+        logger.log('[useTeacherGamificationSettings] No settings found, using in-memory defaults');
         // Use in-memory defaults instead of creating DB records
         // This prevents RLS violations when students try to fetch teacher settings
         setSettings({
@@ -80,11 +81,11 @@ export const useTeacherGamificationSettings = () => {
         });
       }
     } catch (err) {
-      console.error('[useTeacherGamificationSettings] Unexpected error:', err);
+      logger.error('[useTeacherGamificationSettings] Unexpected error:', err);
       
       // Handle RLS violations gracefully
       if (err instanceof Error && err.message?.includes('row-level security')) {
-        console.log('[useTeacherGamificationSettings] RLS violation detected, using defaults');
+        logger.log('[useTeacherGamificationSettings] RLS violation detected, using defaults');
         setSettings({
           id: 'default',
           teacher_id: teacherId,
@@ -114,7 +115,7 @@ export const useTeacherGamificationSettings = () => {
         event: '*',
         filter: `teacher_id=eq.${teacherId}`,
         callback: (payload) => {
-          console.log('[useTeacherGamificationSettings] Real-time settings update:', payload);
+          logger.log('[useTeacherGamificationSettings] Real-time settings update:', payload);
           
           if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
             setSettings(payload.new as GamificationSettings);

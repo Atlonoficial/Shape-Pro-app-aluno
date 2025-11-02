@@ -3,6 +3,7 @@ import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useRealtimeManager } from "./useRealtimeManager";
+import { logger } from "@/utils/logger";
 
 interface UserPoints {
   user_id: string;
@@ -101,7 +102,7 @@ export const useGamification = () => {
       if (error) throw error;
       setUserPoints(data);
     } catch (error) {
-      console.error("Error fetching user points:", error);
+      logger.error("Error fetching user points:", error);
     }
   };
 
@@ -120,7 +121,7 @@ export const useGamification = () => {
       if (error) throw error;
       setActivities(data || []);
     } catch (error) {
-      console.error("Error fetching activities:", error);
+      logger.error("Error fetching activities:", error);
     }
   };
 
@@ -148,7 +149,7 @@ export const useGamification = () => {
       if (error) throw error;
       setAchievements(data || []);
     } catch (error) {
-      console.error("Error fetching achievements:", error);
+      logger.error("Error fetching achievements:", error);
     }
   };
 
@@ -169,7 +170,7 @@ export const useGamification = () => {
       if (error) throw error;
       setUserAchievements(data || []);
     } catch (error) {
-      console.error("Error fetching user achievements:", error);
+      logger.error("Error fetching user achievements:", error);
     }
   };
 
@@ -217,7 +218,7 @@ export const useGamification = () => {
         setRankings([]);
       }
     } catch (error) {
-      console.error("Error fetching rankings:", error);
+      logger.error("Error fetching rankings:", error);
     }
   };
 
@@ -264,7 +265,7 @@ export const useGamification = () => {
         setChallenges(data || []);
       }
     } catch (error) {
-      console.error("Error fetching challenges:", error);
+      logger.error("Error fetching challenges:", error);
     }
   };
 
@@ -289,7 +290,7 @@ export const useGamification = () => {
         toast.error("Você já está participando deste desafio");
       } else {
         toast.error("Erro ao aceitar desafio");
-        console.error("Error joining challenge:", error);
+        logger.error("Error joining challenge:", error);
       }
     }
   };
@@ -315,7 +316,7 @@ export const useGamification = () => {
       
       toast.success(`Pontos adicionados: ${description}`);
     } catch (error) {
-      console.error("Error awarding points:", error);
+      logger.error("Error awarding points:", error);
       toast.error("Erro ao adicionar pontos");
     }
   };
@@ -384,7 +385,7 @@ export const useGamification = () => {
         event: '*',
         filter: `user_id=eq.${user.id}`,
         callback: (payload) => {
-          console.log('Points updated:', payload);
+          logger.log('Points updated:', payload);
           if (payload.new) {
             setUserPoints(payload.new as UserPoints);
           }
@@ -395,7 +396,7 @@ export const useGamification = () => {
         event: 'INSERT',
         filter: `user_id=eq.${user.id}`,
         callback: (payload) => {
-          console.log('New activity:', payload);
+          logger.log('New activity:', payload);
           if (payload.new) {
             const newActivity = payload.new as GamificationActivity;
             setActivities(prev => [newActivity, ...prev.slice(0, 19)]);
@@ -416,7 +417,7 @@ export const useGamification = () => {
         event: 'INSERT',
         filter: `user_id=eq.${user.id}`,
         callback: (payload) => {
-          console.log('New achievement:', payload);
+          logger.log('New achievement:', payload);
           fetchUserAchievements();
           
           if (payload.new) {

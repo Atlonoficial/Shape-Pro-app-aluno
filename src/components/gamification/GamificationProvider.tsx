@@ -2,6 +2,7 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { useGamification } from "@/hooks/useGamification";
 import { useRealtimeGamification } from "@/hooks/useRealtimeGamification";
 import { useAuthContext } from "@/components/auth/AuthProvider";
+import { logger } from "@/utils/logger";
 
 interface GamificationContextType {
   // Data from useGamification
@@ -47,7 +48,7 @@ export const GamificationProvider: React.FC<GamificationProviderProps> = ({ chil
     const auth = useAuthContext();
     user = auth.user;
   } catch (error) {
-    console.warn('[GamificationProvider] Auth context not ready, using empty state');
+    logger.warn('[GamificationProvider] Auth context not ready, using empty state');
   }
   
   // Usar hooks reais de gamificação

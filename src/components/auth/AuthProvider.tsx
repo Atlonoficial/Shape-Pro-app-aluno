@@ -37,6 +37,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const auth = useAuth();
   const location = useLocation();
   
+  logger.log('[AuthProvider] Rendering - loading:', auth.loading, 'authenticated:', auth.isAuthenticated);
+  
   const PUBLIC_PATHS = [
     '/auth/verify', 
     '/auth/verified', 
