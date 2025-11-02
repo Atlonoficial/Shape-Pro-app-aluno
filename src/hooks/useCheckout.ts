@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 interface CheckoutItem {
   type: 'course' | 'product' | 'plan';
@@ -44,7 +45,7 @@ export const useCheckout = () => {
         0
       );
 
-      console.log('🛒 Creating checkout:', { items, totalAmount });
+      logger.log('🛒 Creating checkout:', { items, totalAmount });
 
       // Chamar edge function de checkout dinâmico
       const { data, error } = await supabase.functions.invoke('dynamic-checkout', {
@@ -62,7 +63,7 @@ export const useCheckout = () => {
       });
 
       if (error) {
-        console.error('❌ Checkout error:', error);
+        logger.error('❌ Checkout error:', error);
         throw new Error(error.message || 'Erro ao criar checkout');
       }
 
@@ -70,7 +71,7 @@ export const useCheckout = () => {
         throw new Error(data.error || 'Erro desconhecido no checkout');
       }
 
-      console.log('✅ Checkout created:', data);
+      logger.log('✅ Checkout created:', data);
 
       // Log analytics da tentativa de compra
       await supabase.rpc('award_points_enhanced_v3', {
@@ -97,7 +98,7 @@ export const useCheckout = () => {
       };
 
     } catch (error: any) {
-      console.error('❌ Checkout failed:', error);
+      logger.error('❌ Checkout failed:', error);
       toast.error(error.message || 'Erro ao criar checkout');
       return { success: false, error: error.message };
     } finally {
@@ -119,7 +120,7 @@ export const useCheckout = () => {
 
       return data;
     } catch (error) {
-      console.error('❌ Error checking payment status:', error);
+      logger.error('❌ Error checking payment status:', error);
       return null;
     }
   };

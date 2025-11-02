@@ -1,6 +1,7 @@
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { useRealtimeGamification } from '@/hooks/useRealtimeGamification';
 import { useRealtimeManager } from '@/hooks/useRealtimeManager';
+import { logger } from '@/utils/logger';
 
 /**
  * Hook que integra automaticamente as atividades do Strava com o sistema de gamificação
@@ -51,9 +52,9 @@ export const useGamificationStravaIntegration = () => {
               }
             );
 
-            console.log(`🏃‍♂️ Pontos concedidos automaticamente: ${points} pontos para atividade ${activity.name}`);
+            logger.log(`🏃‍♂️ Pontos concedidos automaticamente: ${points} pontos para atividade ${activity.name}`);
           } catch (error) {
-            console.error('Erro ao conceder pontos para atividade do Strava:', error);
+            logger.error('Erro ao conceder pontos para atividade do Strava:', error);
           }
         }
       }
