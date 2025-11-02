@@ -41,7 +41,14 @@ interface GamificationProviderProps {
 }
 
 export const GamificationProvider: React.FC<GamificationProviderProps> = ({ children }) => {
-  const { user } = useAuthContext();
+  // ✅ Try-catch para evitar crash se useAuthContext falhar
+  let user = null;
+  try {
+    const auth = useAuthContext();
+    user = auth.user;
+  } catch (error) {
+    console.warn('[GamificationProvider] Auth context not ready, using empty state');
+  }
   
   // Usar hooks reais de gamificação
   const {

@@ -20,7 +20,7 @@
 			],
 			"ITSAppUsesNonExemptEncryption": false,
 			"CFBundleShortVersionString": "4.0.0",
-			"CFBundleVersion": "42"
+			"CFBundleVersion": "43"
 		}
 	},
 	"android": {
@@ -44,7 +44,7 @@
 		},
 		"SplashScreen": {
 			"launchAutoHide": true,
-			"launchShowDuration": 1500,
+			"launchShowDuration": 2500,
 			"backgroundColor": "#000000",
 			"androidSplashResourceName": "splash",
 			"androidScaleType": "CENTER",

@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -24,8 +25,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log structured error data
-    console.error('🔥 ErrorBoundary caught an error:', {
+    // Log structured error data usando logger
+    logger.error('🔥 ErrorBoundary caught an error:', {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
@@ -63,7 +64,7 @@ export class ErrorBoundary extends Component<Props, State> {
         body: JSON.stringify(errorReport)
       }).catch(() => {
         // Fail silently for error reporting
-        console.warn('Failed to report error to analytics');
+        logger.warn('Failed to report error to analytics');
       });
     } catch {
       // Fail silently

@@ -5,7 +5,7 @@
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
 	"version": {
-		"code": 42,
+		"code": 43,
 		"name": "4.0.0"
 	},
 	"ios": {
@@ -29,7 +29,7 @@
 	"plugins": {
 		"SplashScreen": {
 			"launchAutoHide": true,
-			"launchShowDuration": 2000,
+			"launchShowDuration": 2500,
 			"backgroundColor": "#000000",
 			"androidSplashResourceName": "splash",
 			"androidScaleType": "CENTER_CROP",

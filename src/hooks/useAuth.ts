@@ -19,6 +19,8 @@ export const useAuth = () => {
 
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
       clearTimeout(safetyTimeout); // Cancelar timeout se resolver
+      logger.log('[useAuth] ✅ Auth resolved in time');
+      
       setUser(user);
       setSession(session);
       

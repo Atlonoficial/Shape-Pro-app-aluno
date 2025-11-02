@@ -80,21 +80,24 @@ const RedirectToAuthConfirm = () => {
   return null; // Não renderiza nada durante o redirect
 };
 
-const App = () => (
-  <ErrorBoundary>
-    <SecurityProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <KeyboardProvider>
-            <BrowserRouter>
-              <AuthProvider>
-                <AuthErrorBoundary>
-                  <NativeIntegration />
-                  <GamificationProvider>
-                    <GamificationIntegrator>
-                    <Routes>
+const App = () => {
+  logger.log('[App.tsx] 🚀 Mounting App component');
+  
+  return (
+    <ErrorBoundary>
+      <SecurityProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <KeyboardProvider>
+              <BrowserRouter>
+                <AuthProvider>
+                  <AuthErrorBoundary>
+                    <NativeIntegration />
+                    <GamificationProvider>
+                      <GamificationIntegrator>
+                      <Routes>
                 {/* Public routes (no AuthGuard, no TermsGuard) */}
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
                 <Route path="/accept-terms" element={<AcceptTerms />} />
@@ -135,17 +138,18 @@ const App = () => (
                 <Route path="/strava-callback" element={<StravaCallback />} />
                 
                 <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </GamificationIntegrator>
-                </GamificationProvider>
-              </AuthErrorBoundary>
-            </AuthProvider>
-          </BrowserRouter>
+                      </Routes>
+                    </GamificationIntegrator>
+                  </GamificationProvider>
+                </AuthErrorBoundary>
+              </AuthProvider>
+            </BrowserRouter>
           </KeyboardProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </SecurityProvider>
   </ErrorBoundary>
-);
+  );
+};
 
 export default App;
