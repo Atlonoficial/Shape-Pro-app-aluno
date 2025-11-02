@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeManager } from './useRealtimeManager';
+import { logger } from '@/utils/logger';
 
 export interface MealLog {
   id: string;
@@ -273,11 +274,11 @@ export const useMyNutrition = () => {
   // Função para registrar uma refeição usando a nova estrutura
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
     if (!user?.id) {
-      console.error('[useMyNutrition] ❌ User ID not available');
+      logger.error('[useMyNutrition] ❌ User ID not available');
       return false;
     }
 
-    console.log('[useMyNutrition] 📝 Starting meal log:', {
+    logger.log('[useMyNutrition] 📝 Starting meal log:', {
       mealPlanItemId,
       consumed,
       userId: user.id,
@@ -290,27 +291,27 @@ export const useMyNutrition = () => {
       const mealData = todayMealsData.find(meal => meal.meal_plan_item_id === mealPlanItemId);
 
       if (!mealData) {
-        console.error('[useMyNutrition] ❌ Meal not found:', mealPlanItemId);
+        logger.error('[useMyNutrition] ❌ Meal not found:', mealPlanItemId);
         return false;
       }
 
-      console.log('[useMyNutrition] ✅ Meal data found:', mealData);
+      logger.log('[useMyNutrition] ✅ Meal data found:', mealData);
 
       // Validar dados obrigatórios
       if (!mealData.meal_plan_id) {
-        console.error('[useMyNutrition] ❌ Missing meal_plan_id');
+        logger.error('[useMyNutrition] ❌ Missing meal_plan_id');
         return false;
       }
 
       // Se já existe um log e está marcado como consumido, não permitir desmarcar
       if (mealData.is_logged && mealData.log_id && !consumed) {
-        console.warn('[useMyNutrition] ⚠️ Cannot uncheck a consumed meal');
+        logger.warn('[useMyNutrition] ⚠️ Cannot uncheck a consumed meal');
         return false;
       }
 
       if (mealData.log_id) {
         // Atualizar log existente
-        console.log('[useMyNutrition] 🔄 Updating existing meal log:', mealData.log_id);
+        logger.log('[useMyNutrition] 🔄 Updating existing meal log:', mealData.log_id);
         
         const { error } = await supabase
           .from('meal_logs')
@@ -323,7 +324,7 @@ export const useMyNutrition = () => {
           .eq('id', mealData.log_id);
 
         if (error) {
-          console.error('[useMyNutrition] ❌ Update error:', {
+          logger.error('[useMyNutrition] ❌ Update error:', {
             code: error.code,
             message: error.message,
             details: error.details,
@@ -333,7 +334,7 @@ export const useMyNutrition = () => {
         }
       } else {
         // Criar novo log usando a nova estrutura
-        console.log('[useMyNutrition] ➕ Creating new meal log');
+        logger.log('[useMyNutrition] ➕ Creating new meal log');
         
         const mealLogData = {
           user_id: user.id,
@@ -346,7 +347,7 @@ export const useMyNutrition = () => {
           actual_time: new Date().toISOString()
         };
 
-        console.log('[useMyNutrition] 📤 Inserting meal log:', mealLogData);
+        logger.log('[useMyNutrition] 📤 Inserting meal log:', mealLogData);
 
         const { data, error } = await supabase
           .from('meal_logs')
@@ -355,16 +356,25 @@ export const useMyNutrition = () => {
           .single();
 
         if (error) {
-          console.error('[useMyNutrition] ❌ Insert error:', {
+          logger.error('[useMyNutrition] ❌ Insert error:', {
             code: error.code,
             message: error.message,
             details: error.details,
-            hint: error.hint
+            hint: error.hint,
+            mealLogData // Adicionar dados para debug
           });
+          
+          // Verificar se é erro de constraint ou RLS
+          if (error.code === '42501') {
+            logger.error('[useMyNutrition] 🚫 RLS policy violation - user may not have permission');
+          } else if (error.code === '23505') {
+            logger.error('[useMyNutrition] 🔄 Duplicate entry - meal already logged');
+          }
+          
           return false;
         }
 
-        console.log('[useMyNutrition] ✅ Meal log created:', data);
+        logger.log('[useMyNutrition] ✅ Meal log created:', data);
       }
 
       // Refresh data após operação
@@ -375,10 +385,10 @@ export const useMyNutrition = () => {
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
 
-      console.log('[useMyNutrition] ✅ Meal logging completed successfully');
+      logger.log('[useMyNutrition] ✅ Meal logging completed successfully');
       return true;
     } catch (error: any) {
-      console.error('[useMyNutrition] ❌ Exception:', {
+      logger.error('[useMyNutrition] ❌ Exception:', {
         message: error?.message,
         stack: error?.stack
       });

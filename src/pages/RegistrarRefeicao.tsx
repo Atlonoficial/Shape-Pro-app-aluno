@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AddCustomMealDialog } from "@/components/nutrition/AddCustomMealDialog";
+import { logger } from "@/utils/logger";
 
 export const RegistrarRefeicao = () => {
   const navigate = useNavigate();
@@ -19,16 +20,36 @@ export const RegistrarRefeicao = () => {
   const handleMealToggle = async (mealId: string, isCompleted: boolean) => {
     if (!user?.id) return;
     
+    logger.log('[RegistrarRefeicao] handleMealToggle:', {
+      mealId,
+      isCompleted,
+      userId: user.id,
+      timestamp: new Date().toISOString()
+    });
+    
     setLoadingMeals(prev => new Set([...prev, mealId]));
     
     try {
-      await logMeal(mealId, !isCompleted);
+      const success = await logMeal(mealId, !isCompleted);
+      
+      logger.log('[RegistrarRefeicao] logMeal result:', { success, mealId });
+      
+      if (!success) {
+        throw new Error('logMeal returned false');
+      }
+      
       toast({
         title: !isCompleted ? "Refeição registrada!" : "Registro removido",
         description: !isCompleted ? "Refeição marcada como concluída." : "Refeição desmarcada.",
       });
     } catch (error) {
-      console.error('Error logging meal:', error);
+      logger.error('[RegistrarRefeicao] Error logging meal:', {
+        error,
+        mealId,
+        isCompleted,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
       toast({
         title: "Erro",
         description: "Não foi possível registrar a refeição. Tente novamente.",
