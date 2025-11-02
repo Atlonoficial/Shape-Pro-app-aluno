@@ -65,6 +65,10 @@
   <key>NSCameraUsageDescription</key>
   <string>Precisamos da câmera para tirar fotos dentro do app.</string>
 
+  <!-- User Tracking (iOS 14.5+) - OBRIGATÓRIO para OneSignal/Analytics -->
+  <key>NSUserTrackingUsageDescription</key>
+  <string>Usamos dados anônimos para melhorar sua experiência no app, personalizar notificações e enviar lembretes relevantes sobre seus treinos.</string>
+
   <!-- Push em background (OneSignal) -->
   <key>UIBackgroundModes</key>
   <array>

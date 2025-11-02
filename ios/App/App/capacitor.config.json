@@ -14,6 +14,7 @@
 			"NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.",
 			"NSPhotoLibraryAddUsageDescription": "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
 			"NSCameraUsageDescription": "Precisamos da câmera para tirar fotos dentro do app.",
+			"NSUserTrackingUsageDescription": "Usamos dados anônimos para melhorar sua experiência no app, personalizar notificações e enviar lembretes relevantes sobre seus treinos.",
 			"UIBackgroundModes": [
 				"remote-notification"
 			],

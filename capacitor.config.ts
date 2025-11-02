@@ -28,6 +28,10 @@ const config: CapacitorConfig = {
       NSPhotoLibraryAddUsageDescription:
         "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
       NSCameraUsageDescription: "Precisamos da câmera para tirar fotos dentro do app.",
+      
+      // User Tracking (iOS 14.5+) - OBRIGATÓRIO para OneSignal/Analytics
+      NSUserTrackingUsageDescription:
+        "Usamos dados anônimos para melhorar sua experiência no app, personalizar notificações e enviar lembretes relevantes sobre seus treinos.",
 
       // OneSignal
       UIBackgroundModes: ["remote-notification"],
