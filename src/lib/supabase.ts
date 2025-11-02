@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { logger } from "@/utils/logger";
 
 // Interfaces for Supabase
 export interface UserProfile {
@@ -151,7 +152,7 @@ export const signUpUser = async (
     ? `https://shapepro.site/auth/confirm?src=${srcParam}`
     : `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
   
-  console.log('[signUpUser] 🎯 Smart Origin Detection:', {
+  logger.log('[signUpUser] 🎯 Smart Origin Detection:', {
     platform: originMetadata.signup_platform,
     userType,
     srcParam,
@@ -184,11 +185,11 @@ export const signUpUser = async (
   });
 
   if (error) {
-    console.error('[signUpUser] ❌ Error:', error);
+    logger.error('[signUpUser] ❌ Error:', error);
     throw error;
   }
   
-  console.log('[signUpUser] ✅ User created with intelligent metadata');
+  logger.log('[signUpUser] ✅ User created with intelligent metadata');
   return data; // contains { user, session }
 };
 
@@ -236,7 +237,7 @@ export const resetPasswordForEmail = async (
   tenantId?: string,
   userType?: 'student' | 'teacher' // ✅ NOVO parâmetro opcional
 ) => {
-  console.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
+  logger.log(`[resetPasswordForEmail] Iniciando reset para: ${email}`);
   
   // 🎯 FASE 1: Detecção Inteligente de Origem (mesma lógica do signup)
   const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
@@ -255,7 +256,7 @@ export const resetPasswordForEmail = async (
     redirectUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
   }
   
-  console.log('[resetPasswordForEmail] 🎯 Smart Origin Detection:', {
+  logger.log('[resetPasswordForEmail] 🎯 Smart Origin Detection:', {
     platform: originMetadata.signup_platform,
     userType,
     redirectUrl,
@@ -269,14 +270,14 @@ export const resetPasswordForEmail = async (
     });
     
     if (error) {
-      console.error('[resetPasswordForEmail] Erro do Supabase:', error);
+      logger.error('[resetPasswordForEmail] Erro do Supabase:', error);
       throw error;
     }
     
-    console.log('[resetPasswordForEmail] ✅ Reset iniciado com sucesso');
+    logger.log('[resetPasswordForEmail] ✅ Reset iniciado com sucesso');
     return data;
   } catch (error: any) {
-    console.error('[resetPasswordForEmail] Erro capturado:', {
+    logger.error('[resetPasswordForEmail] Erro capturado:', {
       message: error.message,
       code: error.code,
       status: error.status
@@ -307,7 +308,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     .single();
 
   if (error) {
-    console.error('Error getting user profile:', error);
+    logger.error('Error getting user profile:', error);
     return null;
   }
   return data as UserProfile;
@@ -356,7 +357,7 @@ export const getStudentsByTeacher = (teacherId: string, callback: (students: any
       .eq('teacher_id', teacherId);
 
     if (error) {
-      console.error('Error fetching students:', error);
+      logger.error('Error fetching students:', error);
       callback([]);
       return;
     }
@@ -407,7 +408,7 @@ export const getStudentByUserId = (userId: string, callback: (student: Student |
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching student:', error);
+      logger.error('Error fetching student:', error);
       callback(null);
       return;
     }
@@ -466,7 +467,7 @@ export const getWorkoutsByUser = (userId: string, callback: (workouts: Workout[]
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching workouts:', error);
+      logger.error('Error fetching workouts:', error);
       callback([]);
       return;
     }
@@ -505,7 +506,7 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching nutrition plans:', error);
+      logger.error('Error fetching nutrition plans:', error);
       callback([]);
       return;
     }
@@ -563,7 +564,7 @@ export const getNotificationsByUser = (userId: string, callback: (notifications:
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching notifications:', error);
+      logger.error('Error fetching notifications:', error);
       callback([]);
       return;
     }
@@ -637,7 +638,7 @@ export const getChatMessages = (conversationId: string, callback: (messages: Cha
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching chat messages:', error);
+      logger.error('Error fetching chat messages:', error);
       callback([]);
       return;
     }
@@ -690,7 +691,7 @@ export const getMealLogsByUserAndDate = (userId: string, date: string, callback:
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching meal logs:', error);
+      logger.error('Error fetching meal logs:', error);
       callback([]);
       return;
     }
@@ -720,7 +721,7 @@ export const createMealLog = async (mealLog: {
   custom_portion_amount?: number;
   custom_portion_unit?: string;
 }) => {
-  console.log('[createMealLog] Creating meal log with data:', mealLog);
+  logger.log('[createMealLog] Creating meal log with data:', mealLog);
   
   const { data, error } = await supabase
     .from('meal_logs')
@@ -729,11 +730,11 @@ export const createMealLog = async (mealLog: {
     .single();
 
   if (error) {
-    console.error('[createMealLog] Error creating meal log:', error);
+    logger.error('[createMealLog] Error creating meal log:', error);
     throw error;
   }
   
-  console.log('[createMealLog] Successfully created meal log:', data);
+  logger.log('[createMealLog] Successfully created meal log:', data);
   return data;
 };
 

@@ -14,6 +14,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { NativeIntegration } from "@/components/native/NativeIntegration";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { KeyboardProvider } from "@/contexts/KeyboardContext";
+import { logger } from "@/utils/logger";
 import Index from "./pages/Index";
 // Core application imports ready for production
 import NotFound from "./pages/NotFound";
@@ -72,7 +73,7 @@ const RedirectToAuthConfirm = () => {
   useEffect(() => {
     // Preservar query params e hash
     const newPath = `/auth/confirm${location.search}${location.hash}`;
-    console.log('🔄 [Redirect] Old URL detected, redirecting to:', newPath);
+    logger.log('🔄 [Redirect] Old URL detected, redirecting to:', newPath);
     navigate(newPath, { replace: true });
   }, [location, navigate]);
   

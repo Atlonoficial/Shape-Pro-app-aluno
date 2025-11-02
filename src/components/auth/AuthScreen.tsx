@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDeviceContext } from '@/hooks/useDeviceContext';
+import { logger } from '@/utils/logger';
 
 export const AuthScreen = () => {
   const [email, setEmail] = useState('');
@@ -99,13 +100,13 @@ export const AuthScreen = () => {
 
     try {
       // FASE 1: Validação proativa - verificar se email já existe
-      console.log('[AuthScreen] 🔍 Verificando email antes do signup...');
+      logger.log('[AuthScreen] 🔍 Verificando email antes do signup...');
       const { exists, confirmed } = await checkEmailExistsFull(email);
 
       if (exists) {
         if (confirmed) {
           // Email existe e está confirmado → redirecionar para login
-          console.log('[AuthScreen] ⚠️ Email já cadastrado e confirmado');
+          logger.log('[AuthScreen] ⚠️ Email já cadastrado e confirmado');
           toast({
             title: "Email já cadastrado",
             description: "Este email já possui uma conta. Faça login.",
@@ -116,7 +117,7 @@ export const AuthScreen = () => {
           return;
         } else {
           // Email existe mas não está confirmado → reenviar email
-          console.log('[AuthScreen] 📧 Email já cadastrado mas não confirmado, reenviando...');
+          logger.log('[AuthScreen] 📧 Email já cadastrado mas não confirmado, reenviando...');
           
           const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
           const meta = detectOrigin('student');
@@ -131,7 +132,7 @@ export const AuthScreen = () => {
           });
 
           if (error) {
-            console.error('[AuthScreen] Erro ao reenviar email:', error);
+            logger.error('[AuthScreen] Erro ao reenviar email:', error);
             toast({
               title: "Email já cadastrado",
               description: "Complete a confirmação do email. Verifique sua caixa de entrada.",
@@ -154,14 +155,14 @@ export const AuthScreen = () => {
       const result = await signUpUser(email, password, name, 'student', isNative);
 
       if (result?.session) {
-        console.log('✅ Cadastro: Sessão criada imediatamente (email confirmation disabled)');
+        logger.log('✅ Cadastro: Sessão criada imediatamente (email confirmation disabled)');
         toast({
           title: "✅ Conta criada!",
           description: "Bem-vindo ao Shape Pro!",
         });
         navigate('/', { replace: true });
       } else {
-        console.log('📧 Cadastro: Sessão não criada, email confirmation necessária');
+        logger.log('📧 Cadastro: Sessão não criada, email confirmation necessária');
         toast({
           title: "📧 Email de confirmação enviado!",
           description: `Verifique sua caixa de entrada em ${email}`,
@@ -220,7 +221,7 @@ export const AuthScreen = () => {
       // (método alternativo já que não temos acesso direto ao auth.users)
       return { exists: true, confirmed: false };
     } catch (error) {
-      console.error('Error in checkEmailExistsFull:', error);
+      logger.error('Error in checkEmailExistsFull:', error);
       return { exists: false, confirmed: false };
     }
   };
@@ -313,7 +314,7 @@ export const AuthScreen = () => {
       }, 3000);
 
     } catch (error: any) {
-      console.error('Reset password error:', error);
+      logger.error('Reset password error:', error);
       
       // Mensagens de erro mais específicas
       let errorMessage = "Tente novamente mais tarde.";

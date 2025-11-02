@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
 import { useRealtimeManager } from './useRealtimeManager';
+import { logger } from '@/utils/logger';
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -9,23 +11,30 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Timeout de segurança (8 segundos)
+    const safetyTimeout = setTimeout(() => {
+      logger.error('[useAuth] ⚠️ Timeout: Auth state não resolveu em 8s');
+      setLoading(false); // Forçar fim do loading
+    }, 8000);
+
     const { data: { subscription } } = onAuthStateChange(async (user, session) => {
+      clearTimeout(safetyTimeout); // Cancelar timeout se resolver
       setUser(user);
       setSession(session);
       
-      console.log('[useAuth] Auth state changed:', { userId: user?.id, email: user?.email });
+      logger.log('[useAuth] Auth state changed:', { userId: user?.id, email: user?.email });
       
       if (user) {
         try {
           const profile = await getUserProfile(user.id);
           setUserProfile(profile);
-          console.log('[useAuth] Profile loaded:', profile);
+          logger.log('[useAuth] Profile loaded:', profile);
         } catch (error) {
-          console.error('[useAuth] Error fetching user profile:', error);
+          logger.error('[useAuth] Error fetching user profile:', error);
           setUserProfile(null);
         }
       } else {
-        console.log('[useAuth] User logged out');
+        logger.log('[useAuth] User logged out');
         setUserProfile(null);
       }
       
@@ -33,6 +42,7 @@ export const useAuth = () => {
     });
 
     return () => {
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -44,14 +54,14 @@ export const useAuth = () => {
       event: '*',
       filter: `id=eq.${user.id}`,
       callback: async () => {
-        console.log('[useAuth] Profile updated in real-time');
+        logger.log('[useAuth] Profile updated in real-time');
         try {
           if (user?.id) {
             const updatedProfile = await getUserProfile(user.id);
             setUserProfile(updatedProfile);
           }
         } catch (error) {
-          console.error('[useAuth] Error syncing profile:', error);
+          logger.error('[useAuth] Error syncing profile:', error);
         }
       }
     }] : [],

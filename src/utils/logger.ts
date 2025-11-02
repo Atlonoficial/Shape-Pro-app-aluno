@@ -6,11 +6,13 @@ export const logger = {
     if (isDev || isVerbose) console.log(...args);
   },
   error: (...args: any[]) => {
-    // Mostrar erros sempre, mas só detalhes em dev
+    // Em produção, apenas string simples (evitar objetos complexos)
     if (isDev) {
       console.error(...args);
     } else {
-      console.error(args[0]); // Apenas mensagem principal em produção
+      // Apenas mensagem, sem stack trace pesada
+      const message = typeof args[0] === 'string' ? args[0] : 'Erro';
+      console.error(message);
     }
   },
   warn: (...args: any[]) => {
