@@ -18,6 +18,7 @@ import { useWeightProgress } from "@/hooks/useWeightProgress";
 import { useProgressActions } from "@/components/progress/ProgressActions";
 import { useWeeklyFeedback } from "@/hooks/useWeeklyFeedback";
 import { WeeklyFeedbackModal } from "@/components/feedback/WeeklyFeedbackModal";
+import { logger } from '@/utils/logger';
 
 interface DashboardProps {
   onCoachClick?: () => void;
@@ -45,7 +46,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
   // ETAPA 3: Logs detalhados do sistema de feedback
   useEffect(() => {
-    console.log('📊 [Dashboard] Feedback system status:', {
+    logger.log('📊 [Dashboard] Feedback system status:', {
       shouldShowFeedbackModal,
       feedbackLoading,
       hasSettings: !!feedbackSettings,
@@ -96,11 +97,11 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   }, [isAuthenticated, user, shouldShowFeedbackModal, shouldShowWeightModal]);
 
   const handleSaveWeight = async (weight: number) => {
-    console.log('💾 Dashboard: Saving weight:', weight);
+    logger.log('💾 Dashboard: Saving weight:', weight);
     
     // Use the weight progress system which now includes validation and gamification
     const success = await addWeightEntry(weight);
-    console.log('✅ Dashboard: Weight save result:', success);
+    logger.log('✅ Dashboard: Weight save result:', success);
     
     if (success) {
       setShowWeightModal(false);

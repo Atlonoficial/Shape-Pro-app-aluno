@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ConnectionStatus } from '@/hooks/useConnectionStatus';
+import { logger } from '@/utils/logger';
 
 interface Conversation {
   id: string;
@@ -62,7 +63,7 @@ export const ChatHeader = ({
           setTeacherAvatar(data.avatar_url);
         }
       } catch (error) {
-        console.error('Erro ao buscar dados do professor:', error);
+        logger.error('Erro ao buscar dados do professor:', error);
       }
     };
 

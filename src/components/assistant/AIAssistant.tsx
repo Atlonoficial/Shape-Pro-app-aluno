@@ -9,6 +9,7 @@ import { useGamificationActions } from '@/hooks/useRealtimeGamification';
 import { useAIUsageLimit } from '@/hooks/useAIUsageLimit';
 import { useKeyboard } from '@/contexts/KeyboardContext';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 export const AIAssistant = () => {
   const { user, userProfile } = useAuthContext();
@@ -57,7 +58,7 @@ export const AIAssistant = () => {
           : "Essa foi sua última pergunta de hoje! 💪"
       );
     } catch (err) {
-      console.error('Error sending message:', err);
+      logger.error('Error sending message:', err);
       toast.error(err instanceof Error ? err.message : 'Erro ao enviar mensagem. Tente novamente.');
     }
   };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 export const BannerMetricsTest = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -10,7 +11,7 @@ export const BannerMetricsTest = () => {
   const handleAggregateMetrics = async () => {
     try {
       setIsProcessing(true);
-      console.log('[BannerMetricsTest] Starting aggregation...');
+      logger.log('[BannerMetricsTest] Starting aggregation...');
       
       const { data, error } = await supabase.functions.invoke('aggregate-banner-analytics', {
         body: {
@@ -19,18 +20,18 @@ export const BannerMetricsTest = () => {
       });
 
       if (error) {
-        console.error('[BannerMetricsTest] Edge function error:', error);
+        logger.error('[BannerMetricsTest] Edge function error:', error);
         throw error;
       }
 
-      console.log('[BannerMetricsTest] Aggregation result:', data);
+      logger.log('[BannerMetricsTest] Aggregation result:', data);
       setLastResult(data);
 
       toast.success('Métricas agregadas com sucesso!', {
         description: `Processados: ${data?.processed || 0} registros`
       });
     } catch (error) {
-      console.error('[BannerMetricsTest] Error aggregating metrics:', error);
+      logger.error('[BannerMetricsTest] Error aggregating metrics:', error);
       toast.error('Erro ao agregar métricas', {
         description: error instanceof Error ? error.message : 'Erro desconhecido'
       });
@@ -78,7 +79,7 @@ export const BannerMetricsTest = () => {
         toast.error('Nenhum banner ativo encontrado');
       }
     } catch (error) {
-      console.error('[BannerMetricsTest] Error creating test interaction:', error);
+      logger.error('[BannerMetricsTest] Error creating test interaction:', error);
       toast.error('Erro ao criar interação teste');
     }
   };

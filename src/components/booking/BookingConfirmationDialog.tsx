@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar, Clock, User, MapPin } from 'lucide-react';
 import { useTeacherLocations } from '@/hooks/useTeacherLocations';
+import { logger } from '@/utils/logger';
 
 interface BookingFormData {
   type: 'consultation' | 'training' | 'assessment';
@@ -116,7 +117,7 @@ export function BookingConfirmationDialog({
       });
       setErrors({});
     } catch (error: any) {
-      console.error('Error during booking:', error);
+      logger.error('Error during booking:', error);
       
       // Não precisa tratar erros aqui pois já foram tratados no componente pai
       // O dialog será fechado automaticamente pelo componente pai

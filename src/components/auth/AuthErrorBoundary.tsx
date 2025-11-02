@@ -2,6 +2,7 @@ import React, { Component, ReactNode } from 'react';
 import { MobileContainer } from '@/components/layout/MobileContainer';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -24,7 +25,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: any) {
     if (error.message.includes('useAuthContext must be used within an AuthProvider')) {
-      console.error('[AuthErrorBoundary] Auth context error:', error, errorInfo);
+      logger.error('[AuthErrorBoundary] Auth context error:', error, errorInfo);
     }
   }
 

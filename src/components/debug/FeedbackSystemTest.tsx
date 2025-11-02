@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWeeklyFeedback } from '@/hooks/useWeeklyFeedback';
 import { useFeedbackSettings } from '@/hooks/useFeedbackSettings';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 interface TestResult {
   name: string;
@@ -183,7 +184,7 @@ export const FeedbackSystemTest = () => {
       });
 
     } catch (error) {
-      console.error('Erro durante os testes:', error);
+      logger.error('Erro durante os testes:', error);
       addResult({
         name: 'Erro Geral',
         status: 'error',
@@ -243,7 +244,7 @@ export const FeedbackSystemTest = () => {
         });
       }
     } catch (error) {
-      console.error('Erro no teste RPC:', error);
+      logger.error('Erro no teste RPC:', error);
       toast({
         title: "Erro",
         description: "Falha ao executar teste RPC",

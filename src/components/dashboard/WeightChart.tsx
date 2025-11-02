@@ -1,6 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { useWeightProgress } from '@/hooks/useWeightProgress';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { logger } from '@/utils/logger';
 
 interface WeightChartProps {
   onWeightNeeded?: () => void;
@@ -10,7 +11,7 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
   const { user } = useAuthContext();
   const { weightData, loading, error } = useWeightProgress(user?.id || '');
   
-  console.log('📊 WeightChart render - data:', weightData, 'loading:', loading, 'error:', error);
+  logger.log('📊 WeightChart render - data:', weightData, 'loading:', loading, 'error:', error);
   
   // Use only real data
   const chartData = weightData;

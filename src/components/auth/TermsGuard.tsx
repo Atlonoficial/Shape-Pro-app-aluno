@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuthContext } from './AuthProvider';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { logger } from '@/utils/logger';
 
 interface TermsGuardProps {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ export const TermsGuard = ({ children }: TermsGuardProps) => {
     if (!loading && userProfile) {
       // Verificar se usuário aceitou os termos
       if (!userProfile.terms_accepted_at || !userProfile.privacy_accepted_at) {
-        console.warn('[TermsGuard] Usuário não aceitou termos, redirecionando...');
+        logger.warn('[TermsGuard] Usuário não aceitou termos, redirecionando...');
         
         // Não redirecionar se já estiver na página de aceitar termos
         if (location.pathname !== '/accept-terms') {

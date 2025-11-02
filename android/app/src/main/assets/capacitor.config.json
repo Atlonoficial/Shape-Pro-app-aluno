@@ -5,7 +5,7 @@
 	"bundledWebRuntime": false,
 	"backgroundColor": "#000000",
 	"version": {
-		"code": 44,
+		"code": 45,
 		"name": "4.0.0"
 	},
 	"ios": {

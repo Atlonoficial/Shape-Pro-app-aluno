@@ -8,6 +8,7 @@ import { useWeeklyFeedback } from '@/hooks/useWeeklyFeedback';
 import { useFeedbackSettings } from '@/hooks/useFeedbackSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
+import { logger } from '@/utils/logger';
 
 export const FeedbackDebugDashboard = () => {
   const { user } = useAuth();
@@ -45,9 +46,9 @@ export const FeedbackDebugDashboard = () => {
       };
 
       const success = await submitWeeklyFeedback(testData);
-      console.log('Resultado do teste:', success);
+      logger.log('Resultado do teste:', success);
     } catch (error) {
-      console.error('Erro no teste:', error);
+      logger.error('Erro no teste:', error);
     } finally {
       setTestSubmitting(false);
     }
