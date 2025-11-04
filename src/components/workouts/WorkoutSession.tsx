@@ -484,10 +484,10 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
       </div>
 
       {/* Controles fixos */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border/30 pb-safe-2xl z-40">
-          <div className="p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/98 to-background/95 backdrop-blur-md border-t border-border/30 pb-safe-2xl z-40">
+          <div className="px-4 pt-3 pb-3">
             {/* Botões de controle ampliados com labels */}
-            <div className="flex items-center justify-center gap-6 mb-4">
+            <div className="flex items-center justify-center gap-6 mb-2">
               <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={handlePause}
@@ -526,26 +526,16 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
               </div>
             </div>
           
-          {/* Barra de progresso */}
-          <div className="mb-3">
-            <div className="w-full bg-muted/30 rounded-full h-2 overflow-hidden">
+          {/* Barra de progresso compacta */}
+          <div className="mb-2">
+            <div className="w-full bg-muted/20 rounded-full h-1.5 overflow-hidden">
               <div 
-                className="h-full bg-gradient-accent transition-all duration-500 ease-out"
+                className="h-1.5 bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
                 style={{ 
                   width: `${((currentExerciseIndex + 1) / workout.exercises.length) * 100}%` 
                 }}
               />
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Exercício {currentExerciseIndex + 1}</span>
-              <span>{workout.exercises.length} total</span>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <span className="text-sm font-medium text-muted-foreground">
-              {isPaused ? 'Treino Pausado' : isResting ? 'Descansando...' : 'Treinando'}
-            </span>
           </div>
         </div>
       </div>

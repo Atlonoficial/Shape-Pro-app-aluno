@@ -150,7 +150,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
       <div 
-        className="relative h-48 sm:h-64 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col"
+        className="relative h-56 sm:h-64 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col pt-safe"
         style={{
           backgroundImage: workout.image ? `url(${workout.image})` : undefined,
           backgroundSize: 'cover',
@@ -159,18 +159,22 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       >
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
-        {/* Back button */}
-        <button 
-          onClick={onBack}
-          className="absolute top-8 left-4 w-10 h-10 rounded-full bg-background/20 backdrop-blur-sm border border-white/20 flex items-center justify-center z-10"
-        >
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
+        {/* Top Bar: Botões de navegação */}
+        <div className="relative z-10 flex items-center justify-between px-4 py-3">
+          <button 
+            onClick={onBack}
+            className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-background/30 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          
+          <div className="w-10 h-10" /> {/* Spacer para centralizar */}
+        </div>
 
         {/* Workout info */}
         <div className="relative z-10 mt-auto p-4 sm:p-6 text-white">
-          <h1 className="text-2xl font-bold mb-2">{workout.name}</h1>
-          <p className="text-white/80 mb-4">{workout.type}</p>
+          <h1 className="text-2xl font-bold mb-1 leading-tight line-clamp-2">{workout.name}</h1>
+          <p className="text-white/70 text-sm mb-4">{workout.type}</p>
           
           {/* Stats compactos em 2 colunas */}
           <div className="grid grid-cols-2 gap-2.5">
@@ -284,7 +288,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/95 to-transparent z-10">
         <button 
           onClick={handleStartWorkout}
-          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-16 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-lg flex items-center justify-center active:scale-95 animate-pulse hover:animate-none"
+          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-16 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-lg flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
         >
           <Play className="w-6 h-6 mr-2" />
           Iniciar Treino
