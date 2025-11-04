@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "47", // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
+  version: "48", // ✅ BUILD 48: Carregamento otimizado + timeouts sincronizados
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
@@ -47,8 +47,9 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
-    CFBundleVersion: '47',
+    // ✅ BUILD 48: Versões atualizadas para Build 48
+    CFBundleVersion: '48',
+    CFBundleShortVersionString: "4.0.0",
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -90,7 +91,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.0",
-      CFBundleVersion: "47", // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
+      CFBundleVersion: "48", // ✅ BUILD 48: Carregamento otimizado + timeouts sincronizados
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -107,7 +108,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 47, // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
+    versionCode: 48, // ✅ BUILD 48: Carregamento otimizado + timeouts sincronizados
     versionName: "4.0.0"
   },
 

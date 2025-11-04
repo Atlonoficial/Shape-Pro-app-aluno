@@ -33,22 +33,22 @@ export const useAuth = () => {
       timestamp: Date.now()
     });
 
-    // ✅ BUILD 22: AGUARDAR boot estar completo antes de configurar auth
+    // ✅ BUILD 48: AGUARDAR boot completo (timeout reduzido 10s → 5s)
     (async () => {
       try {
-        await bootManager.waitForBoot(10000); // 10s timeout
+        await bootManager.waitForBoot(5000); // 10s → 5s
         logger.info('useAuth', '✅ Boot complete, setting up auth listener');
 
-        // ✅ BUILD 40.1 FASE 2: Reduzir de 8s → 3s (mesmo tempo do emergency mode)
+        // ✅ BUILD 48: Reduzir safety timeout (3s → 2s)
         const safetyTimeout = setTimeout(() => {
           if (loadingRef.current) {
-            logger.warn('useAuth', '⚠️ Safety timeout triggered (3s)', {
+            logger.warn('useAuth', '⚠️ Safety timeout triggered (2s)', {
               timestamp: Date.now()
             });
             setLoading(false);
             setBootComplete(true);
           }
-        }, 3000);
+        }, 2000); // 3s → 2s
 
         const { data: { subscription } } = onAuthStateChange(async (user, session) => {
           clearTimeout(safetyTimeout);
@@ -67,13 +67,13 @@ export const useAuth = () => {
             try {
               logger.debug('useAuth', '📋 Fetching profile for:', user.id);
               
-              // ✅ FASE 2: Timeout adicional de 4 segundos para profile fetch
+              // ✅ BUILD 48: Timeout reduzido (4s → 2s)
               const profilePromise = getUserProfile(user.id);
               const timeoutPromise = new Promise<null>((resolve) => 
                 setTimeout(() => {
-                  logger.warn('useAuth', '⚠️ Profile fetch timeout (4s), continuing without profile');
+                  logger.warn('useAuth', '⚠️ Profile fetch timeout (2s), continuing without profile');
                   resolve(null);
-                }, 4000)
+                }, 2000) // 4s → 2s
               );
               
               const profile = await Promise.race([profilePromise, timeoutPromise]);

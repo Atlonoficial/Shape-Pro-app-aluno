@@ -116,16 +116,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
         setForceRender(true);
       }
-    }, 3000); // ✅ Reduzido de 8s → 3s
+    }, 3000); // ✅ Mantido em 3s
     return () => clearTimeout(timeout);
   }, [auth.loading, forceRender, auth.user]);
 
-  // ✅ FASE 3: Modo de emergência após 3 segundos
+  // ✅ BUILD 48: Modo de emergência aumentado (3s → 5s)
   useEffect(() => {
     const timer = setTimeout(() => {
-      // ✅ FASE 3: Ativar emergency mode mesmo COM usuário logado
+      // ✅ Ativar emergency mode mesmo COM usuário logado
       if (auth.loading) {
-        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 3s', {
+        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 5s', {
           loading: auth.loading,
           user: auth.user?.id,
           profile: !!auth.userProfile,
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         ]);
         setEmergencyMode(true);
       }
-    }, 3000); // ✅ Reduzido de 5s → 3s
+    }, 5000); // ✅ Aumentado de 3s → 5s
 
     return () => clearTimeout(timer);
   }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, isNative]);

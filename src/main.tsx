@@ -40,98 +40,108 @@ const waitForCapacitor = async () => {
     });
     bootHealthCheck.addStep('STEP 2: Native platform detected');
     
-    // ✅ Build 26: Tempos otimizados
-    const waitTime = isIOS ? 300 : 150;
+    // ✅ BUILD 48: Tempo reduzido (300ms → 200ms)
+    const waitTime = isIOS ? 200 : 100;
     logger.info('Boot', `⏳ Waiting ${waitTime}ms for plugins...`);
     bootHealthCheck.addStep(`STEP 3: Waiting ${waitTime}ms`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
     bootHealthCheck.addStep('STEP 3: Wait complete');
     
-    // ✅ FASE 1: Inicializar storage PRIMEIRO
-    logger.info('Boot', '🔐 STEP 3: Initializing Capacitor storage...', {
+    // ✅ BUILD 48: Paralelizar storage + import supabase
+    logger.info('Boot', '🔐 STEP 4: Initializing storage & importing Supabase...', {
       timestamp: Date.now()
     });
+    
     try {
-      await createCapacitorStorage();
-      logger.info('Boot', '✅ STEP 4: Storage ready and tested', {
+      const [_, supabaseModule] = await Promise.all([
+        createCapacitorStorage(),
+        import('@/integrations/supabase/client')
+      ]);
+      
+      logger.info('Boot', '✅ Storage & Supabase import complete', {
         timestamp: Date.now()
       });
-      bootHealthCheck.addStep('STEP 4: Storage initialized');
-    } catch (error) {
-      logger.error('Boot', '❌ CRITICAL: Storage init failed:', error);
-      bootHealthCheck.addStep('STEP 4: Storage init FAILED');
-      throw new Error(`Storage initialization failed: ${error}`);
-    }
-    
-    // ✅ FASE 2: Forçar criação do Supabase client AGORA (não no import)
-    logger.info('Boot', '🔐 STEP 5: Creating Supabase client...', {
-      timestamp: Date.now()
-    });
-    
-    const { getSupabase } = await import('@/integrations/supabase/client');
-    const supabase = getSupabase(); // ✅ Força criação do client
-    bootHealthCheck.addStep('STEP 5: Supabase client created');
-    
-    // ✅ BUILD 40.2 FASE 5: Wake up database com timeout maior
-    logger.info('Boot', '🔄 STEP 6: Waking up database...', {
-      timestamp: Date.now()
-    });
-    bootHealthCheck.addStep('STEP 6: Waking up database');
-    
-    try {
-      const { checkDatabaseHealth } = await import('@/lib/supabase');
+      bootHealthCheck.addStep('STEP 4: Storage & Supabase ready');
       
-      // ✅ NOVO: Timeout maior durante boot (5s em vez de 3s)
-      const healthCheckPromise = checkDatabaseHealth();
-      const bootTimeoutPromise = new Promise<boolean>((resolve) => 
+      // ✅ Criar client DEPOIS do storage estar pronto
+      const supabase = supabaseModule.getSupabase();
+      
+      // Import checkDatabaseHealth separadamente
+      const { checkDatabaseHealth } = await import('@/lib/supabase');
+      bootHealthCheck.addStep('STEP 5: Supabase client created');
+      
+      // ✅ BUILD 48: Health check com timeout MENOR (2s)
+      logger.info('Boot', '🔄 STEP 6: Waking up database...', {
+        timestamp: Date.now()
+      });
+      bootHealthCheck.addStep('STEP 6: Waking up database');
+      
+      const healthPromise = checkDatabaseHealth();
+      const healthTimeout = new Promise<boolean>(resolve => 
         setTimeout(() => {
-          logger.warn('Boot', '⚠️ Health check timeout (5s), continuing anyway...');
+          logger.warn('Boot', '⚠️ Health check timeout (2s), continuing anyway...');
           resolve(false);
-        }, 5000)
+        }, 2000) // 5s → 2s
       );
       
-      const isHealthy = await Promise.race([healthCheckPromise, bootTimeoutPromise]);
+      const isHealthy = await Promise.race([healthPromise, healthTimeout]);
       
       if (isHealthy) {
         logger.info('Boot', '✅ Database is awake and healthy');
         bootHealthCheck.addStep('STEP 6: Database awake');
+        
+        // ✅ Buscar session SOMENTE se healthy
+        logger.info('Boot', '🔐 STEP 7: Loading Supabase session...', {
+          timestamp: Date.now()
+        });
+        
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          logger.error('Boot', '❌ Session load error:', error);
+          bootHealthCheck.addStep('STEP 7: Session load FAILED');
+        } else {
+          logger.info('Boot', '✅ STEP 7: Session loaded', {
+            hasSession: !!data.session,
+            userId: data.session?.user?.id || 'null',
+            timestamp: Date.now()
+          });
+          bootHealthCheck.addStep('STEP 7: Session loaded');
+        }
       } else {
-        logger.warn('Boot', '⚠️ Database slow to respond, but continuing boot');
-        bootHealthCheck.addStep('STEP 6: Database slow (continuing anyway)');
+        logger.warn('Boot', '⚠️ Database slow, skipping session check during boot');
+        bootHealthCheck.addStep('STEP 6: Database slow (skipping session)');
       }
+      
     } catch (error) {
-      logger.error('Boot', '❌ Database health check failed:', error);
-      bootHealthCheck.addStep('STEP 6: Database check failed (continuing anyway)');
-      // ✅ NÃO bloquear boot
-    }
-    
-    logger.info('Boot', '🔐 STEP 7: Loading Supabase session...', {
-      timestamp: Date.now()
-    });
-    
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      logger.error('Boot', '❌ Session load error:', error);
-      bootHealthCheck.addStep('STEP 7: Session load FAILED');
-    } else {
-      logger.info('Boot', '✅ STEP 8: Session loaded', {
-        hasSession: !!data.session,
-        userId: data.session?.user?.id || 'null',
-        timestamp: Date.now()
-      });
-      bootHealthCheck.addStep('STEP 7: Session loaded');
+      logger.error('Boot', '❌ CRITICAL: Boot init failed:', error);
+      bootHealthCheck.addStep('STEP 4-6: Init FAILED');
+      throw new Error(`Boot initialization failed: ${error}`);
     }
     
     logger.info('Boot', '🎯 STEP 8: Ready to render React', {
       timestamp: Date.now(),
       totalTime: `${Date.now() - performance.now()}ms`
     });
-    bootHealthCheck.addStep('STEP 7: Ready to render');
+    bootHealthCheck.addStep('STEP 8: Ready to render');
   }
 };
 
 (async () => {
+  // ✅ BUILD 48: Timeout de emergência global de 5 segundos
+  const emergencyTimeout = setTimeout(() => {
+    logger.error('Boot', '🚨 EMERGENCY: Boot taking too long (5s), forcing render');
+    
+    bootManager.markBootComplete();
+    
+    const AppWrapper = Capacitor.isNativePlatform() ? <App /> : <StrictMode><App /></StrictMode>;
+    createRoot(document.getElementById('root')!).render(AppWrapper);
+    
+    // Esconder loader
+    const loader = document.getElementById('native-loader');
+    if (loader) loader.remove();
+  }, 5000);
+  
   try {
     logger.debug('Boot', '🔄 STEP 1: Starting boot sequence...');
     
@@ -190,6 +200,9 @@ const waitForCapacitor = async () => {
     bootManager.markBootComplete();
     bootHealthCheck.addStep('STEP 8: Boot marked complete');
     
+    // ✅ BUILD 48: Cancelar emergency timeout
+    clearTimeout(emergencyTimeout);
+    
     // ✅ BUILD 26: Aguardar 50ms para garantir propagação do flag
     logger.info('Boot', '⏳ STEP 8.5: Waiting 50ms for flag propagation...');
     await new Promise(resolve => setTimeout(resolve, 50));
@@ -223,6 +236,7 @@ const waitForCapacitor = async () => {
     }, 100);
     
   } catch (error) {
+    clearTimeout(emergencyTimeout);
     // ✅ BUILD 21: SEMPRE esconder loader mesmo com erro
     logger.error('Boot', '❌ FATAL ERROR:', error);
     
