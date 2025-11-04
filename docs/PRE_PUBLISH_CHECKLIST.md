@@ -1,4 +1,4 @@
-# 📋 Checklist de Pré-Publicação - BUILD 40
+# 📋 Checklist de Pré-Publicação - BUILD 52
 
 ## ✅ Testes Obrigatórios
 
@@ -36,6 +36,8 @@
 - [ ] Sincronizar treinos do Strava
 - [ ] Comprar produto/curso
 - [ ] Verificar visibilidade pública/privada de produtos
+- [ ] Webhook Mercado Pago configurado e funcionando
+- [ ] Pagamento libera acesso ao curso automaticamente
 
 ### Performance & UX
 - [ ] App abre em < 3 segundos
@@ -48,10 +50,10 @@
 
 ## 🔧 Verificações Técnicas
 
-### Versões (BUILD 40)
-- [ ] `capacitor.config.ts` → version: "40"
-- [ ] `android/app/build.gradle` → versionCode: 40
-- [ ] `ios/App/App/Info.plist` → CFBundleVersion: 40
+### Versões (BUILD 52)
+- [ ] `capacitor.config.ts` → version: "52"
+- [ ] `android/app/build.gradle` → versionCode: 52
+- [ ] `ios/App/App/Info.plist` → CFBundleVersion: 52
 - [ ] Todas as versões sincronizadas
 
 ### Segurança
@@ -67,6 +69,8 @@
 - [ ] App instalado em dispositivo físico iOS
 - [ ] App instalado em dispositivo físico Android
 - [ ] Nenhum crash ao abrir
+- [ ] Logs de Edge Functions sem erros críticos
+- [ ] Teste de pagamento sandbox completo (checkout → webhook → liberação)
 
 ---
 
@@ -206,6 +210,6 @@ Após publicação, monitorar:
 
 ---
 
-**Última atualização:** BUILD 40 - 29/10/2025
-**Versão do app:** 4.0.0 (Build 40)
+**Última atualização:** BUILD 52 - 04/11/2025
+**Versão do app:** 4.0.0 (Build 52)
 **Status:** ✅ Pronto para publicação
