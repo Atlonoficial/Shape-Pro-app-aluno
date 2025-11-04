@@ -5061,16 +5061,26 @@ export type Database = {
         }
         Returns: undefined
       }
-      award_points_enhanced: {
-        Args: {
-          p_activity_type: string
-          p_custom_points?: number
-          p_description?: string
-          p_metadata?: Json
-          p_user_id: string
-        }
-        Returns: undefined
-      }
+      award_points_enhanced:
+        | {
+            Args: {
+              p_activity_type: string
+              p_custom_points?: number
+              p_description: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_activity_type: string
+              p_custom_points?: number
+              p_description?: string
+              p_metadata?: Json
+              p_user_id: string
+            }
+            Returns: undefined
+          }
       award_points_enhanced_v3: {
         Args: {
           p_activity_type: string
@@ -5152,10 +5162,12 @@ export type Database = {
           total_protein: number
         }[]
       }
+      calculate_monthly_rankings: { Args: never; Returns: undefined }
       calculate_plan_expiry: {
         Args: { plan_interval: string }
         Returns: string
       }
+      calculate_streak: { Args: { p_user_id: string }; Returns: number }
       calculate_student_payment_status: {
         Args: { p_student_id: string; p_teacher_id: string }
         Returns: {
@@ -5178,6 +5190,15 @@ export type Database = {
       check_and_award_achievements: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      check_dead_rows: {
+        Args: never
+        Returns: {
+          dead_ratio: number
+          dead_rows: number
+          live_rows: number
+          tablename: string
+        }[]
       }
       check_item_reference_flexible: {
         Args: {
@@ -5218,6 +5239,18 @@ export type Database = {
           p_week_number: number
         }
         Returns: string
+      }
+      create_or_update_feedback: {
+        Args: {
+          p_feedback_text?: string
+          p_feedback_type?: string
+          p_nutrition_log_id?: string
+          p_rating?: number
+          p_student_id: string
+          p_user_id: string
+          p_workout_session_id?: string
+        }
+        Returns: Json
       }
       ensure_student_record: { Args: never; Returns: string }
       execute_marketing_campaign: {

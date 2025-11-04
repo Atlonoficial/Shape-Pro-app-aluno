@@ -64,7 +64,7 @@ export const Nutrition = () => {
   // FASE 2: VALIDAÇÃO - Melhor handling de estados
   if (loading) {
     return (
-      <div className="p-4 pt-8 pb-safe flex items-center justify-center min-h-96">
+      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
           <p className="text-muted-foreground">Carregando seu plano nutricional...</p>
@@ -77,7 +77,7 @@ export const Nutrition = () => {
   // FASE 3: MELHORIAS DE ROBUSTEZ - Error handling e fallbacks
   if (!user?.id) {
     return (
-      <div className="p-4 pt-8 pb-safe">
+      <div className="p-4 pt-8 pb-safe-4xl">
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2 text-destructive">Erro de Autenticação</h2>
           <p className="text-muted-foreground">
@@ -90,7 +90,7 @@ export const Nutrition = () => {
 
   if (!todaysMeals.length) {
     return (
-      <div className="p-4 pt-8 pb-safe">
+      <div className="p-4 pt-8 pb-safe-4xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">Nutrição</h1>
           <p className="text-muted-foreground">Acompanhe sua alimentação hoje</p>
@@ -107,7 +107,7 @@ export const Nutrition = () => {
   const { consumed, target, percentage } = dailyStats;
 
   return (
-    <div className="p-4 pt-8 pb-safe">
+    <div className="p-4 pt-8 pb-safe-4xl">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">Nutrição</h1>

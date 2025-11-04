@@ -138,6 +138,7 @@ export const useMyNutrition = () => {
               fat: item.fat || 0,
               foods: item.foods || [],
               is_logged: false,
+              log_id: undefined,
               meal_plan_id: fallbackData.id
             }))
           : [];
