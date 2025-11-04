@@ -52,27 +52,48 @@ export const useWorkoutPlans = () => {
       return;
     }
 
-    // ✅ BUILD 52: Cache inteligente com versionamento
-    if (!forceRefresh && cacheRef.current && cacheRef.current.version === CACHE_VERSION) {
-      const cacheAge = Date.now() - cacheRef.current.timestamp;
-      const isEmpty = cacheRef.current.data.length === 0;
-      const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
-      
-      if (cacheValid) {
-        setWorkoutPlans(cacheRef.current.data);
-        setLoading(false);
-        return;
+    // ✅ BUILD 52 FINAL: Invalidação ativa de cache antigo
+    if (!forceRefresh && cacheRef.current) {
+      // Se cache não tem versão ou versão errada, LIMPAR
+      if (!cacheRef.current.version || cacheRef.current.version !== CACHE_VERSION) {
+        console.log('🔄 [useWorkoutPlans] Cache inválido detectado, limpando...', {
+          hasVersion: !!cacheRef.current.version,
+          currentVersion: cacheRef.current.version,
+          expectedVersion: CACHE_VERSION
+        });
+        cacheRef.current = null; // ✅ LIMPAR CACHE ANTIGO
+      } else {
+        // Cache válido com versão correta, verificar idade
+        const cacheAge = Date.now() - cacheRef.current.timestamp;
+        const isEmpty = cacheRef.current.data.length === 0;
+        const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
+        
+        if (cacheValid) {
+          console.log('✅ [useWorkoutPlans] Usando cache válido', { 
+            plansCount: cacheRef.current.data.length,
+            cacheAge 
+          });
+          setWorkoutPlans(cacheRef.current.data);
+          setLoading(false);
+          return;
+        }
       }
     }
 
     try {
       setError(null);
       
-      // ✅ BUILD 52: Usar RPC nativo SQL com = ANY()
+      // ✅ BUILD 52 FINAL: Usar RPC com logging
+      console.log('📞 [useWorkoutPlans] Chamando RPC get_user_workout_plans...', { userId: user.id });
       let { data, error: queryError } = await supabase
         .rpc('get_user_workout_plans', {
           p_user_id: user.id
         });
+      console.log('📦 [useWorkoutPlans] RPC retornou:', { 
+        dataLength: data?.length || 0, 
+        hasError: !!queryError,
+        error: queryError 
+      });
 
       // ✅ BUILD 52: Fallback robusto se RPC falhar (buscar todos e filtrar client-side)
       if (queryError || !data || data.length === 0) {
@@ -113,13 +134,14 @@ export const useWorkoutPlans = () => {
     }
   }, [user?.id]);
 
-  // Initial fetch
+  // ✅ BUILD 52 FINAL: Initial fetch com force refresh
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
-    fetchWorkoutPlans();
+    console.log('🚀 [useWorkoutPlans] Primeiro mount - forçando refresh');
+    fetchWorkoutPlans(true); // ✅ SEMPRE forçar refresh no primeiro mount
   }, [user?.id, fetchWorkoutPlans]);
 
   // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime

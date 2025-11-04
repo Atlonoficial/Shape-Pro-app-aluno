@@ -96,19 +96,36 @@ export const useMyNutrition = () => {
 
   // ✅ BUILD 54: Função otimizada com retry automático
   const getTodayMeals = useCallback(async (userId: string, forceRefresh = false, retryCount = 0) => {
-    // ✅ BUILD 52: Cache inteligente com versionamento
-    if (!forceRefresh && mealsCacheRef.current && mealsCacheRef.current.version === CACHE_VERSION) {
-      const cacheAge = Date.now() - mealsCacheRef.current.timestamp;
-      const isEmpty = mealsCacheRef.current.data.length === 0;
-      const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
-      
-      if (cacheValid) {
-        return mealsCacheRef.current.data;
+    // ✅ BUILD 52 FINAL: Invalidação ativa de cache antigo
+    if (!forceRefresh && mealsCacheRef.current) {
+      // Se cache não tem versão ou versão errada, LIMPAR
+      if (!mealsCacheRef.current.version || mealsCacheRef.current.version !== CACHE_VERSION) {
+        console.log('🔄 [useMyNutrition] Cache inválido detectado, limpando...', {
+          hasVersion: !!mealsCacheRef.current.version,
+          currentVersion: mealsCacheRef.current.version,
+          expectedVersion: CACHE_VERSION
+        });
+        mealsCacheRef.current = null; // ✅ LIMPAR CACHE ANTIGO
+      } else {
+        // Cache válido com versão correta, verificar idade
+        const cacheAge = Date.now() - mealsCacheRef.current.timestamp;
+        const isEmpty = mealsCacheRef.current.data.length === 0;
+        const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
+        
+        if (cacheValid) {
+          console.log('✅ [useMyNutrition] Usando cache válido', { 
+            mealsCount: mealsCacheRef.current.data.length,
+            cacheAge 
+          });
+          return mealsCacheRef.current.data;
+        }
       }
     }
 
     try {
-      // ✅ Timeout de 5s para RPC
+      // ✅ BUILD 52 FINAL: RPC com logging e timeout de 5s
+      console.log('📞 [useMyNutrition] Chamando RPC get_meals_for_today_v2...', { userId });
+      
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('RPC Timeout')), 5000)
       );
@@ -118,6 +135,12 @@ export const useMyNutrition = () => {
       });
 
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+
+      console.log('📦 [useMyNutrition] RPC retornou:', { 
+        dataLength: data?.length || 0, 
+        hasError: !!error,
+        error 
+      });
 
       if (error) throw error;
       
@@ -232,9 +255,27 @@ export const useMyNutrition = () => {
     }
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
 
+  // ✅ BUILD 52 FINAL: Initial fetch com force refresh
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    console.log('🚀 [useMyNutrition] Primeiro mount - forçando refresh');
+    
+    const loadInitialData = async () => {
+      setLoading(true);
+      const todayMealsData = await getTodayMeals(user.id, true, 0); // ✅ Force refresh inicial
+      setTodaysMeals(todayMealsData);
+      
+      const today = new Date().toISOString().split('T')[0];
+      const logs = await getMealLogsByUserAndDate(user.id, today);
+      setMealLogs(logs);
+      setLoading(false);
+    };
+    
+    loadInitialData();
+  }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
 
   // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
