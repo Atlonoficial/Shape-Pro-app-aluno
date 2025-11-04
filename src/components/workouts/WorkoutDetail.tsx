@@ -224,7 +224,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       </div>
 
       {/* Exercises list */}
-      <div className="px-4 pt-2 pb-36">
+      <div className="px-4 pt-2 pb-32">
         <h2 className="text-xl font-bold text-foreground mb-4">Exercícios</h2>
         
         <div className="space-y-3">
@@ -295,10 +295,10 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       </div>
 
       {/* Start workout button - próximo à navbar */}
-      <div className="fixed bottom-4 left-0 right-0 px-4 pt-2 pb-safe bg-gradient-to-t from-background via-background/98 to-transparent z-30">
+      <div className="fixed bottom-0 left-0 right-0 px-4 pb-16 bg-gradient-to-t from-background via-background/98 to-transparent z-[9999]">
         <button 
           onClick={handleStartWorkout}
-          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-14 text-base font-semibold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
+          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-12 text-base font-semibold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
         >
           <Play className="w-5 h-5 mr-2" />
           Iniciar Treino
