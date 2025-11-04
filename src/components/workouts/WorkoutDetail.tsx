@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { ArrowLeft, Clock, Flame, Dumbbell, Play, ChevronDown, CheckCircle2, X } from "lucide-react";
+import { ArrowLeft, Clock, Flame, Dumbbell, Play, ChevronDown, CheckCircle2, X, Zap, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "./VideoPlayer";
 import { useExerciseVideo } from "@/hooks/useExerciseVideo";
@@ -119,6 +119,15 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
     onStartWorkout();
   }, [onStartWorkout]);
 
+  // Calcular calorias estimadas
+  const estimateCalories = () => {
+    const totalExercises = workout.exercises.length;
+    const avgSets = 3;
+    const estimatedMinutes = totalExercises * avgSets * 2; // ~2 min por série
+    const MET = workout.difficulty === 'Avançado' ? 7.0 : workout.difficulty === 'Intermediário' ? 5.0 : 3.5;
+    return Math.round((MET * 70 * estimatedMinutes) / 60);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-4">
@@ -163,29 +172,37 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           <h1 className="text-2xl font-bold mb-2">{workout.name}</h1>
           <p className="text-white/80 mb-4">{workout.type}</p>
           
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-background/20 backdrop-blur-sm px-2 sm:px-3 py-2 rounded-xl">
-              <Clock className="w-4 h-4 text-accent" />
-              <div className="text-center sm:text-left">
-                <span className="text-sm font-medium block sm:inline">{workout.duration} min</span>
-                <span className="text-xs text-white/60 block sm:inline sm:ml-1">Duração</span>
+          {/* Stats compactos em 2 colunas */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+              <Clock className="w-4 h-4 text-white flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium block">{workout.duration} min</span>
+                <span className="text-xs text-white/60">Duração</span>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-background/20 backdrop-blur-sm px-2 sm:px-3 py-2 rounded-xl">
-              <Flame className="w-4 h-4 text-accent" />
-              <div className="text-center sm:text-left">
-                <span className="text-sm font-medium block sm:inline">{workout.difficulty}</span>
-                <span className="text-xs text-white/60 block sm:inline sm:ml-1">Dificuldade</span>
+            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+              <Dumbbell className="w-4 h-4 text-white flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium block">{workout.exercises.length}</span>
+                <span className="text-xs text-white/60">Exercícios</span>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-background/20 backdrop-blur-sm px-2 sm:px-3 py-2 rounded-xl">
-              <Dumbbell className="w-4 h-4 text-accent" />
-              <div className="text-center sm:text-left">
-                <span className="text-sm font-medium block sm:inline">{workout.exercises.length}</span>
-                <span className="text-xs text-white/60 block sm:inline sm:ml-1">Exercícios</span>
+            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+              <Flame className="w-4 h-4 text-orange-500 flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium block">{workout.difficulty}</span>
+                <span className="text-xs text-white/60">Dificuldade</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
+              <Zap className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium block">~{estimateCalories()}</span>
+                <span className="text-xs text-white/60">kcal</span>
               </div>
             </div>
           </div>
@@ -208,39 +225,43 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                   <ExerciseNameDisplay exerciseName={exercise.name} />
                   <p className="text-muted-foreground text-sm font-medium mt-1">{exercise.type}</p>
                   
-                  {/* Informações importantes sempre visíveis */}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                  {/* Informações formatadas */}
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {exercise.sets && exercise.reps && (
-                      <span className="flex items-center gap-1">
-                        <Dumbbell className="w-3 h-3" />
-                        {exercise.sets}x{exercise.reps}
+                      <span className="inline-flex items-center gap-1.5 bg-accent/10 px-2.5 py-1 rounded-full text-xs">
+                        <span className="font-semibold text-foreground">{exercise.sets}</span>
+                        <span className="text-muted-foreground">séries</span>
+                        <span className="text-muted-foreground">×</span>
+                        <span className="font-semibold text-foreground">{exercise.reps}</span>
+                        <span className="text-muted-foreground">reps</span>
                       </span>
                     )}
                     {exercise.rest && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {exercise.rest}
+                      <span className="inline-flex items-center gap-1.5 bg-accent/10 px-2.5 py-1 rounded-full text-xs">
+                        <Timer className="w-3 h-3 text-muted-foreground" />
+                        <span className="font-semibold text-foreground">{exercise.rest}</span>
+                        <span className="text-muted-foreground">descanso</span>
                       </span>
                     )}
                   </div>
                 </div>
                 
-                {/* Botões de ação */}
+                {/* Botões de ação compactos */}
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={(e) => handlePlayClick(e, exercise)}
-                    className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center hover:bg-accent/90 transition-all active:scale-95"
+                    className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-all active:scale-95"
                     aria-label="Ver vídeo do exercício"
                   >
-                    <Play className="w-5 h-5 text-background ml-0.5" />
+                    <Play className="w-4 h-4 text-primary ml-0.5" />
                   </button>
                   <button
                     onClick={() => handleExpandClick(exercise)}
-                    className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center hover:bg-muted transition-all active:scale-95"
+                    className="w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center hover:bg-muted transition-all active:scale-95"
                     aria-label="Ver detalhes do exercício"
                   >
                     <ChevronDown 
-                      className={`w-5 h-5 text-muted-foreground transition-transform ${
+                      className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${
                         expandedExercise === exercise.id ? 'rotate-180' : ''
                       }`} 
                     />
@@ -248,28 +269,22 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                 </div>
               </div>
               
-              {/* Detalhes expandíveis (apenas instruções) */}
-              <div className={`transition-all duration-300 ease-in-out ${
-                expandedExercise === exercise.id 
-                  ? 'max-h-[500px] opacity-100 mt-4' 
-                  : 'max-h-0 opacity-0 overflow-hidden'
-              }`}>
-                {expandedExercise === exercise.id && (
-                  <div className="pt-4 border-t border-border/20 space-y-3">
-                    <ExerciseInfoDisplay exerciseName={exercise.name} />
-                  </div>
-                )}
-              </div>
+              {/* Detalhes expandíveis com animação */}
+              {expandedExercise === exercise.id && (
+                <div className="mt-3 pt-3 border-t border-border/20 animate-in slide-in-from-top-2 duration-300">
+                  <ExerciseInfoDisplay exerciseName={exercise.name} />
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Start workout button */}
-      <div className="fixed bottom-safe left-4 right-4 z-fixed">
+      {/* Start workout button com animação */}
+      <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/95 to-transparent z-10">
         <button 
           onClick={handleStartWorkout}
-          className="bg-gradient-accent text-background w-full h-16 text-lg font-semibold rounded-2xl hover:bg-accent/90 transition-all duration-300 shadow-lg flex items-center justify-center active:scale-95"
+          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-16 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-lg flex items-center justify-center active:scale-95 animate-pulse hover:animate-none"
         >
           <Play className="w-6 h-6 mr-2" />
           Iniciar Treino
