@@ -53,6 +53,7 @@ import { EditProfile } from "./pages/teacher/EditProfile";
 import DashboardProfessor from "./pages/DashboardProfessor";
 import StravaCallback from "./pages/StravaCallback";
 import StravaDebug from "./pages/StravaDebug";
+import Cursos from "./pages/Cursos";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -129,6 +130,7 @@ const AuthenticatedApp = () => {
           <Route path="/configuracoes-pagamentos-documentacao" element={<AuthGuard><TermsGuard><ConfiguracoesPagamentosDocumentacao /></TermsGuard></AuthGuard>} />
           <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
           <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
+          <Route path="/cursos" element={<AuthGuard><TermsGuard><Cursos /></TermsGuard></AuthGuard>} />
           <Route path="/iniciar-treino" element={<AuthGuard><TermsGuard><IniciarTreino /></TermsGuard></AuthGuard>} />
           <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
           <Route path="/agenda" element={<AuthGuard><TermsGuard><LazyAgenda /></TermsGuard></AuthGuard>} />

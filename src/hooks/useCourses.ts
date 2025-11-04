@@ -15,6 +15,7 @@ export interface Course {
   is_public: boolean;
   duration: number;
   category: string;
+  price: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -43,6 +43,15 @@ verify_jwt = true
 [functions.test-gateway-credentials]
 verify_jwt = true
 
+[functions.dynamic-checkout]
+verify_jwt = true
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = true
+
 [realtime]
 enabled = true
 # Force secure WebSocket connections
