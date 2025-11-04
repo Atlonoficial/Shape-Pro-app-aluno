@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-platform',
 };
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -67,14 +67,17 @@ serve(async (req) => {
     // Buscar transação pelo payment ID ou preference ID
     console.log('🔍 Searching transaction with:', {
       gateway_payment_id: paymentData.transaction_id,
+      gateway_preference_id: paymentData.transaction_id,
       external_reference: paymentData.external_reference
     });
 
     const { data: foundTransaction, error: findError } = await supabase
       .from('payment_transactions')
-      .select('id')
+      .select('id, gateway_preference_id, gateway_payment_id')
       .or(`gateway_payment_id.eq.${paymentData.transaction_id},gateway_preference_id.eq.${paymentData.transaction_id}`)
       .maybeSingle();
+
+    console.log('🔍 Search result:', foundTransaction || 'Not found');
 
     // Fallback: buscar por external_reference se não encontrar
     let transactionToUpdate = foundTransaction;
@@ -98,6 +101,12 @@ serve(async (req) => {
     console.log('✅ Found transaction:', transactionToUpdate.id);
 
     // Atualizar status da transação
+    console.log('📝 Updating transaction status:', {
+      transaction_id: transactionToUpdate.id,
+      new_status: paymentData.status,
+      gateway_payment_id: paymentData.transaction_id
+    });
+
     const { error: updateError } = await supabase
       .from('payment_transactions')
       .update({
@@ -114,9 +123,11 @@ serve(async (req) => {
       throw updateError;
     }
 
+    console.log('✅ Transaction updated successfully');
+
     // Se pagamento aprovado, liberar acesso
     if (paymentData.status === 'paid') {
-      console.log('✅ Payment approved, processing access...');
+      console.log('🎉 Payment approved! Processing course access and notifications...');
       await processSuccessfulPayment(transactionToUpdate.id);
     }
 

@@ -150,13 +150,14 @@ serve(async (req) => {
         })
         .eq('id', transaction.id);
 
-      console.log('✅ Transaction updated:', {
+      console.log('✅ Transaction updated with gateway data:', {
         internal_id: transaction.id,
-        preference_id: checkoutResponse.transaction_id,
-        payment_id: checkoutResponse.payment_id
+        gateway_preference_id: checkoutResponse.transaction_id,
+        gateway_payment_id: checkoutResponse.payment_id,
+        gateway_type: paymentSettings.gateway_type
       });
 
-      console.log('✅ Checkout created successfully:', checkoutResponse.checkout_url);
+      console.log('✅ Checkout URL ready:', checkoutResponse.checkout_url);
 
       return new Response(
         JSON.stringify({
@@ -244,8 +245,15 @@ async function createMercadoPagoCheckout(credentials: any, transaction: any, ite
   const data = await response.json();
   
   if (!response.ok) {
+    console.error('❌ MercadoPago API error:', data);
     throw new Error(`MercadoPago: ${data.message || 'Erro desconhecido'}`);
   }
+
+  console.log('✅ MercadoPago preference created:', {
+    preference_id: data.id,
+    init_point: data.init_point,
+    expires_at: preference.expiration_date_to
+  });
 
   return {
     transaction_id: data.id,
