@@ -256,8 +256,7 @@
     @apply bg-primary/15 text-primary shadow-[0_0_12px_hsl(43_96%_56%/0.25)];
   }
 
-  /* ✅ BUILD 30: Fixed bottom navigation - força posicionamento fixo global */
-  /* ✅ BUILD 52: Bottom Navigation - Força position fixed com máxima prioridade */
+  /* ✅ BUILD 54: Bottom Navigation - Fix definitivo para scroll em native */
   .bottom-nav-container {
     position: fixed !important;
     bottom: 0 !important;
@@ -265,17 +264,42 @@
     right: 0 !important;
     width: 100% !important;
     z-index: 999999 !important;
+    
+    /* ✅ REMOVER transforms que criam stacking context */
     transform: none !important;
-    will-change: auto !important;
     -webkit-transform: none !important;
+    will-change: auto !important;
+    
+    /* ✅ ADICIONAR overscroll-behavior para evitar bounce */
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+    
+    /* ✅ GPU acceleration sem transform */
     -webkit-tap-highlight-color: transparent;
-    touch-action: pan-y;
     pointer-events: auto;
-    contain: layout style;
+    
+    /* ✅ ADICIONAR isolation para z-index independente */
     isolation: isolate;
-    /* ✅ BUILD 52: Prevenir qualquer movimento durante scroll */
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    
+    /* ✅ Touch behavior otimizado */
+    touch-action: none;
+    -webkit-touch-action: none;
+  }
+
+  /* ✅ BUILD 54: Prevenir scroll na bottom nav wrapper */
+  .bottom-nav-wrapper {
+    position: relative;
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    isolation: isolate;
+    z-index: var(--z-bottom-nav);
+  }
+
+  /* ✅ BUILD 54: Garantir que body seja o único scroll container */
+  html {
+    overscroll-behavior-y: none;
+    -webkit-overscroll-behavior-y: none;
   }
 
   /* ✅ BUILD 29: Force only ONE bottom nav visible */
@@ -283,11 +307,16 @@
     display: none !important;
   }
 
-  /* ✅ BUILD 34: Body ocupa tela inteira, root sem overflow */
+  /* ✅ BUILD 54: Body - único scroll container com comportamento otimizado */
 body {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* ✅ ADICIONAR: Prevenir bounce no final do scroll */
+  overscroll-behavior-y: none;
+  -webkit-overscroll-behavior-y: none;
+  /* ✅ ADICIONAR: Scroll momentum suave */
+  scroll-behavior: smooth;
 }
 
 #root {
@@ -323,11 +352,6 @@ body {
     }
   }
 
-  .bottom-nav-wrapper {
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-    isolation: isolate; /* ✅ BUILD 29: Cria contexto isolado de composição */
-    z-index: var(--z-bottom-nav);
-  }
 
   /* Landscape mode optimizations */
   @media (orientation: landscape) and (max-height: 500px) {
