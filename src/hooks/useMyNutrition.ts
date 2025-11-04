@@ -121,13 +121,13 @@ export const useMyNutrition = () => {
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (!fallbackData?.meals_data) return [];
 
-        // ✅ Transformar meals_data para formato TodayMeal
-        const meals = Array.isArray(fallbackData.meals_data) 
-          ? fallbackData.meals_data.map((item: any) => ({
+        // ✅ Transformar meals_data para formato TodayMeal com type casting
+        const meals: TodayMeal[] = Array.isArray(fallbackData.meals_data) 
+          ? fallbackData.meals_data.map((item: any): TodayMeal => ({
               meal_plan_item_id: item.meal_id || item.id,
               meal_name: item.meal_name || item.name || 'Refeição',
               meal_time: item.meal_time || '12:00',
