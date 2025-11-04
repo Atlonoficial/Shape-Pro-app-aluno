@@ -132,6 +132,7 @@ export type Database = {
           end_date: string
           features: Json | null
           id: string
+          metadata: Json | null
           plan_id: string
           start_date: string
           status: string
@@ -147,6 +148,7 @@ export type Database = {
           end_date: string
           features?: Json | null
           id?: string
+          metadata?: Json | null
           plan_id: string
           start_date?: string
           status?: string
@@ -162,6 +164,7 @@ export type Database = {
           end_date?: string
           features?: Json | null
           id?: string
+          metadata?: Json | null
           plan_id?: string
           start_date?: string
           status?: string
@@ -3920,6 +3923,45 @@ export type Database = {
         }
         Relationships: []
       }
+      system_payment_config: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          credentials: Json
+          gateway_type: string
+          id: string
+          is_active: boolean
+          is_sandbox: boolean
+          updated_at: string | null
+          webhook_id: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          credentials?: Json
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          is_sandbox?: boolean
+          updated_at?: string | null
+          webhook_id?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          credentials?: Json
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          is_sandbox?: boolean
+          updated_at?: string | null
+          webhook_id?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       teacher_availability: {
         Row: {
           created_at: string
@@ -4726,6 +4768,45 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          last_error: string | null
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+          retry_count: number | null
+          updated_at: string | null
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          last_error?: string | null
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          retry_count?: number | null
+          updated_at?: string | null
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          retry_count?: number | null
+          updated_at?: string | null
+          webhook_id?: string
         }
         Relationships: []
       }

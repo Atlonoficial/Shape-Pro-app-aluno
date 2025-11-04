@@ -126,13 +126,20 @@ serve(async (req) => {
       await supabase
         .from('payment_transactions')
         .update({
-          gateway_transaction_id: checkoutResponse.transaction_id,
-          gateway_payment_id: checkoutResponse.payment_id,
+          gateway_transaction_id: transaction.id, // ✅ ID interno da transação
+          gateway_payment_id: checkoutResponse.payment_id, // ✅ ID do pagamento (pode ser null)
+          gateway_preference_id: checkoutResponse.transaction_id, // ✅ ID da preferência/checkout
           checkout_url: checkoutResponse.checkout_url,
           gateway_response: checkoutResponse.raw_response,
           expires_at: checkoutResponse.expires_at
         })
         .eq('id', transaction.id);
+
+      console.log('✅ Transaction updated:', {
+        internal_id: transaction.id,
+        preference_id: checkoutResponse.transaction_id,
+        payment_id: checkoutResponse.payment_id
+      });
 
       console.log('✅ Checkout created successfully:', checkoutResponse.checkout_url);
 

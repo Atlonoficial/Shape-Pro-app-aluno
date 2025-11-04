@@ -64,16 +64,50 @@ serve(async (req) => {
 
     console.log('💰 Payment data processed:', paymentData);
 
+    // Buscar transação pelo payment ID ou preference ID
+    console.log('🔍 Searching transaction with:', {
+      gateway_payment_id: paymentData.transaction_id,
+      external_reference: paymentData.external_reference
+    });
+
+    const { data: foundTransaction, error: findError } = await supabase
+      .from('payment_transactions')
+      .select('id')
+      .or(`gateway_payment_id.eq.${paymentData.transaction_id},gateway_preference_id.eq.${paymentData.transaction_id}`)
+      .maybeSingle();
+
+    // Fallback: buscar por external_reference se não encontrar
+    let transactionToUpdate = foundTransaction;
+    
+    if (!transactionToUpdate && paymentData.external_reference) {
+      console.log('🔄 Trying fallback search by external_reference:', paymentData.external_reference);
+      const { data: fallbackTransaction } = await supabase
+        .from('payment_transactions')
+        .select('id')
+        .eq('id', paymentData.external_reference)
+        .maybeSingle();
+      
+      transactionToUpdate = fallbackTransaction;
+    }
+
+    if (!transactionToUpdate) {
+      console.error('❌ Transaction not found for payment:', paymentData.transaction_id);
+      throw new Error(`Transaction not found for payment ID: ${paymentData.transaction_id}`);
+    }
+
+    console.log('✅ Found transaction:', transactionToUpdate.id);
+
     // Atualizar status da transação
     const { error: updateError } = await supabase
       .from('payment_transactions')
       .update({
         status: paymentData.status,
         paid_at: paymentData.status === 'paid' ? new Date().toISOString() : null,
+        gateway_payment_id: paymentData.transaction_id, // Atualizar com o payment ID real
         gateway_response: paymentData.raw_data,
         updated_at: new Date().toISOString()
       })
-      .eq('gateway_transaction_id', paymentData.transaction_id);
+      .eq('id', transactionToUpdate.id);
 
     if (updateError) {
       console.error('❌ Failed to update transaction:', updateError);
@@ -83,7 +117,7 @@ serve(async (req) => {
     // Se pagamento aprovado, liberar acesso
     if (paymentData.status === 'paid') {
       console.log('✅ Payment approved, processing access...');
-      await processSuccessfulPayment(paymentData.transaction_id);
+      await processSuccessfulPayment(transactionToUpdate.id);
     }
 
     console.log('✅ Webhook processed successfully');
@@ -109,24 +143,31 @@ serve(async (req) => {
 async function handleMercadoPagoWebhook(req: Request) {
   const body = await req.json();
   
+  console.log('📥 MercadoPago webhook body:', JSON.stringify(body, null, 2));
+  
   if (body.type !== 'payment') {
     console.log('🔄 Non-payment notification, ignoring');
     return null;
   }
 
   const paymentId = body.data.id;
+  const externalReference = body.external_reference;
   
-  // Buscar dados do pagamento na API do MercadoPago
-  // Aqui você precisa das credenciais do professor específico
+  console.log('🔍 Looking for transaction with payment ID:', paymentId);
+  
+  // Buscar transação pelo gateway_preference_id ou external_reference
   const { data: transaction } = await supabase
     .from('payment_transactions')
-    .select('teacher_id')
-    .eq('gateway_payment_id', paymentId)
-    .single();
+    .select('teacher_id, id')
+    .or(`gateway_preference_id.eq.${paymentId},id.eq.${externalReference}`)
+    .maybeSingle();
 
   if (!transaction) {
+    console.error('❌ Transaction not found for payment ID:', paymentId, 'or external_reference:', externalReference);
     throw new Error(`Transaction not found for payment ID: ${paymentId}`);
   }
+  
+  console.log('✅ Found transaction:', transaction.id);
 
   const { data: settings } = await supabase
     .from('teacher_payment_settings')
@@ -150,9 +191,12 @@ async function handleMercadoPagoWebhook(req: Request) {
     });
 
   const payment = await response.json();
+  
+  console.log('💳 MercadoPago payment status:', payment.status);
 
   return {
     transaction_id: paymentId,
+    external_reference: payment.external_reference,
     status: mapMercadoPagoStatus(payment.status),
     raw_data: payment
   };
@@ -195,11 +239,11 @@ async function handleAsaasWebhook(req: Request) {
 async function processSuccessfulPayment(transactionId: string) {
   console.log('🎉 Processing successful payment:', transactionId);
 
-  // Buscar transação
+  // Buscar transação pelo ID interno
   const { data: transaction, error: fetchError } = await supabase
     .from('payment_transactions')
     .select('*')
-    .eq('gateway_transaction_id', transactionId)
+    .eq('id', transactionId)
     .single();
 
   if (fetchError || !transaction) {
