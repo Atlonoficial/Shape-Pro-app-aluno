@@ -53,6 +53,19 @@ export const Nutrition = () => {
     }
   };
 
+  // ✅ Verificar loading PRIMEIRO (antes de validar autenticação)
+  if (loading) {
+    return (
+      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">Carregando seu plano nutricional...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Só DEPOIS validar autenticação (evita falso-positivo durante carregamento)
   if (!user?.id) {
     return (
       <div className="p-4 pt-8 pb-safe-4xl">
@@ -61,17 +74,6 @@ export const Nutrition = () => {
           <p className="text-muted-foreground">
             Usuário não autenticado. Por favor, faça login novamente.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-accent" />
-          <p className="text-muted-foreground">Carregando seu plano nutricional...</p>
         </div>
       </div>
     );

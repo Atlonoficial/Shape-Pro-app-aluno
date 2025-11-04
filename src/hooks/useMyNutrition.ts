@@ -262,14 +262,21 @@ export const useMyNutrition = () => {
     }
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
 
+  // ✅ BUILD 54: Fetch inicial FORÇADO (sempre executa RPC)
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
     
+    console.log('🔄 [useMyNutrition] Mount inicial - forçando fetch');
+    
     const loadInitialData = async () => {
       setLoading(true);
+      
+      // ✅ CRÍTICO: Limpar cache ANTES de fetch para garantir execução do RPC
+      mealsCacheRef.current = null;
+      
       const todayMealsData = await getTodayMeals(user.id, true, 0);
       setTodaysMeals(todayMealsData);
       
@@ -284,16 +291,17 @@ export const useMyNutrition = () => {
 
   // ✅ BUILD 54: Escutar eventos de realtime global
   useEffect(() => {
+    if (!user?.id) return;
+    
     const handleMealPlansUpdate = () => {
-      if (user?.id) {
-        fetchData();
-      }
+      console.log('📡 [useMyNutrition] Evento meal-plans-updated recebido');
+      mealsCacheRef.current = null; // Limpar cache antes do refresh
+      fetchData();
     };
 
     const handleMealLogsUpdate = () => {
-      if (user?.id) {
-        fetchData();
-      }
+      console.log('📡 [useMyNutrition] Evento meal-logs-updated recebido');
+      fetchData(); // Não limpar cache aqui (só logs mudaram, não planos)
     };
 
     window.addEventListener('meal-plans-updated', handleMealPlansUpdate);
@@ -303,7 +311,7 @@ export const useMyNutrition = () => {
       window.removeEventListener('meal-plans-updated', handleMealPlansUpdate);
       window.removeEventListener('meal-logs-updated', handleMealLogsUpdate);
     };
-  }, [user?.id, fetchData]);
+  }, [user?.id]); // ✅ REMOVIDO fetchData das dependências (causa re-render infinito)
 
   // Função auxiliar para calcular valores nutricionais de uma refeição
   const calculateMealNutrition = useCallback((meal: TodayMeal) => {

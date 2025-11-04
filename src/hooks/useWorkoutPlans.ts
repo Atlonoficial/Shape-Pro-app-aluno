@@ -116,20 +116,29 @@ export const useWorkoutPlans = () => {
     }
   }, [user?.id]);
 
+  // ✅ BUILD 54: Fetch inicial FORÇADO (sempre executa RPC)
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
+    
+    console.log('🔄 [useWorkoutPlans] Mount inicial - forçando fetch');
+    
+    // ✅ CRÍTICO: Limpar cache ANTES de fetch para garantir execução do RPC
+    cacheRef.current = null;
+    
     fetchWorkoutPlans(true);
   }, [user?.id, fetchWorkoutPlans]);
 
   // ✅ BUILD 54: Escutar eventos de realtime global
   useEffect(() => {
+    if (!user?.id) return;
+    
     const handleWorkoutPlansUpdate = () => {
-      if (user?.id) {
-        fetchWorkoutPlans(true);
-      }
+      console.log('📡 [useWorkoutPlans] Evento realtime recebido - refreshing');
+      cacheRef.current = null; // Limpar cache antes do refresh
+      fetchWorkoutPlans(true);
     };
 
     window.addEventListener('workout-plans-updated', handleWorkoutPlansUpdate);
@@ -137,7 +146,7 @@ export const useWorkoutPlans = () => {
     return () => {
       window.removeEventListener('workout-plans-updated', handleWorkoutPlansUpdate);
     };
-  }, [user?.id, fetchWorkoutPlans]);
+  }, [user?.id]); // ✅ REMOVIDO fetchWorkoutPlans das dependências (causa re-render infinito)
 
   // Get active plans for current user
   const activePlans = workoutPlans.filter(plan => plan.status === 'active');
