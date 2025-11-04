@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Boot Manager - Gerenciador de sincronização do boot da aplicação
  * Garante que todos os serviços estejam prontos antes do React renderizar
@@ -12,7 +14,7 @@ class BootManager {
   markBootComplete() {
     this._bootComplete = true;
     const bootTime = Date.now() - this._bootStartTime;
-    console.log('[BootManager] ✅ Boot marked as complete', {
+    logger.info('BootManager', '✅ Boot marked as complete', {
       bootTime: `${bootTime}ms`,
       timestamp: Date.now()
     });
@@ -30,11 +32,11 @@ class BootManager {
    */
   async waitForBoot(timeoutMs = 10000) {
     if (this._bootComplete) {
-      console.log('[BootManager] ✅ Boot already complete');
+      logger.info('BootManager', '✅ Boot already complete');
       return;
     }
     
-    console.log('[BootManager] ⏳ Waiting for boot to complete...');
+    logger.info('BootManager', '⏳ Waiting for boot to complete...');
     const start = Date.now();
     
     while (!this._bootComplete && (Date.now() - start) < timeoutMs) {
@@ -43,11 +45,12 @@ class BootManager {
     
     if (!this._bootComplete) {
       const elapsed = Date.now() - start;
-      console.error('[BootManager] ❌ Boot timeout after', elapsed, 'ms');
+      logger.error('BootManager', `❌ Boot timeout after ${elapsed}ms`);
       throw new Error(`Boot timeout after ${elapsed}ms`);
     }
     
-    console.log('[BootManager] ✅ Boot complete after', Date.now() - start, 'ms');
+    const elapsed = Date.now() - start;
+    logger.info('BootManager', `✅ Boot complete after ${elapsed}ms`);
   }
   
   /**
@@ -56,7 +59,7 @@ class BootManager {
   reset() {
     this._bootComplete = false;
     this._bootStartTime = Date.now();
-    console.log('[BootManager] 🔄 Reset');
+    logger.info('BootManager', '🔄 Reset');
   }
 }
 

@@ -59,12 +59,12 @@ class CapacitorStorageAdapter {
             throw new Error('Preferences plugin not available');
           }
           
-          logger.info('CapacitorStorage', 'Calling Preferences.keys() with 5s timeout...');
+          logger.info('CapacitorStorage', 'Calling Preferences.keys() with 8s timeout...');
           
-          // ✅ BUILD 48: Timeout aumentado (3s → 5s)
+          // ✅ BUILD 49: Timeout aumentado (5s → 8s para iOS real)
           const { keys } = await withTimeout(
             Preferences.keys(),
-            5000, // 3s → 5s
+            8000, // 5s → 8s
             'Preferences.keys()'
           );
           logger.info('CapacitorStorage', `Total keys found: ${keys.length}`);
@@ -109,12 +109,12 @@ class CapacitorStorageAdapter {
           logger.error('CapacitorStorage', `Init attempt ${attempt} failed:`, error);
           
           if (attempt >= maxAttempts) {
-            logger.error('CapacitorStorage', 'Max attempts reached, using fallback');
-            this.initialized = true; // ✅ Forçar para não travar boot
-            return;
+            logger.error('CapacitorStorage', 'Max attempts reached, throwing error for localStorage fallback');
+            // ✅ BUILD 49: NÃO forçar initialized, jogar erro para forçar fallback
+            throw new Error('Capacitor Storage initialization failed after 2 attempts');
           }
           
-          // ✅ BUILD 48: Aguardar 500ms antes de retry
+          // ✅ Aguardar 500ms antes de retry
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }

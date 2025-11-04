@@ -1,55 +1,70 @@
 import UIKit
 import Capacitor
+import OSLog
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var bootStartTime: Date?
+    
+    // ✅ BUILD 49: Logs estruturados com OSLog (aparecem no Xcode Organizer)
+    let bootLogger = OSLog(subsystem: "com.atlontech.shapepro.aluno", category: "Boot")
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
-        print("🚀 [iOS] Shape Pro launching - Build 47")
-        print("🚀 [iOS] Bundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")")
-        print("🚀 [iOS] App Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown")")
-        print("🚀 [iOS] Build Number: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown")")
-        print("🚀 [iOS] Device: \(UIDevice.current.name)")
-        print("🚀 [iOS] iOS Version: \(UIDevice.current.systemVersion)")
+        
+        bootStartTime = Date()
+        
+        // ✅ BUILD 49: Usar OSLog para logs estruturados
+        os_log(.info, log: bootLogger, "🚀 Shape Pro launching - Build 49")
+        os_log(.info, log: bootLogger, "Bundle: %{public}@", Bundle.main.bundleIdentifier ?? "unknown")
+        os_log(.info, log: bootLogger, "Version: %{public}@", Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown")
+        os_log(.info, log: bootLogger, "Build: %{public}@", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown")
+        os_log(.info, log: bootLogger, "Device: %{public}@", UIDevice.current.name)
+        os_log(.info, log: bootLogger, "iOS: %{public}@", UIDevice.current.systemVersion)
+        os_log(.info, log: bootLogger, "Memory: %llu GB", ProcessInfo.processInfo.physicalMemory / 1_000_000_000)
+        
+        // ✅ BUILD 49: Timer aumentado (5s → 8s) para detectar boot lento
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) { [weak self] in
+            guard let start = self?.bootStartTime else { return }
+            let elapsed = Date().timeIntervalSince(start)
+            
+            if elapsed > 8.0 {
+                os_log(.error, log: self?.bootLogger ?? OSLog.default, "⚠️ Boot timeout: App took %.2f seconds to load", elapsed)
+            }
+        }
+        
         return true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+        os_log(.info, log: bootLogger, "⏸️ App will resign active")
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        os_log(.info, log: bootLogger, "🔙 App entered background")
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        os_log(.info, log: bootLogger, "🔜 App will enter foreground")
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-        print("✅ [iOS] App became active - Build 47")
+        if let start = bootStartTime {
+            let elapsed = Date().timeIntervalSince(start)
+            os_log(.info, log: bootLogger, "✅ App became active after %.2f seconds", elapsed)
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
-        // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+        os_log(.info, log: bootLogger, "🔚 App terminating")
     }
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // Called when the app was launched with a url. Feel free to add additional processing here,
-        // but if you want the App API to support tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
-        // Called when the app was launched with an activity, including Universal Links.
-        // Feel free to add additional processing here, but if you want the App API to support
-        // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 

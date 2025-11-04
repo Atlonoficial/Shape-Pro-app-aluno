@@ -40,14 +40,14 @@ const waitForCapacitor = async () => {
     });
     bootHealthCheck.addStep('STEP 2: Native platform detected');
     
-    // ✅ BUILD 48: Tempo reduzido (300ms → 200ms)
+    // ✅ BUILD 49: Tempo reduzido para iOS
     const waitTime = isIOS ? 200 : 100;
     logger.info('Boot', `⏳ Waiting ${waitTime}ms for plugins...`);
     bootHealthCheck.addStep(`STEP 3: Waiting ${waitTime}ms`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
     bootHealthCheck.addStep('STEP 3: Wait complete');
     
-    // ✅ BUILD 48: Paralelizar storage + import supabase
+    // ✅ BUILD 49: Paralelizar storage + import supabase COM FALLBACK
     logger.info('Boot', '🔐 STEP 4: Initializing storage & importing Supabase...', {
       timestamp: Date.now()
     });
@@ -65,58 +65,62 @@ const waitForCapacitor = async () => {
       
       // ✅ Criar client DEPOIS do storage estar pronto
       const supabase = supabaseModule.getSupabase();
-      
-      // Import checkDatabaseHealth separadamente
-      const { checkDatabaseHealth } = await import('@/lib/supabase');
       bootHealthCheck.addStep('STEP 5: Supabase client created');
       
-      // ✅ BUILD 48: Health check com timeout MENOR (2s)
-      logger.info('Boot', '🔄 STEP 6: Waking up database...', {
-        timestamp: Date.now()
-      });
-      bootHealthCheck.addStep('STEP 6: Waking up database');
+      // ✅ BUILD 49: REMOVER health check do boot (economiza 2s)
+      logger.info('Boot', '✅ STEP 6: Supabase client ready (skipping health check)');
+      bootHealthCheck.addStep('STEP 6: Supabase ready');
       
-      const healthPromise = checkDatabaseHealth();
-      const healthTimeout = new Promise<boolean>(resolve => 
-        setTimeout(() => {
-          logger.warn('Boot', '⚠️ Health check timeout (2s), continuing anyway...');
-          resolve(false);
-        }, 2000) // 5s → 2s
-      );
+      // ✅ BUILD 49: Health check em background DEPOIS do React renderizar
+      setTimeout(async () => {
+        try {
+          const { checkDatabaseHealth } = await import('@/lib/supabase');
+          const isHealthy = await checkDatabaseHealth();
+          logger.info('Boot', 'Background health check:', isHealthy ? 'healthy' : 'slow');
+        } catch (err) {
+          logger.warn('Boot', 'Background health check failed:', err);
+        }
+      }, 3000);
       
-      const isHealthy = await Promise.race([healthPromise, healthTimeout]);
-      
-      if (isHealthy) {
-        logger.info('Boot', '✅ Database is awake and healthy');
-        bootHealthCheck.addStep('STEP 6: Database awake');
-        
-        // ✅ Buscar session SOMENTE se healthy
+      // ✅ BUILD 49: Session load SEMPRE opcional (não travar boot)
+      try {
         logger.info('Boot', '🔐 STEP 7: Loading Supabase session...', {
           timestamp: Date.now()
         });
         
         const { data, error } = await supabase.auth.getSession();
         
-        if (error) {
-          logger.error('Boot', '❌ Session load error:', error);
-          bootHealthCheck.addStep('STEP 7: Session load FAILED');
-        } else {
+        if (!error && data.session) {
           logger.info('Boot', '✅ STEP 7: Session loaded', {
-            hasSession: !!data.session,
+            hasSession: true,
             userId: data.session?.user?.id || 'null',
             timestamp: Date.now()
           });
           bootHealthCheck.addStep('STEP 7: Session loaded');
+        } else {
+          logger.warn('Boot', 'No session found, continuing anyway');
+          bootHealthCheck.addStep('STEP 7: No session');
         }
-      } else {
-        logger.warn('Boot', '⚠️ Database slow, skipping session check during boot');
-        bootHealthCheck.addStep('STEP 6: Database slow (skipping session)');
+      } catch (sessionError) {
+        logger.warn('Boot', 'Session load failed, continuing anyway:', sessionError);
+        bootHealthCheck.addStep('STEP 7: Session load failed (continuing)');
       }
       
     } catch (error) {
-      logger.error('Boot', '❌ CRITICAL: Boot init failed:', error);
-      bootHealthCheck.addStep('STEP 4-6: Init FAILED');
-      throw new Error(`Boot initialization failed: ${error}`);
+      // ✅ BUILD 49: FALLBACK para localStorage se storage falhar
+      logger.error('Boot', '❌ Storage init failed, using localStorage fallback:', error);
+      bootHealthCheck.addStep('STEP 4: Storage FAILED (using localStorage)');
+      
+      try {
+        const supabaseModule = await import('@/integrations/supabase/client');
+        const supabase = supabaseModule.getSupabase();
+        logger.info('Boot', '✅ Supabase client created with localStorage');
+        bootHealthCheck.addStep('STEP 5: Supabase ready (localStorage)');
+      } catch (supabaseError) {
+        logger.error('Boot', '❌ CRITICAL: Supabase init failed:', supabaseError);
+        bootHealthCheck.addStep('STEP 5: Supabase FAILED');
+        throw new Error(`Boot initialization failed: ${supabaseError}`);
+      }
     }
     
     logger.info('Boot', '🎯 STEP 8: Ready to render React', {
@@ -128,9 +132,9 @@ const waitForCapacitor = async () => {
 };
 
 (async () => {
-  // ✅ BUILD 48: Timeout de emergência global de 5 segundos
+  // ✅ BUILD 49: Timeout de emergência global de 8 segundos (iOS real precisa mais tempo)
   const emergencyTimeout = setTimeout(() => {
-    logger.error('Boot', '🚨 EMERGENCY: Boot taking too long (5s), forcing render');
+    logger.error('Boot', '🚨 EMERGENCY: Boot taking too long (8s), forcing render');
     
     bootManager.markBootComplete();
     
@@ -140,7 +144,7 @@ const waitForCapacitor = async () => {
     // Esconder loader
     const loader = document.getElementById('native-loader');
     if (loader) loader.remove();
-  }, 5000);
+  }, 8000); // 5s → 8s
   
   try {
     logger.debug('Boot', '🔄 STEP 1: Starting boot sequence...');

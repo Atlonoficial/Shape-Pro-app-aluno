@@ -17,10 +17,10 @@ export const LoadingScreen = () => {
       });
     }, 1000);
     
-    // Timeout de 15s para mostrar erro
+    // ✅ BUILD 49: Timeout aumentado (15s → 20s para iOS real)
     const timeout = setTimeout(() => {
       setShowError(true);
-    }, 15000);
+    }, 20000); // 15s → 20s
     
     return () => {
       clearTimeout(timeout);
@@ -92,7 +92,7 @@ export const LoadingScreen = () => {
         <div className="animate-spin rounded-full h-16 w-16 border-4 border-yellow-500 border-t-transparent mx-auto"></div>
         <p className="text-white mt-6 text-lg font-semibold">Carregando...</p>
         <p className="text-gray-400 mt-2 text-sm">Inicializando aplicativo...</p>
-        {countdown > 0 && countdown < 15 && (
+        {countdown > 0 && countdown < 20 && (
           <p className="text-gray-500 mt-4 text-xs">
             {countdown}s restantes...
           </p>

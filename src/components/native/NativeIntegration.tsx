@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
+import { logger } from '@/lib/logger';
 
 /**
  * Shape Pro - Native Integration Component
@@ -11,7 +12,7 @@ import { Keyboard } from '@capacitor/keyboard';
 export const NativeIntegration = () => {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
-      console.log('[NativeIntegration] Running on web platform');
+      logger.info('NativeIntegration', 'Running on web platform');
       return;
     }
 
@@ -20,7 +21,7 @@ export const NativeIntegration = () => {
 
   const initNativeFeatures = async () => {
     try {
-      console.log('[NativeIntegration] Initializing native features...');
+      logger.info('NativeIntegration', 'Initializing native features...');
 
       // 1. Configure Status Bar
       await configureStatusBar();
@@ -34,9 +35,9 @@ export const NativeIntegration = () => {
       // 4. Initialize Push Notifications
       await initPushNotifications();
 
-      console.log('[NativeIntegration] All native features initialized successfully');
+      logger.info('NativeIntegration', 'All native features initialized successfully');
     } catch (error) {
-      console.error('[NativeIntegration] Error initializing native features:', error);
+      logger.error('NativeIntegration', 'Error initializing native features:', error);
     }
   };
 
@@ -47,9 +48,9 @@ export const NativeIntegration = () => {
       await StatusBar.setBackgroundColor({ color: '#000000' });
       await StatusBar.show();
       
-      console.log('[NativeIntegration] Status bar configured');
+      logger.info('NativeIntegration', 'Status bar configured');
     } catch (error) {
-      console.error('[NativeIntegration] Error configuring status bar:', error);
+      logger.error('NativeIntegration', 'Error configuring status bar:', error);
     }
   };
 
@@ -64,15 +65,15 @@ export const NativeIntegration = () => {
         document.body.classList.remove('keyboard-open');
       });
 
-      console.log('[NativeIntegration] Keyboard listeners configured');
+      logger.info('NativeIntegration', 'Keyboard listeners configured');
     } catch (error) {
-      console.error('[NativeIntegration] Error configuring keyboard:', error);
+      logger.error('NativeIntegration', 'Error configuring keyboard:', error);
     }
   };
 
   const initPushNotifications = async () => {
     // OneSignal manages push notifications completely
-    console.log('[NativeIntegration] Push notifications managed by OneSignal');
+    logger.info('NativeIntegration', 'Push notifications managed by OneSignal');
     return;
   };
 

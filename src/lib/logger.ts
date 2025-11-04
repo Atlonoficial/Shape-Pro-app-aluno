@@ -1,6 +1,7 @@
 /**
- * Logger Otimizado para Produção - Build 26
+ * Logger Otimizado para Produção - Build 49
  * Controla verbosidade de logs baseado no ambiente
+ * ✅ CRÍTICO: Desabilita completamente console.* em produção iOS
  */
 
 const IS_PRODUCTION = import.meta.env.PROD;
@@ -45,7 +46,9 @@ class Logger {
   }
 
   info(context: string, message: string, data?: any) {
-    // ✅ Logs críticos SEMPRE aparecem
+    // ✅ BUILD 49: Desabilitar completamente em produção
+    if (IS_PRODUCTION) return;
+    
     if (!this.enabled && !this.isCriticalContext(context)) return;
     
     const formatted = this.formatMessage('info', context, message, data);
@@ -53,27 +56,36 @@ class Logger {
   }
 
   warn(context: string, message: string, data?: any) {
-    // Warnings sempre aparecem
+    // ✅ BUILD 49: Desabilitar completamente em produção
+    if (IS_PRODUCTION) return;
+    
     const formatted = this.formatMessage('warn', context, message, data);
     console.warn(formatted.message, data || '');
   }
 
   error(context: string, message: string, error?: any) {
-    // Errors sempre aparecem
+    // ✅ BUILD 49: Desabilitar completamente em produção
+    if (IS_PRODUCTION) return;
+    
     const formatted = this.formatMessage('error', context, message, error);
     console.error(formatted.message, error || '');
   }
 
   debug(context: string, message: string, data?: any) {
-    // ✅ Logs críticos SEMPRE aparecem
+    // ✅ BUILD 49: Desabilitar completamente em produção
+    if (IS_PRODUCTION) return;
+    
     if (!this.enabled && !this.isCriticalContext(context)) return;
     
     const formatted = this.formatMessage('debug', context, message, data);
-    console.log(formatted.message, data || ''); // ✅ Usar console.log em produção
+    console.log(formatted.message, data || '');
   }
 
   // Método especial para logs críticos que sempre aparecem
   critical(context: string, message: string, data?: any) {
+    // ✅ BUILD 49: Desabilitar completamente em produção
+    if (IS_PRODUCTION) return;
+    
     const formatted = this.formatMessage('error', context, `🚨 CRITICAL: ${message}`, data);
     console.error(formatted.message, data || '');
   }
