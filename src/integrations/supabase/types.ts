@@ -5403,8 +5403,61 @@ export type Database = {
         Args: { p_teacher_id: string; p_user_id: string }
         Returns: Json
       }
+      get_user_meal_plans: {
+        Args: { p_user_id: string }
+        Returns: {
+          assigned_students: string[]
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_days: number | null
+          id: string
+          meals_data: Json
+          name: string
+          status: string
+          tenant_id: string | null
+          total_calories: number | null
+          total_carbs: number | null
+          total_fat: number | null
+          total_protein: number | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "meal_plans"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_teacher_id: { Args: { student_id: string }; Returns: string }
       get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }
+      get_user_workout_plans: {
+        Args: { p_user_id: string }
+        Returns: {
+          assigned_students: string[] | null
+          created_at: string
+          created_by: string
+          description: string | null
+          difficulty: string | null
+          duration_weeks: number | null
+          exercises_data: Json
+          id: string
+          is_template: boolean | null
+          name: string
+          notes: string | null
+          sessions_per_week: number | null
+          status: string
+          tags: string[] | null
+          tenant_id: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "workout_plans"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_workout_details_for_student: {
         Args: { p_student_id: string }
         Returns: {

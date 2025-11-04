@@ -51,7 +51,7 @@ export const useWorkoutPlans = () => {
       return;
     }
 
-    // ✅ BUILD 54: Cache inteligente - vazio expira em 10s, com dados em 1min
+    // ✅ BUILD 52: Cache inteligente - vazio expira em 10s, com dados em 1min
     if (!forceRefresh && cacheRef.current) {
       const cacheAge = Date.now() - cacheRef.current.timestamp;
       const isEmpty = cacheRef.current.data.length === 0;
@@ -67,16 +67,13 @@ export const useWorkoutPlans = () => {
     try {
       setError(null);
       
-      // ✅ BUILD 54: Query principal com .cs para assigned_students
+      // ✅ BUILD 52: Usar RPC nativo SQL com = ANY()
       let { data, error: queryError } = await supabase
-        .from('workout_plans')
-        .select('*')
-        .eq('status', 'active')
-        .or(`created_by.eq.${user.id},assigned_students.cs.{${user.id}}`)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .rpc('get_user_workout_plans', {
+          p_user_id: user.id
+        });
 
-      // ✅ BUILD 54: Fallback robusto se .cs falhar
+      // ✅ BUILD 52: Fallback robusto se RPC falhar (buscar todos e filtrar client-side)
       if (queryError || !data || data.length === 0) {
         const { data: allPlans } = await supabase
           .from('workout_plans')
@@ -98,13 +95,13 @@ export const useWorkoutPlans = () => {
         exercises_data: Array.isArray(plan.exercises_data) ? plan.exercises_data as any[] : []
       }));
 
-      // ✅ BUILD 54: Retry automático se vazio (máx 3 tentativas)
+      // ✅ BUILD 52: Retry automático se vazio (máx 3 tentativas)
       if (formatted.length === 0 && retryCount < 3) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         return fetchWorkoutPlans(true, retryCount + 1);
       }
 
-      // ✅ BUILD 54: Atualizar cache
+      // ✅ BUILD 52: Atualizar cache
       cacheRef.current = { data: formatted, timestamp: Date.now() };
       setWorkoutPlans(formatted);
     } catch (err) {

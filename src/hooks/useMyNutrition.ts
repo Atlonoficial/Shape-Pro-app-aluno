@@ -131,32 +131,33 @@ export const useMyNutrition = () => {
       mealsCacheRef.current = { data: meals, timestamp: Date.now() };
       return meals;
     } catch (error) {
-      // ✅ BUILD 54: Fallback robusto com .cs + filtro client-side
+      // ✅ BUILD 52: Fallback robusto usando RPC + filtro client-side
       try {
-        let { data: allPlans } = await supabase
-          .from('meal_plans')
-          .select(`id, name, total_calories, meals_data, created_by, assigned_students`)
-          .eq('status', 'active')
-          .or(`created_by.eq.${userId},assigned_students.cs.{${userId}}`)
-          .order('created_at', { ascending: false })
-          .limit(10);
+        // Tentar usar RPC primeiro
+        let { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_user_meal_plans', {
+            p_user_id: userId
+          });
 
-        // ✅ BUILD 54: Fallback adicional se .cs falhar
-        if (!allPlans || allPlans.length === 0) {
-          const { data: allActivePlans } = await supabase
+        let userPlan = null;
+
+        // Se RPC funcionar, usar dados
+        if (!rpcError && rpcData && rpcData.length > 0) {
+          userPlan = rpcData[0];
+        } else {
+          // Fallback: buscar TODOS e filtrar client-side
+          const { data: allPlans } = await supabase
             .from('meal_plans')
             .select(`id, name, total_calories, meals_data, created_by, assigned_students`)
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(50);
 
-          allPlans = (allActivePlans || []).filter(plan =>
+          userPlan = (allPlans || []).find(plan =>
             plan.created_by === userId ||
             (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(userId))
           );
         }
-
-        const userPlan = allPlans?.[0];
 
         if (!userPlan?.meals_data) {
           // ✅ BUILD 54: Retry se vazio
