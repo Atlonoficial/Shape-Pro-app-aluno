@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useRealtimeManager } from './useRealtimeManager';
 
 export interface MealLog {
   id: string;
@@ -90,8 +89,17 @@ export const useMyNutrition = () => {
     percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
   });
 
-  // ✅ BUILD 52: Função otimizada com timeout e fallback
-  const getTodayMeals = useCallback(async (userId: string) => {
+  // ✅ BUILD 53: Cache de 1 minuto
+  const mealsCacheRef = useRef<{ data: TodayMeal[]; timestamp: number } | null>(null);
+  const CACHE_DURATION = 60000; // 1 minuto
+
+  // ✅ BUILD 53: Função otimizada com timeout, fallback e cache
+  const getTodayMeals = useCallback(async (userId: string, forceRefresh = false) => {
+    // ✅ BUILD 53: Usar cache se ainda válido
+    if (!forceRefresh && mealsCacheRef.current && Date.now() - mealsCacheRef.current.timestamp < CACHE_DURATION) {
+      return mealsCacheRef.current.data;
+    }
+
     try {
       // ✅ Timeout de 5s para RPC
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -105,29 +113,35 @@ export const useMyNutrition = () => {
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
       if (error) throw error;
-      return data || [];
+      
+      // ✅ BUILD 53: Atualizar cache
+      const meals = data || [];
+      mealsCacheRef.current = { data: meals, timestamp: Date.now() };
+      return meals;
     } catch (error) {
-      // ✅ Fallback: Buscar diretamente da tabela meal_plans
+      // ✅ BUILD 53: Fallback com query corrigida
       try {
-        const { data: fallbackData } = await supabase
+        const { data: allPlans } = await supabase
           .from('meal_plans')
-          .select(`
-            id,
-            name,
-            total_calories,
-            meals_data
-          `)
-          .contains('assigned_students', [userId])
+          .select(`id, name, total_calories, meals_data, created_by, assigned_students`)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(10);
 
-        if (!fallbackData?.meals_data) return [];
+        // ✅ BUILD 53: Filtrar no client-side
+        const userPlan = (allPlans || []).find(plan =>
+          plan.created_by === userId ||
+          (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(userId))
+        );
+
+        if (!userPlan?.meals_data) {
+          mealsCacheRef.current = { data: [], timestamp: Date.now() };
+          return [];
+        }
 
         // ✅ Transformar meals_data para formato TodayMeal com type casting
-        const meals: TodayMeal[] = Array.isArray(fallbackData.meals_data) 
-          ? fallbackData.meals_data.map((item: any): TodayMeal => ({
+        const meals: TodayMeal[] = Array.isArray(userPlan.meals_data) 
+          ? userPlan.meals_data.map((item: any): TodayMeal => ({
               meal_plan_item_id: item.meal_id || item.id,
               meal_name: item.meal_name || item.name || 'Refeição',
               meal_time: item.meal_time || '12:00',
@@ -139,12 +153,15 @@ export const useMyNutrition = () => {
               foods: item.foods || [],
               is_logged: false,
               log_id: undefined,
-              meal_plan_id: fallbackData.id
+              meal_plan_id: userPlan.id
             }))
           : [];
 
+        // ✅ BUILD 53: Atualizar cache
+        mealsCacheRef.current = { data: meals, timestamp: Date.now() };
         return meals;
       } catch (fallbackError) {
+        mealsCacheRef.current = { data: [], timestamp: Date.now() };
         return [];
       }
     }
@@ -192,18 +209,7 @@ export const useMyNutrition = () => {
     fetchData();
   }, [fetchData]);
 
-  // Usar useRealtimeManager para subscriptions consolidadas
-  useRealtimeManager({
-    subscriptions: user?.id ? [{
-      table: 'meal_logs',
-      event: '*',
-      filter: `user_id=eq.${user.id}`,
-      callback: () => fetchData(),
-    }] : [],
-    enabled: !!user?.id,
-    channelName: 'meal-logs',
-    debounceMs: 500,
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   // Função auxiliar para calcular valores nutricionais de uma refeição
   const calculateMealNutrition = useCallback((meal: TodayMeal) => {

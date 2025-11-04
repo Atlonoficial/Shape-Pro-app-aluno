@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
-import { useRealtimeManager } from './useRealtimeManager';
 import { bootManager } from '@/lib/bootManager';
 import { logger } from '@/lib/logger';
 
@@ -149,29 +148,7 @@ export const useAuth = () => {
     };
   }, []);
 
-  // Use centralized realtime manager for profile changes
-  // CRITICAL: Only enable after boot is complete to prevent initialization lockup
-  useRealtimeManager({
-    subscriptions: user?.id ? [{
-      table: 'profiles',
-      event: '*',
-      filter: `id=eq.${user.id}`,
-      callback: async () => {
-        logger.debug('useAuth', 'Profile updated in real-time');
-        try {
-          if (user?.id) {
-            const updatedProfile = await getUserProfile(user.id);
-            setUserProfile(updatedProfile);
-          }
-        } catch (error) {
-          logger.error('useAuth', 'Error syncing profile:', error);
-        }
-      }
-    }] : [],
-    enabled: bootComplete && !!user?.id,
-    channelName: 'auth-profile',
-    debounceMs: 500
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   return {
     user,

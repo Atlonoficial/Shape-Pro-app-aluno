@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useRealtimeManager } from '@/hooks/useRealtimeManager';
 
 export interface WorkoutPlan {
   id: string;
@@ -42,8 +41,19 @@ export const useWorkoutPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchWorkoutPlans = useCallback(async () => {
+  // ✅ BUILD 53: Cache de 1 minuto
+  const cacheRef = useRef<{ data: WorkoutPlan[]; timestamp: number } | null>(null);
+  const CACHE_DURATION = 60000; // 1 minuto
+
+  const fetchWorkoutPlans = useCallback(async (forceRefresh = false) => {
     if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    // ✅ BUILD 53: Usar cache se ainda válido
+    if (!forceRefresh && cacheRef.current && Date.now() - cacheRef.current.timestamp < CACHE_DURATION) {
+      setWorkoutPlans(cacheRef.current.data);
       setLoading(false);
       return;
     }
@@ -51,12 +61,12 @@ export const useWorkoutPlans = () => {
     try {
       setError(null);
       
-      // ✅ BUILD 52: Query otimizada com eq + or (mais rápido que contains)
+      // ✅ BUILD 53: Query corrigida - buscar todos ativos e filtrar no client
       const { data, error: queryError } = await supabase
         .from('workout_plans')
         .select('*')
-        .or(`assigned_students.cs.{${user.id}},created_by.eq.${user.id}`)
         .eq('status', 'active')
+        .or(`created_by.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -66,12 +76,22 @@ export const useWorkoutPlans = () => {
         return;
       }
 
-      setWorkoutPlans((data || []).map(plan => ({
+      // ✅ BUILD 53: Filtrar no client-side (mais confiável que operadores complexos)
+      const filtered = (data || []).filter(plan =>
+        plan.created_by === user.id ||
+        (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(user.id))
+      );
+
+      const formatted = filtered.map(plan => ({
         ...plan,
         status: plan.status as 'active' | 'inactive' | 'draft',
         difficulty: plan.difficulty as 'beginner' | 'intermediate' | 'advanced',
         exercises_data: Array.isArray(plan.exercises_data) ? plan.exercises_data as any[] : []
-      })));
+      }));
+
+      // ✅ BUILD 53: Atualizar cache
+      cacheRef.current = { data: formatted, timestamp: Date.now() };
+      setWorkoutPlans(formatted);
     } catch (err) {
       setError('Erro inesperado ao carregar planos');
       setWorkoutPlans([]);
@@ -89,32 +109,7 @@ export const useWorkoutPlans = () => {
     fetchWorkoutPlans();
   }, [user?.id, fetchWorkoutPlans]);
 
-  // Realtime subscriptions using centralized manager
-  useRealtimeManager({
-    subscriptions: [
-      {
-        table: 'workout_plans',
-        event: '*',
-        callback: (payload) => {
-          console.log('Workout plans realtime update:', payload);
-          
-          const newRecord = payload.new as any;
-          const oldRecord = payload.old as any;
-          
-          const isRelevant = 
-            (newRecord && Array.isArray(newRecord.assigned_students) && newRecord.assigned_students.includes(user?.id)) ||
-            (oldRecord && Array.isArray(oldRecord.assigned_students) && oldRecord.assigned_students.includes(user?.id));
-            
-          if (isRelevant) {
-            fetchWorkoutPlans();
-          }
-        }
-      }
-    ],
-    enabled: !!user?.id,
-    channelName: `workout-plans-${user?.id}`,
-    debounceMs: 500
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   // Get active plans for current user
   const activePlans = workoutPlans.filter(plan => plan.status === 'active');

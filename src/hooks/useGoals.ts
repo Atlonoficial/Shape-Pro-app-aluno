@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-import { useRealtimeManager } from "./useRealtimeManager";
 import { toast } from "sonner";
 
 export interface UserGoal {
@@ -160,18 +159,7 @@ export const useGoals = () => {
     fetchGoals();
   }, [fetchGoals]);
 
-  // Usar useRealtimeManager para subscriptions consolidadas
-  useRealtimeManager({
-    subscriptions: user?.id ? [{
-      table: 'user_goals',
-      event: '*',
-      filter: `user_id=eq.${user.id}`,
-      callback: () => fetchGoals(),
-    }] : [],
-    enabled: !!user?.id,
-    channelName: 'user-goals',
-    debounceMs: 1000,
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   return {
     goals,

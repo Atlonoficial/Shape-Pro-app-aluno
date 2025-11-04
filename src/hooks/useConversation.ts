@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useRealtimeManager } from './useRealtimeManager';
 import { toast } from 'sonner';
 
 interface Conversation {
@@ -153,56 +152,7 @@ export const useConversation = (userId?: string) => {
     }
   }, []);
 
-  // Usar useRealtimeManager para subscriptions consolidadas
-  useRealtimeManager({
-    subscriptions: conversation?.id ? [{
-      table: 'chat_messages',
-      event: 'INSERT',
-      filter: `conversation_id=eq.${conversation.id}`,
-      callback: (payload: any) => {
-        const payloadKey = `${payload.new.id}-${payload.new.created_at}`;
-        if (processedPayloadsRef.current.has(payloadKey)) {
-          return;
-        }
-        processedPayloadsRef.current.add(payloadKey);
-
-        const newMessage = payload.new as ChatMessage;
-        
-        if (messageIdsRef.current.has(newMessage.id)) {
-          return;
-        }
-        
-        setMessages(prev => {
-          const localMsgIndex = prev.findIndex(msg => 
-            msg.status === 'sending' && 
-            msg.message === newMessage.message &&
-            msg.sender_id === newMessage.sender_id &&
-            Math.abs(new Date(msg.created_at || 0).getTime() - new Date(newMessage.created_at || 0).getTime()) < 10000
-          );
-          
-          let updatedMessages = [...prev];
-          
-          if (localMsgIndex >= 0) {
-            updatedMessages[localMsgIndex] = { ...newMessage, status: 'sent' };
-          } else {
-            const existsById = updatedMessages.some(msg => msg.id === newMessage.id);
-            if (!existsById) {
-              updatedMessages.push({ ...newMessage, status: 'sent' });
-            }
-          }
-          
-          messageIdsRef.current.add(newMessage.id);
-          
-          return updatedMessages.sort((a, b) => 
-            new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-          );
-        });
-      }
-    }] : [],
-    enabled: !!conversation?.id,
-    channelName: `chat-messages-${conversation?.id}`,
-    debounceMs: 500,
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   // Enviar mensagem com retry e estado local
   const sendMessage = useCallback(async (content: string) => {

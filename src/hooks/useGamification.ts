@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRealtimeManager } from "./useRealtimeManager";
 
 interface UserPoints {
   user_id: string;
@@ -362,61 +361,7 @@ export const useGamification = () => {
     }
   }, [user?.id]);
 
-  // Centralized realtime subscriptions for gamification
-  useRealtimeManager({
-    subscriptions: user?.id ? [
-      {
-        table: 'user_points',
-        event: '*',
-        filter: `user_id=eq.${user.id}`,
-        callback: (payload) => {
-          console.log('Points updated:', payload);
-          if (payload.new) {
-            setUserPoints(payload.new as UserPoints);
-          }
-        },
-      },
-      {
-        table: 'gamification_activities',
-        event: 'INSERT',
-        filter: `user_id=eq.${user.id}`,
-        callback: (payload) => {
-          console.log('New activity:', payload);
-          if (payload.new) {
-            const newActivity = payload.new as GamificationActivity;
-            setActivities(prev => [newActivity, ...prev.slice(0, 19)]);
-            
-            // Show points toast for new activity
-            import("@/components/gamification/PointsToast").then(({ showPointsToast }) => {
-              showPointsToast({
-                points: newActivity.points_earned,
-                activity: newActivity.description,
-                description: newActivity.metadata?.description
-              });
-            });
-          }
-        },
-      },
-      {
-        table: 'user_achievements',
-        event: 'INSERT',
-        filter: `user_id=eq.${user.id}`,
-        callback: (payload) => {
-          console.log('New achievement:', payload);
-          fetchUserAchievements();
-          
-          if (payload.new) {
-            toast.success(`🏆 Nova conquista desbloqueada! +${payload.new.points_earned} pontos`, {
-              duration: 5000
-            });
-          }
-        },
-      },
-    ] : [],
-    enabled: !!user?.id,
-    channelName: 'gamification-realtime',
-    debounceMs: 500,
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   return {
     userPoints,

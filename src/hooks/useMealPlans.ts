@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useRealtimeManager } from './useRealtimeManager';
 
 export interface MealPlan {
   id: string;
@@ -83,28 +82,7 @@ export const useMealPlans = () => {
     }
   }, [user?.id, fetchMealPlans]);
 
-  // Usar useRealtimeManager para subscriptions consolidadas
-  useRealtimeManager({
-    subscriptions: user?.id ? [{
-      table: 'meal_plans',
-      event: '*',
-      callback: (payload: any) => {
-        const newRecord = payload.new as any;
-        const oldRecord = payload.old as any;
-        
-        const isRelevant = 
-          (newRecord && Array.isArray(newRecord.assigned_students) && newRecord.assigned_students.includes(user.id)) ||
-          (oldRecord && Array.isArray(oldRecord.assigned_students) && oldRecord.assigned_students.includes(user.id));
-          
-        if (isRelevant) {
-          fetchMealPlans();
-        }
-      },
-    }] : [],
-    enabled: !!user?.id,
-    channelName: 'meal-plans',
-    debounceMs: 1000,
-  });
+  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   // Get active plans for current user
   const activePlans = mealPlans.filter(plan => plan.status === 'active');

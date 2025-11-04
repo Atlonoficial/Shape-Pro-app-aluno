@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { NativeIntegration } from "@/components/native/NativeIntegration";
 import { NetworkStatus } from "@/components/ui/NetworkStatus";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { useGlobalRealtime } from "@/hooks/useGlobalRealtime";
 import Index from "./pages/Index";
 // Core application imports ready for production
 import NotFound from "./pages/NotFound";
@@ -87,6 +88,9 @@ const RedirectToAuthConfirm = () => {
 
 // ✅ BUILD 32.1: AuthenticatedApp - Garante que AuthProvider está pronto antes de GamificationProvider
 const AuthenticatedApp = () => {
+  // ✅ BUILD 53: Consolidar TODAS as subscriptions realtime aqui
+  useGlobalRealtime();
+  
   return (
     <GamificationProvider>
       <GamificationIntegrator>
