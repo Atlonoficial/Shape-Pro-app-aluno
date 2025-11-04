@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "4.0.0", // ✅ BUILD 52: Correções de UX/UI + espaçamento
+  version: "4.0.0", // ✅ BUILD 53: Fix botão "Ativar Notificações"
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
@@ -47,8 +47,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 52: Correções de UX/UI + espaçamento
-    CFBundleVersion: '52',
+    // ✅ BUILD 53: Fix botão "Ativar Notificações"
+    CFBundleVersion: '53',
     CFBundleShortVersionString: "4.0.0",
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
@@ -91,7 +91,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.0",
-      CFBundleVersion: "52", // ✅ BUILD 52: Correções de UX/UI + espaçamento
+      CFBundleVersion: "53", // ✅ BUILD 53: Fix botão "Ativar Notificações"
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -108,7 +108,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 52, // ✅ BUILD 52: Correções de UX/UI + espaçamento
+    versionCode: 53, // ✅ BUILD 53: Fix botão "Ativar Notificações"
     versionName: "4.0.0"
   },
 

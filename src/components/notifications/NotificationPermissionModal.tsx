@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 
 export const NotificationPermissionModal = () => {
   const [open, setOpen] = useState(false);
+  const [oneSignalReady, setOneSignalReady] = useState(false);
 
   useEffect(() => {
     // ✅ Apenas mostrar em mobile nativo
@@ -22,31 +24,79 @@ export const NotificationPermissionModal = () => {
       return;
     }
     
-    // ✅ Mostrar após 3 segundos (deixar app carregar completamente)
-    logger.debug('NotificationPermissionModal', 'Scheduling modal display in 3s');
-    const timer = setTimeout(() => {
-      logger.info('NotificationPermissionModal', 'Displaying permission modal');
-      setOpen(true);
-    }, 3000);
+    // ✅ BUILD 53: Escutar evento onesignal-ready
+    const handleOneSignalReady = (event: Event) => {
+      logger.info('NotificationPermissionModal', 'OneSignal ready event received', (event as CustomEvent).detail);
+      setOneSignalReady(true);
+      
+      // Mostrar modal após 1 segundo extra (garantir estabilidade)
+      setTimeout(() => {
+        logger.info('NotificationPermissionModal', 'Displaying permission modal');
+        setOpen(true);
+      }, 1000);
+    };
     
-    return () => clearTimeout(timer);
+    window.addEventListener('onesignal-ready', handleOneSignalReady);
+    
+    // ✅ Fallback: Verificar manualmente se OneSignal já está pronto
+    const checkOneSignalReady = () => {
+      if (window.plugins?.OneSignal) {
+        logger.info('NotificationPermissionModal', 'OneSignal detected via polling');
+        setOneSignalReady(true);
+        
+        setTimeout(() => {
+          logger.info('NotificationPermissionModal', 'Displaying permission modal');
+          setOpen(true);
+        }, 1000);
+      } else {
+        logger.debug('NotificationPermissionModal', 'OneSignal not ready yet, checking again in 1s');
+        setTimeout(checkOneSignalReady, 1000);
+      }
+    };
+    
+    // Iniciar verificação após 3 segundos (deixar app carregar)
+    const timer = setTimeout(checkOneSignalReady, 3000);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('onesignal-ready', handleOneSignalReady);
+    };
   }, []);
 
-  const handleAccept = async () => {
+  const handleAccept = () => {
     try {
       logger.info('NotificationPermissionModal', 'User accepted, requesting native permission');
       
       if (window.plugins?.OneSignal) {
-        // ✅ Pedir permissão nativa do iOS/Android
-        await window.plugins.OneSignal.promptForPushNotificationsWithUserResponse();
-        logger.info('NotificationPermissionModal', 'Native permission prompt displayed');
-        localStorage.setItem('notification_permission_requested', 'true');
-        setOpen(false);
+        // ✅ BUILD 53: Usar callback (não Promise!)
+        window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+          if (accepted) {
+            logger.info('NotificationPermissionModal', 'User accepted native permission');
+            localStorage.setItem('notification_permission_requested', 'true');
+            setOpen(false);
+            
+            // Toast de confirmação
+            toast.success('🔔 Notificações ativadas!', {
+              description: 'Você receberá lembretes de treinos e avisos importantes.',
+              duration: 4000
+            });
+          } else {
+            logger.info('NotificationPermissionModal', 'User denied native permission');
+            localStorage.setItem('notification_permission_requested', 'declined');
+            setOpen(false);
+          }
+        });
       } else {
-        logger.warn('NotificationPermissionModal', 'OneSignal plugin not available');
+        logger.warn('NotificationPermissionModal', 'OneSignal plugin not available yet');
+        toast.error('OneSignal ainda não está pronto', {
+          description: 'Aguarde alguns segundos e tente novamente.'
+        });
       }
     } catch (error) {
       logger.error('NotificationPermissionModal', 'Error requesting permission', error);
+      toast.error('Erro ao solicitar permissões', {
+        description: 'Por favor, tente novamente.'
+      });
     }
   };
 

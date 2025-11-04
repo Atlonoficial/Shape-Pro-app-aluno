@@ -66,43 +66,12 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       
       OneSignal.setAppId(APP_ID);
 
-      // ✅ BUILD 24: Solicitar permissão de forma unificada
-      logger.debug('OneSignal', 'Requesting notification permission');
-      
-      OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-        if (accepted) {
-          logger.info('OneSignal', 'Push notifications enabled');
-          
-          // Definir external user ID após aceitar
-          if (externalUserId) {
-            currentExternalUserId = externalUserId;
-            OneSignal.setExternalUserId(String(externalUserId));
-            logger.debug('OneSignal', 'User ID set', { externalUserId });
-          }
-
-          // Sincronizar playerId no backend
-          OneSignal.getDeviceState((state: any) => {
-            logger.debug('OneSignal', 'Device State', state);
-            
-            const playerId = state?.userId;
-            if (playerId && externalUserId) {
-              logger.info('OneSignal', 'Player ID obtained', {
-                playerId,
-                subscribed: state?.isSubscribed,
-                pushEnabled: state?.pushEnabled
-              });
-              updatePlayerIdInSupabase(playerId, externalUserId);
-            } else {
-              logger.warn('OneSignal', 'No Player ID available', {
-                hasPlayerId: !!playerId,
-                hasExternalUserId: !!externalUserId
-              });
-            }
-          });
-        } else {
-          logger.debug('OneSignal', 'User denied push notifications');
-        }
-      });
+      // ✅ BUILD 53: Definir external user ID (permissão será pedida pelo modal)
+      if (externalUserId) {
+        currentExternalUserId = externalUserId;
+        OneSignal.setExternalUserId(String(externalUserId));
+        logger.debug('OneSignal', 'User ID set', { externalUserId });
+      }
 
       // Handler para notificações em foreground
       OneSignal.setNotificationWillShowInForegroundHandler((notificationReceivedEvent: any) => {
@@ -127,7 +96,15 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       });
 
       isInitialized = true;
-      logger.info('OneSignal Mobile', 'Initialized successfully');
+      logger.info('OneSignal Mobile', 'Initialized successfully', {
+        pluginAvailable: !!window.plugins?.OneSignal,
+        timestamp: new Date().toISOString()
+      });
+
+      // ✅ BUILD 53: Disparar evento customizado para notificar componentes
+      window.dispatchEvent(new CustomEvent('onesignal-ready', { 
+        detail: { platform: 'mobile', externalUserId } 
+      }));
 
     } catch (error) {
       logger.error('OneSignal Mobile', 'Init failed (non-fatal)', error);
