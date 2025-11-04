@@ -96,18 +96,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     logger.info('AuthProvider', `🔄 State update: ${stateStr}`);
   }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, forceRender, emergencyMode, location.pathname]);
 
-  // ✅ BUILD 50: FORÇA loading = false após 2s (antes do forceRender de 3s)
+  // ✅ BUILD 51: FORÇA loading = false após 1s (2s → 1s mais agressivo)
   useEffect(() => {
     const forceLoadingOff = setTimeout(() => {
       if (auth.loading && !forceRender) {
-        logger.error('AuthProvider', '🚨 FORCE LOADING OFF after 2s', {
+        logger.error('AuthProvider', '🚨 FORCE LOADING OFF after 1s', {
           loading: auth.loading,
           user: !!auth.user,
           profile: !!auth.userProfile
         });
         setForceRender(true);
       }
-    }, 2000); // ✅ 2s (antes do forceRender de 3s)
+    }, 1000); // ✅ 2s → 1s (mais agressivo)
     
     return () => clearTimeout(forceLoadingOff);
   }, [auth.loading, forceRender, auth.user, auth.userProfile]);
@@ -125,26 +125,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   const isPublicRoute = PUBLIC_PATHS.some((p) => location.pathname.startsWith(p));
 
-  // FASE 3: Timeout de 3 segundos para forçar renderização se loading travar
+  // ✅ BUILD 51: Timeout reduzido para 1.5s (3s → 1.5s)
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (auth.loading && !forceRender) {
-        logger.error('AuthProvider', '⚠️ Loading timeout (3s) - forcing render', {
+        logger.error('AuthProvider', '⚠️ Loading timeout (1.5s) - forcing render', {
           loading: auth.loading,
           user: auth.user?.id
         });
         setForceRender(true);
       }
-    }, 3000); // ✅ Mantido em 3s
+    }, 1500); // 3s → 1.5s
     return () => clearTimeout(timeout);
   }, [auth.loading, forceRender, auth.user]);
 
-  // ✅ BUILD 48: Modo de emergência aumentado (3s → 5s)
+  // ✅ BUILD 51: Emergency timeout reduzido para 3s (5s → 3s)
   useEffect(() => {
     const timer = setTimeout(() => {
       // ✅ Ativar emergency mode mesmo COM usuário logado
       if (auth.loading) {
-        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 5s', {
+        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 3s', {
           loading: auth.loading,
           user: auth.user?.id,
           profile: !!auth.userProfile,
@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         ]);
         setEmergencyMode(true);
       }
-    }, 5000); // ✅ Aumentado de 3s → 5s
+    }, 3000); // 5s → 3s
 
     return () => clearTimeout(timer);
   }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, isNative]);

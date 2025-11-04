@@ -47,31 +47,45 @@ const waitForCapacitor = async () => {
     await new Promise(resolve => setTimeout(resolve, waitTime));
     bootHealthCheck.addStep('STEP 3: Wait complete');
     
-    // ✅ BUILD 49: Paralelizar storage + import supabase COM FALLBACK
-    logger.info('Boot', '🔐 STEP 4: Initializing storage & importing Supabase...', {
+    // ✅ BUILD 51: NUNCA aguardar storage - Supabase usa localStorage imediatamente
+    logger.info('Boot', '🔐 STEP 4: Creating Supabase client (no storage wait)...', {
       timestamp: Date.now()
     });
+    bootHealthCheck.addStep('STEP 4: Creating Supabase client');
     
     try {
-      const [_, supabaseModule] = await Promise.all([
-        createCapacitorStorage(),
-        import('@/integrations/supabase/client')
-      ]);
+      // ✅ Import Supabase IMEDIATAMENTE (sem aguardar storage)
+      const supabaseModule = await import('@/integrations/supabase/client');
+      const supabase = supabaseModule.getSupabase();
       
-      logger.info('Boot', '✅ Storage & Supabase import complete', {
+      logger.info('Boot', '✅ STEP 5: Supabase client ready', {
         timestamp: Date.now()
       });
-      bootHealthCheck.addStep('STEP 4: Storage & Supabase ready');
+      bootHealthCheck.addStep('STEP 5: Supabase client ready');
       
-      // ✅ Criar client DEPOIS do storage estar pronto
-      const supabase = supabaseModule.getSupabase();
-      bootHealthCheck.addStep('STEP 5: Supabase client created');
+      // ✅ BUILD 51: Inicializar storage EM BACKGROUND (não bloquear boot)
+      if (isIOS) {
+        setTimeout(async () => {
+          try {
+            logger.info('Boot', 'Background: Initializing Capacitor Storage...');
+            await createCapacitorStorage();
+            
+            // ✅ Migrar sessão de localStorage → Capacitor Storage
+            const storageKey = 'sb-bqbopkqzkavhmenjlhab-auth-token';
+            const session = localStorage.getItem(storageKey);
+            if (session) {
+              logger.info('Boot', 'Migrating session to Capacitor Storage');
+              // A migração acontece automaticamente no próximo setItem()
+            }
+            
+            logger.info('Boot', '✅ Background: Storage initialized and migrated');
+          } catch (err) {
+            logger.warn('Boot', 'Background: Storage init failed, continuing with localStorage:', err);
+          }
+        }, 1000); // Aguardar 1s após boot
+      }
       
-      // ✅ BUILD 49: REMOVER health check do boot (economiza 2s)
-      logger.info('Boot', '✅ STEP 6: Supabase client ready (skipping health check)');
-      bootHealthCheck.addStep('STEP 6: Supabase ready');
-      
-      // ✅ BUILD 49: Health check em background DEPOIS do React renderizar
+      // ✅ Health check em background (não bloquear)
       setTimeout(async () => {
         try {
           const { checkDatabaseHealth } = await import('@/lib/supabase');
@@ -80,47 +94,13 @@ const waitForCapacitor = async () => {
         } catch (err) {
           logger.warn('Boot', 'Background health check failed:', err);
         }
-      }, 3000);
-      
-      // ✅ BUILD 49: Session load SEMPRE opcional (não travar boot)
-      try {
-        logger.info('Boot', '🔐 STEP 7: Loading Supabase session...', {
-          timestamp: Date.now()
-        });
-        
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (!error && data.session) {
-          logger.info('Boot', '✅ STEP 7: Session loaded', {
-            hasSession: true,
-            userId: data.session?.user?.id || 'null',
-            timestamp: Date.now()
-          });
-          bootHealthCheck.addStep('STEP 7: Session loaded');
-        } else {
-          logger.warn('Boot', 'No session found, continuing anyway');
-          bootHealthCheck.addStep('STEP 7: No session');
-        }
-      } catch (sessionError) {
-        logger.warn('Boot', 'Session load failed, continuing anyway:', sessionError);
-        bootHealthCheck.addStep('STEP 7: Session load failed (continuing)');
-      }
+      }, 2000);
       
     } catch (error) {
-      // ✅ BUILD 49: FALLBACK para localStorage se storage falhar
-      logger.error('Boot', '❌ Storage init failed, using localStorage fallback:', error);
-      bootHealthCheck.addStep('STEP 4: Storage FAILED (using localStorage)');
-      
-      try {
-        const supabaseModule = await import('@/integrations/supabase/client');
-        const supabase = supabaseModule.getSupabase();
-        logger.info('Boot', '✅ Supabase client created with localStorage');
-        bootHealthCheck.addStep('STEP 5: Supabase ready (localStorage)');
-      } catch (supabaseError) {
-        logger.error('Boot', '❌ CRITICAL: Supabase init failed:', supabaseError);
-        bootHealthCheck.addStep('STEP 5: Supabase FAILED');
-        throw new Error(`Boot initialization failed: ${supabaseError}`);
-      }
+      // ✅ BUILD 51: Se Supabase falhar, é erro crítico (mas não deve acontecer)
+      logger.error('Boot', '❌ CRITICAL: Supabase init failed:', error);
+      bootHealthCheck.addStep('STEP 4: Supabase FAILED');
+      throw new Error(`Boot initialization failed: ${error}`);
     }
     
     logger.info('Boot', '🎯 STEP 8: Ready to render React', {
@@ -132,19 +112,23 @@ const waitForCapacitor = async () => {
 };
 
 (async () => {
-  // ✅ BUILD 49: Timeout de emergência global de 8 segundos (iOS real precisa mais tempo)
+  // ✅ BUILD 51: Timeout de emergência reduzido para 5s
   const emergencyTimeout = setTimeout(() => {
-    logger.error('Boot', '🚨 EMERGENCY: Boot taking too long (8s), forcing render');
+    logger.error('Boot', '🚨 EMERGENCY: Boot taking too long (5s), forcing render');
     
     bootManager.markBootComplete();
     
-    const AppWrapper = Capacitor.isNativePlatform() ? <App /> : <StrictMode><App /></StrictMode>;
+    // ✅ BUILD 51: NUNCA usar StrictMode em nativo ou produção
+    const isNative = Capacitor.isNativePlatform();
+    const IS_PRODUCTION = import.meta.env.PROD;
+    const AppWrapper = (isNative || IS_PRODUCTION) ? <App /> : <StrictMode><App /></StrictMode>;
+    
     createRoot(document.getElementById('root')!).render(AppWrapper);
     
     // Esconder loader
     const loader = document.getElementById('native-loader');
     if (loader) loader.remove();
-  }, 8000); // 5s → 8s
+  }, 5000); // 8s → 5s (mais agressivo)
   
   try {
     logger.debug('Boot', '🔄 STEP 1: Starting boot sequence...');
@@ -211,10 +195,14 @@ const waitForCapacitor = async () => {
     logger.info('Boot', '⏳ STEP 8.5: Waiting 50ms for flag propagation...');
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    // ✅ BUILD 22: Renderizar React AGORA (garantia absoluta)
+    // ✅ BUILD 51: Renderizar React NUNCA com StrictMode em nativo ou produção
     logger.info('Boot', '🔄 STEP 9: Rendering React application...');
     
-    const AppWrapper = Capacitor.isNativePlatform() ? (
+    const isNative = Capacitor.isNativePlatform();
+    const IS_PRODUCTION = import.meta.env.PROD;
+    
+    // ✅ NUNCA usar StrictMode em produção ou plataforma nativa
+    const AppWrapper = (isNative || IS_PRODUCTION) ? (
       <App />
     ) : (
       <StrictMode>

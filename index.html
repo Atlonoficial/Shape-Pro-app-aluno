@@ -123,5 +123,42 @@
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- ✅ BUILD 51: Timeout de emergência global (JavaScript puro) -->
+    <script>
+      (function() {
+        const EMERGENCY_TIMEOUT = 5000; // 5 segundos
+        
+        setTimeout(function() {
+          const loader = document.getElementById('native-loader');
+          const root = document.getElementById('root');
+          
+          // Se loader ainda visível após 5s, algo deu errado
+          if (loader && !loader.classList.contains('hidden')) {
+            console.error('🚨 EMERGENCY: Boot timeout (5s), forcing error screen');
+            
+            // Esconder loader
+            loader.style.display = 'none';
+            
+            // Mostrar erro
+            root.innerHTML = '\
+              <div style="min-height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; padding: 20px; font-family: system-ui;">\
+                <div style="text-align: center; max-width: 400px;">\
+                  <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>\
+                  <h1 style="color: white; font-size: 24px; margin-bottom: 10px;">Erro ao Iniciar</h1>\
+                  <p style="color: #9ca3af; margin-bottom: 20px;">O app não respondeu em 5 segundos.</p>\
+                  <button \
+                    onclick="window.location.reload()" \
+                    style="background: #eab308; color: black; padding: 12px 24px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 16px;"\
+                  >\
+                    🔄 Recarregar App\
+                  </button>\
+                </div>\
+              </div>\
+            ';
+          }
+        }, EMERGENCY_TIMEOUT);
+      })();
+    </script>
   </body>
 </html>

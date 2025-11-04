@@ -426,7 +426,16 @@ export const updateUserProfile = async (uid: string, updates: Partial<UserProfil
 
 export const onAuthStateChange = (callback: (user: User | null, session: Session | null) => void) => {
   const client = getClient();
+  
+  logger.info('onAuthStateChange', '📡 Setting up auth listener');
+  
   return client.auth.onAuthStateChange((event, session) => {
+    logger.info('onAuthStateChange', `🔔 Event: ${event}`, {
+      hasUser: !!session?.user,
+      userId: session?.user?.id || 'null',
+      timestamp: Date.now()
+    });
+    
     callback(session?.user ?? null, session);
   });
 };

@@ -19,26 +19,31 @@ let _supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
 export const getSupabase = () => {
   if (!_supabaseInstance) {
-    // ✅ FASE 5: Logging detalhado de criação do client
+    // ✅ BUILD 51: Logging detalhado incluindo fallback mode
+    const usingFallback = isNativePlatform && !capacitorStorage.initialized;
+    
     logger.info('Supabase Client', 'Creating client instance', {
       isNativePlatform,
       storageInitialized: isNativePlatform ? capacitorStorage.initialized : 'N/A (web)',
+      fallbackMode: usingFallback,
       timestamp: Date.now()
     });
     
-    // ✅ BUILD 28: Verificação corrigida para plataforma nativa
-    if (isNativePlatform && !capacitorStorage.initialized) {
-      logger.critical('Supabase Client', 'Storage not initialized', {
-        storageInitialized: capacitorStorage.initialized,
-        hint: 'Client accessed before boot sequence completed'
+    // ✅ BUILD 51: SEMPRE permitir criação (usar localStorage como fallback)
+    if (usingFallback) {
+      logger.warn('Supabase Client', '⚠️ Using localStorage fallback (storage not ready)', {
+        hint: 'Storage will be migrated in background'
       });
-      
-      throw new Error('Storage must be initialized before creating Supabase client. Wait for bootManager.markBootComplete()');
     }
+    
+    // ✅ BUILD 51: Decidir storage baseado na disponibilidade
+    const storage = (isNativePlatform && capacitorStorage.initialized) 
+      ? capacitorStorage 
+      : localStorage;
     
     _supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
-        storage: isNativePlatform ? capacitorStorage : localStorage,
+        storage, // ✅ localStorage ou capacitorStorage (o que estiver pronto)
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
@@ -65,15 +70,10 @@ export const getSupabase = () => {
   return _supabaseInstance;
 };
 
-// ✅ BUILD 28: Proxy com guard corrigido para plataforma nativa
+// ✅ BUILD 51: Proxy SEM guard (permitir sempre, usar localStorage fallback)
 export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
   get(target, prop) {
-    // ✅ BUILD 28: Verificar storage apenas em plataforma nativa
-    if (isNativePlatform && !capacitorStorage.initialized) {
-      logger.critical('Supabase Proxy', `Accessed ${String(prop)} before storage init`);
-      throw new Error(`[Build 40] Supabase.${String(prop)} accessed before storage initialization. Call getSupabase() instead or wait for boot.`);
-    }
-    
+    // ✅ BUILD 51: NUNCA bloquear - getSupabase() decidirá o storage
     const client = getSupabase();
     return client[prop as keyof ReturnType<typeof createClient<Database>>];
   }

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 
 export const LoadingScreen = () => {
   const [showError, setShowError] = useState(false);
-  const [countdown, setCountdown] = useState(10); // ✅ BUILD 50: 15 → 10
+  const [countdown, setCountdown] = useState(8); // ✅ BUILD 51: 10 → 8
   
   useEffect(() => {
     // Countdown visual
@@ -17,10 +17,10 @@ export const LoadingScreen = () => {
       });
     }, 1000);
     
-    // ✅ BUILD 50: Timeout reduzido (20s → 10s para fallback mais rápido)
+    // ✅ BUILD 51: Timeout reduzido (10s → 8s para fallback mais rápido)
     const timeout = setTimeout(() => {
       setShowError(true);
-    }, 10000); // 20s → 10s
+    }, 8000); // 10s → 8s
     
     return () => {
       clearTimeout(timeout);
