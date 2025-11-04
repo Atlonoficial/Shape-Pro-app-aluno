@@ -312,6 +312,9 @@ async function processSuccessfulPayment(transactionId: string) {
   // Notificar professor sobre a venda
   await notifyTeacherOfSale(transaction);
 
+  // Notificar aluno sobre aprovação do pagamento
+  await notifyStudentOfPurchase(transaction);
+
   console.log('✅ Successful payment processed completely');
 }
 
@@ -355,6 +358,45 @@ async function notifyTeacherOfSale(transaction: any) {
     });
   } catch (error) {
     console.error('❌ Failed to notify teacher:', error);
+  }
+}
+
+// Notificar aluno sobre compra aprovada
+async function notifyStudentOfPurchase(transaction: any) {
+  try {
+    const metadata = transaction.metadata;
+    let itemDescription = 'seu pedido';
+    let deepLink = '/dashboard';
+    
+    if (metadata.items?.[0]) {
+      const firstItem = metadata.items[0];
+      if (firstItem.type === 'course' && firstItem.course_id) {
+        itemDescription = 'o curso';
+        deepLink = `/courses/${firstItem.course_id}`;
+      } else if (firstItem.type === 'plan') {
+        itemDescription = 'seu plano de treino';
+        deepLink = '/dashboard';
+      }
+    }
+
+    await supabase.functions.invoke('send-push-notification', {
+      body: {
+        user_ids: [transaction.student_id],
+        title: '🎉 Pagamento Aprovado!',
+        message: `Seu pagamento foi confirmado! Acesse ${itemDescription} agora mesmo.`,
+        data: {
+          type: 'payment_approved',
+          transaction_id: transaction.id,
+          course_id: metadata.items?.[0]?.course_id,
+          plan_id: metadata.items?.[0]?.plan_catalog_id
+        },
+        deep_link: deepLink
+      }
+    });
+    
+    console.log('✅ Student notified of purchase:', transaction.student_id);
+  } catch (error) {
+    console.error('❌ Failed to notify student:', error);
   }
 }
 
