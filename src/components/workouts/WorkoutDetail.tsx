@@ -178,35 +178,43 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           
           {/* Stats compactos em 2 colunas */}
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
-              <Clock className="w-4 h-4 text-white flex-shrink-0" />
-              <div>
-                <span className="text-sm font-medium block">{workout.duration} min</span>
-                <span className="text-xs text-white/60">Duração</span>
+            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4.5 h-4.5 text-blue-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-white leading-tight">{workout.duration} min</p>
+                <p className="text-[11px] text-white/70">Duração</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
-              <Dumbbell className="w-4 h-4 text-white flex-shrink-0" />
-              <div>
-                <span className="text-sm font-medium block">{workout.exercises.length}</span>
-                <span className="text-xs text-white/60">Exercícios</span>
+            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <Dumbbell className="w-4.5 h-4.5 text-purple-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-white leading-tight">{workout.exercises.length}</p>
+                <p className="text-[11px] text-white/70">Exercícios</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
-              <Flame className="w-4 h-4 text-orange-500 flex-shrink-0" />
-              <div>
-                <span className="text-sm font-medium block">{workout.difficulty}</span>
-                <span className="text-xs text-white/60">Dificuldade</span>
+            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                <Flame className="w-4.5 h-4.5 text-orange-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-white leading-tight">{workout.difficulty}</p>
+                <p className="text-[11px] text-white/70">Dificuldade</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-background/20 backdrop-blur-sm px-3 py-2 rounded-xl">
-              <Zap className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-              <div>
-                <span className="text-sm font-medium block">~{estimateCalories()}</span>
-                <span className="text-xs text-white/60">kcal</span>
+            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
+              <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-4.5 h-4.5 text-yellow-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-white leading-tight">~{estimateCalories()}</p>
+                <p className="text-[11px] text-white/70">kcal</p>
               </div>
             </div>
           </div>
