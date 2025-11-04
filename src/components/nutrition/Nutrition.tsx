@@ -30,33 +30,25 @@ export const Nutrition = () => {
   }, [todaysMeals]);
   
   const handleMealToggle = async (mealPlanItemId: string, isCompleted: boolean) => {
-    console.log('[Nutrition] handleMealToggle called:', { mealPlanItemId, isCompleted });
-    
     if (!user?.id) return;
     
     // Impedir desmarcação - só permite marcar como consumido uma vez por dia
     if (isCompleted) {
-      console.log('[Nutrition] Meal already logged, preventing uncheck');
       hapticWarning();
       toast.error('Refeição já foi registrada hoje! Não é possível desmarcar até amanhã.');
       return;
     }
     
     try {
-      console.log('[Nutrition] Logging meal...');
       hapticLight();
       const success = await logMeal(mealPlanItemId, true);
       
       if (success) {
-        console.log('[Nutrition] Meal logged successfully, awarding points...');
         await awardMealPoints();
-        console.log('[Nutrition] Points awarded successfully');
       } else {
-        console.error('[Nutrition] Failed to log meal');
         toast.error('Erro ao registrar refeição. Tente novamente.');
       }
     } catch (error) {
-      console.error('[Nutrition] Error logging meal:', error);
       toast.error('Erro ao registrar refeição. Tente novamente.');
     }
   };

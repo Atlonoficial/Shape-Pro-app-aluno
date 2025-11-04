@@ -13,8 +13,6 @@ export const useNutritionActions = () => {
 
   const logMeal = async (mealPlanItemId: string, mealName?: string, consumed: boolean = true, notes?: string) => {
     try {
-      console.log(`[useNutritionActions] Logging meal: ${mealPlanItemId} (${mealName})`);
-      
       // Usar o hook atualizado para registrar a refeição
       const success = await logMealFromHook(mealPlanItemId, consumed, notes);
       
@@ -33,7 +31,6 @@ export const useNutritionActions = () => {
       
       return true;
     } catch (error) {
-      console.error('[useNutritionActions] Error logging meal:', error);
       toast.error("Erro ao registrar refeição");
       return false;
     }

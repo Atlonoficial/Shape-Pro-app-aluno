@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "53", // ✅ BUILD 53: Queries corrigidas + realtime consolidado + cache + performance
+  version: "4.0.1", // ✅ BUILD 54: Queries + fallback + retry + cache inteligente
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
@@ -47,9 +47,9 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 53: Versões atualizadas para Build 53
-    CFBundleVersion: '53',
-    CFBundleShortVersionString: "4.0.0",
+    // ✅ BUILD 54: Versões atualizadas para Build 54
+    CFBundleVersion: '54',
+    CFBundleShortVersionString: "4.0.1",
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
@@ -90,8 +90,8 @@ const config: CapacitorConfig = {
       UILaunchStoryboardName: "LaunchScreen",
 
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "4.0.0",
-      CFBundleVersion: "53", // ✅ BUILD 53: Queries corrigidas + realtime consolidado + cache + performance
+      CFBundleShortVersionString: "4.0.1",
+      CFBundleVersion: "54", // ✅ BUILD 54: Queries + fallback + retry + cache inteligente
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -108,8 +108,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 53, // ✅ BUILD 53: Queries corrigidas + realtime consolidado + cache + performance
-    versionName: "4.0.0"
+    versionCode: 54, // ✅ BUILD 54: Queries + fallback + retry + cache inteligente
+    versionName: "4.0.1"
   },
 
   plugins: {

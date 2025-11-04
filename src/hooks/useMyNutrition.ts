@@ -93,11 +93,17 @@ export const useMyNutrition = () => {
   const mealsCacheRef = useRef<{ data: TodayMeal[]; timestamp: number } | null>(null);
   const CACHE_DURATION = 60000; // 1 minuto
 
-  // ✅ BUILD 53: Função otimizada com timeout, fallback e cache
-  const getTodayMeals = useCallback(async (userId: string, forceRefresh = false) => {
-    // ✅ BUILD 53: Usar cache se ainda válido
-    if (!forceRefresh && mealsCacheRef.current && Date.now() - mealsCacheRef.current.timestamp < CACHE_DURATION) {
-      return mealsCacheRef.current.data;
+  // ✅ BUILD 54: Função otimizada com retry automático
+  const getTodayMeals = useCallback(async (userId: string, forceRefresh = false, retryCount = 0) => {
+    // ✅ BUILD 54: Cache inteligente - vazio expira em 10s, com dados em 1min
+    if (!forceRefresh && mealsCacheRef.current) {
+      const cacheAge = Date.now() - mealsCacheRef.current.timestamp;
+      const isEmpty = mealsCacheRef.current.data.length === 0;
+      const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
+      
+      if (cacheValid) {
+        return mealsCacheRef.current.data;
+      }
     }
 
     try {
@@ -114,32 +120,54 @@ export const useMyNutrition = () => {
 
       if (error) throw error;
       
-      // ✅ BUILD 53: Atualizar cache
       const meals = data || [];
+      
+      // ✅ BUILD 54: Retry automático se vazio (máx 3 tentativas)
+      if (meals.length === 0 && retryCount < 3) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return getTodayMeals(userId, true, retryCount + 1);
+      }
+      
       mealsCacheRef.current = { data: meals, timestamp: Date.now() };
       return meals;
     } catch (error) {
-      // ✅ BUILD 53: Fallback com query corrigida
+      // ✅ BUILD 54: Fallback robusto com .cs + filtro client-side
       try {
-        const { data: allPlans } = await supabase
+        let { data: allPlans } = await supabase
           .from('meal_plans')
           .select(`id, name, total_calories, meals_data, created_by, assigned_students`)
           .eq('status', 'active')
+          .or(`created_by.eq.${userId},assigned_students.cs.{${userId}}`)
           .order('created_at', { ascending: false })
           .limit(10);
 
-        // ✅ BUILD 53: Filtrar no client-side
-        const userPlan = (allPlans || []).find(plan =>
-          plan.created_by === userId ||
-          (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(userId))
-        );
+        // ✅ BUILD 54: Fallback adicional se .cs falhar
+        if (!allPlans || allPlans.length === 0) {
+          const { data: allActivePlans } = await supabase
+            .from('meal_plans')
+            .select(`id, name, total_calories, meals_data, created_by, assigned_students`)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          allPlans = (allActivePlans || []).filter(plan =>
+            plan.created_by === userId ||
+            (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(userId))
+          );
+        }
+
+        const userPlan = allPlans?.[0];
 
         if (!userPlan?.meals_data) {
+          // ✅ BUILD 54: Retry se vazio
+          if (retryCount < 3) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return getTodayMeals(userId, true, retryCount + 1);
+          }
           mealsCacheRef.current = { data: [], timestamp: Date.now() };
           return [];
         }
 
-        // ✅ Transformar meals_data para formato TodayMeal com type casting
         const meals: TodayMeal[] = Array.isArray(userPlan.meals_data) 
           ? userPlan.meals_data.map((item: any): TodayMeal => ({
               meal_plan_item_id: item.meal_id || item.id,
@@ -157,7 +185,6 @@ export const useMyNutrition = () => {
             }))
           : [];
 
-        // ✅ BUILD 53: Atualizar cache
         mealsCacheRef.current = { data: meals, timestamp: Date.now() };
         return meals;
       } catch (fallbackError) {
@@ -185,21 +212,19 @@ export const useMyNutrition = () => {
     }
   }, []);
 
-  // ✅ BUILD 52: Buscar refeições sem logs excessivos
+  // ✅ BUILD 54: Buscar refeições com retry automático
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
     
     try {
       setLoading(true);
       
-      const todayMealsData = await getTodayMeals(user.id);
+      const todayMealsData = await getTodayMeals(user.id, false, 0);
       setTodaysMeals(todayMealsData);
       
       const today = new Date().toISOString().split('T')[0];
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
-    } catch (error) {
-      // Silent error handling
     } finally {
       setLoading(false);
     }
@@ -297,21 +322,19 @@ export const useMyNutrition = () => {
     setDailyStats({ consumed, target, percentage });
   }, [todaysMeals, calculateMealNutrition]);
 
-  // ✅ BUILD 52: Função simplificada sem logs excessivos
+  // ✅ BUILD 54: Função otimizada
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
     if (!user?.id) return false;
 
     try {
-      const todayMealsData = await getTodayMeals(user.id);
+      const todayMealsData = await getTodayMeals(user.id, false, 0);
       const mealData = todayMealsData.find(meal => meal.meal_plan_item_id === mealPlanItemId);
 
       if (!mealData) return false;
 
-      // Se já existe um log e está marcado como consumido, não permitir desmarcar
       if (mealData.is_logged && mealData.log_id && !consumed) return false;
 
       if (mealData.log_id) {
-        // Atualizar log existente
         const { error } = await supabase
           .from('meal_logs')
           .update({
@@ -324,7 +347,6 @@ export const useMyNutrition = () => {
 
         if (error) return false;
       } else {
-        // Criar novo log
         const mealLogData = {
           user_id: user.id,
           meal_plan_id: mealData.meal_plan_id,
@@ -343,8 +365,7 @@ export const useMyNutrition = () => {
         if (error) return false;
       }
 
-      // Refresh data após operação
-      const refreshedData = await getTodayMeals(user.id);
+      const refreshedData = await getTodayMeals(user.id, true, 0);
       setTodaysMeals(refreshedData);
       
       const today = new Date().toISOString().split('T')[0];

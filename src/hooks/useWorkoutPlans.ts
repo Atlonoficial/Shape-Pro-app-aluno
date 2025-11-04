@@ -45,51 +45,66 @@ export const useWorkoutPlans = () => {
   const cacheRef = useRef<{ data: WorkoutPlan[]; timestamp: number } | null>(null);
   const CACHE_DURATION = 60000; // 1 minuto
 
-  const fetchWorkoutPlans = useCallback(async (forceRefresh = false) => {
+  const fetchWorkoutPlans = useCallback(async (forceRefresh = false, retryCount = 0) => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
 
-    // ✅ BUILD 53: Usar cache se ainda válido
-    if (!forceRefresh && cacheRef.current && Date.now() - cacheRef.current.timestamp < CACHE_DURATION) {
-      setWorkoutPlans(cacheRef.current.data);
-      setLoading(false);
-      return;
+    // ✅ BUILD 54: Cache inteligente - vazio expira em 10s, com dados em 1min
+    if (!forceRefresh && cacheRef.current) {
+      const cacheAge = Date.now() - cacheRef.current.timestamp;
+      const isEmpty = cacheRef.current.data.length === 0;
+      const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
+      
+      if (cacheValid) {
+        setWorkoutPlans(cacheRef.current.data);
+        setLoading(false);
+        return;
+      }
     }
 
     try {
       setError(null);
       
-      // ✅ BUILD 53: Query corrigida - buscar todos ativos e filtrar no client
-      const { data, error: queryError } = await supabase
+      // ✅ BUILD 54: Query principal com .cs para assigned_students
+      let { data, error: queryError } = await supabase
         .from('workout_plans')
         .select('*')
         .eq('status', 'active')
-        .or(`created_by.eq.${user.id}`)
+        .or(`created_by.eq.${user.id},assigned_students.cs.{${user.id}}`)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (queryError) {
-        setError('Erro ao carregar planos de treino');
-        setWorkoutPlans([]);
-        return;
+      // ✅ BUILD 54: Fallback robusto se .cs falhar
+      if (queryError || !data || data.length === 0) {
+        const { data: allPlans } = await supabase
+          .from('workout_plans')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        data = (allPlans || []).filter(plan =>
+          plan.created_by === user.id ||
+          (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(user.id))
+        );
       }
 
-      // ✅ BUILD 53: Filtrar no client-side (mais confiável que operadores complexos)
-      const filtered = (data || []).filter(plan =>
-        plan.created_by === user.id ||
-        (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(user.id))
-      );
-
-      const formatted = filtered.map(plan => ({
+      const formatted = (data || []).map(plan => ({
         ...plan,
         status: plan.status as 'active' | 'inactive' | 'draft',
         difficulty: plan.difficulty as 'beginner' | 'intermediate' | 'advanced',
         exercises_data: Array.isArray(plan.exercises_data) ? plan.exercises_data as any[] : []
       }));
 
-      // ✅ BUILD 53: Atualizar cache
+      // ✅ BUILD 54: Retry automático se vazio (máx 3 tentativas)
+      if (formatted.length === 0 && retryCount < 3) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return fetchWorkoutPlans(true, retryCount + 1);
+      }
+
+      // ✅ BUILD 54: Atualizar cache
       cacheRef.current = { data: formatted, timestamp: Date.now() };
       setWorkoutPlans(formatted);
     } catch (err) {
