@@ -282,7 +282,28 @@ export const useMyNutrition = () => {
     loadInitialData();
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
 
-  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
+  // ✅ BUILD 54: Escutar eventos de realtime global
+  useEffect(() => {
+    const handleMealPlansUpdate = () => {
+      if (user?.id) {
+        fetchData();
+      }
+    };
+
+    const handleMealLogsUpdate = () => {
+      if (user?.id) {
+        fetchData();
+      }
+    };
+
+    window.addEventListener('meal-plans-updated', handleMealPlansUpdate);
+    window.addEventListener('meal-logs-updated', handleMealLogsUpdate);
+    
+    return () => {
+      window.removeEventListener('meal-plans-updated', handleMealPlansUpdate);
+      window.removeEventListener('meal-logs-updated', handleMealLogsUpdate);
+    };
+  }, [user?.id, fetchData]);
 
   // Função auxiliar para calcular valores nutricionais de uma refeição
   const calculateMealNutrition = useCallback((meal: TodayMeal) => {

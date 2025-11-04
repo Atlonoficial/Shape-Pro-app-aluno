@@ -124,7 +124,20 @@ export const useWorkoutPlans = () => {
     fetchWorkoutPlans(true);
   }, [user?.id, fetchWorkoutPlans]);
 
-  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
+  // ✅ BUILD 54: Escutar eventos de realtime global
+  useEffect(() => {
+    const handleWorkoutPlansUpdate = () => {
+      if (user?.id) {
+        fetchWorkoutPlans(true);
+      }
+    };
+
+    window.addEventListener('workout-plans-updated', handleWorkoutPlansUpdate);
+    
+    return () => {
+      window.removeEventListener('workout-plans-updated', handleWorkoutPlansUpdate);
+    };
+  }, [user?.id, fetchWorkoutPlans]);
 
   // Get active plans for current user
   const activePlans = workoutPlans.filter(plan => plan.status === 'active');
