@@ -6,8 +6,9 @@ import { Capacitor } from '@capacitor/core';
 import { initializeDeepLinkHandler } from '@/utils/deepLinkHandler';
 import { createCapacitorStorage } from '@/lib/capacitorStorage';
 import { bootManager } from '@/lib/bootManager';
+import { logger } from '@/lib/logger';
 
-console.log('[Boot] 🔄 STEP 0: main.tsx loaded');
+logger.info('Boot', '🔄 STEP 0: main.tsx loaded');
 
 // ✅ NOVO: Health check para validar cada etapa do boot
 const bootHealthCheck = {
@@ -15,7 +16,7 @@ const bootHealthCheck = {
   addStep(step: string) {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, 12);
     this.steps.push(`${timestamp} - ${step}`);
-    console.log(`[Boot Health] ✅ ${step}`);
+    logger.info('Boot Health', `✅ ${step}`);
   },
   getStatus() {
     return this.steps.join('\n');
@@ -31,7 +32,7 @@ const waitForCapacitor = async () => {
     const platform = Capacitor.getPlatform();
     const isIOS = platform === 'ios';
     
-    console.log('[Boot] 🔄 STEP 2: Native platform detected', {
+    logger.info('Boot', '🔄 STEP 2: Native platform detected', {
       platform,
       isIOS,
       userAgent: navigator.userAgent,
@@ -41,29 +42,29 @@ const waitForCapacitor = async () => {
     
     // ✅ Build 26: Tempos otimizados
     const waitTime = isIOS ? 300 : 150;
-    console.log(`[Boot] ⏳ Waiting ${waitTime}ms for plugins...`);
+    logger.info('Boot', `⏳ Waiting ${waitTime}ms for plugins...`);
     bootHealthCheck.addStep(`STEP 3: Waiting ${waitTime}ms`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
     bootHealthCheck.addStep('STEP 3: Wait complete');
     
     // ✅ FASE 1: Inicializar storage PRIMEIRO
-    console.log('[Boot] 🔐 STEP 3: Initializing Capacitor storage...', {
+    logger.info('Boot', '🔐 STEP 3: Initializing Capacitor storage...', {
       timestamp: Date.now()
     });
     try {
       await createCapacitorStorage();
-      console.log('[Boot] ✅ STEP 4: Storage ready and tested', {
+      logger.info('Boot', '✅ STEP 4: Storage ready and tested', {
         timestamp: Date.now()
       });
       bootHealthCheck.addStep('STEP 4: Storage initialized');
     } catch (error) {
-      console.error('[Boot] ❌ CRITICAL: Storage init failed:', error);
+      logger.error('Boot', '❌ CRITICAL: Storage init failed:', error);
       bootHealthCheck.addStep('STEP 4: Storage init FAILED');
       throw new Error(`Storage initialization failed: ${error}`);
     }
     
     // ✅ FASE 2: Forçar criação do Supabase client AGORA (não no import)
-    console.log('[Boot] 🔐 STEP 5: Creating Supabase client...', {
+    logger.info('Boot', '🔐 STEP 5: Creating Supabase client...', {
       timestamp: Date.now()
     });
     
@@ -72,7 +73,7 @@ const waitForCapacitor = async () => {
     bootHealthCheck.addStep('STEP 5: Supabase client created');
     
     // ✅ BUILD 40.2 FASE 5: Wake up database com timeout maior
-    console.log('[Boot] 🔄 STEP 6: Waking up database...', {
+    logger.info('Boot', '🔄 STEP 6: Waking up database...', {
       timestamp: Date.now()
     });
     bootHealthCheck.addStep('STEP 6: Waking up database');
@@ -84,7 +85,7 @@ const waitForCapacitor = async () => {
       const healthCheckPromise = checkDatabaseHealth();
       const bootTimeoutPromise = new Promise<boolean>((resolve) => 
         setTimeout(() => {
-          console.warn('[Boot] ⚠️ Health check timeout (5s), continuing anyway...');
+          logger.warn('Boot', '⚠️ Health check timeout (5s), continuing anyway...');
           resolve(false);
         }, 5000)
       );
@@ -92,29 +93,29 @@ const waitForCapacitor = async () => {
       const isHealthy = await Promise.race([healthCheckPromise, bootTimeoutPromise]);
       
       if (isHealthy) {
-        console.log('[Boot] ✅ Database is awake and healthy');
+        logger.info('Boot', '✅ Database is awake and healthy');
         bootHealthCheck.addStep('STEP 6: Database awake');
       } else {
-        console.warn('[Boot] ⚠️ Database slow to respond, but continuing boot');
+        logger.warn('Boot', '⚠️ Database slow to respond, but continuing boot');
         bootHealthCheck.addStep('STEP 6: Database slow (continuing anyway)');
       }
     } catch (error) {
-      console.error('[Boot] ❌ Database health check failed:', error);
+      logger.error('Boot', '❌ Database health check failed:', error);
       bootHealthCheck.addStep('STEP 6: Database check failed (continuing anyway)');
       // ✅ NÃO bloquear boot
     }
     
-    console.log('[Boot] 🔐 STEP 7: Loading Supabase session...', {
+    logger.info('Boot', '🔐 STEP 7: Loading Supabase session...', {
       timestamp: Date.now()
     });
     
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error('[Boot] ❌ Session load error:', error);
+      logger.error('Boot', '❌ Session load error:', error);
       bootHealthCheck.addStep('STEP 7: Session load FAILED');
     } else {
-      console.log('[Boot] ✅ STEP 8: Session loaded', {
+      logger.info('Boot', '✅ STEP 8: Session loaded', {
         hasSession: !!data.session,
         userId: data.session?.user?.id || 'null',
         timestamp: Date.now()
@@ -122,7 +123,7 @@ const waitForCapacitor = async () => {
       bootHealthCheck.addStep('STEP 7: Session loaded');
     }
     
-    console.log('[Boot] 🎯 STEP 8: Ready to render React', {
+    logger.info('Boot', '🎯 STEP 8: Ready to render React', {
       timestamp: Date.now(),
       totalTime: `${Date.now() - performance.now()}ms`
     });
@@ -132,13 +133,13 @@ const waitForCapacitor = async () => {
 
 (async () => {
   try {
-    console.debug('[Boot] 🔄 STEP 1: Starting boot sequence...');
+    logger.debug('Boot', '🔄 STEP 1: Starting boot sequence...');
     
     if (Capacitor.isNativePlatform()) {
       await waitForCapacitor();
       
-      console.log('[Boot] 🚀 Starting native platform initialization...');
-      console.debug('[Boot] Platform:', Capacitor.getPlatform());
+      logger.info('Boot', '🚀 Starting native platform initialization...');
+      logger.debug('Boot', 'Platform:', Capacitor.getPlatform());
       
       // LOGGING APRIMORADO: Capturar TODOS os erros com detalhes completos
       window.addEventListener('error', (e) => {
@@ -151,7 +152,7 @@ const waitForCapacitor = async () => {
           timestamp: new Date().toISOString()
         };
         
-        console.error('[Boot] ❌ CRITICAL ERROR:', JSON.stringify(errorDetails, null, 2));
+        logger.error('Boot', '❌ CRITICAL ERROR:', JSON.stringify(errorDetails, null, 2));
       });
       
       window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
@@ -161,23 +162,23 @@ const waitForCapacitor = async () => {
           timestamp: new Date().toISOString()
         };
         
-        console.error('[Boot] ❌ UNHANDLED PROMISE REJECTION:', JSON.stringify(rejectionDetails, null, 2));
+        logger.error('Boot', '❌ UNHANDLED PROMISE REJECTION:', JSON.stringify(rejectionDetails, null, 2));
       });
 
       // Inicializa deep links com segurança
       try {
-        console.log('[Boot] 🔗 Initializing deep link handler...');
+        logger.info('Boot', '🔗 Initializing deep link handler...');
         initializeDeepLinkHandler();
-        console.log('[Boot] ✅ Deep link handler initialized');
+        logger.info('Boot', '✅ Deep link handler initialized');
       } catch (err) {
-        console.error('[Boot] ❌ DeepLink init failed:', err);
+        logger.error('Boot', '❌ DeepLink init failed:', err);
       }
 
-      console.log('[Boot] ✅ Native initialization complete');
+      logger.info('Boot', '✅ Native initialization complete');
     } else {
-      console.debug('[Boot] ℹ️ STEP 2: Web platform detected, skipping native init');
-      console.debug('[Boot] 📝 Note: capacitorStorage will NOT be initialized (using localStorage)');
-      console.debug('[Boot] 🔍 BUILD 28: Capacitor detection:', {
+      logger.debug('Boot', 'ℹ️ STEP 2: Web platform detected, skipping native init');
+      logger.debug('Boot', '📝 Note: capacitorStorage will NOT be initialized (using localStorage)');
+      logger.debug('Boot', '🔍 BUILD 47: Capacitor detection:', {
         isNativePlatform: Capacitor.isNativePlatform(),
         platform: Capacitor.getPlatform(),
         CapacitorExists: typeof (window as any).Capacitor !== 'undefined'
@@ -185,16 +186,16 @@ const waitForCapacitor = async () => {
     }
 
     // ✅ BUILD 26: Marcar boot como completo (WEB + NATIVO)
-    console.log('[Boot] 🎯 STEP 8: Marking boot as complete');
+    logger.info('Boot', '🎯 STEP 8: Marking boot as complete');
     bootManager.markBootComplete();
     bootHealthCheck.addStep('STEP 8: Boot marked complete');
     
     // ✅ BUILD 26: Aguardar 50ms para garantir propagação do flag
-    console.log('[Boot] ⏳ STEP 8.5: Waiting 50ms for flag propagation...');
+    logger.info('Boot', '⏳ STEP 8.5: Waiting 50ms for flag propagation...');
     await new Promise(resolve => setTimeout(resolve, 50));
 
     // ✅ BUILD 22: Renderizar React AGORA (garantia absoluta)
-    console.log('[Boot] 🔄 STEP 9: Rendering React application...');
+    logger.info('Boot', '🔄 STEP 9: Rendering React application...');
     
     const AppWrapper = Capacitor.isNativePlatform() ? (
       <App />
@@ -208,22 +209,22 @@ const waitForCapacitor = async () => {
     bootHealthCheck.addStep('STEP 9: React rendered');
 
     // ✅ Esconder loader nativo DEPOIS de React renderizar
-    console.log('[Boot] 🔄 STEP 10: React rendered, hiding native loader...');
+    logger.info('Boot', '🔄 STEP 10: React rendered, hiding native loader...');
     setTimeout(() => {
       const nativeLoader = document.getElementById('native-loader');
       if (nativeLoader) {
         nativeLoader.classList.add('hidden');
-        console.log('[Boot] ✅ STEP 11: Native loader hidden');
+        logger.info('Boot', '✅ STEP 11: Native loader hidden');
         setTimeout(() => {
           nativeLoader.remove();
-          console.log('[Boot] ✅ STEP 12: Native loader removed from DOM');
+          logger.info('Boot', '✅ STEP 12: Native loader removed from DOM');
         }, 500);
       }
     }, 100);
     
   } catch (error) {
     // ✅ BUILD 21: SEMPRE esconder loader mesmo com erro
-    console.error('[Boot] ❌ FATAL ERROR:', error);
+    logger.error('Boot', '❌ FATAL ERROR:', error);
     
     const loader = document.getElementById('native-loader');
     if (loader) loader.remove();

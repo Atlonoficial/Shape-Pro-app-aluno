@@ -53,31 +53,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // ✅ Register daily activity automatically for authenticated users
   useRegisterDailyActivity();
   
-  // ✅ NOVO: Capturar todos os logs do console
+  // ✅ NOVO: Capturar todos os logs do logger
   useEffect(() => {
-    const originalLog = console.log;
-    const originalError = console.error;
     const logs: string[] = [];
     
-    console.log = (...args) => {
+    const originalLoggerLog = logger.info;
+    const originalLoggerError = logger.error;
+    
+    (logger as any).infoWithCapture = (...args: any[]) => {
       const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-      if (message.includes('[Boot]') || message.includes('[CapacitorStorage]') || message.includes('useAuth')) {
+      if (message.includes('Boot') || message.includes('CapacitorStorage') || message.includes('useAuth')) {
         logs.push(message);
         setBootLogs(prev => [...prev, message].slice(-20)); // ✅ Últimos 20 logs
       }
-      originalLog.apply(console, args);
+      originalLoggerLog.apply(logger, args);
     };
     
-    console.error = (...args) => {
+    (logger as any).errorWithCapture = (...args: any[]) => {
       const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
       logs.push(`❌ ${message}`);
       setBootLogs(prev => [...prev, `❌ ${message}`].slice(-20));
-      originalError.apply(console, args);
+      originalLoggerError.apply(logger, args);
     };
     
     return () => {
-      console.log = originalLog;
-      console.error = originalError;
+      // Restaurar originais se necessário
     };
   }, []);
   
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (auth.loading && !forceRender) {
-        console.error('[AuthProvider] ⚠️ Loading timeout (3s) - forcing render', {
+        logger.error('AuthProvider', '⚠️ Loading timeout (3s) - forcing render', {
           loading: auth.loading,
           user: auth.user?.id
         });
@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const timer = setTimeout(() => {
       // ✅ FASE 3: Ativar emergency mode mesmo COM usuário logado
       if (auth.loading) {
-        console.error('[AuthProvider] 🚨 EMERGENCY MODE: Auth stuck for 3s', {
+        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 3s', {
           loading: auth.loading,
           user: auth.user?.id,
           profile: !!auth.userProfile,

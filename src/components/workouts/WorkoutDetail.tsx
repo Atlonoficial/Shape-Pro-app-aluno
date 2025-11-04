@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ArrowLeft, Clock, Flame, Dumbbell, Play, ChevronDown, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "./VideoPlayer";
 import { useExerciseVideo } from "@/hooks/useExerciseVideo";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { useNavigate } from "react-router-dom";
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Capacitor } from '@capacitor/core';
 
 interface Exercise {
   id: number;
@@ -85,6 +87,12 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
   const navigate = useNavigate();
   const [videoModalExercise, setVideoModalExercise] = useState<Exercise | null>(null);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simular carregamento inicial
+    setTimeout(() => setIsLoading(false), 400);
+  }, []);
 
   const handleTabChange = useCallback((tab: string) => {
     navigate(`/${tab === 'home' ? '' : tab}`);
@@ -98,6 +106,37 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
   const handleExpandClick = useCallback((exercise: Exercise) => {
     setExpandedExercise(expandedExercise === exercise.id ? null : exercise.id);
   }, [expandedExercise]);
+
+  const handleStartWorkout = useCallback(async () => {
+    // Feedback háptico no mobile
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Haptics.impact({ style: ImpactStyle.Medium });
+      } catch (error) {
+        // Ignorar erro de haptic em dispositivos sem suporte
+      }
+    }
+    onStartWorkout();
+  }, [onStartWorkout]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-64 bg-muted rounded-2xl"></div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-muted/50 rounded-2xl p-4">
+                <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
@@ -210,11 +249,17 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
               </div>
               
               {/* Detalhes expandíveis (apenas instruções) */}
-              {expandedExercise === exercise.id && (
-                <div className="mt-4 pt-4 border-t border-border/20 space-y-3 animate-slide-down">
-                  <ExerciseInfoDisplay exerciseName={exercise.name} />
-                </div>
-              )}
+              <div className={`transition-all duration-300 ease-in-out ${
+                expandedExercise === exercise.id 
+                  ? 'max-h-[500px] opacity-100 mt-4' 
+                  : 'max-h-0 opacity-0 overflow-hidden'
+              }`}>
+                {expandedExercise === exercise.id && (
+                  <div className="pt-4 border-t border-border/20 space-y-3">
+                    <ExerciseInfoDisplay exerciseName={exercise.name} />
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -223,7 +268,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       {/* Start workout button */}
       <div className="fixed bottom-safe left-4 right-4 z-fixed">
         <button 
-          onClick={onStartWorkout}
+          onClick={handleStartWorkout}
           className="bg-gradient-accent text-background w-full h-16 text-lg font-semibold rounded-2xl hover:bg-accent/90 transition-all duration-300 shadow-lg flex items-center justify-center active:scale-95"
         >
           <Play className="w-6 h-6 mr-2" />

@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "40", // ✅ BUILD 40: Sistema de treinos profissional + Sincronização completa
+  version: "47", // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
@@ -47,18 +47,20 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 40: Sistema de treinos profissional + Sincronização completa
-    CFBundleVersion: '40',
+    // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
+    CFBundleVersion: '47',
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
       NSPhotoLibraryUsageDescription:
-        "Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.",
+        "Este app precisa acessar suas fotos para permitir que você adicione fotos de progresso e compartilhe conquistas.",
       NSPhotoLibraryAddUsageDescription:
         "Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.",
       NSCameraUsageDescription:
         "Precisamos da câmera para tirar fotos dentro do app.",
+      NSUserTrackingUsageDescription:
+        "Este app usa dados de atividade para personalizar sua experiência de treino e fornecer conteúdo relevante.",
       
       // ---- Localização (ITMS-90683) ----
       NSLocationWhenInUseUsageDescription:
@@ -88,7 +90,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.0",
-      CFBundleVersion: "40", // ✅ BUILD 40: Sistema de treinos profissional + Sincronização completa
+      CFBundleVersion: "47", // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
       
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -105,7 +107,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 40, // ✅ BUILD 40: Sistema de treinos profissional + Sincronização completa
+    versionCode: 47, // ✅ BUILD 47: Tela preta corrigida + console.* eliminado + ícones oficiais
     versionName: "4.0.0"
   },
 

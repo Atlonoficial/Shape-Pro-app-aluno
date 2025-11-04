@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>4.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>40</string>
+	<string>47</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -44,7 +44,9 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Precisamos acessar suas fotos para você escolher imagens de perfil e anexar comprovantes no app.</string>
+	<string>Este app precisa acessar suas fotos para permitir que você adicione fotos de progresso e compartilhe conquistas.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Este app usa dados de atividade para personalizar sua experiência de treino e fornecer conteúdo relevante.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.</string>
 	<key>NSCameraUsageDescription</key>

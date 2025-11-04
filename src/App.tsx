@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { TermsGuard } from "@/components/auth/TermsGuard";
 import { GamificationProvider } from "@/components/gamification/GamificationProvider";
@@ -24,6 +24,7 @@ import { AuthChangeEmail } from "./pages/auth/AuthChangeEmail";
 import { AuthError } from "./pages/auth/AuthError";
 import { AcceptTerms } from "./pages/AcceptTerms";
 import { Anamnese } from "./pages/Anamnese";
+import { LoadingScreen } from "@/components/auth/LoadingScreen";
 import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
 import AssinaturasPlanos from "./pages/AssinaturasPlanos";
@@ -145,21 +146,23 @@ const AuthenticatedApp = () => {
 const App = () => {
   return (
   <ErrorBoundary>
-    <SecurityProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-            <BrowserRouter>
-              <AuthProvider>
-                <NativeIntegration />
-                <NetworkStatus />
-                <AuthenticatedApp />
-              </AuthProvider>
-            </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </SecurityProvider>
+    <Suspense fallback={<LoadingScreen />}>
+      <SecurityProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+              <BrowserRouter>
+                <AuthProvider>
+                  <NativeIntegration />
+                  <NetworkStatus />
+                  <AuthenticatedApp />
+                </AuthProvider>
+              </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </SecurityProvider>
+    </Suspense>
   </ErrorBoundary>
   );
 };
