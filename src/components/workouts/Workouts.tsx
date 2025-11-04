@@ -139,7 +139,7 @@ export const Workouts = () => {
 
   if (loading) {
     return (
-      <div className="p-4 pt-8 pb-safe flex items-center justify-center min-h-96">
+      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
           <p className="text-muted-foreground">Carregando seus treinos...</p>
@@ -182,7 +182,7 @@ export const Workouts = () => {
   }
 
   return (
-    <div className="p-4 pt-8 pb-safe">
+    <div className="p-4 pt-8 pb-safe-4xl">
       {/* Header */}
       <div className="mb-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/")} aria-label="Voltar para a Home">

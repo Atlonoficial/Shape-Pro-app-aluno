@@ -90,33 +90,68 @@ export const useMyNutrition = () => {
     percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
   });
 
-  // Função para buscar refeições do dia usando a nova função do banco
+  // ✅ BUILD 52: Função otimizada com timeout e fallback
   const getTodayMeals = useCallback(async (userId: string) => {
     try {
-      console.log(`[useMyNutrition] Fetching today's meals for user ${userId}`);
-      
-      const { data, error } = await supabase.rpc('get_meals_for_today_v2', {
+      // ✅ Timeout de 5s para RPC
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('RPC Timeout')), 5000)
+      );
+
+      const queryPromise = supabase.rpc('get_meals_for_today_v2', {
         p_user_id: userId
       });
 
-      if (error) {
-        console.error('[useMyNutrition] Error fetching today meals:', error);
-        return [];
-      }
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
-      console.log(`[useMyNutrition] Successfully fetched ${data?.length || 0} meals for today`);
+      if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('[useMyNutrition] Exception in getTodayMeals:', error);
-      return [];
+      // ✅ Fallback: Buscar diretamente da tabela meal_plans
+      try {
+        const { data: fallbackData } = await supabase
+          .from('meal_plans')
+          .select(`
+            id,
+            name,
+            total_calories,
+            meals_data
+          `)
+          .contains('assigned_students', [userId])
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!fallbackData?.meals_data) return [];
+
+        // ✅ Transformar meals_data para formato TodayMeal
+        const meals = Array.isArray(fallbackData.meals_data) 
+          ? fallbackData.meals_data.map((item: any) => ({
+              meal_plan_item_id: item.meal_id || item.id,
+              meal_name: item.meal_name || item.name || 'Refeição',
+              meal_time: item.meal_time || '12:00',
+              meal_type: item.meal_type || 'almoço',
+              calories: item.calories || 0,
+              protein: item.protein || 0,
+              carbs: item.carbs || 0,
+              fat: item.fat || 0,
+              foods: item.foods || [],
+              is_logged: false,
+              meal_plan_id: fallbackData.id
+            }))
+          : [];
+
+        return meals;
+      } catch (fallbackError) {
+        return [];
+      }
     }
   }, []);
 
-  // Função para buscar os logs de refeição do usuário (mantida para compatibilidade)
+  // ✅ BUILD 52: Função simplificada sem console.log
   const getMealLogsByUserAndDate = useCallback(async (userId: string, date: string) => {
     try {
-      console.log(`[useMyNutrition] Fetching meal logs for user ${userId} on date ${date}`);
-      
       const { data, error } = await supabase
         .from('meal_logs')
         .select('*')
@@ -125,26 +160,19 @@ export const useMyNutrition = () => {
         .lt('date', `${date}T23:59:59`)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('[useMyNutrition] Error fetching meal logs:', error);
-        return [];
-      }
-
-      console.log(`[useMyNutrition] Successfully fetched ${data?.length || 0} meal logs`);
+      if (error) return [];
       return data || [];
     } catch (error) {
-      console.error('[useMyNutrition] Exception in getMealLogsByUserAndDate:', error);
       return [];
     }
   }, []);
 
-  // Buscar refeições do dia
+  // ✅ BUILD 52: Buscar refeições sem logs excessivos
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
     
     try {
       setLoading(true);
-      console.log('[useMyNutrition] Starting data fetch for user:', user.id);
       
       const todayMealsData = await getTodayMeals(user.id);
       setTodaysMeals(todayMealsData);
@@ -152,10 +180,8 @@ export const useMyNutrition = () => {
       const today = new Date().toISOString().split('T')[0];
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
-      
-      console.log('[useMyNutrition] Data fetch completed successfully');
     } catch (error) {
-      console.error('[useMyNutrition] Error in data fetch:', error);
+      // Silent error handling
     } finally {
       setLoading(false);
     }
@@ -175,7 +201,7 @@ export const useMyNutrition = () => {
     }] : [],
     enabled: !!user?.id,
     channelName: 'meal-logs',
-    debounceMs: 1000,
+    debounceMs: 500,
   });
 
   // Função auxiliar para calcular valores nutricionais de uma refeição
@@ -197,7 +223,6 @@ export const useMyNutrition = () => {
               (meal.foods && typeof meal.foods === 'object') ? 
               (meal.foods.foods || []) : [];
     } catch (e) {
-      console.warn('[useMyNutrition] Error parsing foods for meal:', meal.meal_name, e);
       foods = [];
     }
 
@@ -224,13 +249,10 @@ export const useMyNutrition = () => {
       return;
     }
 
-    console.log('[useMyNutrition] Calculating daily stats for meals:', todaysMeals);
-
     // Calcular totais alvo usando valores corretos
     const target = todaysMeals.reduce(
       (acc, meal) => {
         const mealNutrition = calculateMealNutrition(meal);
-        console.log(`[useMyNutrition] Meal ${meal.meal_name} nutrition:`, mealNutrition);
         return {
           calories: acc.calories + mealNutrition.calories,
           protein: acc.protein + mealNutrition.protein,
@@ -265,42 +287,24 @@ export const useMyNutrition = () => {
       fat: target.fat > 0 ? (consumed.fat / target.fat) * 100 : 0,
     };
 
-    console.log('[useMyNutrition] Daily stats calculated - Target:', target, 'Consumed:', consumed, 'Percentage:', percentage);
-
     setDailyStats({ consumed, target, percentage });
   }, [todaysMeals, calculateMealNutrition]);
 
-  // Função para registrar uma refeição usando a nova estrutura
+  // ✅ BUILD 52: Função simplificada sem logs excessivos
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
-    if (!user?.id) {
-      console.error('[useMyNutrition] User ID not available for meal logging');
-      return false;
-    }
+    if (!user?.id) return false;
 
     try {
-      console.log(`[useMyNutrition] Logging meal: ${mealPlanItemId}, consumed: ${consumed}`);
-
-      // Buscar as refeições do dia para obter informações completas
       const todayMealsData = await getTodayMeals(user.id);
       const mealData = todayMealsData.find(meal => meal.meal_plan_item_id === mealPlanItemId);
 
-      if (!mealData) {
-        console.error('[useMyNutrition] Meal data not found for item ID:', mealPlanItemId);
-        return false;
-      }
-
-      console.log('[useMyNutrition] Found meal data:', mealData);
+      if (!mealData) return false;
 
       // Se já existe um log e está marcado como consumido, não permitir desmarcar
-      if (mealData.is_logged && mealData.log_id && !consumed) {
-        console.warn('[useMyNutrition] Cannot uncheck a consumed meal');
-        return false;
-      }
+      if (mealData.is_logged && mealData.log_id && !consumed) return false;
 
       if (mealData.log_id) {
         // Atualizar log existente
-        console.log('[useMyNutrition] Updating existing meal log:', mealData.log_id);
-        
         const { error } = await supabase
           .from('meal_logs')
           .update({
@@ -311,14 +315,9 @@ export const useMyNutrition = () => {
           })
           .eq('id', mealData.log_id);
 
-        if (error) {
-          console.error('[useMyNutrition] Error updating meal log:', error);
-          return false;
-        }
+        if (error) return false;
       } else {
-        // Criar novo log usando a nova estrutura
-        console.log('[useMyNutrition] Creating new meal log');
-        
+        // Criar novo log
         const mealLogData = {
           user_id: user.id,
           meal_plan_id: mealData.meal_plan_id,
@@ -330,16 +329,11 @@ export const useMyNutrition = () => {
           actual_time: new Date().toISOString()
         };
 
-        console.log('[useMyNutrition] Meal log data to insert:', mealLogData);
-
         const { error } = await supabase
           .from('meal_logs')
           .insert(mealLogData);
 
-        if (error) {
-          console.error('[useMyNutrition] Error creating meal log:', error);
-          return false;
-        }
+        if (error) return false;
       }
 
       // Refresh data após operação
@@ -350,10 +344,8 @@ export const useMyNutrition = () => {
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
 
-      console.log('[useMyNutrition] Meal logging completed successfully');
       return true;
     } catch (error) {
-      console.error('[useMyNutrition] Exception in logMeal:', error);
       return false;
     }
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);

@@ -257,7 +257,7 @@
   }
 
   /* ✅ BUILD 30: Fixed bottom navigation - força posicionamento fixo global */
-  /* ✅ BUILD 34: Bottom Navigation - Força position fixed */
+  /* ✅ BUILD 52: Bottom Navigation - Força position fixed com máxima prioridade */
   .bottom-nav-container {
     position: fixed !important;
     bottom: 0 !important;
@@ -273,6 +273,9 @@
     pointer-events: auto;
     contain: layout style;
     isolation: isolate;
+    /* ✅ BUILD 52: Prevenir qualquer movimento durante scroll */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
   /* ✅ BUILD 29: Force only ONE bottom nav visible */

@@ -51,9 +51,14 @@
   padding-bottom: calc(320px + env(safe-area-inset-bottom));
 }
 
-/* ✅ BUILD 34: Para conteúdo muito longo - aumentado para 180px */
+/* ✅ BUILD 52: Para conteúdo muito longo - aumentado para 220px */
 .pb-safe-4xl {
-  padding-bottom: calc(180px + env(safe-area-inset-bottom));
+  padding-bottom: calc(220px + env(safe-area-inset-bottom));
+}
+
+/* ✅ BUILD 52: Para conteúdo EXTREMAMENTE longo */
+.pb-safe-5xl {
+  padding-bottom: calc(280px + env(safe-area-inset-bottom));
 }
 
 /* Bottom positioning considering navigation bar + safe area */

@@ -51,15 +51,18 @@ export const useWorkoutPlans = () => {
     try {
       setError(null);
       
+      // ✅ BUILD 52: Query otimizada com eq + or (mais rápido que contains)
       const { data, error: queryError } = await supabase
         .from('workout_plans')
         .select('*')
-        .contains('assigned_students', [user.id])
-        .order('created_at', { ascending: false });
+        .or(`assigned_students.cs.{${user.id}},created_by.eq.${user.id}`)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (queryError) {
-        console.error('Error fetching workout plans:', queryError);
         setError('Erro ao carregar planos de treino');
+        setWorkoutPlans([]);
         return;
       }
 
@@ -70,8 +73,8 @@ export const useWorkoutPlans = () => {
         exercises_data: Array.isArray(plan.exercises_data) ? plan.exercises_data as any[] : []
       })));
     } catch (err) {
-      console.error('Error in fetchWorkoutPlans:', err);
       setError('Erro inesperado ao carregar planos');
+      setWorkoutPlans([]);
     } finally {
       setLoading(false);
     }
@@ -110,7 +113,7 @@ export const useWorkoutPlans = () => {
     ],
     enabled: !!user?.id,
     channelName: `workout-plans-${user?.id}`,
-    debounceMs: 2000
+    debounceMs: 500
   });
 
   // Get active plans for current user
