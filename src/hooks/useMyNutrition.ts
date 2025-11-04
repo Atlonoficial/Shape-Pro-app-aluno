@@ -262,32 +262,112 @@ export const useMyNutrition = () => {
     }
   }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
 
-  // ✅ BUILD 54: Fetch inicial FORÇADO (sempre executa RPC)
+  // ✅ CORREÇÃO DEFINITIVA: Fetch inicial SEM dependência circular
   useEffect(() => {
     if (!user?.id) {
+      console.log('[useMyNutrition] No user, skipping');
       setLoading(false);
       return;
     }
     
-    console.log('🔄 [useMyNutrition] Mount inicial - forçando fetch');
+    console.log('🔄 [useMyNutrition] Mount with user:', user.id);
     
-    const loadInitialData = async () => {
-      setLoading(true);
-      
-      // ✅ CRÍTICO: Limpar cache ANTES de fetch para garantir execução do RPC
-      mealsCacheRef.current = null;
-      
-      const todayMealsData = await getTodayMeals(user.id, true, 0);
-      setTodaysMeals(todayMealsData);
-      
-      const today = new Date().toISOString().split('T')[0];
-      const logs = await getMealLogsByUserAndDate(user.id, today);
-      setMealLogs(logs);
-      setLoading(false);
-    };
+    // ✅ Limpar cache para forçar RPC
+    mealsCacheRef.current = null;
     
-    loadInitialData();
-  }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
+    // ✅ Chamar RPC diretamente sem dependência de getTodayMeals
+    (async () => {
+      try {
+        setLoading(true);
+        console.log('📞 [useMyNutrition] Calling RPC get_meals_for_today_v2');
+        
+        let { data, error } = await supabase
+          .rpc('get_meals_for_today_v2', {
+            p_user_id: user.id
+          });
+
+        console.log('📦 [useMyNutrition] RPC result:', { 
+          hasData: !!data, 
+          length: data?.length || 0,
+          hasError: !!error 
+        });
+
+        if (error || !data || data.length === 0) {
+          console.log('[useMyNutrition] RPC failed/empty, using fallback');
+          const { data: mealPlans } = await supabase
+            .from('meal_plans')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false });
+
+          data = [];
+          
+          if (mealPlans && mealPlans.length > 0) {
+            const userPlan = mealPlans.find(plan => 
+              plan.created_by === user.id || 
+              (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(user.id))
+            );
+
+            if (userPlan && Array.isArray(userPlan.meals_data)) {
+              data = userPlan.meals_data.map((meal: any) => ({
+                meal_plan_item_id: meal.id || crypto.randomUUID(),
+                meal_name: meal.name || 'Refeição',
+                meal_time: meal.time || '00:00',
+                meal_type: meal.meal_type || 'almoço',
+                calories: meal.foods?.reduce((sum: number, f: any) => sum + (f.calories || 0), 0) || 0,
+                protein: meal.foods?.reduce((sum: number, f: any) => sum + (f.protein || 0), 0) || 0,
+                carbs: meal.foods?.reduce((sum: number, f: any) => sum + (f.carbs || 0), 0) || 0,
+                fat: meal.foods?.reduce((sum: number, f: any) => sum + (f.fat || 0), 0) || 0,
+                foods: meal.foods || [],
+                is_logged: false,
+                log_id: undefined,
+                meal_plan_id: userPlan.id
+              }));
+            }
+          }
+        }
+
+        const formatted = (data || []).map((meal: any) => ({
+          meal_plan_item_id: meal.meal_plan_item_id,
+          meal_name: meal.meal_name,
+          meal_time: meal.meal_time,
+          meal_type: meal.meal_type || 'almoço',
+          calories: meal.calories || 0,
+          protein: meal.protein || 0,
+          carbs: meal.carbs || 0,
+          fat: meal.fat || 0,
+          foods: Array.isArray(meal.foods) ? meal.foods : [],
+          is_logged: meal.is_logged || false,
+          log_id: meal.log_id,
+          meal_plan_id: meal.meal_plan_id
+        }));
+
+        console.log('✅ [useMyNutrition] Setting meals:', formatted.length);
+        mealsCacheRef.current = { data: formatted, timestamp: Date.now(), version: CACHE_VERSION };
+        setTodaysMeals(formatted);
+        
+        // Buscar logs de hoje
+        const today = new Date().toISOString().split('T')[0];
+        const { data: logsData } = await supabase
+          .from('meal_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('date', `${today}T00:00:00`)
+          .lt('date', `${today}T23:59:59`)
+          .order('created_at', { ascending: false });
+        
+        setMealLogs(logsData || []);
+        
+      } catch (err) {
+        console.error('[useMyNutrition] Unexpected error:', err);
+        setTodaysMeals([]);
+        setMealLogs([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+    
+  }, [user?.id]); // ✅ APENAS user?.id como dependência
 
   // ✅ BUILD 54: Escutar eventos de realtime global
   useEffect(() => {

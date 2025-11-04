@@ -116,20 +116,72 @@ export const useWorkoutPlans = () => {
     }
   }, [user?.id]);
 
-  // ✅ BUILD 54: Fetch inicial FORÇADO (sempre executa RPC)
+  // ✅ CORREÇÃO DEFINITIVA: Fetch inicial SEM dependência circular
   useEffect(() => {
     if (!user?.id) {
+      console.log('[useWorkoutPlans] No user, skipping');
       setLoading(false);
       return;
     }
     
-    console.log('🔄 [useWorkoutPlans] Mount inicial - forçando fetch');
+    console.log('🔄 [useWorkoutPlans] Mount with user:', user.id);
     
-    // ✅ CRÍTICO: Limpar cache ANTES de fetch para garantir execução do RPC
+    // ✅ Limpar cache para forçar RPC
     cacheRef.current = null;
     
-    fetchWorkoutPlans(true);
-  }, [user?.id, fetchWorkoutPlans]);
+    // ✅ Chamar RPC diretamente sem dependência de fetchWorkoutPlans
+    (async () => {
+      try {
+        setError(null);
+        console.log('📞 [useWorkoutPlans] Calling RPC get_user_workout_plans');
+        
+        let { data, error: queryError } = await supabase
+          .rpc('get_user_workout_plans', {
+            p_user_id: user.id
+          });
+
+        console.log('📦 [useWorkoutPlans] RPC result:', { 
+          hasData: !!data, 
+          length: data?.length || 0,
+          hasError: !!queryError 
+        });
+
+        if (queryError || !data || data.length === 0) {
+          console.log('[useWorkoutPlans] RPC failed/empty, using fallback');
+          const { data: allPlans } = await supabase
+            .from('workout_plans')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+          data = (allPlans || []).filter(plan =>
+            plan.created_by === user.id ||
+            (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(user.id))
+          );
+        }
+
+        const formatted = (data || []).map(plan => ({
+          ...plan,
+          status: plan.status as 'active' | 'inactive' | 'draft',
+          difficulty: plan.difficulty as 'beginner' | 'intermediate' | 'advanced',
+          exercises_data: Array.isArray(plan.exercises_data) ? plan.exercises_data as any[] : []
+        }));
+
+        console.log('✅ [useWorkoutPlans] Setting plans:', formatted.length);
+        cacheRef.current = { data: formatted, timestamp: Date.now(), version: CACHE_VERSION };
+        setWorkoutPlans(formatted);
+        
+      } catch (err) {
+        console.error('[useWorkoutPlans] Unexpected error:', err);
+        setError('Erro inesperado ao carregar planos');
+        setWorkoutPlans([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+    
+  }, [user?.id]); // ✅ APENAS user?.id como dependência
 
   // ✅ BUILD 54: Escutar eventos de realtime global
   useEffect(() => {

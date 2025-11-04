@@ -13,15 +13,17 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [bootComplete, setBootComplete] = useState(false);
 
+  // ✅ CORREÇÃO DEFINITIVA: useRef interno para prevenir múltiplas inicializações
+  const initRef = useRef(false);
+  
   useEffect(() => {
-    // ✅ BUILD 51: GUARD ABSOLUTO - Usar flag global para prevenir múltiplas execuções
-    if ((window as any).__useAuthInitialized) {
-      logger.warn('useAuth', '⚠️ BLOCKED: Already initialized globally');
+    if (initRef.current) {
+      logger.warn('useAuth', '⚠️ BLOCKED: Already initialized in this instance');
       return;
     }
     
-    (window as any).__useAuthInitialized = true;
-    logger.info('useAuth', '🔄 BUILD 51: Single initialization starting');
+    initRef.current = true;
+    logger.info('useAuth', '🔄 useAuth initialization starting');
 
     let unsubscribe: (() => void) | null = null;
 
