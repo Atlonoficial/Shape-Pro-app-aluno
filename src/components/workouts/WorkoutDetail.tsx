@@ -150,14 +150,14 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
       <div 
-        className="relative h-48 sm:h-56 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col pt-safe"
+        className="relative h-40 sm:h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col pt-safe"
         style={{
           backgroundImage: workout.image ? `url(${workout.image})` : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/20" />
         
         {/* Top Bar: Botões de navegação */}
         <div className="relative z-10 flex items-center justify-between px-4 py-3">
@@ -171,58 +171,60 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
           <div className="w-10 h-10" /> {/* Spacer para centralizar */}
         </div>
 
-        {/* Workout info */}
-        <div className="relative z-10 mt-auto p-4 sm:p-6 text-white">
+        {/* Workout info - apenas título */}
+        <div className="relative z-10 mt-auto px-4 pb-4 text-white">
           <h1 className="text-2xl font-bold mb-1 leading-tight line-clamp-2">{workout.name}</h1>
-          <p className="text-white/70 text-sm mb-4">{workout.type}</p>
+          <p className="text-white/80 text-sm">{workout.type}</p>
+        </div>
+      </div>
+
+      {/* Stats section - separado do header */}
+      <div className="px-4 py-4 bg-background">
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <Clock className="w-4.5 h-4.5 text-blue-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground leading-tight">{workout.duration} min</p>
+              <p className="text-[11px] text-muted-foreground">Duração</p>
+            </div>
+          </div>
           
-          {/* Stats compactos em 2 colunas */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4.5 h-4.5 text-blue-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-semibold text-white leading-tight">{workout.duration} min</p>
-                <p className="text-[11px] text-white/70">Duração</p>
-              </div>
+          <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <Dumbbell className="w-4.5 h-4.5 text-purple-400" />
             </div>
-            
-            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <Dumbbell className="w-4.5 h-4.5 text-purple-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-semibold text-white leading-tight">{workout.exercises.length}</p>
-                <p className="text-[11px] text-white/70">Exercícios</p>
-              </div>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground leading-tight">{workout.exercises.length}</p>
+              <p className="text-[11px] text-muted-foreground">Exercícios</p>
             </div>
-            
-            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
-              <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                <Flame className="w-4.5 h-4.5 text-orange-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-semibold text-white leading-tight">{workout.difficulty}</p>
-                <p className="text-[11px] text-white/70">Dificuldade</p>
-              </div>
+          </div>
+          
+          <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+              <Flame className="w-4.5 h-4.5 text-orange-400" />
             </div>
-            
-            <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md border border-white/15 px-3 py-2.5 rounded-xl">
-              <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-4.5 h-4.5 text-yellow-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-semibold text-white leading-tight">~{estimateCalories()}</p>
-                <p className="text-[11px] text-white/70">kcal</p>
-              </div>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground leading-tight">{workout.difficulty}</p>
+              <p className="text-[11px] text-muted-foreground">Dificuldade</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-4.5 h-4.5 text-yellow-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground leading-tight">~{estimateCalories()}</p>
+              <p className="text-[11px] text-muted-foreground">kcal</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Exercises list */}
-      <div className="px-4 pt-6 pb-44">
+      <div className="px-4 pt-2 pb-44">
         <h2 className="text-xl font-bold text-foreground mb-4">Exercícios</h2>
         
         <div className="space-y-3">
