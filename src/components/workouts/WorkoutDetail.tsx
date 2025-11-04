@@ -224,7 +224,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       </div>
 
       {/* Exercises list */}
-      <div className="px-4 pt-2 pb-44">
+      <div className="px-4 pt-2 pb-36">
         <h2 className="text-xl font-bold text-foreground mb-4">Exercícios</h2>
         
         <div className="space-y-3">
@@ -294,8 +294,8 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
         </div>
       </div>
 
-      {/* Start workout button com animação */}
-      <div className="fixed bottom-16 left-0 right-0 px-4 pt-8 pb-safe bg-gradient-to-t from-background via-background/98 to-transparent z-30">
+      {/* Start workout button - próximo à navbar */}
+      <div className="fixed bottom-20 left-0 right-0 px-4 pt-4 pb-safe bg-gradient-to-t from-background via-background/98 to-transparent z-30">
         <button 
           onClick={handleStartWorkout}
           className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-14 text-base font-semibold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
