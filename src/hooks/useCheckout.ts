@@ -38,6 +38,19 @@ export const useCheckout = () => {
     setLoading(true);
 
     try {
+      // ✅ CRÍTICO: Garantir que temos um token válido
+      console.log('🔐 Checking auth session...');
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error('❌ No valid session:', sessionError);
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+      
+      console.log('✅ Valid session found, token expires at:', 
+        new Date(sessionData.session.expires_at! * 1000).toISOString()
+      );
+
       // Calcular total
       const totalAmount = items.reduce(
         (total, item) => total + item.price * (item.quantity || 1), 
@@ -61,8 +74,14 @@ export const useCheckout = () => {
         }
       });
 
+      // Log completo do erro para debug
       if (error) {
-        console.error('❌ Checkout error:', error);
+        console.error('❌ Checkout error (FULL):', {
+          message: error.message,
+          context: error.context,
+          name: error.name,
+          stack: error.stack
+        });
         throw new Error(error.message || 'Erro ao criar checkout');
       }
 
@@ -97,7 +116,13 @@ export const useCheckout = () => {
       };
 
     } catch (error: any) {
-      console.error('❌ Checkout failed:', error);
+      // Adicionar mais logging detalhado
+      console.error('❌ Checkout failed (FULL ERROR):', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        ...error
+      });
       toast.error(error.message || 'Erro ao criar checkout');
       return { success: false, error: error.message };
     } finally {
