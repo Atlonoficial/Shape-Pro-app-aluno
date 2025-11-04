@@ -81,17 +81,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
   
-  // ✅ NOVO: Log detalhado do estado de auth a cada mudança
+  // ✅ BUILD 50: Log detalhado do estado de auth a cada mudança
   useEffect(() => {
-    logger.debug('AuthProvider', 'Auth state update', {
+    const stateStr = JSON.stringify({
       loading: auth.loading,
       isAuthenticated: auth.isAuthenticated,
       hasUser: !!auth.user,
       hasProfile: !!auth.userProfile,
       userType: auth.userProfile?.user_type || 'null',
-      pathname: location.pathname
+      forceRender,
+      emergencyMode
     });
-  }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, location.pathname]);
+    
+    logger.info('AuthProvider', `🔄 State update: ${stateStr}`);
+  }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, forceRender, emergencyMode, location.pathname]);
+
+  // ✅ BUILD 50: FORÇA loading = false após 2s (antes do forceRender de 3s)
+  useEffect(() => {
+    const forceLoadingOff = setTimeout(() => {
+      if (auth.loading && !forceRender) {
+        logger.error('AuthProvider', '🚨 FORCE LOADING OFF after 2s', {
+          loading: auth.loading,
+          user: !!auth.user,
+          profile: !!auth.userProfile
+        });
+        setForceRender(true);
+      }
+    }, 2000); // ✅ 2s (antes do forceRender de 3s)
+    
+    return () => clearTimeout(forceLoadingOff);
+  }, [auth.loading, forceRender, auth.user, auth.userProfile]);
   
   const PUBLIC_PATHS = [
     '/auth/verify', 
@@ -269,12 +288,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
   }
 
-  // FASE 3: Sempre mostrar LoadingScreen quando loading, mesmo com forceRender
-  if (auth.loading) {
-    if (forceRender) {
-      logger.warn('AuthProvider', 'Force render ativado mas auth ainda loading');
-    }
+  // ✅ BUILD 50: Mostrar LoadingScreen APENAS se loading E forceRender = false
+  if (auth.loading && !forceRender) {
     return <LoadingScreen />;
+  }
+
+  // ✅ Se forceRender = true, ignorar auth.loading e renderizar app
+  if (forceRender && auth.loading) {
+    logger.warn('AuthProvider', '⚠️ Force rendering despite loading = true');
   }
 
   if (!auth.isAuthenticated && !isPublicRoute) {

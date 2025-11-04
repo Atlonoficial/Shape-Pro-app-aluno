@@ -5,7 +5,7 @@ import { useRealtimeManager } from './useRealtimeManager';
 import { bootManager } from '@/lib/bootManager';
 import { logger } from '@/lib/logger';
 
-let initCount = 0;
+let authStateChangeCount = 0;
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,47 +13,36 @@ export const useAuth = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootComplete, setBootComplete] = useState(false);
-  
-  const setupRef = useRef(false);
-  const loadingRef = useRef(loading);
-  
-  useEffect(() => {
-    loadingRef.current = loading;
-  }, [loading]);
 
   useEffect(() => {
-    if (setupRef.current) {
-      logger.debug('useAuth', '⚠️ Setup already running, skipping duplicate');
+    // ✅ BUILD 50: GUARD ABSOLUTO - Usar flag global para prevenir múltiplas execuções
+    if ((window as any).__useAuthInitialized) {
+      logger.warn('useAuth', '⚠️ BLOCKED: Already initialized globally');
       return;
     }
     
-    setupRef.current = true;
-    initCount++;
-    logger.debug('useAuth', `🔄 BUILD 22: INIT #${initCount} - Waiting for boot...`, {
-      timestamp: Date.now()
-    });
+    (window as any).__useAuthInitialized = true;
+    logger.info('useAuth', '🔄 BUILD 50: Single initialization starting');
 
-    // ✅ BUILD 48: AGUARDAR boot completo (timeout reduzido 10s → 5s)
+    let unsubscribe: (() => void) | null = null;
+
     (async () => {
       try {
-        await bootManager.waitForBoot(5000); // 10s → 5s
+        await bootManager.waitForBoot(5000);
         logger.info('useAuth', '✅ Boot complete, setting up auth listener');
 
-        // ✅ BUILD 48: Reduzir safety timeout (3s → 2s)
-        const safetyTimeout = setTimeout(() => {
-          if (loadingRef.current) {
-            logger.warn('useAuth', '⚠️ Safety timeout triggered (2s)', {
-              timestamp: Date.now()
-            });
-            setLoading(false);
-            setBootComplete(true);
-          }
-        }, 2000); // 3s → 2s
+        // ✅ BUILD 50: Safety timeout aumentado para 3s
+        const safetyTimer = setTimeout(() => {
+          logger.warn('useAuth', '⏰ Safety timeout (3s), forcing ready');
+          setLoading(false);
+          setBootComplete(true);
+        }, 3000);
 
         const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-          clearTimeout(safetyTimeout);
+          clearTimeout(safetyTimer);
+          authStateChangeCount++;
           
-          logger.debug('useAuth', '🔄 AUTH CHANGE:', {
+          logger.info('useAuth', `🔔 AUTH STATE CHANGE #${authStateChangeCount}`, {
             hasUser: !!user,
             userId: user?.id || 'null',
             hasSession: !!session,
@@ -65,27 +54,26 @@ export const useAuth = () => {
           
           if (user) {
             try {
-              logger.debug('useAuth', '📋 Fetching profile for:', user.id);
+              logger.info('useAuth', '📋 Fetching profile for:', user.id);
               
-              // ✅ BUILD 48: Timeout reduzido (4s → 2s)
+              // ✅ BUILD 50: Timeout agressivo (1s)
               const profilePromise = getUserProfile(user.id);
               const timeoutPromise = new Promise<null>((resolve) => 
                 setTimeout(() => {
-                  logger.warn('useAuth', '⚠️ Profile fetch timeout (2s), continuing without profile');
+                  logger.warn('useAuth', '⚠️ Profile timeout (1s), skipping');
                   resolve(null);
-                }, 2000) // 4s → 2s
+                }, 1000)
               );
               
               const profile = await Promise.race([profilePromise, timeoutPromise]);
               
               if (profile) {
                 logger.info('useAuth', '✅ Profile loaded:', {
-                  userType: profile?.user_type,
-                  timestamp: Date.now()
+                  userType: profile?.user_type
                 });
                 setUserProfile(profile);
               } else {
-                logger.warn('useAuth', '⚠️ Continuing without profile due to timeout');
+                logger.warn('useAuth', '⚠️ No profile, continuing');
                 setUserProfile(null);
               }
               
@@ -97,30 +85,33 @@ export const useAuth = () => {
               setBootComplete(true);
             }
           } else {
-            logger.debug('useAuth', '👤 No user, clearing profile');
+            logger.info('useAuth', '👤 No user, clearing state');
             setUserProfile(null);
             setBootComplete(false);
           }
           
-          // ✅ FASE 2: CRÍTICO - Sempre desligar loading
+          // ✅ BUILD 50: Log detalhado antes de desligar loading
+          logger.info('useAuth', `✅ About to set loading = false (event #${authStateChangeCount})`);
           setLoading(false);
+          logger.info('useAuth', `✅ Loading set to false (event #${authStateChangeCount})`);
         });
 
-        return () => {
-          logger.debug('useAuth', `🧹 CLEANUP #${initCount}`);
-          clearTimeout(safetyTimeout);
+        unsubscribe = () => {
+          logger.info('useAuth', '🧹 Cleanup: Unsubscribing');
+          clearTimeout(safetyTimer);
           subscription.unsubscribe();
         };
         
       } catch (error) {
-        logger.error('useAuth', '❌ Boot timeout:', error);
+        logger.error('useAuth', '❌ Setup error:', error);
         setLoading(false);
         setBootComplete(false);
       }
     })();
 
+    // ✅ Cleanup apenas UMA VEZ
     return () => {
-      setupRef.current = false;
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 

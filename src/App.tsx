@@ -143,27 +143,45 @@ const AuthenticatedApp = () => {
   );
 };
 
+import { Capacitor } from '@capacitor/core';
+import { StrictMode } from 'react';
+
 const App = () => {
-  return (
-  <ErrorBoundary>
-    <Suspense fallback={<LoadingScreen />}>
-      <SecurityProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-              <BrowserRouter>
-                <AuthProvider>
-                  <NativeIntegration />
-                  <NetworkStatus />
-                  <AuthenticatedApp />
-                </AuthProvider>
-              </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </SecurityProvider>
-    </Suspense>
-  </ErrorBoundary>
+  // ✅ BUILD 50: NUNCA usar StrictMode em:
+  // - Produção (evita double render que causa loops infinitos)
+  // - Plataforma nativa (iOS/Android)
+  const isNative = Capacitor.isNativePlatform();
+  const IS_PRODUCTION = import.meta.env.PROD;
+  
+  const useStrictMode = !IS_PRODUCTION && !isNative;
+  
+  const AppContent = (
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingScreen />}>
+        <SecurityProvider>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+                <BrowserRouter>
+                  <AuthProvider>
+                    <NativeIntegration />
+                    <NetworkStatus />
+                    <AuthenticatedApp />
+                  </AuthProvider>
+                </BrowserRouter>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </SecurityProvider>
+      </Suspense>
+    </ErrorBoundary>
+  );
+  
+  // ✅ Retornar COM ou SEM StrictMode baseado no ambiente
+  return useStrictMode ? (
+    <StrictMode>{AppContent}</StrictMode>
+  ) : (
+    AppContent
   );
 };
 
