@@ -145,10 +145,16 @@ export default function AIChat() {
               <div className="flex flex-col items-center justify-center h-full text-center px-8">
                 <Sparkles className="w-16 h-16 text-primary mb-4" />
                 <h2 className="text-xl font-semibold mb-2">
-                  Bem-vindo ao Assistente IA!
+                  {new Date().getHours() < 12 
+                    ? "Bom dia! Novo dia, novas perguntas! 🌅"
+                    : "Bem-vindo ao Assistente IA!"
+                  }
                 </h2>
                 <p className="text-muted-foreground">
-                  Faça uma pergunta para começar a conversa.
+                  {new Date().getHours() < 12
+                    ? "Você tem 3 perguntas disponíveis hoje."
+                    : "Faça uma pergunta para começar a conversa."
+                  }
                 </p>
               </div>
             ) : messages.length > 0 ? (

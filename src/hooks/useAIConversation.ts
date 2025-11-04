@@ -426,6 +426,20 @@ export const useAIConversation = () => {
       const timeoutId = setTimeout(async () => {
         console.log('[useAIConversation] 🕐 Midnight reached - re-checking daily limit from database');
         
+        // Log cleanup details
+        console.log('[useAIConversation] 🕐 Midnight reset executed:', {
+          userId: user.id,
+          messagesCleared: messages.length,
+          conversationCleared: !!currentConversation,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Clear messages and conversation for new day
+        console.log('[useAIConversation] 🧹 Clearing messages for new day');
+        setMessages([]);
+        setCurrentConversation(null);
+        console.log('[useAIConversation] ✨ New day started - UI reset');
+        
         const limitReached = await checkDailyLimitStatus();
         
         if (!limitReached) {
