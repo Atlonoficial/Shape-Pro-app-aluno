@@ -33,16 +33,31 @@ serve(async (req) => {
     }
 
     // Buscar configurações de pagamento do professor
-    const { data: paymentSettings, error: settingsError } = await supabase
+    let { data: paymentSettings, error: settingsError } = await supabase
       .from('teacher_payment_settings')
       .select('*')
       .eq('teacher_id', teacherId)
       .eq('is_active', true)
       .single();
 
+    // Fallback: se não encontrar configurações do professor, buscar configuração global
     if (settingsError || !paymentSettings) {
-      console.error('❌ Payment settings not found:', settingsError);
-      throw new Error('Configurações de pagamento não encontradas para este professor');
+      console.log('⚠️ Teacher payment settings not found, trying system config fallback...');
+      
+      const { data: systemConfig, error: systemError } = await supabase
+        .from('system_payment_config')
+        .select('*')
+        .eq('gateway_type', 'mercadopago')
+        .eq('is_active', true)
+        .single();
+        
+      if (systemError || !systemConfig) {
+        console.error('❌ No payment settings found (teacher or system):', { settingsError, systemError });
+        throw new Error('Configurações de pagamento não encontradas');
+      }
+      
+      console.log('✅ Using system payment config as fallback');
+      paymentSettings = systemConfig;
     }
 
     console.log('✅ Payment settings found:', paymentSettings.gateway_type);
