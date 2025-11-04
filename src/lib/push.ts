@@ -19,6 +19,7 @@ declare global {
 
 let isInitialized = false;
 let currentExternalUserId: string | null = null;
+let webInitialized = false; // ✅ BUILD 54: Guard para prevenir re-inicialização do SDK Web
 
 // Detectar se é mobile (Capacitor/Cordova) ou web
 const isMobileApp = () => {
@@ -136,7 +137,14 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
 
 // Inicialização Web Push
 async function initWebPush(APP_ID: string, externalUserId?: string) {
+  // ✅ BUILD 54: Prevenir re-inicialização do SDK Web
+  if (webInitialized) {
+    logger.warn('OneSignal Web', 'Already initialized, skipping');
+    return;
+  }
+  
   try {
+    webInitialized = true;
     logger.debug('OneSignal Web', 'Initializing', { appId: APP_ID.substring(0, 8) + '...' });
 
     // Carregar SDK Web do OneSignal
@@ -209,6 +217,7 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
     }
 
   } catch (error) {
+    webInitialized = false; // ✅ Reset se falhar para permitir retry
     logger.error('OneSignal Web', 'Initialization error', error);
   }
 }

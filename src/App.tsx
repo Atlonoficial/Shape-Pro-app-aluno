@@ -11,6 +11,7 @@ import { GamificationIntegrator } from "@/components/gamification/GamificationIn
 import { SecurityProvider } from "@/components/security/SecurityProvider";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { NativeIntegration } from "@/components/native/NativeIntegration";
+import { NotificationPermissionModal } from "@/components/notifications/NotificationPermissionModal";
 import { NetworkStatus } from "@/components/ui/NetworkStatus";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useGlobalRealtime } from "@/hooks/useGlobalRealtime";
@@ -170,6 +171,7 @@ const App = () => {
                 <BrowserRouter>
                   <AuthProvider>
                     <NativeIntegration />
+                    <NotificationPermissionModal />
                     <NetworkStatus />
                     <AuthenticatedApp />
                   </AuthProvider>
