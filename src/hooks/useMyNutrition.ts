@@ -89,14 +89,15 @@ export const useMyNutrition = () => {
     percentage: { calories: 0, protein: 0, carbs: 0, fat: 0 }
   });
 
-  // ✅ BUILD 53: Cache de 1 minuto
-  const mealsCacheRef = useRef<{ data: TodayMeal[]; timestamp: number } | null>(null);
+  // ✅ BUILD 52: Cache com versionamento para invalidar após mudanças
+  const CACHE_VERSION = 'v52_rpc'; // Incrementar para invalidar cache antigo
+  const mealsCacheRef = useRef<{ data: TodayMeal[]; timestamp: number; version: string } | null>(null);
   const CACHE_DURATION = 60000; // 1 minuto
 
   // ✅ BUILD 54: Função otimizada com retry automático
   const getTodayMeals = useCallback(async (userId: string, forceRefresh = false, retryCount = 0) => {
-    // ✅ BUILD 54: Cache inteligente - vazio expira em 10s, com dados em 1min
-    if (!forceRefresh && mealsCacheRef.current) {
+    // ✅ BUILD 52: Cache inteligente com versionamento
+    if (!forceRefresh && mealsCacheRef.current && mealsCacheRef.current.version === CACHE_VERSION) {
       const cacheAge = Date.now() - mealsCacheRef.current.timestamp;
       const isEmpty = mealsCacheRef.current.data.length === 0;
       const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
@@ -128,7 +129,7 @@ export const useMyNutrition = () => {
         return getTodayMeals(userId, true, retryCount + 1);
       }
       
-      mealsCacheRef.current = { data: meals, timestamp: Date.now() };
+      mealsCacheRef.current = { data: meals, timestamp: Date.now(), version: CACHE_VERSION };
       return meals;
     } catch (error) {
       // ✅ BUILD 52: Fallback robusto usando RPC + filtro client-side
@@ -165,7 +166,7 @@ export const useMyNutrition = () => {
             await new Promise(resolve => setTimeout(resolve, 2000));
             return getTodayMeals(userId, true, retryCount + 1);
           }
-          mealsCacheRef.current = { data: [], timestamp: Date.now() };
+          mealsCacheRef.current = { data: [], timestamp: Date.now(), version: CACHE_VERSION };
           return [];
         }
 
@@ -186,10 +187,10 @@ export const useMyNutrition = () => {
             }))
           : [];
 
-        mealsCacheRef.current = { data: meals, timestamp: Date.now() };
+        mealsCacheRef.current = { data: meals, timestamp: Date.now(), version: CACHE_VERSION };
         return meals;
       } catch (fallbackError) {
-        mealsCacheRef.current = { data: [], timestamp: Date.now() };
+        mealsCacheRef.current = { data: [], timestamp: Date.now(), version: CACHE_VERSION };
         return [];
       }
     }

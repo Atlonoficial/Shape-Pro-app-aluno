@@ -41,8 +41,9 @@ export const useWorkoutPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ BUILD 53: Cache de 1 minuto
-  const cacheRef = useRef<{ data: WorkoutPlan[]; timestamp: number } | null>(null);
+  // ✅ BUILD 52: Cache com versionamento para invalidar após mudanças
+  const CACHE_VERSION = 'v52_rpc'; // Incrementar para invalidar cache antigo
+  const cacheRef = useRef<{ data: WorkoutPlan[]; timestamp: number; version: string } | null>(null);
   const CACHE_DURATION = 60000; // 1 minuto
 
   const fetchWorkoutPlans = useCallback(async (forceRefresh = false, retryCount = 0) => {
@@ -51,8 +52,8 @@ export const useWorkoutPlans = () => {
       return;
     }
 
-    // ✅ BUILD 52: Cache inteligente - vazio expira em 10s, com dados em 1min
-    if (!forceRefresh && cacheRef.current) {
+    // ✅ BUILD 52: Cache inteligente com versionamento
+    if (!forceRefresh && cacheRef.current && cacheRef.current.version === CACHE_VERSION) {
       const cacheAge = Date.now() - cacheRef.current.timestamp;
       const isEmpty = cacheRef.current.data.length === 0;
       const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
@@ -101,8 +102,8 @@ export const useWorkoutPlans = () => {
         return fetchWorkoutPlans(true, retryCount + 1);
       }
 
-      // ✅ BUILD 52: Atualizar cache
-      cacheRef.current = { data: formatted, timestamp: Date.now() };
+      // ✅ BUILD 52: Atualizar cache com versão
+      cacheRef.current = { data: formatted, timestamp: Date.now(), version: CACHE_VERSION };
       setWorkoutPlans(formatted);
     } catch (err) {
       setError('Erro inesperado ao carregar planos');
