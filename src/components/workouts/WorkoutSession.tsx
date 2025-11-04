@@ -484,50 +484,50 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
       </div>
 
       {/* Controles fixos */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/98 to-background/95 backdrop-blur-md border-t border-border/30 pb-safe-2xl z-40">
-          <div className="px-4 pt-3 pb-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/98 to-background/95 backdrop-blur-md border-t border-border/30 pb-safe z-40">
+          <div className="px-4 pt-2 pb-1.5">
             {/* Botões de controle ampliados com labels */}
-            <div className="flex items-center justify-center gap-6 mb-2">
-              <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center justify-center gap-5 mb-1.5">
+              <div className="flex flex-col items-center gap-1">
                 <button
                   onClick={handlePause}
-                  className="w-16 h-16 rounded-2xl bg-accent shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
+                  className="w-14 h-14 rounded-2xl bg-accent shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
                 >
-                  {isPaused ? <Play className="w-6 h-6 text-background" /> : <Pause className="w-6 h-6 text-background" />}
+                  {isPaused ? <Play className="w-5 h-5 text-background" /> : <Pause className="w-5 h-5 text-background" />}
                 </button>
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-[10px] font-medium text-muted-foreground">
                   {isPaused ? 'Retomar' : 'Pausar'}
                 </span>
               </div>
               
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <button
                   onClick={handleRest}
-                  className="w-16 h-16 rounded-2xl bg-accent shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-14 h-14 rounded-2xl bg-accent shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
                   disabled={isResting}
                 >
-                  <Timer className="w-6 h-6 text-background" />
+                  <Timer className="w-5 h-5 text-background" />
                 </button>
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-[10px] font-medium text-muted-foreground">
                   Descansar
                 </span>
               </div>
               
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <button
                   onClick={handleNextExercise}
-                  className="w-16 h-16 rounded-2xl bg-muted shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
+                  className="w-14 h-14 rounded-2xl bg-muted shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
                 >
-                  <SkipForward className="w-6 h-6 text-background" />
+                  <SkipForward className="w-5 h-5 text-background" />
                 </button>
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-[10px] font-medium text-muted-foreground">
                   Próximo
                 </span>
               </div>
             </div>
           
           {/* Barra de progresso compacta */}
-          <div className="mb-2">
+          <div>
             <div className="w-full bg-muted/20 rounded-full h-1.5 overflow-hidden">
               <div 
                 className="h-1.5 bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
