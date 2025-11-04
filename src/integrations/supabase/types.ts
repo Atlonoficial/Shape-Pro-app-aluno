@@ -3925,6 +3925,7 @@ export type Database = {
       }
       system_payment_config: {
         Row: {
+          allowed_payment_methods: Json | null
           created_at: string | null
           created_by: string | null
           credentials: Json
@@ -3937,6 +3938,7 @@ export type Database = {
           webhook_url: string | null
         }
         Insert: {
+          allowed_payment_methods?: Json | null
           created_at?: string | null
           created_by?: string | null
           credentials?: Json
@@ -3949,6 +3951,7 @@ export type Database = {
           webhook_url?: string | null
         }
         Update: {
+          allowed_payment_methods?: Json | null
           created_at?: string | null
           created_by?: string | null
           credentials?: Json
@@ -4638,19 +4641,19 @@ export type Database = {
       }
       user_roles: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -5755,7 +5758,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "student" | "professor" | "admin"
+      app_role: "admin" | "teacher" | "student"
       billing_interval: "monthly" | "quarterly" | "yearly"
     }
     CompositeTypes: {
@@ -5884,7 +5887,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["student", "professor", "admin"],
+      app_role: ["admin", "teacher", "student"],
       billing_interval: ["monthly", "quarterly", "yearly"],
     },
   },
