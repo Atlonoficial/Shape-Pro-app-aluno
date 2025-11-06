@@ -78,8 +78,8 @@ export const TeacherCard = () => {
   }
 
   const handleChatClick = () => {
-    // Navigate to chat or open chat dialog
-    navigate('/chat');
+    // Navigate to teacher-student chat
+    navigate('/teacher-chat');
   };
 
   const handleInstagramClick = () => {
