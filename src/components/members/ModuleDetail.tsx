@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Download, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Download, CheckCircle2, Clock, Loader2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { VideoPlayer } from "@/components/workouts/VideoPlayer";
 import { useModuleLessons } from "@/hooks/useModuleLessons";
+import { useNavigate } from "react-router-dom";
 
 interface ModuleDetailProps {
   module: any;
@@ -14,6 +15,7 @@ interface ModuleDetailProps {
 export const ModuleDetail = ({ module, courseTitle, onBack }: ModuleDetailProps) => {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
   
   const { lessons, loading, error } = useModuleLessons(module?.id);
 
@@ -75,6 +77,28 @@ export const ModuleDetail = ({ module, courseTitle, onBack }: ModuleDetailProps)
             videoUrl={selectedLesson.video_url}
             className="w-full rounded-lg overflow-hidden"
           />
+          
+          {/* Introductory Lesson CTA */}
+          {selectedLesson.is_free && (
+            <Card className="mt-4 border-primary/20 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground mb-1">
+                      🎓 Aula Introdutória Gratuita
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Gostou do conteúdo? Fale com seu professor para ter acesso ao curso completo
+                    </p>
+                  </div>
+                  <Button onClick={() => navigate('/teacher-chat')} size="sm">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Falar com Professor
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

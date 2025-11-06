@@ -1,4 +1,4 @@
-import { ArrowLeft, Shield, Eye, Lock, Database, Users } from "lucide-react";
+import { ArrowLeft, Shield, Eye, Lock, Database, Users, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -130,6 +130,23 @@ const PoliticaPrivacidade = () => {
               </p>
             </div>
           </div>
+        </Card>
+
+        {/* Transações Financeiras */}
+        <Card className="p-6 border-amber-200 bg-amber-50/50">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-amber-700" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Transações Financeiras</h2>
+          </div>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            O Shape Pro <strong>não processa, armazena ou gerencia transações financeiras</strong> dentro do aplicativo.
+            Todas as negociações de valores, pagamentos e assinaturas são realizadas diretamente entre 
+            você e seu instrutor, fora do aplicativo. Não coletamos informações de cartão de crédito, 
+            dados bancários ou qualquer informação financeira. O acesso aos conteúdos premium é controlado 
+            manualmente pelo seu instrutor após a negociação externa.
+          </p>
         </Card>
 
         {/* Contato */}

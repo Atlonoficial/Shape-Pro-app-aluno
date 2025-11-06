@@ -1,15 +1,12 @@
 import { useState } from "react";
-import { Play, Package, Loader2, Users, ShoppingBag, Lock, Crown } from "lucide-react";
+import { Play, Package, Loader2, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ModuleDetail } from "./ModuleDetail";
 import { StudentsList } from "./StudentsList";
 import { StudentAssessments } from "./StudentAssessments";
-import { ProductsShop } from "./ProductsShop";
-import { UnlockCourseDialog } from "./UnlockCourseDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { useAllModules, CourseWithModules } from "@/hooks/useAllModules";
+import { useAllModules } from "@/hooks/useAllModules";
 import { Student } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
@@ -18,20 +15,15 @@ export const Members = () => {
   const { user, userProfile } = useAuth();
   const { student } = useStudentProfile();
   const { courses, loading } = useAllModules();
-  const [activeTab, setActiveTab] = useState<'modules' | 'shop' | 'students'>('modules');
+  const [activeTab, setActiveTab] = useState<'modules' | 'students'>('modules');
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [unlockCourse, setUnlockCourse] = useState<CourseWithModules | null>(null);
   const navigate = useNavigate();
 
   const isTeacher = userProfile?.user_type === 'teacher';
 
-  const handleModuleClick = (module: any, course: CourseWithModules) => {
-    if (module.hasAccess) {
-      setSelectedModule(module);
-    } else {
-      setUnlockCourse(course);
-    }
+  const handleModuleClick = (module: any) => {
+    setSelectedModule(module);
   };
 
   if (selectedModule) {
@@ -87,7 +79,7 @@ export const Members = () => {
         </Button>
       </div>
 
-        {/* Tab Navigation */}
+      {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
         <Button
           onClick={() => setActiveTab('modules')}
@@ -98,19 +90,7 @@ export const Members = () => {
           }`}
         >
           <Package className="w-4 h-4 mr-2" />
-          Módulos
-        </Button>
-        
-        <Button
-          onClick={() => setActiveTab('shop')}
-          className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
-            activeTab === 'shop' 
-              ? 'btn-primary' 
-              : 'btn-secondary'
-          }`}
-        >
-          <ShoppingBag className="w-4 h-4 mr-2" />
-          {isTeacher ? 'Produtos' : 'Loja'}
+          Cursos
         </Button>
         
         {isTeacher && (
@@ -172,34 +152,10 @@ export const Members = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-foreground">{course.title}</h4>
-                      {!course.is_free && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                          <Crown className="w-3 h-3 mr-1" />
-                          Premium
-                        </Badge>
-                      )}
-                      {!course.hasAccess && !course.is_free && (
-                        <Badge variant="destructive" className="text-xs">
-                          <Lock className="w-3 h-3 mr-1" />
-                          Bloqueado
-                        </Badge>
-                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!course.is_free && !course.hasAccess && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setUnlockCourse(course)}
-                          className="text-xs h-7"
-                        >
-                          Desbloquear
-                        </Button>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {course.modules.length} módulos
-                      </span>
-                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {course.modules.length} módulos
+                    </span>
                   </div>
                   
                   {/* Course Content - Always show modules when available */}
@@ -209,7 +165,7 @@ export const Members = () => {
                         {course.modules.map((module) => (
                           <div 
                             key={module.id}
-                            onClick={() => handleModuleClick(module, course)}
+                            onClick={() => handleModuleClick(module)}
                             className="relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
                           >
                             <div 
@@ -219,13 +175,6 @@ export const Members = () => {
                               }}
                             >
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                              
-                              {/* Lock overlay for premium content */}
-                              {!module.hasAccess && (
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                  <Lock className="w-8 h-8 text-white/80" />
-                                </div>
-                              )}
                               
                               <div className="absolute bottom-3 left-3 right-3">
                                 <p className="text-xs text-white/70 mb-1 leading-tight truncate">{module.course_title}</p>
@@ -241,18 +190,13 @@ export const Members = () => {
                     /* Show message when no modules are available */
                     <div className="text-center py-8">
                       <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-muted-foreground text-sm mb-4">
                         Este curso ainda não possui módulos disponíveis
                       </p>
-                      {!course.hasAccess && (
-                        <Button
-                          size="sm"
-                          className="mt-4"
-                          onClick={() => setUnlockCourse(course)}
-                        >
-                          Desbloquear Curso - R$ {course.price || 0}
-                        </Button>
-                      )}
+                      <Button onClick={() => navigate('/teacher-chat')}>
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Falar com Professor
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -262,27 +206,9 @@ export const Members = () => {
         </div>
       )}
 
-      {activeTab === 'shop' && (
-        <ProductsShop />
-      )}
-
       {activeTab === 'students' && isTeacher && (
         <StudentsList onSelectStudent={setSelectedStudent} />
       )}
-
-      {/* Unlock Course Dialog */}
-      <UnlockCourseDialog 
-        course={unlockCourse ? {
-          id: unlockCourse.id,
-          title: unlockCourse.title,
-          description: unlockCourse.description,
-          price: unlockCourse.price || 0,
-          thumbnail: unlockCourse.thumbnail,
-          instructor: unlockCourse.instructor,
-          total_lessons: unlockCourse.total_lessons
-        } : null}
-        onClose={() => setUnlockCourse(null)}
-      />
 
     </div>
   );

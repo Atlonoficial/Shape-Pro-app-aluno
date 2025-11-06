@@ -1,32 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCourses } from '@/hooks/useCourses';
-import { useCheckout } from '@/hooks/useCheckout';
 import { Loader2, BookOpen, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Cursos() {
   const { courses, loading } = useCourses();
-  const { createCheckout, loading: checkoutLoading } = useCheckout();
   const navigate = useNavigate();
-
-  const handlePurchaseCourse = async (course: any) => {
-    console.log('🛒 Purchasing course:', course.title);
-    
-    const result = await createCheckout([{
-      type: 'course',
-      id: course.id,
-      title: course.title,
-      price: course.price,
-      quantity: 1,
-      course_id: course.id
-    }]);
-
-    if (result?.success && result.checkout_url) {
-      console.log('✅ Redirecting to checkout:', result.checkout_url);
-      window.location.href = result.checkout_url;
-    }
-  };
 
   if (loading) {
     return (
@@ -91,24 +71,14 @@ export default function Cursos() {
                     </p>
                   </div>
 
-                  {/* Price & CTA */}
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Valor</p>
-                      <p className="text-2xl font-bold text-primary">
-                        {course.price ? `R$ ${course.price.toFixed(2)}` : 'Grátis'}
-                      </p>
-                    </div>
+                  {/* CTA */}
+                  <div className="pt-4 border-t">
                     <Button 
-                      onClick={() => handlePurchaseCourse(course)}
-                      disabled={checkoutLoading}
+                      onClick={() => navigate('/members')}
                       size="lg"
+                      className="w-full"
                     >
-                      {checkoutLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Comprar'
-                      )}
+                      Ver Detalhes
                     </Button>
                   </div>
                 </div>

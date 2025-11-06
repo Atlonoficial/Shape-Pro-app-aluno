@@ -1780,6 +1780,44 @@ export type Database = {
           },
         ]
       }
+      lesson_access: {
+        Row: {
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: string
+          id: string
+          lesson_id: string
+          notes: string | null
+          student_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by: string
+          id?: string
+          lesson_id: string
+          notes?: string | null
+          student_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string
+          id?: string
+          lesson_id?: string
+          notes?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_access_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_progress: {
         Row: {
           completed_at: string | null

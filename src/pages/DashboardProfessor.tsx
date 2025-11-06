@@ -2,7 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MobileContainer } from "@/components/layout/MobileContainer";
 import { NotificationManager } from "@/components/teacher/NotificationManager";
+import { LessonAccessManager } from "@/components/teacher/LessonAccessManager";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DashboardProfessor = () => {
   const navigate = useNavigate();
@@ -25,7 +27,18 @@ const DashboardProfessor = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4 space-y-6">
-          <NotificationManager />
+          <Tabs defaultValue="notifications" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="notifications" className="flex-1">Notificações</TabsTrigger>
+              <TabsTrigger value="access" className="flex-1">Controle de Acesso</TabsTrigger>
+            </TabsList>
+            <TabsContent value="notifications">
+              <NotificationManager />
+            </TabsContent>
+            <TabsContent value="access">
+              <LessonAccessManager />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </MobileContainer>
