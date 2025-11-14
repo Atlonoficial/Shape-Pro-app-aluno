@@ -175,26 +175,6 @@ export const Profile = () => {
       {/* Teacher Profile */}
       <TeacherCard />
 
-      {/* Teacher Dashboard Access */}
-      {userProfile?.user_type === 'teacher' && (
-        <Card className="mb-6">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                  <Cog className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Dashboard Professor</h3>
-                  <p className="text-sm text-muted-foreground">Gerencie cursos, produtos e alunos</p>
-                </div>
-              </div>
-              <Button onClick={() => navigate("/dashboard-professor")}>Acessar</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Rewards CTA */}
       <Card className="mb-6">
         <CardContent className="p-5">
