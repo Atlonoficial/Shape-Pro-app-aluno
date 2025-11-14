@@ -49,8 +49,6 @@ import { AuthVerify } from "./pages/AuthVerify";
 import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
-import { EditProfile } from "./pages/teacher/EditProfile";
-import DashboardProfessor from "./pages/DashboardProfessor";
 import StravaCallback from "./pages/StravaCallback";
 import StravaDebug from "./pages/StravaDebug";
 import Cursos from "./pages/Cursos";
@@ -138,8 +136,6 @@ const AuthenticatedApp = () => {
           <Route path="/recompensas" element={<AuthGuard><TermsGuard><Recompensas /></TermsGuard></AuthGuard>} />
           <Route path="/chat" element={<AuthGuard><TermsGuard><LazyAIChat /></TermsGuard></AuthGuard>} />
           <Route path="/teacher-chat" element={<AuthGuard><TermsGuard><LazyTeacherStudentChat /></TermsGuard></AuthGuard>} />
-          <Route path="/dashboard-professor" element={<AuthGuard><TermsGuard><DashboardProfessor /></TermsGuard></AuthGuard>} />
-          <Route path="/teacher/edit-profile" element={<AuthGuard><TermsGuard><EditProfile /></TermsGuard></AuthGuard>} />
           <Route path="/strava-callback" element={<StravaCallback />} />
           {import.meta.env.DEV && <Route path="/strava-debug" element={<AuthGuard><StravaDebug /></AuthGuard>} />}
           

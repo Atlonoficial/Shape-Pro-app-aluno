@@ -1,26 +1,22 @@
+/**
+ * SHAPE PRO - APP DO ALUNO - ÁREA DE MEMBROS
+ * 
+ * Este componente exibe APENAS os cursos publicados pelo professor.
+ * Criação/edição de conteúdo é feita no Dashboard Professor (projeto separado).
+ */
 import { useState } from "react";
-import { Play, Package, Loader2, Users, MessageCircle } from "lucide-react";
+import { Play, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ModuleDetail } from "./ModuleDetail";
-import { StudentsList } from "./StudentsList";
-import { StudentAssessments } from "./StudentAssessments";
 import { useAuth } from "@/hooks/useAuth";
-import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useAllModules } from "@/hooks/useAllModules";
-import { Student } from "@/lib/supabase";
-import { useNavigate } from "react-router-dom";
 
 
 export const Members = () => {
-  const { user, userProfile } = useAuth();
-  const { student } = useStudentProfile();
+  const { user } = useAuth();
   const { courses, loading } = useAllModules();
-  const [activeTab, setActiveTab] = useState<'modules' | 'students'>('modules');
   const [selectedModule, setSelectedModule] = useState<any>(null);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const navigate = useNavigate();
-
-  const isTeacher = userProfile?.user_type === 'teacher';
 
   const handleModuleClick = (module: any) => {
     setSelectedModule(module);
@@ -32,15 +28,6 @@ export const Members = () => {
         module={selectedModule} 
         courseTitle={selectedModule.course_title}
         onBack={() => setSelectedModule(null)} 
-      />
-    );
-  }
-
-  if (selectedStudent) {
-    return (
-      <StudentAssessments
-        student={selectedStudent}
-        onBack={() => setSelectedStudent(null)}
       />
     );
   }
@@ -72,144 +59,77 @@ export const Members = () => {
         {/* Welcome Text */}
         <h1 className="text-2xl font-bold text-foreground mb-2">Bem-vindo,</h1>
         <h2 className="text-xl text-foreground mb-4">Área de membros!</h2>
-        
-        <Button className="btn-primary w-32 h-12 mb-6">
-          <Play className="w-4 h-4 mr-2" />
-          Assistir
-        </Button>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 mb-6">
-        <Button
-          onClick={() => setActiveTab('modules')}
-          className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
-            activeTab === 'modules' 
-              ? 'btn-primary' 
-              : 'btn-secondary'
-          }`}
-        >
-          <Package className="w-4 h-4 mr-2" />
-          Cursos
-        </Button>
-        
-        {isTeacher && (
-          <Button
-            onClick={() => setActiveTab('students')}
-            className={`flex-1 h-12 rounded-xl font-medium transition-all duration-300 ${
-              activeTab === 'students' 
-                ? 'btn-primary' 
-                : 'btn-secondary'
-            }`}
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Alunos
-          </Button>
+      {/* Courses Content */}
+      <div>
+        <h3 className="text-lg font-semibold text-foreground mb-4">
+          {courses.length === 0 
+            ? 'Cursos Disponíveis' 
+            : courses.length === 1 
+            ? `Curso: ${courses[0].title}` 
+            : 'Cursos Disponíveis'}
+        </h3>
+
+        {courses.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Nenhum curso disponível ainda
+            </h3>
+            <p className="text-muted-foreground">
+              Aguarde publicações do seu professor.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {courses.map((course) => (
+              <div
+                key={course.id}
+                className="relative bg-gradient-to-br from-purple-900/80 to-purple-700/80 rounded-xl p-5 border border-purple-500/30 shadow-lg cursor-pointer hover:scale-[1.02] transition-transform overflow-hidden"
+                onClick={() => handleModuleClick(course)}
+              >
+                {/* Badge no canto superior esquerdo */}
+                <Badge className="absolute top-4 left-4 bg-white/20 backdrop-blur-sm text-white border-0">
+                  Curso
+                </Badge>
+                
+                {/* Botão Play no canto superior direito */}
+                <Button 
+                  size="icon" 
+                  className="absolute top-4 right-4 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleModuleClick(course);
+                  }}
+                >
+                  <Play className="w-5 h-5 text-white" />
+                </Button>
+                
+                <div className="pt-12">
+                  <h4 className="text-xl font-bold text-white mb-1">{course.title}</h4>
+                  
+                  {course.modules && course.modules.length > 0 && (
+                    <p className="text-sm text-white/80 mb-2">{course.modules.length} módulos</p>
+                  )}
+                  
+                  {course.description && (
+                    <p className="text-sm text-white/70 line-clamp-2 mb-4">{course.description}</p>
+                  )}
+                  
+                  <div className="flex items-center gap-2">
+                    {course.hasAccess ? (
+                      <span className="text-xs text-green-300 font-medium">✓ Acesso liberado</span>
+                    ) : (
+                      <span className="text-xs text-yellow-300 font-medium">🔒 Alguns conteúdos bloqueados</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Content */}
-      {activeTab === 'modules' && (
-        <div>
-        <h3 className="text-lg font-semibold text-foreground mb-4">
-          {(() => {
-            if (courses.length === 0) {
-              return isTeacher ? 'Cursos Publicados' : 'Cursos Disponíveis';
-            }
-            
-            if (courses.length === 1) {
-              return `Curso: ${courses[0].title}`;
-            }
-            
-            return isTeacher ? 'Seus Cursos' : 'Cursos Disponíveis';
-          })()}
-        </h3>
-          
-          {courses.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {isTeacher 
-                  ? 'Você ainda não publicou nenhum curso. Acesse o Dashboard Professor para criar.' 
-                  : 'Nenhum curso disponível no momento'
-                }
-              </p>
-              {isTeacher && (
-                <Button 
-                  onClick={() => navigate('/dashboard-professor')} 
-                  className="mt-4"
-                  variant="outline"
-                >
-                  Ir para Dashboard
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {courses.map((course) => (
-                <div key={course.id} className="space-y-3">
-                  {/* Course Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-foreground">{course.title}</h4>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {course.modules.length} módulos
-                    </span>
-                  </div>
-                  
-                  {/* Course Content - Always show modules when available */}
-                  {course.modules.length > 0 ? (
-                    <div className="px-1">
-                      <div className="flex flex-nowrap gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                        {course.modules.map((module) => (
-                          <div 
-                            key={module.id}
-                            onClick={() => handleModuleClick(module)}
-                            className="relative w-40 flex-shrink-0 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer bg-card border border-border/50"
-                          >
-                            <div 
-                              className="aspect-[2/3] bg-cover bg-center relative"
-                              style={{ 
-                                backgroundImage: module.cover_image_url ? `url(${module.cover_image_url})` : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)'
-                              }}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                              
-                              <div className="absolute bottom-3 left-3 right-3">
-                                <p className="text-xs text-white/70 mb-1 leading-tight truncate">{module.course_title}</p>
-                                <h4 className="text-sm font-semibold text-white mb-1 leading-tight">{module.title}</h4>
-                                <p className="text-xs text-white/80 leading-tight">{module.lessons_count} aulas</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Show message when no modules are available */
-                    <div className="text-center py-8">
-                      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground text-sm mb-4">
-                        Este curso ainda não possui módulos disponíveis
-                      </p>
-                      <Button onClick={() => navigate('/teacher-chat')}>
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Falar com Professor
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'students' && isTeacher && (
-        <StudentsList onSelectStudent={setSelectedStudent} />
-      )}
-
     </div>
   );
 };
