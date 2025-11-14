@@ -77,7 +77,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
         <div className="space-y-4 py-2 sm:py-4">
           <div className="text-center px-2">
             <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-              É sexta-feira! Que tal registrar seu peso para acompanhar sua evolução?
+              Registre seu peso semanal para acompanhar sua evolução!
             </p>
           </div>
           
