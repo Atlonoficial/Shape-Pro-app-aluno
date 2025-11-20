@@ -904,6 +904,50 @@ export type Database = {
           },
         ]
       }
+      content_unlock_rules: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          plan_id: string | null
+          requires_active_subscription: boolean | null
+          teacher_id: string
+          unlock_delay_days: number | null
+          unlock_on_payment: boolean | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          plan_id?: string | null
+          requires_active_subscription?: boolean | null
+          teacher_id: string
+          unlock_delay_days?: number | null
+          unlock_on_payment?: boolean | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          plan_id?: string | null
+          requires_active_subscription?: boolean | null
+          teacher_id?: string
+          unlock_delay_days?: number | null
+          unlock_on_payment?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_unlock_rules_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -1865,6 +1909,132 @@ export type Database = {
           },
         ]
       }
+      manual_charges: {
+        Row: {
+          amount: number
+          billing_cycle: string | null
+          content_to_unlock: Json | null
+          content_unlocked: boolean | null
+          created_at: string | null
+          currency: string | null
+          current_cycle: number | null
+          due_date: string
+          gateway_charge_id: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          paid_at: string | null
+          payment_link: string | null
+          payment_transaction_id: string | null
+          plan_id: string | null
+          preference_id: string | null
+          recurring_end_date: string | null
+          recurring_interval: string | null
+          reminder_sent_at: string | null
+          status: string | null
+          student_id: string
+          teacher_id: string
+          total_cycles: number | null
+          unlocked_at: string | null
+          updated_at: string | null
+          whatsapp_sent: boolean | null
+        }
+        Insert: {
+          amount: number
+          billing_cycle?: string | null
+          content_to_unlock?: Json | null
+          content_unlocked?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          current_cycle?: number | null
+          due_date: string
+          gateway_charge_id?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_link?: string | null
+          payment_transaction_id?: string | null
+          plan_id?: string | null
+          preference_id?: string | null
+          recurring_end_date?: string | null
+          recurring_interval?: string | null
+          reminder_sent_at?: string | null
+          status?: string | null
+          student_id: string
+          teacher_id: string
+          total_cycles?: number | null
+          unlocked_at?: string | null
+          updated_at?: string | null
+          whatsapp_sent?: boolean | null
+        }
+        Update: {
+          amount?: number
+          billing_cycle?: string | null
+          content_to_unlock?: Json | null
+          content_unlocked?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          current_cycle?: number | null
+          due_date?: string
+          gateway_charge_id?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_link?: string | null
+          payment_transaction_id?: string | null
+          plan_id?: string | null
+          preference_id?: string | null
+          recurring_end_date?: string | null
+          recurring_interval?: string | null
+          reminder_sent_at?: string | null
+          status?: string | null
+          student_id?: string
+          teacher_id?: string
+          total_cycles?: number | null
+          unlocked_at?: string | null
+          updated_at?: string | null
+          whatsapp_sent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_manual_charges_plan"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_manual_charges_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_manual_charges_teacher"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_charges_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_charges_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           banner_template: Json
@@ -2405,6 +2575,104 @@ export type Database = {
           },
         ]
       }
+      notification_campaigns: {
+        Row: {
+          created_at: string | null
+          delivered_count: number | null
+          failed_count: number | null
+          id: string
+          message: string
+          metadata: Json | null
+          onesignal_notification_id: string | null
+          opened_count: number | null
+          scheduled_for: string | null
+          segment: string
+          sent_at: string | null
+          sent_count: number | null
+          status: string | null
+          target_user_ids: string[] | null
+          teacher_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivered_count?: number | null
+          failed_count?: number | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          onesignal_notification_id?: string | null
+          opened_count?: number | null
+          scheduled_for?: string | null
+          segment?: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string | null
+          target_user_ids?: string[] | null
+          teacher_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivered_count?: number | null
+          failed_count?: number | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          onesignal_notification_id?: string | null
+          opened_count?: number | null
+          scheduled_for?: string | null
+          segment?: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string | null
+          target_user_ids?: string[] | null
+          teacher_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      notification_interactions: {
+        Row: {
+          action: string
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          player_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          player_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          player_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_interactions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "notification_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_logs: {
         Row: {
           created_at: string | null
@@ -2762,9 +3030,11 @@ export type Database = {
           gateway_transaction_id: string | null
           gateway_type: string
           id: string
+          is_manual: boolean | null
           item_name: string | null
           item_type: string | null
           last_error: string | null
+          manual_charge_id: string | null
           metadata: Json | null
           paid_at: string | null
           payment_method: string | null
@@ -2790,9 +3060,11 @@ export type Database = {
           gateway_transaction_id?: string | null
           gateway_type: string
           id?: string
+          is_manual?: boolean | null
           item_name?: string | null
           item_type?: string | null
           last_error?: string | null
+          manual_charge_id?: string | null
           metadata?: Json | null
           paid_at?: string | null
           payment_method?: string | null
@@ -2818,9 +3090,11 @@ export type Database = {
           gateway_transaction_id?: string | null
           gateway_type?: string
           id?: string
+          is_manual?: boolean | null
           item_name?: string | null
           item_type?: string | null
           last_error?: string | null
+          manual_charge_id?: string | null
           metadata?: Json | null
           paid_at?: string | null
           payment_method?: string | null
@@ -2834,6 +3108,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_transactions_manual_charge_id_fkey"
+            columns: ["manual_charge_id"]
+            isOneToOne: false
+            referencedRelation: "manual_charges"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_transactions_plan_catalog_id_fkey"
             columns: ["plan_catalog_id"]
@@ -3272,9 +3553,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          about: string | null
           academy_name: string | null
+          address: string | null
           avatar_url: string | null
           bio: string | null
+          cnpj: string | null
           created_at: string | null
           email: string
           facebook_url: string | null
@@ -3307,9 +3591,12 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          about?: string | null
           academy_name?: string | null
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          cnpj?: string | null
           created_at?: string | null
           email: string
           facebook_url?: string | null
@@ -3342,9 +3629,12 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          about?: string | null
           academy_name?: string | null
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          cnpj?: string | null
           created_at?: string | null
           email?: string
           facebook_url?: string | null
@@ -3509,6 +3799,54 @@ export type Database = {
         }
         Relationships: []
       }
+      public_profiles: {
+        Row: {
+          banner_image_url: string | null
+          bio: string | null
+          created_at: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          is_visible: boolean | null
+          professional_title: string | null
+          profile_image_url: string | null
+          updated_at: string | null
+          user_id: string
+          whatsapp: string | null
+          youtube: string | null
+        }
+        Insert: {
+          banner_image_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          is_visible?: boolean | null
+          professional_title?: string | null
+          profile_image_url?: string | null
+          updated_at?: string | null
+          user_id: string
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          banner_image_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          is_visible?: boolean | null
+          professional_title?: string | null
+          profile_image_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Relationships: []
+      }
       rate_limit_log: {
         Row: {
           created_at: string
@@ -3536,29 +3874,68 @@ export type Database = {
         }
         Relationships: []
       }
-      reward_redemptions: {
+      recent_items_history: {
         Row: {
           created_at: string
           id: string
-          points_spent: number
-          reward_id: string
-          status: string
+          item_category: string
+          item_id: string
+          item_name: string
+          item_type: string
+          used_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          points_spent: number
-          reward_id: string
-          status?: string
+          item_category: string
+          item_id: string
+          item_name: string
+          item_type: string
+          used_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          item_category?: string
+          item_id?: string
+          item_name?: string
+          item_type?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reward_redemptions: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          points_spent: number
+          reward_id: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          points_spent: number
+          reward_id: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
           points_spent?: number
           reward_id?: string
           status?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -4078,6 +4455,7 @@ export type Database = {
           feedback_days: number[]
           feedback_frequency: string
           feedback_reminder_days: number
+          feedback_retention_policy: string | null
           feedback_types_enabled: string[]
           feedbacks_per_page: number
           id: string
@@ -4094,6 +4472,7 @@ export type Database = {
           feedback_days?: number[]
           feedback_frequency?: string
           feedback_reminder_days?: number
+          feedback_retention_policy?: string | null
           feedback_types_enabled?: string[]
           feedbacks_per_page?: number
           id?: string
@@ -4110,6 +4489,7 @@ export type Database = {
           feedback_days?: number[]
           feedback_frequency?: string
           feedback_reminder_days?: number
+          feedback_retention_policy?: string | null
           feedback_types_enabled?: string[]
           feedbacks_per_page?: number
           id?: string
@@ -5343,10 +5723,12 @@ export type Database = {
       clean_old_appointments: { Args: never; Returns: undefined }
       clean_test_banner_data: { Args: never; Returns: undefined }
       cleanup_expired_transactions: { Args: never; Returns: undefined }
+      cleanup_feedbacks_hybrid: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       cleanup_old_data: { Args: never; Returns: undefined }
       cleanup_old_notifications: { Args: never; Returns: undefined }
       cleanup_old_presence: { Args: never; Returns: undefined }
+      cleanup_old_recent_items_history: { Args: never; Returns: undefined }
       cleanup_rate_limit_logs: { Args: never; Returns: undefined }
       clear_conversation_messages: {
         Args: { p_conversation_id: string }
@@ -5692,6 +6074,17 @@ export type Database = {
           p_feedback_data: Json
           p_student_id: string
           p_teacher_id: string
+        }
+        Returns: Json
+      }
+      submit_feedback_with_points_v5: {
+        Args: {
+          p_custom_responses?: Json
+          p_message: string
+          p_rating: number
+          p_student_id: string
+          p_teacher_id: string
+          p_type: string
         }
         Returns: Json
       }
