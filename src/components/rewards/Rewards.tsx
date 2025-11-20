@@ -5,6 +5,8 @@ import { Trophy, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRealtimeManager } from "@/hooks/useRealtimeManager";
+import { RedemptionConfirmDialog } from "./RedemptionConfirmDialog";
+import { useRedemptionStatus } from "@/hooks/useRedemptionStatus";
 
 interface RewardItem {
   id: string;
@@ -20,6 +22,11 @@ export const Rewards = () => {
   const [points, setPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [lastRedeemedReward, setLastRedeemedReward] = useState<{ title: string; points: number } | null>(null);
+
+  // Listen for redemption status updates (approved/rejected)
+  useRedemptionStatus();
 
   // Centralized realtime subscriptions
   useRealtimeManager({
@@ -87,12 +94,23 @@ export const Rewards = () => {
   const redeem = async (id: string) => {
     if (!user?.id) return;
     setRedeeming(id);
+    
+    // Find the reward being redeemed
+    const reward = items.find(item => item.id === id);
+    if (!reward) return;
+
     try {
       const { error } = await supabase.rpc("redeem_reward", { _reward_id: id });
       if (error) throw error;
-      toast.success("Resgate solicitado com sucesso!");
+      
+      // Store reward info and show confirmation dialog
+      setLastRedeemedReward({
+        title: reward.title,
+        points: reward.points_cost,
+      });
+      setShowConfirmDialog(true);
+      
       // Points and items will be updated automatically via real-time subscriptions
-      // No need to manually refresh here
     } catch (e: any) {
       const msg = e?.message || "Erro ao resgatar";
       toast.error(msg);
@@ -102,7 +120,15 @@ export const Rewards = () => {
   };
 
   return (
-    <div className="p-4 pt-8 pb-safe">
+    <>
+      <RedemptionConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        rewardTitle={lastRedeemedReward?.title || ''}
+        pointsSpent={lastRedeemedReward?.points || 0}
+      />
+      
+      <div className="p-4 pt-8 pb-safe">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">Recompensas</h1>
@@ -214,6 +240,7 @@ export const Rewards = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };

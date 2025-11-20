@@ -6041,6 +6041,10 @@ export type Database = {
         Returns: undefined
       }
       redeem_reward: { Args: { _reward_id: string }; Returns: Json }
+      refund_redemption_points: {
+        Args: { _redemption_id: string }
+        Returns: Json
+      }
       register_daily_activity: { Args: never; Returns: undefined }
       reset_all_student_points: {
         Args: { p_reason?: string; p_teacher_id: string }
