@@ -10,7 +10,6 @@ import { Profile } from "@/components/profile/Profile";
 import { Members } from "@/components/members/Members";
 import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
 import { NotificationPermissionPrompt } from "@/components/notifications/NotificationPermissionPrompt";
-import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useGamificationIntegration } from "@/hooks/useGamificationIntegration";
 import { useGamificationStravaIntegration } from "@/hooks/useGamificationStravaIntegration";
 
@@ -18,9 +17,6 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
-  
-  // Ativar notificações de chat em toda a aplicação
-  useChatNotifications();
   
   // Integração automática de gamificação
   useGamificationIntegration();

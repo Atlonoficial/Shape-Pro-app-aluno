@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversation } from '@/hooks/useConversation';
 import { useEnhancedPresence } from '@/hooks/useEnhancedPresence';
-import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { supabase } from '@/integrations/supabase/client';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { ChatHeader } from '@/components/chat/ChatHeader';
@@ -16,9 +16,6 @@ export default function Chat() {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const [isTyping, setIsTyping] = useState(false);
-  
-  // Inicializar notificações de chat
-  useChatNotifications();
   
   // Status de conexão
   const { status: globalConnectionStatus } = useConnectionStatus();
@@ -47,6 +44,28 @@ export default function Chat() {
       markAsRead();
     }
   }, [conversation, messages, markAsRead]);
+
+  // Auto-delete chat notifications when entering conversation
+  useEffect(() => {
+    if (conversation?.id && user?.id) {
+      const deleteNotifications = async () => {
+        try {
+          const { error } = await supabase.rpc('delete_chat_notifications', {
+            p_user_id: user.id,
+            p_conversation_id: conversation.id
+          });
+          
+          if (error) {
+            console.error('Erro ao deletar notificações:', error);
+          }
+        } catch (error) {
+          console.error('Erro ao deletar notificações:', error);
+        }
+      };
+      
+      deleteNotifications();
+    }
+  }, [conversation?.id, user?.id]);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;

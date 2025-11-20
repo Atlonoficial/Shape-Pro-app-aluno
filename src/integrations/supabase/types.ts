@@ -5756,6 +5756,10 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_chat_notifications: {
+        Args: { p_conversation_id: string; p_user_id: string }
+        Returns: undefined
+      }
       ensure_student_record: { Args: never; Returns: string }
       execute_marketing_campaign: {
         Args: { p_campaign_id: string }
