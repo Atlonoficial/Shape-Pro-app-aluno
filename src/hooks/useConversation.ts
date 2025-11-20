@@ -53,52 +53,52 @@ export const useConversation = (userId?: string) => {
 
     try {
       setError(null);
-      const isStudent = userProfile.user_type === 'student';
       
-      if (isStudent) {
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('teacher_id')
-          .eq('user_id', userId)
+      // Verificar se usuário existe na tabela students (validação correta)
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('teacher_id')
+        .eq('user_id', userId)
+        .single();
+
+      // Se não encontrou na tabela students ou não tem teacher_id
+      if (studentError || !studentData?.teacher_id) {
+        setError('Você precisa estar vinculado a um professor para usar o chat');
+        setConnectionStatus('disconnected');
+        setLoading(false);
+        return;
+      }
+
+      const conversationId = `${studentData.teacher_id}-${userId}`;
+      
+      // Buscar conversação existente
+      let { data: existingConv, error: fetchError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      // Se não existir, criar nova
+      if (!existingConv) {
+        const { data: newConv, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            id: conversationId,
+            student_id: userId,
+            teacher_id: studentData.teacher_id,
+            is_active: true
+          })
+          .select()
           .single();
 
-        if (studentError || !studentData?.teacher_id) {
-          throw new Error('Professor não encontrado');
-        }
-
-        const conversationId = `${studentData.teacher_id}-${userId}`;
-        
-        // Buscar conversação existente
-        let { data: existingConv, error: fetchError } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('id', conversationId)
-          .maybeSingle();
-
-        if (fetchError) throw fetchError;
-
-        // Se não existir, criar nova
-        if (!existingConv) {
-          const { data: newConv, error: createError } = await supabase
-            .from('conversations')
-            .insert({
-              id: conversationId,
-              student_id: userId,
-              teacher_id: studentData.teacher_id,
-              is_active: true
-            })
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          existingConv = newConv;
-        }
-
-        setConversation(existingConv);
-        setConnectionStatus('connected');
-      } else {
-        setError('Interface do professor em desenvolvimento');
+        if (createError) throw createError;
+        existingConv = newConv;
       }
+
+      setConversation(existingConv);
+      setConnectionStatus('connected');
     } catch (err) {
       console.error(`Erro ao criar/buscar conversação (tentativa ${retryCount + 1}):`, err);
       
