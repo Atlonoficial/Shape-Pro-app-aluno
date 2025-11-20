@@ -316,6 +316,18 @@ export const useConversation = (userId?: string) => {
     };
   }, []);
 
+  // Listen for real-time chat message updates
+  useEffect(() => {
+    const handleChatUpdate = () => {
+      if (conversation?.id) {
+        loadMessages(conversation.id);
+      }
+    };
+
+    window.addEventListener('chat-messages-updated', handleChatUpdate);
+    return () => window.removeEventListener('chat-messages-updated', handleChatUpdate);
+  }, [conversation?.id, loadMessages]);
+
   return {
     conversation,
     messages,

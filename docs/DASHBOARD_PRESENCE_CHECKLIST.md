@@ -1,53 +1,288 @@
-# ✅ Checklist: Verificar Presença do Professor na Dashboard Externa
+# Teacher Presence System - Checklist de Verificação
 
-## 🎯 Objetivo
-Este documento serve como guia para verificar e implementar corretamente o sistema de presença do professor na Dashboard Externa, garantindo que o status "online" apareça no Student App.
-
----
-
-## 1. ✅ Verificar conversationId
-
-### Formato Correto
-```
-{teacher_id}-{student_id}
-```
-
-### Exemplo Real
-```
-2db424b4-08d2-4ad0-9dd0-971eaab960e1-1adbd8ee-fc70-46d4-9187-ad69b523eb11
-```
-
-### Como Verificar
-```typescript
-// Na Dashboard, adicione este log:
-console.log('📍 Conversation ID:', conversationId);
-
-// No Student App, compare:
-console.log('📍 Student App Conversation ID:', conversation?.id);
-```
-
-### ⚠️ Erro Comum
-- ❌ `teacher-student` (texto, não UUIDs)
-- ❌ `${studentId}-${teacherId}` (ordem invertida)
-- ❌ IDs diferentes entre Dashboard e Student App
+Este documento fornece um checklist completo para verificar e implementar o sistema de presença do professor no Dashboard Externo, garantindo que o status "online" seja exibido corretamente no Student App.
 
 ---
 
-## 2. ✅ Verificar Nome do Canal
+## ⚠️ PROBLEMA ATUAL: PROFESSOR NÃO APARECE ONLINE
 
-### Formato EXATO Obrigatório
+### Diagnóstico Rápido
+
+Se o professor não aparece online no Student App, siga estes passos na Dashboard Externa:
+
+#### 1. ✅ Verificar conversationId
+
 ```typescript
-const channelName = `presence:${conversationId}`;
+// Na Dashboard, adicione este log temporário:
+console.log('ConversationId:', conversationId);
+// Deve ser exatamente no formato: {teacher_id}-{student_id}
+// Exemplo: 2db424b4-08d2-4ad0-9dd0-971eaab960e1-1adbd8ee-fc70-46d4-9187-ad69b523eb11
 ```
 
-### Exemplo Correto
-```
-presence:2db424b4-08d2-4ad0-9dd0-971eaab960e1-1adbd8ee-fc70-46d4-9187-ad69b523eb11
+#### 2. ✅ Verificar canal conectado
+
+```typescript
+// Verifique o nome do canal:
+console.log('Channel:', channel.topic);
+// Deve mostrar: presence:{teacher_id}-{student_id}
 ```
 
-### ⚠️ Variações INCORRETAS
-- ❌ `teacher-presence:${conversationId}`
-- ❌ `chat:${conversationId}`
+#### 3. ✅ Verificar presenceState
+
+```typescript
+channel.on('presence', { event: 'sync' }, () => {
+  console.log('Presence State:', channel.presenceState());
+  // Deve mostrar objeto com teacher_id E student_id como chaves
+  // Se estiver vazio, a Dashboard não está conectada corretamente
+});
+```
+
+#### 4. ✅ Verificar heartbeat
+
+```typescript
+// Deve aparecer a cada 15 segundos no console:
+console.log('💓 Sending heartbeat');
+// Se não aparecer, o heartbeat não está configurado
+```
+
+---
+
+## 💡 SOLUÇÃO COMPLETA PARA DASHBOARD EXTERNA
+
+### Passo 1: Criar o Hook useTeacherPresence
+
+Copie este hook **exatamente como está** para a Dashboard:
+
+```typescript
+// hooks/useTeacherPresence.ts (Dashboard Externa)
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export const useTeacherPresence = (conversationId: string, teacherId: string) => {
+  const [isActive, setIsActive] = useState(false);
+  const heartbeatRef = useRef<NodeJS.Timeout>();
+  const channelRef = useRef<any>();
+
+  const sendHeartbeat = useCallback(() => {
+    if (!channelRef.current || !teacherId) return;
+
+    channelRef.current.track({
+      user_id: teacherId,
+      online_at: new Date().toISOString(),
+      last_heartbeat: new Date().toISOString(),
+      typing: false
+    });
+  }, [teacherId]);
+
+  useEffect(() => {
+    if (!conversationId || !teacherId) {
+      console.warn('⚠️ useTeacherPresence: Missing conversationId or teacherId');
+      return;
+    }
+
+    console.log('🔌 Connecting to presence channel:', `presence:${conversationId}`);
+
+    const channel = supabase
+      .channel(`presence:${conversationId}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        console.log('🟢 Teacher Presence State:', state);
+      })
+      .subscribe(async (status) => {
+        console.log('📡 Subscription Status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          setIsActive(true);
+          
+          const initialPresence = {
+            user_id: teacherId,
+            online_at: new Date().toISOString(),
+            last_heartbeat: new Date().toISOString(),
+            typing: false
+          };
+
+          console.log('✅ Sending initial teacher presence:', initialPresence);
+          await channel.track(initialPresence);
+
+          // Heartbeat a cada 15 segundos
+          heartbeatRef.current = setInterval(() => {
+            console.log('💓 Sending heartbeat');
+            sendHeartbeat();
+          }, 15000);
+        }
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      console.log('🔌 Disconnecting from presence channel');
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      supabase.removeChannel(channel);
+      setIsActive(false);
+    };
+  }, [conversationId, teacherId, sendHeartbeat]);
+
+  return { isActive };
+};
+```
+
+### Passo 2: Usar no Componente de Chat
+
+Ative a presença quando uma conversa for selecionada:
+
+```typescript
+// pages/TeacherChat.tsx (Dashboard Externa)
+import { useTeacherPresence } from '@/hooks/useTeacherPresence';
+import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
+
+export default function TeacherChat() {
+  const [selectedConversation, setSelectedConversation] = useState<any>(null);
+  const { user } = useAuth();
+  
+  // ✅ ATIVAR PRESENÇA quando conversa estiver selecionada
+  const { isActive } = useTeacherPresence(
+    selectedConversation?.id || '', 
+    user?.id || ''
+  );
+
+  return (
+    <div>
+      {/* Indicador visual opcional */}
+      {isActive && selectedConversation && (
+        <div className="text-xs text-green-600 flex items-center gap-1">
+          <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+          Você está online para este aluno
+        </div>
+      )}
+      
+      {/* Resto do componente de chat */}
+    </div>
+  );
+}
+```
+
+---
+
+## 🧪 COMO TESTAR SE FUNCIONOU
+
+### No Student App (console do navegador)
+
+Você deve ver este log quando o professor conectar:
+
+```
+🔍 [EnhancedPresence] Presence Sync: {
+  channelName: "presence:{conversationId}",
+  onlineUsers: ["teacher_id"],  // ✅ ID do professor aparece aqui!
+  typingUsers: [],
+  totalPresences: 2  // ✅ 2 usuários (aluno + professor)
+}
+```
+
+### No ChatHeader do Student App
+
+Você deve ver:
+- ✅ Badge verde pulsante
+- ✅ Texto "online" ao lado do nome do professor
+- ✅ Badge desaparece se professor fechar Dashboard ou ficar inativo por 30 segundos
+
+### Na Dashboard Externa (console)
+
+Você deve ver estes logs:
+
+```
+🔌 Connecting to presence channel: presence:{conversationId}
+📡 Subscription Status: SUBSCRIBED
+✅ Sending initial teacher presence: { user_id: "...", ... }
+💓 Sending heartbeat  // ← A cada 15 segundos
+🟢 Teacher Presence State: { ... }  // ← Mostra professor e aluno
+```
+
+---
+
+## 📋 CHECKLIST DE IMPLEMENTAÇÃO
+
+### Na Dashboard Externa
+
+- [ ] Criar arquivo `hooks/useTeacherPresence.ts` com o código fornecido
+- [ ] Importar hook no componente de chat
+- [ ] Passar `conversationId` e `teacherId` corretos
+- [ ] Ativar apenas quando conversa estiver selecionada
+- [ ] Verificar logs no console (conexão, heartbeats)
+
+### No Student App
+
+- [ ] Verificar que não há erros no console
+- [ ] Confirmar que badge "online" aparece quando professor conecta
+- [ ] Testar que badge desaparece quando professor desconecta
+- [ ] Verificar que mensagens chegam em tempo real
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+### Problema: Professor não aparece online
+
+**Possível causa 1**: conversationId diferente entre apps
+```typescript
+// Verificar se são IDÊNTICOS:
+console.log('Dashboard:', conversationId);
+console.log('Student App:', conversation?.id);
+```
+
+**Possível causa 2**: Canal com nome errado
+```typescript
+// Deve ser EXATAMENTE:
+`presence:${conversationId}`
+// NÃO usar variações
+```
+
+**Possível causa 3**: Heartbeat não está sendo enviado
+```typescript
+// Verificar se aparece a cada 15 segundos:
+console.log('💓 Sending heartbeat');
+```
+
+**Possível causa 4**: last_heartbeat faltando no track()
+```typescript
+// OBRIGATÓRIO incluir:
+channel.track({
+  user_id: teacherId,
+  online_at: new Date().toISOString(),
+  last_heartbeat: new Date().toISOString(),  // ← CRÍTICO
+  typing: false
+});
+```
+
+---
+
+## 📊 ESTRUTURA DO SISTEMA
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     SUPABASE REALTIME                        │
+│              Channel: presence:{conversationId}              │
+└─────────────────────────────────────────────────────────────┘
+                ▲                           ▲
+                │                           │
+        track() │                           │ track()
+     heartbeat  │                           │ heartbeat
+       (15s)    │                           │  (15s)
+                │                           │
+     ┌──────────┴─────────┐      ┌──────────┴─────────┐
+     │   STUDENT APP      │      │  TEACHER DASHBOARD │
+     │                    │      │                    │
+     │ useEnhancedPresence│      │ useTeacherPresence │
+     │                    │      │                    │
+     │ Listen: sync/join/ │      │ Listen: sync/join/ │
+     │         leave      │      │         leave      │
+     │                    │      │                    │
+     │ Show: Teacher      │      │ Show: Student      │
+     │       online badge │      │       online badge │
+     └────────────────────┘      └────────────────────┘
+```
+
+---
 - ❌ `presence-${conversationId}` (sem dois pontos)
 - ❌ `presence:teacher:${conversationId}`
 

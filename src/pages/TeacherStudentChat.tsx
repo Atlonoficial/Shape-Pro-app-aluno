@@ -10,7 +10,6 @@ import { MessageInput } from '@/components/chat/MessageInput';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MobileContainer } from '@/components/layout/MobileContainer';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
-import { PresenceDebugPanel } from '@/components/debug/PresenceDebugPanel';
 import { Loader2 } from 'lucide-react';
 
 export default function Chat() {
@@ -152,15 +151,6 @@ export default function Chat() {
             connectionStatus={connectionStatus}
           />
         </div>
-
-        {/* Debug Panel (apenas em desenvolvimento) */}
-        {import.meta.env.DEV && (
-          <PresenceDebugPanel
-            conversationId={conversation?.id}
-            onlineUsers={onlineUsers}
-            typingUsers={typingUsers}
-          />
-        )}
 
         {/* Bottom Navigation fixed at bottom */}
         <BottomNavigation 
