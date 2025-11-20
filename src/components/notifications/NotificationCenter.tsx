@@ -77,21 +77,27 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
 
   const handleClearAll = async () => {
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('notifications')
-        .delete()
-        .contains('target_users', [userId]);
+        .delete({ count: 'exact' })
+        .filter('target_users', 'cs', `{${userId}}`);
 
       if (error) throw error;
 
-      toast({
-        description: "Todas as notificações foram removidas",
-      });
+      if (count === 0) {
+        toast({
+          description: "Nenhuma notificação para remover",
+        });
+      } else {
+        toast({
+          description: `${count} notificação${count > 1 ? 'ões' : ''} removida${count > 1 ? 's' : ''}`,
+        });
+      }
     } catch (error) {
       logger.error('NotificationCenter', 'Erro ao limpar notificações', error);
       toast({
         variant: "destructive",
-        description: "Erro ao limpar notificações",
+        description: "Erro ao limpar notificações. Tente novamente.",
       });
     }
   };
