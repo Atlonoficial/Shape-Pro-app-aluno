@@ -493,6 +493,159 @@ export const TeacherChatDashboard = ({ teacherId }: { teacherId: string }) => {
 };
 ```
 
+## 🟢 Teacher Online/Offline Status (External Dashboard)
+
+### How It Works
+
+The presence system uses Supabase Realtime with heartbeats:
+- Channel: `presence:${conversationId}` (ex: `presence:teacher123-student456`)
+- Heartbeat every 15 seconds
+- Considers online if heartbeat < 30 seconds ago
+
+### Implementation in External Dashboard
+
+#### 1. Presence Hook (copy to Dashboard)
+
+```typescript
+// hooks/useTeacherPresence.ts
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export const useTeacherPresence = (conversationId: string, teacherId: string) => {
+  const [isActive, setIsActive] = useState(false);
+  const heartbeatRef = useRef<NodeJS.Timeout>();
+  const channelRef = useRef<any>();
+
+  const sendHeartbeat = useCallback(() => {
+    if (!channelRef.current || !teacherId) return;
+
+    channelRef.current.track({
+      user_id: teacherId,
+      online_at: new Date().toISOString(),
+      last_heartbeat: new Date().toISOString(),
+      typing: false
+    });
+  }, [teacherId]);
+
+  useEffect(() => {
+    if (!conversationId || !teacherId) return;
+
+    // Connect to same channel as student app
+    const channel = supabase
+      .channel(`presence:${conversationId}`)
+      .on('presence', { event: 'sync' }, () => {
+        // Update state if needed
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsActive(true);
+          
+          // Send initial presence
+          await channel.track({
+            user_id: teacherId,
+            online_at: new Date().toISOString(),
+            last_heartbeat: new Date().toISOString(),
+            typing: false
+          });
+
+          // Heartbeat every 15 seconds
+          heartbeatRef.current = setInterval(sendHeartbeat, 15000);
+        }
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      supabase.removeChannel(channel);
+      setIsActive(false);
+    };
+  }, [conversationId, teacherId, sendHeartbeat]);
+
+  return { isActive };
+};
+```
+
+#### 2. Use in Dashboard Chat Component
+
+```typescript
+// pages/TeacherChat.tsx (External Dashboard)
+import { useTeacherPresence } from '@/hooks/useTeacherPresence';
+
+function TeacherChat() {
+  const { teacherId, conversationId } = useAuth(); // Your hooks
+  
+  // ✅ Activate presence when dashboard is open
+  const { isActive } = useTeacherPresence(conversationId, teacherId);
+
+  return (
+    <div>
+      {isActive && (
+        <span className="text-xs text-success">
+          ● You are online for your students
+        </span>
+      )}
+      {/* Rest of chat UI */}
+    </div>
+  );
+}
+```
+
+#### 3. Automatic Activation
+
+Presence is activated automatically when:
+- ✅ Dashboard opens chat page
+- ✅ Teacher views conversations
+- ✅ Teacher is logged in with active tab
+
+Deactivates automatically when:
+- ❌ Dashboard closes chat page
+- ❌ Tab becomes inactive for 30+ seconds (no heartbeat)
+- ❌ Teacher logs out
+
+### Integration Tests
+
+**Scenario 1: Teacher enters Dashboard**
+```
+1. Student App shows: "offline" (gray)
+2. Teacher opens Dashboard → enters chat
+3. Student App detects presence (< 2 seconds)
+4. Student App shows: "online" (green + pulsing)
+```
+
+**Scenario 2: Teacher closes Dashboard**
+```
+1. Student App shows: "online" (green)
+2. Teacher closes tab/browser
+3. Heartbeat stops arriving
+4. After 30 seconds → Student App shows: "offline" (gray)
+```
+
+**Scenario 3: Teacher goes inactive**
+```
+1. Dashboard open but no interaction
+2. Heartbeat continues sending every 15s
+3. Student App continues showing "online"
+4. System considers active while heartbeat arrives
+```
+
+### Flow Diagram
+
+```
+Student App                Dashboard Externa
+    |                            |
+    |--- presence:conv123 -------|  (same channel)
+    |                            |
+    |<--- heartbeat (15s) -------|  (teacher online)
+    |                            |
+    [Shows: "Prof. João - online 🟢"]
+    |                            |
+    |                      [Dashboard closes]
+    |                            |
+    [After 30s without heartbeat]
+    [Shows: "Prof. João - offline ⚪]
+```
+
 ## Fluxo Completo de Comunicação
 
 ```mermaid

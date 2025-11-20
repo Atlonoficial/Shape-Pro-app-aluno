@@ -41,9 +41,9 @@ export const ChatHeader = ({
   const [teacherName, setTeacherName] = useState<string>('Professor');
   const [teacherAvatar, setTeacherAvatar] = useState<string | null>(null);
   
-  const isStudent = userProfile?.user_type === 'student';
-  const chatPartner = isStudent ? teacherName : 'Aluno';
-  const chatPartnerId = isStudent ? conversation?.teacher_id : conversation?.student_id;
+  // Sempre mostrar o professor no chat
+  const chatPartner = teacherName;
+  const chatPartnerId = conversation?.teacher_id;
 
   // Buscar nome e avatar do professor
   useEffect(() => {
@@ -66,10 +66,10 @@ export const ChatHeader = ({
       }
     };
 
-    if (isStudent && conversation?.teacher_id) {
+    if (conversation?.teacher_id) {
       fetchTeacherData();
     }
-  }, [conversation?.teacher_id, isStudent]);
+  }, [conversation?.teacher_id]);
   
   const isOnline = chatPartnerId ? onlineUsers.includes(chatPartnerId) : false;
   const isTyping = chatPartnerId ? typingUsers.includes(chatPartnerId) : false;
@@ -103,7 +103,7 @@ export const ChatHeader = ({
         <div className="flex items-center gap-3">
           <div className="relative">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={isStudent ? teacherAvatar || '' : ''} />
+              <AvatarImage src={teacherAvatar || ''} />
               <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                 {chatPartner.charAt(0)}
               </AvatarFallback>
@@ -135,14 +135,16 @@ export const ChatHeader = ({
           />
         )}
         
-        {isStudent && connectionStatus === 'connected' && (
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${
-            isOnline ? 'border-success/20 bg-success/10' : 'border-muted'
+        {connectionStatus === 'connected' && (
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+            isOnline 
+              ? 'border-success/30 bg-success/10 shadow-sm shadow-success/20' 
+              : 'border-border bg-muted/50'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${
-              isOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground'
+            <div className={`w-2.5 h-2.5 rounded-full ${
+              isOnline ? 'bg-success animate-pulse shadow-lg shadow-success/50' : 'bg-muted-foreground'
             }`} />
-            <span className={`text-xs font-medium ${
+            <span className={`text-xs font-semibold ${
               isTyping ? 'text-primary' : isOnline ? 'text-success' : 'text-muted-foreground'
             }`}>
               {getStatusText()}
