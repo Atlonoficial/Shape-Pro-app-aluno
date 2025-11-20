@@ -83,10 +83,35 @@ export default function Chat() {
   if (error) {
     return (
       <MobileContainer>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <p className="text-destructive mb-2">Erro ao carregar chat</p>
-            <p className="text-muted-foreground text-sm">{error}</p>
+        <div className="flex flex-col items-center justify-center h-screen p-6">
+          <div className="text-center max-w-md">
+            <div className="flex justify-center mb-4">
+              <div className="rounded-full bg-destructive/20 p-3">
+                <Loader2 className="h-16 w-16 text-destructive" />
+              </div>
+            </div>
+            
+            <h2 className="text-xl font-semibold text-foreground mb-2">
+              Não foi possível carregar o chat
+            </h2>
+            
+            <p className="text-muted-foreground mb-4">{error}</p>
+            
+            {error.includes('vinculado a um professor') && (
+              <div className="bg-muted rounded-lg p-4 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  💡 Para ter acesso ao chat com seu professor, é necessário que ele
+                  te vincule como aluno através do Dashboard de Professores.
+                </p>
+              </div>
+            )}
+            
+            <button
+              onClick={() => navigate('/')}
+              className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Voltar para Início
+            </button>
           </div>
         </div>
       </MobileContainer>
