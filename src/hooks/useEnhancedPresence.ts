@@ -67,15 +67,6 @@ export const useEnhancedPresence = (channelName: string) => {
         const state = channel.presenceState();
         const allPresences = Object.values(state).flat() as any[];
         
-        // 🔍 DEBUG: Log detalhado de presença
-        console.log('🔍 [EnhancedPresence] Presence Sync:', {
-          channelName: `presence:${channelName}`,
-          presenceState: state,
-          allPresences,
-          totalPresences: allPresences.length,
-          currentUserId: user.id
-        });
-        
         // Filtrar usuários online (heartbeat nos últimos 30 segundos)
         const now = new Date();
         const thirtySecondsAgo = new Date(now.getTime() - 30000);
@@ -84,17 +75,7 @@ export const useEnhancedPresence = (channelName: string) => {
           .filter((p: any) => {
             if (!p.last_heartbeat || !p.user_id) return false;
             const lastSeen = new Date(p.last_heartbeat);
-            const isOnline = lastSeen > thirtySecondsAgo;
-            
-            // 🔍 DEBUG: Log de cada presença
-            console.log('🔍 [EnhancedPresence] Checking presence:', {
-              user_id: p.user_id,
-              last_heartbeat: p.last_heartbeat,
-              isOnline,
-              secondsSinceLastSeen: (now.getTime() - lastSeen.getTime()) / 1000
-            });
-            
-            return isOnline;
+            return lastSeen > thirtySecondsAgo;
           })
           .map((p: any) => p.user_id)
           .filter((id: string) => id !== user.id);
@@ -103,10 +84,14 @@ export const useEnhancedPresence = (channelName: string) => {
           .filter((p: any) => p.typing && p.user_id && p.user_id !== user.id)
           .map((p: any) => p.user_id);
 
-        console.log('🔍 [EnhancedPresence] Final state:', {
-          onlineUsers: online,
-          typingUsers: typing
-        });
+        if (import.meta.env.DEV) {
+          console.log('🔍 [EnhancedPresence] Presence Sync:', {
+            channelName: `presence:${channelName}`,
+            onlineUsers: online,
+            typingUsers: typing,
+            totalPresences: allPresences.length
+          });
+        }
 
         setOnlineUsers(online);
         setTypingUsers(typing);

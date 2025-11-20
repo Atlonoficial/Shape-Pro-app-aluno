@@ -104,13 +104,18 @@ export const useGlobalRealtime = () => {
           window.dispatchEvent(new CustomEvent('conversations-updated'));
         } 
       },
-      { 
-        table: 'messages', 
-        event: '*', 
-        callback: () => {
-          window.dispatchEvent(new CustomEvent('messages-updated'));
-        } 
-      },
+    { 
+      table: 'chat_messages', 
+      event: 'INSERT', 
+      callback: (payload) => {
+        if (import.meta.env.DEV) {
+          console.log('📨 New chat message:', payload);
+        }
+        window.dispatchEvent(new CustomEvent('chat-messages-updated', {
+          detail: payload.new
+        }));
+      } 
+    },
       
       // Goals
       { 
