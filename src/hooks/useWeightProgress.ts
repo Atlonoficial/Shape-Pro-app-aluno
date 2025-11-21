@@ -26,24 +26,32 @@ export const useWeightProgress = (userId: string) => {
       setLoading(true);
       setError(null);
 
-      console.log('🔍 Fetching weight progress for user:', userId);
+      if (import.meta.env.DEV) {
+        console.log('🔍 Fetching weight progress for user:', userId);
+      }
 
-      // Use SQL date functions to filter by current month (more reliable)
-      const { data, error: fetchError } = await supabase
-        .from('progress')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('type', 'weight')
-        .gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
-        .lt('date', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0])
-        .order('date', { ascending: true });
+      // ✅ Adicionar retry logic
+      const { data, error: fetchError } = await retryWithBackoff(async () => {
+        return await supabase
+          .from('progress')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('type', 'weight')
+          .gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+          .lt('date', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0])
+          .order('date', { ascending: true });
+      });
 
       if (fetchError) {
-        console.error('❌ Error fetching weight data:', fetchError);
+        if (import.meta.env.DEV) {
+          console.error('❌ Error fetching weight data:', fetchError);
+        }
         throw fetchError;
       }
 
-      console.log('📊 Raw weight data from DB:', data);
+      if (import.meta.env.DEV) {
+        console.log('📊 Raw weight data from DB:', data);
+      }
 
       // Format data for the chart - current month only
       const formattedData = (data || []).map(entry => {

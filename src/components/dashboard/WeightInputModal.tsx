@@ -17,8 +17,11 @@ interface WeightInputModalProps {
 export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInputModalProps) => {
   const [weight, setWeight] = useState('');
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   const { isOnline } = useNetworkStatus();
+  
+  const MAX_VISUAL_RETRIES = 3;
 
   const handleSave = async () => {
     const weightValue = parseFloat(weight);
@@ -32,7 +35,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
       return;
     }
 
-    // ✅ Check connection BEFORE trying to save
+    // ✅ Verificar conexão ANTES de tentar salvar
     if (!isOnline) {
       toast({
         title: "Sem conexão",
@@ -44,7 +47,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
 
     setLoading(true);
     
-    // ✅ Add visual timeout (15s warning)
+    // ✅ Timeout visual
     const timeoutId = setTimeout(() => {
       toast({
         title: "Servidor não responde",
@@ -57,6 +60,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
       clearTimeout(timeoutId);
       
       if (success) {
+        setRetryCount(0); // ✅ Reset retry counter
         toast({
           title: "Peso registrado!",
           description: `Seu peso de ${weightValue}kg foi salvo com sucesso.`,
@@ -64,12 +68,29 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
         setWeight('');
         onClose();
       } else {
-        const errorMessage = error || "Não foi possível salvar seu peso. Tente novamente.";
-        toast({
-          title: "Erro ao salvar",
-          description: errorMessage,
-          variant: "destructive"
-        });
+        // ✅ Implementar retry visual automático
+        setRetryCount(prev => prev + 1);
+        
+        if (retryCount < MAX_VISUAL_RETRIES) {
+          toast({
+            title: "Tentando novamente",
+            description: `Tentativa ${retryCount + 1}/${MAX_VISUAL_RETRIES}. Aguarde...`,
+          });
+          
+          // ✅ Retry automático após 2s
+          setTimeout(() => {
+            setLoading(false);
+            handleSave();
+          }, 2000);
+          return; // Não desligar loading ainda
+        } else {
+          setRetryCount(0);
+          toast({
+            title: "Não foi possível salvar",
+            description: error || "Múltiplas tentativas falharam. Tente novamente mais tarde.",
+            variant: "destructive"
+          });
+        }
       }
     } catch (err) {
       clearTimeout(timeoutId);
@@ -79,12 +100,15 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      if (retryCount >= MAX_VISUAL_RETRIES || retryCount === 0) {
+        setLoading(false);
+      }
     }
   };
 
   const handleSkip = () => {
     setWeight('');
+    setRetryCount(0);
     onClose();
   };
 
