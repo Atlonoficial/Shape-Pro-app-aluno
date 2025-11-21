@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRealtimeManager } from './useRealtimeManager';
 import { useAuth } from './useAuth';
+import '@/utils/realtimeMonitor'; // ✅ BUILD 55: Import monitor (auto-inicia em DEV)
 
 /**
  * ✅ BUILD 53: Global Realtime Hook (Singleton)
@@ -31,7 +32,7 @@ export const useGlobalRealtime = () => {
     };
   }, []);
 
-  // ✅ Reduzir para apenas subscriptions CRÍTICAS (13 → 4 = 69% redução)
+  // ✅ BUILD 55: Subscriptions consolidadas (8+ canais → 1 canal = 87% redução)
   useRealtimeManager({
     subscriptions: user?.id ? [
       // Profile (crítico - dados do usuário)
@@ -48,8 +49,6 @@ export const useGlobalRealtime = () => {
       { 
         table: 'chat_messages', 
         event: 'INSERT',
-        // ✅ Filtrar apenas conversas do usuário para reduzir tráfego
-        // Formato: {teacher_id}-{student_id}, então filtramos por user.id em qualquer posição
         filter: `conversation_id.like.%${user.id}%`,
         callback: (payload) => {
           if (import.meta.env.DEV) {
@@ -82,11 +81,45 @@ export const useGlobalRealtime = () => {
           window.dispatchEvent(new CustomEvent('gamification-updated'));
         } 
       },
+      
+      // ✅ Conversations (consolidado de useUnreadMessages)
+      {
+        table: 'conversations',
+        event: '*',
+        filter: `student_id=eq.${user.id}`,
+        callback: () => {
+          window.dispatchEvent(new CustomEvent('conversations-updated'));
+        }
+      },
+      
+      // ✅ Workout activities (consolidado de useGamificationStravaIntegration)
+      {
+        table: 'workout_activities',
+        event: 'INSERT',
+        filter: `user_id=eq.${user.id}`,
+        callback: (payload) => {
+          window.dispatchEvent(new CustomEvent('workout-activity-created', {
+            detail: payload.new
+          }));
+        }
+      },
     ] : [],
     enabled: !!user?.id,
     channelName: 'global-app-realtime',
-    debounceMs: 2000, // ✅ 1s → 2s (menos carga no servidor)
+    debounceMs: 2000,
     maxRetries: 3,
-    retryDelay: 8000, // ✅ 8s entre retries (menos agressivo)
+    retryDelay: 8000,
   });
+  
+  // ✅ BUILD 55: Performance metrics (DEV only)
+  useEffect(() => {
+    if (import.meta.env.DEV && user?.id) {
+      console.log('📊 [GlobalRealtime] Performance Metrics:', {
+        subscriptions: 6,
+        debounceMs: 2000,
+        channelName: 'global-app-realtime',
+        userId: user.id
+      });
+    }
+  }, [user?.id]);
 };
