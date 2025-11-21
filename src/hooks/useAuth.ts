@@ -33,22 +33,14 @@ export const useAuth = () => {
         await bootManager.waitForBoot(3000);
         logger.info('useAuth', '✅ Boot complete, setting up auth listener');
 
-        // ✅ BUILD 51: Safety timeout reduzido para 1.5s (3s → 1.5s)
+        // ✅ Safety timeout aumentado para 8s (permite operações completarem)
         const safetyTimer = setTimeout(() => {
-          logger.warn('useAuth', '⏰ Safety timeout (1.5s), forcing ready');
+          logger.warn('useAuth', '⏰ Safety timeout (8s), forcing ready');
           setLoading(false);
           setBootComplete(true);
-        }, 1500);
-        
-        // ✅ BUILD 51: Timeout ABSOLUTO de 2s (garante que loading SEMPRE desliga)
-        const absoluteTimeout = setTimeout(() => {
-          logger.error('useAuth', '🚨 ABSOLUTE TIMEOUT (2s) - forcing loading OFF');
-          setLoading(false);
-        }, 2000);
+        }, 8000);
 
         const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-          clearTimeout(safetyTimer);
-          clearTimeout(absoluteTimeout);
           clearTimeout(safetyTimer);
           authStateChangeCount++;
           
@@ -66,13 +58,13 @@ export const useAuth = () => {
             try {
               logger.info('useAuth', '📋 Fetching profile for:', user.id);
               
-              // ✅ BUILD 51: Timeout MUITO agressivo (800ms)
+              // ✅ Timeout realista (5s) para permitir retry logic completar
               const profilePromise = getUserProfile(user.id);
               const timeoutPromise = new Promise<null>((resolve) => 
                 setTimeout(() => {
-                  logger.warn('useAuth', '⚠️ Profile timeout (800ms), skipping');
+                  logger.warn('useAuth', '⚠️ Profile timeout (5s), skipping');
                   resolve(null);
-                }, 800) // 1s → 800ms
+                }, 5000)
               );
               
               const profile = await Promise.race([profilePromise, timeoutPromise]);
@@ -83,8 +75,18 @@ export const useAuth = () => {
                 });
                 setUserProfile(profile);
               } else {
-                logger.warn('useAuth', '⚠️ No profile, continuing');
-                setUserProfile(null);
+                logger.warn('useAuth', '⚠️ No profile, using fallback from user metadata');
+                
+                // ✅ FALLBACK: Criar profile mínimo a partir do user metadata
+                const fallbackProfile = {
+                  id: user.id,
+                  email: user.email || '',
+                  name: user.user_metadata?.name || 'Usuário',
+                  user_type: user.user_metadata?.user_type || 'student',
+                  profile_complete: false
+                };
+                
+                setUserProfile(fallbackProfile as any);
               }
               
               setBootComplete(true);
@@ -126,14 +128,12 @@ export const useAuth = () => {
           
           // ✅ SEMPRE desligar loading
           clearTimeout(safetyTimer);
-          clearTimeout(absoluteTimeout);
           setLoading(false);
         }, 100); // 100ms após setup
         
         unsubscribe = () => {
           logger.info('useAuth', '🧹 Cleanup: Unsubscribing');
           clearTimeout(safetyTimer);
-          clearTimeout(absoluteTimeout);
           subscription.unsubscribe();
         };
         
