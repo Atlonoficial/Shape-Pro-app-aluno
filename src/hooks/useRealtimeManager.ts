@@ -70,26 +70,28 @@ export const useRealtimeManager = ({
       return;
     }
 
-    // Build 28: Circuit Breaker - Check if circuit is open
-    if (circuitOpenRef.current) {
-      const timeSinceLastError = Date.now() - lastErrorTimeRef.current;
-      const circuitResetTime = retryDelay * Math.pow(2, maxRetries);
-      
-      if (timeSinceLastError < circuitResetTime) {
-        logger.warn('RealtimeManager', `Circuit breaker OPEN - retry in ${Math.ceil((circuitResetTime - timeSinceLastError) / 1000)}s`);
-        return;
-      } else {
-        logger.info('RealtimeManager', 'Circuit breaker RESET');
-        circuitOpenRef.current = false;
-        retryCountRef.current = 0;
+    // ✅ Debounce setup to prevent rapid channel creation/destruction
+    const setupTimeout = setTimeout(() => {
+      // Build 28: Circuit Breaker - Check if circuit is open
+      if (circuitOpenRef.current) {
+        const timeSinceLastError = Date.now() - lastErrorTimeRef.current;
+        const circuitResetTime = retryDelay * Math.pow(2, maxRetries);
+        
+        if (timeSinceLastError < circuitResetTime) {
+          logger.warn('RealtimeManager', `Circuit breaker OPEN - retry in ${Math.ceil((circuitResetTime - timeSinceLastError) / 1000)}s`);
+          return;
+        } else {
+          logger.info('RealtimeManager', 'Circuit breaker RESET');
+          circuitOpenRef.current = false;
+          retryCountRef.current = 0;
+        }
       }
-    }
 
-    logger.info('RealtimeManager', `Initializing with ${subscriptions.length} subscriptions`);
-    logger.debug('RealtimeManager', `Retry count: ${retryCountRef.current}`);
+      logger.info('RealtimeManager', `Initializing with ${subscriptions.length} subscriptions`);
+      logger.debug('RealtimeManager', `Retry count: ${retryCountRef.current}`);
 
-    // ✅ BUILD 32: Safety timeout increased to 20s (less aggressive)
-    const safetyTimeout = setTimeout(() => {
+      // ✅ BUILD 32: Safety timeout increased to 20s (less aggressive)
+      const safetyTimeout = setTimeout(() => {
       if (!isConnectedRef.current && channelRef.current) {
         logger.warn('RealtimeManager', 'Safety timeout reached');
         supabase.removeChannel(channelRef.current);
@@ -143,7 +145,16 @@ export const useRealtimeManager = ({
         
         if (retryCountRef.current >= maxRetries) {
           circuitOpenRef.current = true;
-          logger.warn('RealtimeManager', `Circuit breaker OPENED - pausing for ${retryDelay * Math.pow(2, maxRetries) / 1000}s`);
+          logger.warn('RealtimeManager', `🛑 Max retries reached - circuit breaker OPENED for 5 minutes`);
+          
+          // ✅ Pause for 5 minutes before allowing retries
+          setTimeout(() => {
+            retryCountRef.current = 0;
+            circuitOpenRef.current = false;
+            logger.info('RealtimeManager', '🔄 Circuit breaker RESET');
+          }, 300000); // 5 minutes
+          
+          return; // Don't try to reconnect
         } else {
           const backoffDelay = retryDelay * Math.pow(2, retryCountRef.current - 1);
           logger.debug('RealtimeManager', `Will retry with ${backoffDelay}ms backoff`);
@@ -155,10 +166,12 @@ export const useRealtimeManager = ({
       }
     });
 
+    }, 2000);
+
     // Cleanup function
     return () => {
       logger.debug('RealtimeManager', 'Cleaning up subscriptions');
-      clearTimeout(safetyTimeout);
+      clearTimeout(setupTimeout);
       clearDebouncedCallbacks();
       
       if (channelRef.current) {
