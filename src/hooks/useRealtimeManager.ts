@@ -36,13 +36,8 @@ export const useRealtimeManager = ({
   const debouncedCallbacksRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const isConnectedRef = useRef(false);
   const retryCountRef = useRef(0); // Build 28: Circuit breaker retry counter
-  const circuitOpenRef = useRef(false);
-  const lastErrorTimeRef = useRef(0);
-  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // ✅ Constantes do circuit breaker
-  const CIRCUIT_BREAKER_PAUSE = 600000; // 10 minutos
-  const MAX_FAILURES_BEFORE_PAUSE = 5; // 5 falhas antes de pausar
+  const circuitOpenRef = useRef(false); // Build 28: Circuit breaker state
+  const lastErrorTimeRef = useRef<number>(0); // Build 28: Last error timestamp
 
   // Cleanup debounced callbacks
   const clearDebouncedCallbacks = useCallback(() => {
@@ -75,28 +70,26 @@ export const useRealtimeManager = ({
       return;
     }
 
-    // ✅ Debounce setup to prevent rapid channel creation/destruction
-    const setupTimeout = setTimeout(() => {
-      // ✅ Circuit breaker melhorado - menos agressivo
-      if (circuitOpenRef.current) {
-        const timeSinceLastError = Date.now() - lastErrorTimeRef.current;
-        
-        if (timeSinceLastError < CIRCUIT_BREAKER_PAUSE) {
-          const minutesRemaining = Math.ceil((CIRCUIT_BREAKER_PAUSE - timeSinceLastError) / 60000);
-          logger.warn('RealtimeManager', `🛑 Circuit breaker OPEN - retry em ${minutesRemaining}min`);
-          return;
-        } else {
-          logger.info('RealtimeManager', '✅ Circuit breaker RESET');
-          circuitOpenRef.current = false;
-          retryCountRef.current = 0;
-        }
+    // Build 28: Circuit Breaker - Check if circuit is open
+    if (circuitOpenRef.current) {
+      const timeSinceLastError = Date.now() - lastErrorTimeRef.current;
+      const circuitResetTime = retryDelay * Math.pow(2, maxRetries);
+      
+      if (timeSinceLastError < circuitResetTime) {
+        logger.warn('RealtimeManager', `Circuit breaker OPEN - retry in ${Math.ceil((circuitResetTime - timeSinceLastError) / 1000)}s`);
+        return;
+      } else {
+        logger.info('RealtimeManager', 'Circuit breaker RESET');
+        circuitOpenRef.current = false;
+        retryCountRef.current = 0;
       }
+    }
 
-      logger.info('RealtimeManager', `Initializing with ${subscriptions.length} subscriptions`);
-      logger.debug('RealtimeManager', `Retry count: ${retryCountRef.current}`);
+    logger.info('RealtimeManager', `Initializing with ${subscriptions.length} subscriptions`);
+    logger.debug('RealtimeManager', `Retry count: ${retryCountRef.current}`);
 
-      // ✅ BUILD 32: Safety timeout increased to 20s (less aggressive)
-      const safetyTimeout = setTimeout(() => {
+    // ✅ BUILD 32: Safety timeout increased to 20s (less aggressive)
+    const safetyTimeout = setTimeout(() => {
       if (!isConnectedRef.current && channelRef.current) {
         logger.warn('RealtimeManager', 'Safety timeout reached');
         supabase.removeChannel(channelRef.current);
@@ -143,29 +136,14 @@ export const useRealtimeManager = ({
         retryCountRef.current = 0;
         circuitOpenRef.current = false;
       } else if (status === 'CHANNEL_ERROR') {
-        logger.warn('RealtimeManager', '⚠️ Channel error detected');
+        logger.warn('RealtimeManager', 'Channel error');
         
         retryCountRef.current++;
         lastErrorTimeRef.current = Date.now();
         
-        // ✅ Circuit breaker mais inteligente
-        if (retryCountRef.current >= MAX_FAILURES_BEFORE_PAUSE) {
+        if (retryCountRef.current >= maxRetries) {
           circuitOpenRef.current = true;
-          logger.warn('RealtimeManager', `🛑 ${MAX_FAILURES_BEFORE_PAUSE} falhas - circuit breaker OPEN por 10 min`);
-          
-          // ✅ Reset automático após 10 minutos
-          const safetyTimeout = setTimeout(() => {
-            retryCountRef.current = 0;
-            circuitOpenRef.current = false;
-            logger.info('RealtimeManager', '🔄 Circuit breaker AUTO-RESET');
-          }, CIRCUIT_BREAKER_PAUSE);
-          
-          if (safetyTimeoutRef.current) {
-            clearTimeout(safetyTimeoutRef.current);
-          }
-          safetyTimeoutRef.current = safetyTimeout;
-          
-          return; // ❌ NÃO tentar reconectar
+          logger.warn('RealtimeManager', `Circuit breaker OPENED - pausing for ${retryDelay * Math.pow(2, maxRetries) / 1000}s`);
         } else {
           const backoffDelay = retryDelay * Math.pow(2, retryCountRef.current - 1);
           logger.debug('RealtimeManager', `Will retry with ${backoffDelay}ms backoff`);
@@ -177,12 +155,10 @@ export const useRealtimeManager = ({
       }
     });
 
-    }, 2000);
-
     // Cleanup function
     return () => {
       logger.debug('RealtimeManager', 'Cleaning up subscriptions');
-      clearTimeout(setupTimeout);
+      clearTimeout(safetyTimeout);
       clearDebouncedCallbacks();
       
       if (channelRef.current) {

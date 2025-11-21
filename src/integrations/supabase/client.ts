@@ -65,45 +65,6 @@ export const getSupabase = () => {
     });
     
     logger.info('Supabase Client', 'Client created successfully');
-    
-    // ✅ FASE 5: Request interceptor for detailed logging (dev only)
-    if (import.meta.env.DEV) {
-      const originalFetch = window.fetch;
-      window.fetch = async (...args) => {
-        const url = args[0]?.toString() || '';
-        
-        // Log only Supabase requests
-        if (url.includes('supabase.co')) {
-          console.log('🌐 Supabase Request:', {
-            url: url.replace(/apikey=[^&]+/, 'apikey=***'),
-            method: args[1]?.method || 'GET',
-            timestamp: new Date().toISOString()
-          });
-        }
-        
-        try {
-          const response = await originalFetch(...args);
-          
-          if (url.includes('supabase.co') && !response.ok) {
-            console.error('❌ Supabase Response Error:', {
-              url: url.replace(/apikey=[^&]+/, 'apikey=***'),
-              status: response.status,
-              statusText: response.statusText
-            });
-          }
-          
-          return response;
-        } catch (error: any) {
-          if (url.includes('supabase.co')) {
-            console.error('❌ Supabase Fetch Error:', {
-              url: url.replace(/apikey=[^&]+/, 'apikey=***'),
-              error: error?.message || 'Unknown error'
-            });
-          }
-          throw error;
-        }
-      };
-    }
   }
   
   return _supabaseInstance;

@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Scale, WifiOff } from 'lucide-react';
+import { Scale, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 interface WeightInputModalProps {
   isOpen: boolean;
@@ -17,11 +16,7 @@ interface WeightInputModalProps {
 export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInputModalProps) => {
   const [weight, setWeight] = useState('');
   const [loading, setLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
-  const { isOnline } = useNetworkStatus();
-  
-  const MAX_VISUAL_RETRIES = 3;
 
   const handleSave = async () => {
     const weightValue = parseFloat(weight);
@@ -35,80 +30,31 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
       return;
     }
 
-    // ✅ Verificar conexão ANTES de tentar salvar
-    if (!isOnline) {
-      toast({
-        title: "Sem conexão",
-        description: "Verifique sua conexão com a internet e tente novamente.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(true);
+    const success = await onSave(weightValue);
     
-    // ✅ Timeout visual
-    const timeoutId = setTimeout(() => {
+    if (success) {
       toast({
-        title: "Servidor não responde",
-        description: "A operação está demorando mais que o esperado...",
+        title: "Peso registrado!",
+        description: `Seu peso de ${weightValue}kg foi salvo com sucesso.`,
       });
-    }, 15000);
-    
-    try {
-      const success = await onSave(weightValue);
-      clearTimeout(timeoutId);
-      
-      if (success) {
-        setRetryCount(0); // ✅ Reset retry counter
-        toast({
-          title: "Peso registrado!",
-          description: `Seu peso de ${weightValue}kg foi salvo com sucesso.`,
-        });
-        setWeight('');
-        onClose();
-      } else {
-        // ✅ Implementar retry visual automático
-        setRetryCount(prev => prev + 1);
-        
-        if (retryCount < MAX_VISUAL_RETRIES) {
-          toast({
-            title: "Tentando novamente",
-            description: `Tentativa ${retryCount + 1}/${MAX_VISUAL_RETRIES}. Aguarde...`,
-          });
-          
-          // ✅ Retry automático após 2s
-          setTimeout(() => {
-            setLoading(false);
-            handleSave();
-          }, 2000);
-          return; // Não desligar loading ainda
-        } else {
-          setRetryCount(0);
-          toast({
-            title: "Não foi possível salvar",
-            description: error || "Múltiplas tentativas falharam. Tente novamente mais tarde.",
-            variant: "destructive"
-          });
-        }
-      }
-    } catch (err) {
-      clearTimeout(timeoutId);
+      setWeight('');
+      onClose();
+    } else {
+      // Show the specific error from the hook if available
+      const errorMessage = error || "Não foi possível salvar seu peso. Tente novamente.";
       toast({
-        title: "Erro inesperado",
-        description: "Verifique sua conexão e tente novamente.",
+        title: "Erro ao salvar",
+        description: errorMessage,
         variant: "destructive"
       });
-    } finally {
-      if (retryCount >= MAX_VISUAL_RETRIES || retryCount === 0) {
-        setLoading(false);
-      }
     }
+    
+    setLoading(false);
   };
 
   const handleSkip = () => {
     setWeight('');
-    setRetryCount(0);
     onClose();
   };
 
@@ -127,14 +73,6 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
             </span>
           </DialogTitle>
         </DialogHeader>
-        
-        {/* ✅ Show warning if offline */}
-        {!isOnline && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-md flex items-center gap-2">
-            <WifiOff className="w-4 h-4 flex-shrink-0" />
-            <p className="text-sm">Você está offline. Conecte-se para salvar seu peso.</p>
-          </div>
-        )}
         
         <div className="space-y-4 py-2 sm:py-4">
           <div className="text-center px-2">
