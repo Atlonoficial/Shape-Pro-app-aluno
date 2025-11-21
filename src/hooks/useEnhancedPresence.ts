@@ -29,8 +29,15 @@ export const useEnhancedPresence = (channelName: string) => {
     });
   }, [user]);
 
+  // ✅ BUILD 55: Track último estado de typing para evitar updates desnecessários
+  const lastTypingStateRef = useRef<boolean>(false);
+
   const sendTypingIndicator = useCallback((isTyping: boolean) => {
     if (!channelRef.current || !user) return;
+
+    // ✅ Skip se o estado não mudou
+    if (lastTypingStateRef.current === isTyping) return;
+    lastTypingStateRef.current = isTyping;
 
     if (isTyping) {
       channelRef.current.track({

@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useRealtimeManager } from './useRealtimeManager';
 
+/**
+ * ✅ BUILD 55: Otimizado para usar canal global
+ * ANTES: Canal próprio 'unread-messages'
+ * DEPOIS: Listener do evento 'conversations-updated' do useGlobalRealtime
+ */
 export const useUnreadMessages = () => {
   const { user, userProfile } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -33,21 +37,16 @@ export const useUnreadMessages = () => {
     }
   };
 
-  // Use centralized realtime manager
-  useRealtimeManager({
-    subscriptions: user && userProfile ? [{
-      table: 'conversations',
-      event: '*',
-      filter: `${userProfile.user_type === 'student' ? 'student_id' : 'teacher_id'}=eq.${user.id}`,
-      callback: () => fetchUnreadCount(),
-    }] : [],
-    enabled: !!user && !!userProfile,
-    channelName: 'unread-messages',
-    debounceMs: 500,
-  });
-
+  // ✅ Fetch inicial
   useEffect(() => {
     fetchUnreadCount();
+  }, [user, userProfile]);
+
+  // ✅ Listener para updates do canal global
+  useEffect(() => {
+    const handleUpdate = () => fetchUnreadCount();
+    window.addEventListener('conversations-updated', handleUpdate);
+    return () => window.removeEventListener('conversations-updated', handleUpdate);
   }, [user, userProfile]);
 
   return unreadCount;
