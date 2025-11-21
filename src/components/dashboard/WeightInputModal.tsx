@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Scale, X } from 'lucide-react';
+import { Scale, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 interface WeightInputModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
   const [weight, setWeight] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { isOnline } = useNetworkStatus();
 
   const handleSave = async () => {
     const weightValue = parseFloat(weight);
@@ -30,27 +32,55 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
       return;
     }
 
-    setLoading(true);
-    const success = await onSave(weightValue);
-    
-    if (success) {
+    // ✅ Check connection BEFORE trying to save
+    if (!isOnline) {
       toast({
-        title: "Peso registrado!",
-        description: `Seu peso de ${weightValue}kg foi salvo com sucesso.`,
-      });
-      setWeight('');
-      onClose();
-    } else {
-      // Show the specific error from the hook if available
-      const errorMessage = error || "Não foi possível salvar seu peso. Tente novamente.";
-      toast({
-        title: "Erro ao salvar",
-        description: errorMessage,
+        title: "Sem conexão",
+        description: "Verifique sua conexão com a internet e tente novamente.",
         variant: "destructive"
       });
+      return;
     }
+
+    setLoading(true);
     
-    setLoading(false);
+    // ✅ Add visual timeout (15s warning)
+    const timeoutId = setTimeout(() => {
+      toast({
+        title: "Servidor não responde",
+        description: "A operação está demorando mais que o esperado...",
+      });
+    }, 15000);
+    
+    try {
+      const success = await onSave(weightValue);
+      clearTimeout(timeoutId);
+      
+      if (success) {
+        toast({
+          title: "Peso registrado!",
+          description: `Seu peso de ${weightValue}kg foi salvo com sucesso.`,
+        });
+        setWeight('');
+        onClose();
+      } else {
+        const errorMessage = error || "Não foi possível salvar seu peso. Tente novamente.";
+        toast({
+          title: "Erro ao salvar",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      toast({
+        title: "Erro inesperado",
+        description: "Verifique sua conexão e tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSkip = () => {
@@ -73,6 +103,14 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
             </span>
           </DialogTitle>
         </DialogHeader>
+        
+        {/* ✅ Show warning if offline */}
+        {!isOnline && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md flex items-center gap-2">
+            <WifiOff className="w-4 h-4 flex-shrink-0" />
+            <p className="text-sm">Você está offline. Conecte-se para salvar seu peso.</p>
+          </div>
+        )}
         
         <div className="space-y-4 py-2 sm:py-4">
           <div className="text-center px-2">
