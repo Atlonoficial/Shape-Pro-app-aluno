@@ -159,6 +159,9 @@ export const useConversation = (userId?: string) => {
     if (!conversation || !userId) return;
 
     const localId = `local_${Date.now()}_${Math.random()}`;
+    // ✅ IMPORTANTE: Este é o app do ALUNO
+    // Todas as mensagens enviadas daqui devem ter sender_type: 'student'
+    // Mensagens do professor vêm do Dashboard externo com sender_type: 'teacher'
     const tempMessage: ChatMessage = {
       id: localId,
       local_id: localId,
@@ -166,7 +169,7 @@ export const useConversation = (userId?: string) => {
       sender_id: userId,
       message: content,
       message_type: 'text',
-      sender_type: userProfile?.user_type || 'student',
+      sender_type: 'student', // ✅ SEMPRE 'student' neste app
       created_at: new Date().toISOString(),
       status: 'sending'
     };
@@ -190,6 +193,7 @@ export const useConversation = (userId?: string) => {
 
     const sendAttempt = async (retryCount = 0) => {
       try {
+        // ✅ INSERT no banco com sender_type fixo
         const { data, error } = await supabase
           .from('chat_messages')
           .insert({
@@ -197,7 +201,7 @@ export const useConversation = (userId?: string) => {
             sender_id: userId,
             message: content,
             message_type: 'text',
-            sender_type: userProfile?.user_type || 'student'
+            sender_type: 'student' // ✅ SEMPRE 'student' neste app
           })
           .select()
           .single();
