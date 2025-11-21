@@ -225,13 +225,17 @@ export const checkDatabaseHealth = async (): Promise<boolean> => {
   try {
     const client = getClient();
     
-    // ✅ NOVO: Usar auth.getSession() em vez de query na tabela profiles
+    // ✅ Timeout aumentado para 8s e com retry logic
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Health check timeout')), 3000) // ✅ 3s em vez de 2s
+      setTimeout(() => reject(new Error('Health check timeout')), 8000)
     );
     
-    // ✅ Usar auth session em vez de query de tabela
-    const healthPromise = client.auth.getSession();
+    // ✅ Adicionar retry (1 retry = 2 tentativas totais)
+    const { retryWithBackoff } = await import('@/utils/retryWithBackoff');
+    
+    const healthPromise = retryWithBackoff(async () => {
+      return await client.auth.getSession();
+    }, 1);
     
     const { error } = await Promise.race([healthPromise, timeoutPromise]);
     
@@ -265,11 +269,12 @@ export const signInUser = async (email: string, password: string) => {
     }
   }
   
-  // ✅ BUILD 40.1 FASE 3: Verificar saúde do banco ANTES de tentar login
+  // ✅ Verificar health mas NÃO bloquear login se falhar
   const isHealthy = await checkDatabaseHealth();
   
   if (!isHealthy) {
-    throw new Error('Banco de dados não está respondendo. Aguarde alguns segundos e tente novamente.');
+    logger.warn('signInUser', '⚠️ Health check failed, attempting login anyway');
+    // NÃO lançar erro - tentar login mesmo assim
   }
   
   // ✅ BUILD 24: Importar dinamicamente para garantir storage pronto
@@ -388,17 +393,23 @@ export const resetPasswordForEmail = async (
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   try {
-    // ✅ FASE 1: Timeout de 5 segundos para evitar travamento
+    // ✅ Timeout aumentado para 10s e com retry logic
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('getUserProfile timeout after 5s')), 5000)
+      setTimeout(() => reject(new Error('getUserProfile timeout after 10 seconds')), 10000)
     );
     
     const client = getClient();
-    const fetchPromise = client
-      .from('profiles')
-      .select('*')
-      .eq('id', uid)
-      .single();
+    
+    // ✅ Adicionar retry com backoff (2 retries = 3 tentativas totais)
+    const { retryWithBackoff } = await import('@/utils/retryWithBackoff');
+    
+    const fetchPromise = retryWithBackoff(async () => {
+      return await client
+        .from('profiles')
+        .select('*')
+        .eq('id', uid)
+        .single();
+    }, 2);
     
     const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
@@ -406,10 +417,10 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
       logger.error('getUserProfile', 'Error getting user profile', error);
       return null;
     }
+
     return data as UserProfile;
-    
   } catch (error) {
-    logger.error('getUserProfile', 'Failed to fetch profile', error);
+    logger.error('getUserProfile', 'Failed to fetch profile - timeout or network error', error);
     return null;
   }
 };
