@@ -16,6 +16,7 @@ export const useEnhancedPresence = (channelName: string) => {
   const heartbeatRef = useRef<NodeJS.Timeout>();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const channelRef = useRef<any>();
+  const syncDebounceRef = useRef<NodeJS.Timeout>();
 
   const sendHeartbeat = useCallback(() => {
     if (!channelRef.current || !user) return;
@@ -64,37 +65,44 @@ export const useEnhancedPresence = (channelName: string) => {
     const channel = supabase
       .channel(`presence:${channelName}`)
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const allPresences = Object.values(state).flat() as any[];
-        
-        // Filtrar usuários online (heartbeat nos últimos 30 segundos)
-        const now = new Date();
-        const thirtySecondsAgo = new Date(now.getTime() - 30000);
-        
-        const online = allPresences
-          .filter((p: any) => {
-            if (!p.last_heartbeat || !p.user_id) return false;
-            const lastSeen = new Date(p.last_heartbeat);
-            return lastSeen > thirtySecondsAgo;
-          })
-          .map((p: any) => p.user_id)
-          .filter((id: string) => id !== user.id);
-
-        const typing = allPresences
-          .filter((p: any) => p.typing && p.user_id && p.user_id !== user.id)
-          .map((p: any) => p.user_id);
-
-        if (import.meta.env.DEV) {
-          console.log('🔍 [EnhancedPresence] Presence Sync:', {
-            channelName: `presence:${channelName}`,
-            onlineUsers: online,
-            typingUsers: typing,
-            totalPresences: allPresences.length
-          });
+        // ✅ Debounce de 1s para evitar syncs excessivos
+        if (syncDebounceRef.current) {
+          clearTimeout(syncDebounceRef.current);
         }
+        
+        syncDebounceRef.current = setTimeout(() => {
+          const state = channel.presenceState();
+          const allPresences = Object.values(state).flat() as any[];
+          
+          // Filtrar usuários online (heartbeat nos últimos 30 segundos)
+          const now = new Date();
+          const thirtySecondsAgo = new Date(now.getTime() - 30000);
+          
+          const online = allPresences
+            .filter((p: any) => {
+              if (!p.last_heartbeat || !p.user_id) return false;
+              const lastSeen = new Date(p.last_heartbeat);
+              return lastSeen > thirtySecondsAgo;
+            })
+            .map((p: any) => p.user_id)
+            .filter((id: string) => id !== user.id);
 
-        setOnlineUsers(online);
-        setTypingUsers(typing);
+          const typing = allPresences
+            .filter((p: any) => p.typing && p.user_id && p.user_id !== user.id)
+            .map((p: any) => p.user_id);
+
+          if (import.meta.env.DEV) {
+            console.log('🔍 [EnhancedPresence] Presence Sync:', {
+              channelName: `presence:${channelName}`,
+              onlineUsers: online,
+              typingUsers: typing,
+              totalPresences: allPresences.length
+            });
+          }
+
+          setOnlineUsers(online);
+          setTypingUsers(typing);
+        }, 1000);
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
         const users = (newPresences as any[])
@@ -121,8 +129,8 @@ export const useEnhancedPresence = (channelName: string) => {
             typing: false
           });
 
-          // Iniciar heartbeat a cada 15 segundos
-          heartbeatRef.current = setInterval(sendHeartbeat, 15000);
+          // Iniciar heartbeat a cada 30 segundos (reduz syncs em 50%)
+          heartbeatRef.current = setInterval(sendHeartbeat, 30000);
         }
       });
 
@@ -134,6 +142,9 @@ export const useEnhancedPresence = (channelName: string) => {
       }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
+      }
+      if (syncDebounceRef.current) {
+        clearTimeout(syncDebounceRef.current);
       }
       supabase.removeChannel(channel);
       channelRef.current = null;

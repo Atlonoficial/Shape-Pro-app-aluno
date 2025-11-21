@@ -47,10 +47,13 @@ export const useGlobalRealtime = () => {
       // Chat messages (crítico - tempo real necessário)
       { 
         table: 'chat_messages', 
-        event: 'INSERT', 
+        event: 'INSERT',
+        // ✅ Filtrar apenas conversas do usuário para reduzir tráfego
+        // Formato: {teacher_id}-{student_id}, então filtramos por user.id em qualquer posição
+        filter: `conversation_id.like.%${user.id}%`,
         callback: (payload) => {
           if (import.meta.env.DEV) {
-            console.log('📨 New chat message:', payload);
+            console.log('📨 New chat message:', payload.new.id);
           }
           window.dispatchEvent(new CustomEvent('chat-messages-updated', {
             detail: payload.new

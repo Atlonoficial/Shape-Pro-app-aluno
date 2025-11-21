@@ -316,17 +316,51 @@ export const useConversation = (userId?: string) => {
     };
   }, []);
 
-  // Listen for real-time chat message updates
+  // Listen for real-time chat message updates (incremental)
   useEffect(() => {
-    const handleChatUpdate = () => {
-      if (conversation?.id) {
-        loadMessages(conversation.id);
+    const handleChatUpdate = (event: any) => {
+      const newMessage = event.detail;
+      
+      if (!newMessage || !conversation?.id) return;
+      
+      // ✅ Verificar se é da conversa atual
+      if (newMessage.conversation_id !== conversation.id) return;
+      
+      // ✅ Verificar se mensagem já existe (evitar duplicatas)
+      if (messageIdsRef.current.has(newMessage.id)) {
+        if (import.meta.env.DEV) {
+          console.log('🔄 Mensagem já existe, ignorando:', newMessage.id);
+        }
+        return;
+      }
+      
+      // ✅ Adicionar apenas a nova mensagem
+      const messageWithStatus = {
+        ...newMessage,
+        status: 'sent' as const
+      };
+      
+      messageIdsRef.current.add(newMessage.id);
+      
+      setMessages(prev => {
+        // Remover mensagem local se existir (substitui por mensagem do servidor)
+        const filtered = prev.filter(msg => 
+          msg.local_id !== newMessage.local_id
+        );
+        
+        return [...filtered, messageWithStatus];
+      });
+      
+      localMessagesCache.current = [...localMessagesCache.current, messageWithStatus];
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ Nova mensagem adicionada instantaneamente:', newMessage.id);
       }
     };
 
     window.addEventListener('chat-messages-updated', handleChatUpdate);
     return () => window.removeEventListener('chat-messages-updated', handleChatUpdate);
-  }, [conversation?.id, loadMessages]);
+  }, [conversation?.id]);
 
   return {
     conversation,
