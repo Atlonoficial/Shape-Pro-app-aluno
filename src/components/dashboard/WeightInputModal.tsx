@@ -17,11 +17,8 @@ interface WeightInputModalProps {
 export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInputModalProps) => {
   const [weight, setWeight] = useState('');
   const [loading, setLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   const { isOnline } = useNetworkStatus();
-  
-  const MAX_VISUAL_RETRIES = 3;
 
   const handleSave = async () => {
     const weightValue = parseFloat(weight);
@@ -47,20 +44,19 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
 
     setLoading(true);
     
-    // ✅ Timeout visual
+    // ✅ Timeout visual aumentado para 30s
     const timeoutId = setTimeout(() => {
       toast({
         title: "Servidor não responde",
-        description: "A operação está demorando mais que o esperado...",
+        description: "A operação está demorando mais que o esperado. Continue aguardando...",
       });
-    }, 15000);
+    }, 30000);
     
     try {
       const success = await onSave(weightValue);
       clearTimeout(timeoutId);
       
       if (success) {
-        setRetryCount(0); // ✅ Reset retry counter
         toast({
           title: "Peso registrado!",
           description: `Seu peso de ${weightValue}kg foi salvo com sucesso.`,
@@ -68,47 +64,26 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
         setWeight('');
         onClose();
       } else {
-        // ✅ Implementar retry visual automático
-        setRetryCount(prev => prev + 1);
-        
-        if (retryCount < MAX_VISUAL_RETRIES) {
-          toast({
-            title: "Tentando novamente",
-            description: `Tentativa ${retryCount + 1}/${MAX_VISUAL_RETRIES}. Aguarde...`,
-          });
-          
-          // ✅ Retry automático após 2s
-          setTimeout(() => {
-            setLoading(false);
-            handleSave();
-          }, 2000);
-          return; // Não desligar loading ainda
-        } else {
-          setRetryCount(0);
-          toast({
-            title: "Não foi possível salvar",
-            description: error || "Múltiplas tentativas falharam. Tente novamente mais tarde.",
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Não foi possível salvar",
+          description: error || "Tente novamente mais tarde ou contate o suporte.",
+          variant: "destructive"
+        });
       }
     } catch (err) {
       clearTimeout(timeoutId);
       toast({
-        title: "Erro inesperado",
+        title: "Erro ao salvar",
         description: "Verifique sua conexão e tente novamente.",
         variant: "destructive"
       });
     } finally {
-      if (retryCount >= MAX_VISUAL_RETRIES || retryCount === 0) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
   const handleSkip = () => {
     setWeight('');
-    setRetryCount(0);
     onClose();
   };
 

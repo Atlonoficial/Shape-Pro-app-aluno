@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -11,7 +11,7 @@ export const useUnreadMessages = () => {
   const { user, userProfile } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     if (!user || !userProfile) return;
     
     try {
@@ -35,19 +35,19 @@ export const useUnreadMessages = () => {
     } catch (error) {
       console.error('Erro ao contar mensagens não lidas:', error);
     }
-  };
+  }, [user, userProfile]);
 
   // ✅ Fetch inicial
   useEffect(() => {
     fetchUnreadCount();
-  }, [user, userProfile]);
+  }, [fetchUnreadCount]);
 
   // ✅ Listener para updates do canal global
   useEffect(() => {
     const handleUpdate = () => fetchUnreadCount();
     window.addEventListener('conversations-updated', handleUpdate);
     return () => window.removeEventListener('conversations-updated', handleUpdate);
-  }, [user, userProfile]);
+  }, [fetchUnreadCount]);
 
   return unreadCount;
 };

@@ -32,7 +32,8 @@ export const useGlobalRealtime = () => {
     };
   }, []);
 
-  // ✅ BUILD 55: Subscriptions consolidadas (8+ canais → 1 canal = 87% redução)
+  // ✅ BUILD 55: Subscriptions consolidadas (6 canais → 1 canal = 83% redução)
+  // ⚠️ EMERGENCY: Removido notifications do Realtime (array scan muito lento)
   useRealtimeManager({
     subscriptions: user?.id ? [
       // Profile (crítico - dados do usuário)
@@ -46,6 +47,7 @@ export const useGlobalRealtime = () => {
       },
       
       // Chat messages (crítico - tempo real necessário)
+      // ⚠️ NOTA: Filtro .like é lento mas necessário (conversation_id pode ser teacher-student ou student-teacher)
       { 
         table: 'chat_messages', 
         event: 'INSERT',
@@ -58,18 +60,6 @@ export const useGlobalRealtime = () => {
             detail: payload.new
           }));
         } 
-      },
-      
-      // Notifications (crítico - tempo real necessário)
-      { 
-        table: 'notifications', 
-        event: 'INSERT', 
-        filter: `${user.id}=ANY(target_users)`,
-        callback: (payload) => {
-          window.dispatchEvent(new CustomEvent('notification-received', {
-            detail: payload.new
-          }));
-        }
       },
       
       // User points (crítico - gamificação tempo real)
@@ -111,11 +101,12 @@ export const useGlobalRealtime = () => {
     retryDelay: 8000,
   });
   
-  // ✅ BUILD 55: Performance metrics (DEV only)
+  // ✅ BUILD 56: Performance metrics (DEV only)
   useEffect(() => {
     if (import.meta.env.DEV && user?.id) {
-      console.log('📊 [GlobalRealtime] Performance Metrics:', {
-        subscriptions: 6,
+      console.log('📊 [GlobalRealtime] EMERGENCY Recovery Metrics:', {
+        subscriptions: 5,
+        removed: ['notifications (array scan)'],
         debounceMs: 2000,
         channelName: 'global-app-realtime',
         userId: user.id

@@ -3,6 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { getFridayOfWeek } from '@/utils/dateHelpers';
 import { retryWithBackoff } from '@/utils/retryWithBackoff';
 
+// ✅ Circuit breaker para peso (impede cascata de falhas)
+let weightCircuitOpen = false;
+let weightFailureCount = 0;
+const CIRCUIT_THRESHOLD = 3;
+const CIRCUIT_TIMEOUT = 300000; // 5 minutos
+
 interface WeightEntry {
   date: string;
   weight: number;
@@ -200,6 +206,12 @@ export const useWeightProgress = (userId: string) => {
       return false;
     }
 
+    // ✅ Circuit breaker - parar de tentar se já falhou 3x
+    if (weightCircuitOpen) {
+      setError('Servidor temporariamente indisponível. Tente novamente em 5 minutos.');
+      return false;
+    }
+
     // ✅ Create promise with 30 second timeout
     const timeoutPromise = new Promise<never>((_, reject) => 
       setTimeout(() => reject(new Error('Timeout: Servidor não respondeu em 30s')), 30000)
@@ -212,13 +224,33 @@ export const useWeightProgress = (userId: string) => {
         timeoutPromise
       ]);
       
+      // ✅ Reset failure count on success
+      weightFailureCount = 0;
       return result;
     } catch (err: any) {
       console.error('❌ Error adding weight entry:', err);
       
+      // ✅ Incrementar contador de falhas
+      weightFailureCount++;
+      
+      // ✅ Abrir circuit breaker se atingiu o threshold
+      if (weightFailureCount >= CIRCUIT_THRESHOLD) {
+        weightCircuitOpen = true;
+        console.warn(`⚠️ Circuit breaker ABERTO após ${CIRCUIT_THRESHOLD} falhas consecutivas`);
+        
+        // ✅ Auto-reset após 5 minutos
+        setTimeout(() => {
+          weightCircuitOpen = false;
+          weightFailureCount = 0;
+          console.log('✅ Circuit breaker FECHADO - tentativas habilitadas novamente');
+        }, CIRCUIT_TIMEOUT);
+      }
+      
       // ✅ Specific message for timeout
       if (err?.message?.includes('Timeout')) {
         setError('Servidor não respondeu. Verifique sua conexão e tente novamente.');
+      } else if (weightCircuitOpen) {
+        setError('Múltiplas falhas detectadas. Sistema em proteção por 5 minutos.');
       } else {
         const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar peso';
         setError(errorMessage);
