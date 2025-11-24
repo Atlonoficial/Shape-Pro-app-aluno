@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface TeacherLocation {
   id: string;
@@ -31,24 +32,16 @@ export const useTeacherLocations = (teacherId?: string | null) => {
 
     try {
       setLoading(true);
-      
-      // For now, return mock data until table is properly set up
-      setLocations([{
-        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        teacher_id: teacherId,
-        name: 'Academia Mamuscle',
-        address: 'Rua das Flores, 123',
-        city: 'São Paulo',
-        state: 'SP',
-        postal_code: '01234-567',
-        country: 'Brasil',
-        phone: null,
-        email: null,
-        notes: null,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }]);
+
+      const { data, error } = await supabase
+        .from('training_locations')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .order('name');
+
+      if (error) throw error;
+
+      setLocations(data || []);
     } catch (error: any) {
       console.error('Error fetching teacher locations:', error);
       toast({
