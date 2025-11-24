@@ -143,31 +143,31 @@ export interface ChatMessage {
 
 // Auth functions
 export const signUpUser = async (
-  email: string, 
-  password: string, 
-  name: string, 
+  email: string,
+  password: string,
+  name: string,
   userType: 'student' | 'teacher' = 'student',
   isNative: boolean = false,
   tenantId?: string
 ) => {
   // 🎯 FASE 1: Detecção Inteligente de Origem
   const { detectOrigin, extractUserMetadata, calculateRedirectUrl } = await import('@/utils/domainDetector');
-  
+
   // Detectar origem automaticamente
   const originMetadata = detectOrigin(userType, tenantId);
-  
+
   // Calcular URL de redirecionamento inteligente
   const redirectUrl = calculateRedirectUrl(originMetadata);
-  
+
   // ✅ NOVO: Adicionar parâmetro src baseado no userType
   const srcParam = userType === 'teacher' ? 'dashboard' : 'app';
-  
+
   // 🛡️ GUARD-RAIL: Forçar produção se detectar Lovable preview
   const previewRegex = /(lovable\.dev|lovableproject\.com|\.lovable\.app)/i;
   const finalRedirect = previewRegex.test(redirectUrl)
     ? `https://shapepro.site/auth/confirm?src=${srcParam}`
     : `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
-  
+
   logger.debug('signUpUser', 'Smart Origin Detection', {
     platform: originMetadata.signup_platform,
     userType,
@@ -177,10 +177,10 @@ export const signUpUser = async (
     isCustomDomain: originMetadata.is_custom_domain,
     isMobile: originMetadata.is_mobile,
   });
-  
+
   // Extrair metadados para armazenar no user_metadata
   const userMetadata = extractUserMetadata(originMetadata);
-  
+
   const client = getClient();
   const { data, error } = await client.auth.signUp({
     email,
@@ -205,15 +205,15 @@ export const signUpUser = async (
     logger.error('signUpUser', 'Error during signup', error);
     throw error;
   }
-  
+
   logger.info('signUpUser', 'User created successfully with intelligent metadata');
-  
+
   // ✅ BUILD 35: Log de confirmação que email foi enviado
   logger.debug('signUpUser', 'Email confirmation sent', {
     email,
     redirectUrl: finalRedirect
   });
-  
+
   return data; // contains { user, session }
 };
 
@@ -224,26 +224,26 @@ export const signUpUser = async (
 export const checkDatabaseHealth = async (): Promise<boolean> => {
   try {
     const client = getClient();
-    
+
     // ✅ Timeout aumentado para 8s e com retry logic
-    const timeoutPromise = new Promise<never>((_, reject) => 
+    const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Health check timeout')), 8000)
     );
-    
+
     // ✅ Adicionar retry (1 retry = 2 tentativas totais)
     const { retryWithBackoff } = await import('@/utils/retryWithBackoff');
-    
+
     const healthPromise = retryWithBackoff(async () => {
       return await client.auth.getSession();
     }, 1);
-    
+
     const { error } = await Promise.race([healthPromise, timeoutPromise]);
-    
+
     if (error) {
       logger.error('checkDatabaseHealth', '❌ Database error', error);
       return false;
     }
-    
+
     logger.debug('checkDatabaseHealth', '✅ Database is healthy');
     return true;
   } catch (error) {
@@ -256,7 +256,7 @@ export const signInUser = async (email: string, password: string) => {
   // ✅ BUILD 28: Verificar storage APENAS em plataforma nativa
   if (typeof window !== 'undefined') {
     const { Capacitor } = await import('@capacitor/core');
-    
+
     if (Capacitor.isNativePlatform()) {
       const { capacitorStorage } = await import('@/lib/capacitorStorage');
       if (!capacitorStorage.initialized) {
@@ -268,19 +268,19 @@ export const signInUser = async (email: string, password: string) => {
       }
     }
   }
-  
+
   // ✅ Verificar health mas NÃO bloquear login se falhar
   const isHealthy = await checkDatabaseHealth();
-  
+
   if (!isHealthy) {
     logger.warn('signInUser', '⚠️ Health check failed, attempting login anyway');
     // NÃO lançar erro - tentar login mesmo assim
   }
-  
+
   // ✅ BUILD 24: Importar dinamicamente para garantir storage pronto
   const { getSupabase } = await import('@/integrations/supabase/client');
   const client = getSupabase();
-  
+
   const { data, error } = await client.auth.signInWithPassword({
     email,
     password
@@ -288,25 +288,25 @@ export const signInUser = async (email: string, password: string) => {
 
   if (error) {
     // ✅ BUILD 40.2 FASE 3: Melhorar mensagens de erro
-    if (error.message.includes('User not found') || 
-        error.message.includes('Invalid login credentials')) {
+    if (error.message.includes('User not found') ||
+      error.message.includes('Invalid login credentials')) {
       throw new Error('Email ou senha incorretos. Verifique suas credenciais e tente novamente.');
     }
-    
+
     if (error.message.includes('Email not confirmed')) {
       throw new Error('Email não confirmado. Verifique sua caixa de entrada para confirmar seu cadastro.');
     }
-    
+
     // ✅ NOVO: Detectar problema de conexão
-    if (error.message.includes('timeout') || 
-        error.message.includes('Failed to fetch') ||
-        error.message.includes('Network')) {
+    if (error.message.includes('timeout') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('Network')) {
       throw new Error('Problema de conexão. Aguarde alguns segundos e tente novamente.');
     }
-    
+
     throw error;
   }
-  
+
   return data.user;
 };
 
@@ -317,21 +317,21 @@ export const signOutUser = async () => {
 };
 
 export const resetPasswordForEmail = async (
-  email: string, 
+  email: string,
   isNative: boolean = false,
   tenantId?: string,
   userType?: 'student' | 'teacher' // ✅ NOVO parâmetro opcional
 ) => {
   // 🎯 FASE 1: Detecção Inteligente de Origem (mesma lógica do signup)
   const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
-  
+
   // Detectar origem automaticamente
   const originMetadata = detectOrigin(userType, tenantId);
-  
+
   // Calcular URL de redirecionamento inteligente
   // Para recovery, usamos /auth/recovery em vez de /auth/confirm
   const baseRedirectUrl = calculateRedirectUrl(originMetadata);
-  
+
   // ✅ GARANTIR deep link em plataforma nativa (Capacitor)
   let redirectUrl: string;
   if (originMetadata.signup_platform === 'mobile' || originMetadata.is_mobile) {
@@ -339,13 +339,13 @@ export const resetPasswordForEmail = async (
   } else {
     redirectUrl = baseRedirectUrl.replace('/auth/confirm', '/auth/recovery');
   }
-  
+
   // ✅ NOVO: Adicionar src se userType fornecido
   if (userType) {
     const srcParam = userType === 'teacher' ? 'dashboard' : 'app';
     redirectUrl = `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
   }
-  
+
   logger.debug('resetPasswordForEmail', 'Smart Origin Detection', {
     platform: originMetadata.signup_platform,
     userType,
@@ -353,18 +353,18 @@ export const resetPasswordForEmail = async (
     isCustomDomain: originMetadata.is_custom_domain,
     isMobile: originMetadata.is_mobile,
   });
-  
+
   try {
     const client = getClient();
     const { data, error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
-    
+
     if (error) {
       logger.error('resetPasswordForEmail', 'Supabase error', error);
       throw error;
     }
-    
+
     logger.info('resetPasswordForEmail', 'Reset initiated successfully');
     return data;
   } catch (error: any) {
@@ -373,20 +373,20 @@ export const resetPasswordForEmail = async (
       code: error.code,
       status: error.status
     });
-    
+
     // Melhorar mensagens de erro específicas
     if (error.message?.includes('rate')) {
       throw new Error('Muitas tentativas de reset. Aguarde alguns minutos antes de tentar novamente.');
     }
-    
+
     if (error.message?.includes('invalid') || error.message?.includes('not found')) {
       throw new Error('Email não encontrado no sistema.');
     }
-    
+
     if (error.message?.includes('network') || error.message?.includes('fetch')) {
       throw new Error('Erro de conexão. Verifique sua internet.');
     }
-    
+
     throw error;
   }
 };
@@ -394,15 +394,15 @@ export const resetPasswordForEmail = async (
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   try {
     // ✅ Timeout aumentado para 10s e com retry logic
-    const timeoutPromise = new Promise<never>((_, reject) => 
+    const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('getUserProfile timeout after 10 seconds')), 10000)
     );
-    
+
     const client = getClient();
-    
+
     // ✅ Adicionar retry com backoff (2 retries = 3 tentativas totais)
     const { retryWithBackoff } = await import('@/utils/retryWithBackoff');
-    
+
     const fetchPromise = retryWithBackoff(async () => {
       return await client
         .from('profiles')
@@ -410,7 +410,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
         .eq('id', uid)
         .single();
     }, 2);
-    
+
     const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (error) {
@@ -437,16 +437,16 @@ export const updateUserProfile = async (uid: string, updates: Partial<UserProfil
 
 export const onAuthStateChange = (callback: (user: User | null, session: Session | null) => void) => {
   const client = getClient();
-  
+
   logger.info('onAuthStateChange', '📡 Setting up auth listener');
-  
+
   return client.auth.onAuthStateChange((event, session) => {
     logger.info('onAuthStateChange', `🔔 Event: ${event}`, {
       hasUser: !!session?.user,
       userId: session?.user?.id || 'null',
       timestamp: Date.now()
     });
-    
+
     callback(session?.user ?? null, session);
   });
 };
@@ -639,7 +639,7 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
       callback([]);
       return;
     }
-    
+
     // Transform meal_plans data to match NutritionPlan interface
     const transformedPlans: NutritionPlan[] = (data || []).map(plan => ({
       id: plan.id,
@@ -657,7 +657,7 @@ export const getNutritionPlansByUser = (userId: string, callback: (plans: Nutrit
       created_at: plan.created_at,
       updated_at: plan.updated_at
     }));
-    
+
     callback(transformedPlans);
   };
 
@@ -712,9 +712,9 @@ export const markNotificationAsRead = async (notificationId: string) => {
   const client = getClient();
   const { error } = await client
     .from('notifications')
-    .update({ 
-      is_read: true, 
-      read_at: new Date().toISOString() 
+    .update({
+      is_read: true,
+      read_at: new Date().toISOString()
     })
     .eq('id', notificationId);
 
@@ -725,9 +725,9 @@ export const markAllNotificationsAsRead = async (userId: string) => {
   const client = getClient();
   const { error } = await client
     .from('notifications')
-    .update({ 
-      is_read: true, 
-      read_at: new Date().toISOString() 
+    .update({
+      is_read: true,
+      read_at: new Date().toISOString()
     })
     .contains('target_users', [userId])
     .eq('is_read', false);
@@ -799,46 +799,22 @@ export const sendChatMessage = async (message: Omit<ChatMessage, 'id' | 'created
 };
 
 // Meal logs functions
-export const getMealLogsByUserAndDate = (userId: string, date: string, callback: (logs: any[]) => void) => {
+export const getMealLogsByUserAndDate = async (userId: string, date: string) => {
   const client = getClient();
-  const channel = client
-    .channel('meal-logs-changes')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'meal_logs',
-        filter: `user_id=eq.${userId}`
-      },
-      () => {
-        fetchMealLogs();
-      }
-    )
-    .subscribe();
 
-  const fetchMealLogs = async () => {
-    const { data, error } = await client
-      .from('meal_logs')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', `${date}T00:00:00`)
-      .lt('date', `${date}T23:59:59`)
-      .order('created_at', { ascending: false });
+  const { data, error } = await client
+    .from('meal_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('date', `${date}T00:00:00`)
+    .lt('date', `${date}T23:59:59`)
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching meal logs:', error);
-      callback([]);
-      return;
-    }
-    callback(data || []);
-  };
-
-  fetchMealLogs();
-
-  return () => {
-    client.removeChannel(channel);
-  };
+  if (error) {
+    console.error('Error fetching meal logs:', error);
+    return [];
+  }
+  return data || [];
 };
 
 export const createMealLog = async (mealLog: {
@@ -858,7 +834,7 @@ export const createMealLog = async (mealLog: {
   custom_portion_unit?: string;
 }) => {
   console.log('[createMealLog] Creating meal log with data:', mealLog);
-  
+
   const client = getClient();
   const { data, error } = await client
     .from('meal_logs')
@@ -870,7 +846,7 @@ export const createMealLog = async (mealLog: {
     console.error('[createMealLog] Error creating meal log:', error);
     throw error;
   }
-  
+
   console.log('[createMealLog] Successfully created meal log:', data);
   return data;
 };

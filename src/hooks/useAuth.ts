@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { onAuthStateChange, getUserProfile, UserProfile } from '@/lib/supabase';
 import { bootManager } from '@/lib/bootManager';
@@ -11,146 +11,134 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bootComplete, setBootComplete] = useState(false);
 
-  // ✅ CORREÇÃO DEFINITIVA: useRef interno para prevenir múltiplas inicializações
+  // Refs to track current state without triggering re-renders
+  const userRef = useRef<User | null>(null);
+  const profileRef = useRef<UserProfile | null>(null);
   const initRef = useRef(false);
-  
+  const fetchingProfileRef = useRef(false);
+
   useEffect(() => {
     if (initRef.current) {
-      logger.warn('useAuth', '⚠️ BLOCKED: Already initialized in this instance');
       return;
     }
-    
     initRef.current = true;
-    logger.info('useAuth', '🔄 useAuth initialization starting');
 
     let unsubscribe: (() => void) | null = null;
+    let safetyTimer: NodeJS.Timeout | null = null;
+
+    // ✅ Safety timeout (8s) - Starts IMMEDIATELY to prevent deadlocks
+    safetyTimer = setTimeout(() => {
+      if (loading) {
+        logger.warn('useAuth', '⏰ Safety timeout (8s), forcing ready');
+        setLoading(false);
+      }
+    }, 8000);
+
+    const handleAuthChange = async (newUser: User | null, newSession: Session | null) => {
+      // Prevent redundant updates
+      if (newUser?.id === userRef.current?.id && !!newUser === !!userRef.current) {
+        // Session refresh, just update session but don't re-fetch profile
+        if (newSession?.access_token !== session?.access_token) {
+          setSession(newSession);
+        }
+        // Even if redundant, we must ensure loading is false
+        if (safetyTimer) clearTimeout(safetyTimer);
+        setLoading(false);
+        return;
+      }
+
+      authStateChangeCount++;
+      logger.info('useAuth', `🔔 AUTH STATE CHANGE #${authStateChangeCount}`, {
+        userId: newUser?.id || 'null',
+        timestamp: Date.now()
+      });
+
+      userRef.current = newUser;
+      setUser(newUser);
+      setSession(newSession);
+
+      if (newUser) {
+        // Only fetch profile if we don't have it or it's for a different user
+        if (!profileRef.current || profileRef.current.id !== newUser.id) {
+          if (fetchingProfileRef.current) return;
+          fetchingProfileRef.current = true;
+
+          try {
+            logger.info('useAuth', '📋 Fetching profile for:', newUser.id);
+
+            // Race condition protection: Timeout for profile fetch
+            const profilePromise = getUserProfile(newUser.id);
+            const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 6000));
+
+            const profile = await Promise.race([profilePromise, timeoutPromise]);
+
+            if (profile) {
+              profileRef.current = profile;
+              setUserProfile(profile);
+              logger.info('useAuth', '✅ Profile loaded');
+            } else {
+              // Fallback profile
+              const fallback: any = {
+                id: newUser.id,
+                email: newUser.email || '',
+                name: newUser.user_metadata?.name || 'Usuário',
+                user_type: newUser.user_metadata?.user_type || 'student',
+                profile_complete: false,
+                // Tenta pegar terms do metadata se existir
+                terms_accepted_at: newUser.user_metadata?.terms_accepted_at,
+                privacy_accepted_at: newUser.user_metadata?.privacy_accepted_at
+              };
+              profileRef.current = fallback;
+              setUserProfile(fallback);
+              logger.warn('useAuth', '⚠️ Using fallback profile (Fetch failed or timed out)');
+            }
+          } catch (error) {
+            logger.error('useAuth', '❌ Profile fetch error', error);
+          } finally {
+            fetchingProfileRef.current = false;
+            if (safetyTimer) clearTimeout(safetyTimer);
+            setLoading(false);
+          }
+        } else {
+          if (safetyTimer) clearTimeout(safetyTimer);
+          setLoading(false);
+        }
+      } else {
+        profileRef.current = null;
+        setUserProfile(null);
+        if (safetyTimer) clearTimeout(safetyTimer);
+        setLoading(false);
+      }
+    };
 
     (async () => {
       try {
-        // ✅ BUILD 51: Timeout reduzido para 3s (5s → 3s)
-        await bootManager.waitForBoot(3000);
-        logger.info('useAuth', '✅ Boot complete, setting up auth listener');
+        await bootManager.waitForBoot(2000);
 
-        // ✅ Safety timeout aumentado para 8s (permite operações completarem)
-        const safetyTimer = setTimeout(() => {
-          logger.warn('useAuth', '⏰ Safety timeout (8s), forcing ready');
-          setLoading(false);
-          setBootComplete(true);
-        }, 8000);
+        // Initial check
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
 
-        const { data: { subscription } } = onAuthStateChange(async (user, session) => {
-          clearTimeout(safetyTimer);
-          authStateChangeCount++;
-          
-          logger.info('useAuth', `🔔 AUTH STATE CHANGE #${authStateChangeCount}`, {
-            hasUser: !!user,
-            userId: user?.id || 'null',
-            hasSession: !!session,
-            timestamp: Date.now()
-          });
-          
-          setUser(user);
-          setSession(session);
-          
-          if (user) {
-            try {
-              logger.info('useAuth', '📋 Fetching profile for:', user.id);
-              
-              // ✅ Timeout realista (5s) para permitir retry logic completar
-              const profilePromise = getUserProfile(user.id);
-              const timeoutPromise = new Promise<null>((resolve) => 
-                setTimeout(() => {
-                  logger.warn('useAuth', '⚠️ Profile timeout (5s), skipping');
-                  resolve(null);
-                }, 5000)
-              );
-              
-              const profile = await Promise.race([profilePromise, timeoutPromise]);
-              
-              if (profile) {
-                logger.info('useAuth', '✅ Profile loaded:', {
-                  userType: profile?.user_type
-                });
-                setUserProfile(profile);
-              } else {
-                logger.warn('useAuth', '⚠️ No profile, using fallback from user metadata');
-                
-                // ✅ FALLBACK: Criar profile mínimo a partir do user metadata
-                const fallbackProfile = {
-                  id: user.id,
-                  email: user.email || '',
-                  name: user.user_metadata?.name || 'Usuário',
-                  user_type: user.user_metadata?.user_type || 'student',
-                  profile_complete: false
-                };
-                
-                setUserProfile(fallbackProfile as any);
-              }
-              
-              setBootComplete(true);
-              
-            } catch (error) {
-              logger.error('useAuth', '❌ Profile error:', error);
-              setUserProfile(null);
-              setBootComplete(true);
-            }
-          } else {
-            logger.info('useAuth', '👤 No user, clearing state');
-            setUserProfile(null);
-            setBootComplete(false);
-          }
-          
-          // ✅ BUILD 50: Log detalhado antes de desligar loading
-          logger.info('useAuth', `✅ About to set loading = false (event #${authStateChangeCount})`);
-          setLoading(false);
-          logger.info('useAuth', `✅ Loading set to false (event #${authStateChangeCount})`);
+        await handleAuthChange(initialSession?.user ?? null, initialSession);
+
+        // Subscribe to changes
+        const { data: { subscription } } = onAuthStateChange((u, s) => {
+          handleAuthChange(u, s);
         });
 
-        // ✅ BUILD 51: FORÇAR disparo inicial imediato (mesmo sem sessão)
-        logger.info('useAuth', '🚀 Forcing initial auth check');
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // ✅ Chamar callback manualmente para garantir loading = false
-        setTimeout(() => {
-          logger.info('useAuth', '🔄 Manual auth callback trigger');
-          const currentUser = session?.user ?? null;
-          setUser(currentUser);
-          setSession(session);
-          
-          if (!currentUser) {
-            logger.info('useAuth', '👤 No session found, ready to show auth');
-            setUserProfile(null);
-            setBootComplete(false);
-          }
-          
-          // ✅ SEMPRE desligar loading
-          clearTimeout(safetyTimer);
-          setLoading(false);
-        }, 100); // 100ms após setup
-        
-        unsubscribe = () => {
-          logger.info('useAuth', '🧹 Cleanup: Unsubscribing');
-          clearTimeout(safetyTimer);
-          subscription.unsubscribe();
-        };
-        
+        unsubscribe = () => subscription.unsubscribe();
       } catch (error) {
-        logger.error('useAuth', '❌ Setup error:', error);
+        logger.error('useAuth', 'Setup error', error);
         setLoading(false);
-        setBootComplete(false);
       }
     })();
 
-    // ✅ Cleanup apenas UMA VEZ
     return () => {
+      if (safetyTimer) clearTimeout(safetyTimer);
       if (unsubscribe) unsubscribe();
     };
   }, []);
-
-  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
 
   return {
     user,
@@ -159,6 +147,17 @@ export const useAuth = () => {
     loading,
     isAuthenticated: !!user,
     isStudent: userProfile?.user_type === 'student',
-    isTeacher: userProfile?.user_type === 'teacher'
+    isTeacher: userProfile?.user_type === 'teacher',
+    refreshProfile: async () => {
+      if (userRef.current) {
+        fetchingProfileRef.current = true;
+        const profile = await getUserProfile(userRef.current.id);
+        if (profile) {
+          profileRef.current = profile;
+          setUserProfile(profile);
+        }
+        fetchingProfileRef.current = false;
+      }
+    }
   };
 };

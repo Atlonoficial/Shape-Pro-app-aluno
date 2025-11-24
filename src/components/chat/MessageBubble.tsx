@@ -30,9 +30,9 @@ interface MessageBubbleProps {
   onVisible?: (messageId: string) => void;
 }
 
-export const MessageBubble = ({ 
-  message, 
-  isOwn, 
+export const MessageBubble = ({
+  message,
+  isOwn,
   showAvatar = true,
   onRetry,
   onVisible
@@ -44,7 +44,7 @@ export const MessageBubble = ({
 
   const getStatusIcon = () => {
     if (!isOwn) return null;
-    
+
     // Verificar status da mensagem primeiro
     switch (message.status) {
       case 'sending':
@@ -71,11 +71,10 @@ export const MessageBubble = ({
   };
 
   const getMessageStyle = () => {
-    const baseStyle = `px-4 py-3 rounded-2xl ${
-      isOwn
+    const baseStyle = `px-4 py-3 rounded-2xl ${isOwn
         ? 'bg-primary text-primary-foreground rounded-br-md'
         : 'bg-muted text-foreground rounded-bl-md'
-    }`;
+      }`;
 
     // Adicionar estilo para mensagens falhadas
     if (message.status === 'failed') {
@@ -101,9 +100,9 @@ export const MessageBubble = ({
         },
         { threshold: 0.5 }
       );
-      
+
       observer.observe(messageRef.current);
-      
+
       return () => observer.disconnect();
     }
   }, [isOwn, message.is_read, message.id, onVisible]);
@@ -113,13 +112,13 @@ export const MessageBubble = ({
       {/* Avatar */}
       {showAvatar && !isOwn && (
         <Avatar className="w-8 h-8 flex-shrink-0">
-          <AvatarImage src="" />
+          <AvatarImage />
           <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
             {message.sender_type === 'teacher' ? 'P' : 'A'}
           </AvatarFallback>
         </Avatar>
       )}
-      
+
       {/* Spacer quando não há avatar */}
       {!showAvatar && !isOwn && <div className="w-8" />}
 
@@ -129,7 +128,7 @@ export const MessageBubble = ({
           <p className="text-sm leading-relaxed break-words">
             {message.message}
           </p>
-          
+
           {/* Botão de retry para mensagens falhadas */}
           {message.status === 'failed' && isOwn && onRetry && (
             <div className="mt-2 pt-2 border-t border-primary-foreground/20">
@@ -145,14 +144,14 @@ export const MessageBubble = ({
             </div>
           )}
         </div>
-        
+
         {/* Timestamp e status */}
         <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
           <span className="text-xs text-muted-foreground">
             {formatTime(message.created_at)}
           </span>
           {getStatusIcon()}
-          
+
           {/* Indicador de mensagem falhada */}
           {message.status === 'failed' && (
             <span className="text-xs text-destructive font-medium">

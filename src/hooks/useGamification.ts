@@ -273,7 +273,7 @@ export const useGamification = () => {
         });
 
       if (error) throw error;
-      
+
       toast.success("Desafio aceito com sucesso!");
       await fetchChallenges();
     } catch (error: any) {
@@ -299,12 +299,12 @@ export const useGamification = () => {
       });
 
       if (error) throw error;
-      
+
       await Promise.all([
         fetchUserPoints(),
         fetchActivities()
       ]);
-      
+
       toast.success(`Pontos adicionados: ${description}`);
     } catch (error) {
       console.error("Error awarding points:", error);
@@ -340,7 +340,7 @@ export const useGamification = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!user?.id) return;
-      
+
       setLoading(true);
       try {
         await Promise.all([
@@ -361,7 +361,22 @@ export const useGamification = () => {
     }
   }, [user?.id]);
 
-  // ✅ BUILD 53: Realtime removido - consolidado em useGlobalRealtime
+  // ✅ BUILD 54: Escutar eventos de realtime global
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleGamificationUpdate = () => {
+      console.log('📡 [useGamification] Evento gamification-updated recebido');
+      fetchUserPoints();
+      fetchActivities(5); // Refresh apenas as últimas 5 atividades para ser leve
+    };
+
+    window.addEventListener('gamification-updated', handleGamificationUpdate);
+
+    return () => {
+      window.removeEventListener('gamification-updated', handleGamificationUpdate);
+    };
+  }, [user?.id]);
 
   return {
     userPoints,

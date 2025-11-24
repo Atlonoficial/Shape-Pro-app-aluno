@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useRealtimeManager } from './useRealtimeManager';
+
 
 export interface ActiveSubscription {
   id: string;
@@ -74,9 +74,9 @@ export const useActiveSubscription = () => {
         if (planCatalogData) {
           const daysRemaining = calculateDaysRemaining(activeSubData.end_date);
           const expirationStatus = getExpirationStatus(daysRemaining);
-          
+
           console.log('✅ [useActiveSubscription] Found active subscription from active_subscriptions:', activeSubData);
-          
+
           setSubscription({
             id: activeSubData.id,
             plan_id: activeSubData.plan_id,
@@ -112,18 +112,18 @@ export const useActiveSubscription = () => {
         error: studentError
       });
 
-      if (studentData?.membership_status === 'active' && 
-          studentData.active_plan && 
-          studentData.active_plan !== 'free' && 
-          studentData.teacher_id) {
-        
+      if (studentData?.membership_status === 'active' &&
+        studentData.active_plan &&
+        studentData.active_plan !== 'free' &&
+        studentData.teacher_id) {
+
         const daysRemaining = calculateDaysRemaining(studentData.membership_expiry);
         const expirationStatus = getExpirationStatus(daysRemaining);
-        
+
         // Only consider expired if date has actually passed
         if (expirationStatus !== 'expired') {
           let planCatalogData = null;
-          
+
           // Fetch catalog data for additional information
           try {
             const planId = studentData.active_plan;
@@ -134,14 +134,14 @@ export const useActiveSubscription = () => {
               .eq('teacher_id', studentData.teacher_id)
               .limit(1)
               .maybeSingle();
-            
+
             planCatalogData = catalogData;
           } catch (e) {
             console.warn('[useActiveSubscription] Error fetching plan catalog:', e);
           }
 
           console.log('✅ [useActiveSubscription] Using student data as primary source - Active membership');
-          
+
           setSubscription({
             id: 'student-based-subscription',
             plan_id: studentData.active_plan,
@@ -180,9 +180,9 @@ export const useActiveSubscription = () => {
       if (planSub?.plan_catalog && planSub.status === 'active') {
         const daysRemaining = calculateDaysRemaining(planSub.end_at);
         const expirationStatus = getExpirationStatus(daysRemaining);
-        
+
         console.log('✅ [useActiveSubscription] Using plan subscription as fallback source');
-        
+
         setSubscription({
           id: planSub.id,
           plan_id: planSub.plan_id,
@@ -242,58 +242,31 @@ export const useActiveSubscription = () => {
   }, [user?.id]);
 
   // Use centralized realtime manager
-  useRealtimeManager({
-    subscriptions: user?.id ? [
-      {
-        table: 'active_subscriptions',
-        event: '*',
-        filter: `user_id=eq.${user.id}`,
-        callback: () => {
-          console.log('[useActiveSubscription] Active subscriptions change detected');
-          setTimeout(() => fetchActiveSubscription(), 100);
-        }
-      },
-      {
-        table: 'students',
-        event: '*',
-        filter: `user_id=eq.${user.id}`,
-        callback: () => {
-          console.log('[useActiveSubscription] Students table change detected');
-          setTimeout(() => fetchActiveSubscription(), 100);
-        }
-      },
-      {
-        table: 'plan_subscriptions',
-        event: '*',
-        filter: `student_user_id=eq.${user.id}`,
-        callback: () => {
-          console.log('[useActiveSubscription] Plan subscriptions change detected');
-          setTimeout(() => fetchActiveSubscription(), 100);
-        }
-      },
-      {
-        table: 'plan_catalog',
-        event: '*',
-        callback: () => {
-          console.log('[useActiveSubscription] Plan catalog change detected');
-          setTimeout(() => fetchActiveSubscription(), 100);
-        }
-      }
-    ] : [],
-    enabled: !!user?.id,
-    channelName: 'active-subscription',
-    debounceMs: 500
-  });
+  // ✅ BUILD 54: Escutar eventos de realtime global
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleSubscriptionUpdate = () => {
+      console.log('📡 [useActiveSubscription] Evento subscription-updated recebido');
+      fetchActiveSubscription();
+    };
+
+    window.addEventListener('subscription-updated', handleSubscriptionUpdate);
+
+    return () => {
+      window.removeEventListener('subscription-updated', handleSubscriptionUpdate);
+    };
+  }, [user?.id]);
 
   // Helper functions - CORRIGIDO para considerar membership_status
   const hasActiveSubscription = () => {
     if (!subscription) return false;
-    
+
     // Verificar se tem plano ativo e não está expirado
     const isActiveStatus = subscription.status === 'active';
     const isNotFree = subscription.plan_name !== 'free';
     const isNotExpired = !isSubscriptionExpired();
-    
+
     console.log('[useActiveSubscription] hasActiveSubscription check:', {
       subscription: !!subscription,
       status: subscription.status,
@@ -303,7 +276,7 @@ export const useActiveSubscription = () => {
       isNotExpired,
       result: isActiveStatus && isNotFree && isNotExpired
     });
-    
+
     return isActiveStatus && isNotFree && isNotExpired;
   };
 
@@ -322,7 +295,7 @@ export const useActiveSubscription = () => {
 
   const getStatusMessage = () => {
     const status = getSubscriptionStatus();
-    
+
     switch (status) {
       case 'none':
         return 'Você precisa contratar uma consultoria para agendar horários';

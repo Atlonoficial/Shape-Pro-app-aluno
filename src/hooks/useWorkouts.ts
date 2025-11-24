@@ -49,32 +49,62 @@ export const useWorkouts = () => {
 
   // Convert WorkoutPlan to Workout format for compatibility
   const convertWorkoutPlan = (plan: WorkoutPlan): Workout => {
-    const sessions: WorkoutSession[] = Array.isArray(plan.exercises_data) 
-      ? plan.exercises_data.map(sessionData => ({
-          id: sessionData.id,
-          name: sessionData.name,
+    let sessions: WorkoutSession[] = [];
+
+    if (Array.isArray(plan.exercises_data)) {
+      // Case 1: Standard structure (Array of Sessions)
+      if (plan.exercises_data.length > 0 && 'exercises' in plan.exercises_data[0]) {
+        sessions = plan.exercises_data.map(sessionData => ({
+          id: sessionData.id || `session-${Math.random()}`,
+          name: sessionData.name || 'Treino Principal',
           notes: sessionData.notes,
-          exercises: Array.isArray(sessionData.exercises) 
+          exercises: Array.isArray(sessionData.exercises)
             ? sessionData.exercises.map(ex => ({
-                id: ex.id,
-                name: ex.name,
-                category: ex.category || 'general',
-                sets: ex.sets || '3',
-                reps: ex.reps || 12,
-                weight: ex.weight,
-                duration: ex.duration,
-                rest_time: ex.rest_time || 60,
-                notes: ex.notes,
-                muscle_groups: [],
-                equipment: [],
-                difficulty: plan.difficulty,
-                instructions: '',
-                video_url: '',
-                image_url: ''
-              }))
+              id: ex.id || `ex-${Math.random()}`,
+              name: ex.name,
+              category: ex.category || 'general',
+              sets: ex.sets || '3',
+              reps: ex.reps || 12,
+              weight: ex.weight,
+              duration: ex.duration,
+              rest_time: ex.rest_time || 60,
+              notes: ex.notes,
+              muscle_groups: [],
+              equipment: [],
+              difficulty: plan.difficulty,
+              instructions: '',
+              video_url: '',
+              image_url: ''
+            }))
             : []
-        }))
-      : [];
+        }));
+      }
+      // Case 2: Flat Array of Exercises (AI Generated often does this)
+      else if (plan.exercises_data.length > 0) {
+        sessions = [{
+          id: `session-${plan.id}`,
+          name: 'Treino Completo',
+          notes: plan.description,
+          exercises: plan.exercises_data.map((ex: any) => ({
+            id: ex.id || `ex-${Math.random()}`,
+            name: ex.name || ex.exercise || 'Exercício sem nome',
+            category: ex.category || 'general',
+            sets: ex.sets || '3',
+            reps: ex.reps || 12,
+            weight: ex.weight,
+            duration: ex.duration,
+            rest_time: ex.rest_time || 60,
+            notes: ex.notes,
+            muscle_groups: [],
+            equipment: [],
+            difficulty: plan.difficulty,
+            instructions: ex.instructions || '',
+            video_url: '',
+            image_url: ''
+          }))
+        }];
+      }
+    }
 
     return {
       id: plan.id,

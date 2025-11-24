@@ -15,7 +15,8 @@ export const useKeyboardState = () => {
   });
 
   useEffect(() => {
-    if (!isMobileApp) return;
+    // Only run on native mobile apps (iOS/Android), not on web
+    if (!isMobileApp || (window as any).Capacitor?.getPlatform() === 'web') return;
 
     let keyboardShowListener: any;
     let keyboardHideListener: any;
@@ -36,7 +37,8 @@ export const useKeyboardState = () => {
           });
         });
       } catch (error) {
-        console.error('[useKeyboardState] Error setting up keyboard listeners:', error);
+        // Silently fail on web or if plugin missing
+        console.warn('[useKeyboardState] Keyboard plugin not available:', error);
       }
     };
 

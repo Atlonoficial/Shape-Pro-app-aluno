@@ -20,6 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isStudent: boolean;
   isTeacher: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,17 +50,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [emergencyDetails, setEmergencyDetails] = useState<string[]>([]);
   const [bootLogs, setBootLogs] = useState<string[]>([]);
   const [permissionsRequested, setPermissionsRequested] = useState(false);
-  
+
   // ✅ Register daily activity automatically for authenticated users
   useRegisterDailyActivity();
-  
+
   // ✅ NOVO: Capturar todos os logs do logger
   useEffect(() => {
     const logs: string[] = [];
-    
+
     const originalLoggerLog = logger.info;
     const originalLoggerError = logger.error;
-    
+
     (logger as any).infoWithCapture = (...args: any[]) => {
       const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
       if (message.includes('Boot') || message.includes('CapacitorStorage') || message.includes('useAuth')) {
@@ -68,19 +69,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       originalLoggerLog.apply(logger, args);
     };
-    
+
     (logger as any).errorWithCapture = (...args: any[]) => {
       const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
       logs.push(`❌ ${message}`);
       setBootLogs(prev => [...prev, `❌ ${message}`].slice(-20));
       originalLoggerError.apply(logger, args);
     };
-    
+
     return () => {
       // Restaurar originais se necessário
     };
   }, []);
-  
+
   // ✅ BUILD 50: Log detalhado do estado de auth a cada mudança
   useEffect(() => {
     const stateStr = JSON.stringify({
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       forceRender,
       emergencyMode
     });
-    
+
     logger.info('AuthProvider', `🔄 State update: ${stateStr}`);
   }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, forceRender, emergencyMode, location.pathname]);
 
@@ -100,21 +101,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const forceLoadingOff = setTimeout(() => {
       if (auth.loading && !forceRender) {
-        logger.error('AuthProvider', '🚨 FORCE LOADING OFF after 1s', {
+        logger.error('AuthProvider', '🚨 FORCE LOADING OFF after 5s', {
           loading: auth.loading,
           user: !!auth.user,
           profile: !!auth.userProfile
         });
         setForceRender(true);
       }
-    }, 1000); // ✅ 2s → 1s (mais agressivo)
-    
+    }, 5000); // ✅ 1s → 5s (give more time for profile fetch)
+
     return () => clearTimeout(forceLoadingOff);
   }, [auth.loading, forceRender, auth.user, auth.userProfile]);
-  
+
   const PUBLIC_PATHS = [
-    '/auth/verify', 
-    '/auth/verified', 
+    '/auth/verify',
+    '/auth/verified',
     '/auth/confirm',
     '/auth/recovery',
     '/auth/invite',
@@ -122,35 +123,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     '/auth/change-email',
     '/auth/error'
   ];
-  
+
   const isPublicRoute = PUBLIC_PATHS.some((p) => location.pathname.startsWith(p));
 
   // ✅ BUILD 51: Timeout reduzido para 1.5s (3s → 1.5s)
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (auth.loading && !forceRender) {
-        logger.error('AuthProvider', '⚠️ Loading timeout (1.5s) - forcing render', {
+        logger.warn('AuthProvider', '⚠️ Loading timeout (6s) - forcing render', {
           loading: auth.loading,
           user: auth.user?.id
         });
         setForceRender(true);
       }
-    }, 1500); // 3s → 1.5s
+    }, 6000); // 1.5s → 6s
     return () => clearTimeout(timeout);
   }, [auth.loading, forceRender, auth.user]);
 
   // ✅ BUILD 51: Emergency timeout reduzido para 3s (5s → 3s)
   useEffect(() => {
     const timer = setTimeout(() => {
-      // ✅ Ativar emergency mode mesmo COM usuário logado
-      if (auth.loading) {
-        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 3s', {
+      // ✅ Ativar emergency mode APENAS se ainda estiver carregando E não tiver forçado render
+      if (auth.loading && !forceRender) {
+        logger.error('AuthProvider', '🚨 EMERGENCY MODE: Auth stuck for 10s', {
           loading: auth.loading,
           user: auth.user?.id,
           profile: !!auth.userProfile,
           isNative
         });
-        
+
         setEmergencyDetails([
           `Loading: ${auth.loading}`,
           `User: ${auth.user?.id || 'null'}`,
@@ -160,10 +161,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         ]);
         setEmergencyMode(true);
       }
-    }, 3000); // 5s → 3s
+    }, 10000); // 10s safety net
 
     return () => clearTimeout(timer);
-  }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, isNative]);
+  }, [auth.loading, auth.isAuthenticated, auth.user, auth.userProfile, isNative, forceRender]);
+
+
 
   // Inicializar OneSignal quando usuário estiver autenticado
   useEffect(() => {
@@ -172,7 +175,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
           // Verificar se o usuário tem push notifications habilitadas
           const pushEnabled = auth.userProfile.notification_preferences?.push_enabled !== false;
-          
+
           if (!pushEnabled) {
             logger.info('AuthProvider', 'Push notifications disabled by user preference', {
               userId: auth.user.id
@@ -188,7 +191,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
 
           await initPush(auth.user.id);
-          
+
           logger.info('AuthProvider', 'OneSignal initialization complete', {
             userId: auth.user.id
           });
@@ -220,7 +223,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           <p className="text-gray-400 text-sm">
             O app não conseguiu carregar em 3 segundos.
           </p>
-          
+
           {/* ✅ NOVO: Mostrar logs do boot */}
           <details className="text-left text-xs bg-gray-900 p-3 rounded max-h-60 overflow-auto" open>
             <summary className="cursor-pointer font-medium text-gray-400 mb-2">
@@ -238,7 +241,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               )}
             </div>
           </details>
-          
+
           {/* Detalhes técnicos existentes */}
           <details className="text-left text-xs text-gray-500 bg-gray-900 p-3 rounded">
             <summary className="cursor-pointer font-medium text-gray-400">Detalhes técnicos</summary>
@@ -248,8 +251,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               ))}
             </ul>
           </details>
-          
-          <Button 
+
+          <Button
             onClick={() => {
               logger.info('Emergency', 'User requested reload');
               window.location.reload();
@@ -258,8 +261,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           >
             🔄 Tentar Novamente
           </Button>
-          
-          <Button 
+
+          <Button
             onClick={async () => {
               logger.info('Emergency', 'User requested cache clear');
               if ('caches' in window) {
@@ -268,14 +271,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 });
               }
               localStorage.clear();
-              
+
               // ✅ NOVO: Limpar Preferences também
               if (isNative) {
                 const { Preferences } = await import('@capacitor/preferences');
                 await Preferences.clear();
                 logger.info('Emergency', 'Preferences cleared');
               }
-              
+
               window.location.reload();
             }}
             variant="outline"

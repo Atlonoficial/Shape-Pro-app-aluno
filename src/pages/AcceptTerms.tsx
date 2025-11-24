@@ -12,7 +12,7 @@ import { ShieldCheck } from 'lucide-react';
 export const AcceptTerms = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuthContext();
+  const { user, refreshProfile } = useAuthContext();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,17 +38,34 @@ export const AcceptTerms = () => {
     setLoading(true);
 
     try {
+      const now = new Date().toISOString();
+
+      // 1. Atualizar tabela profiles (Fonte da verdade)
       await updateUserProfile(user.id, {
-        terms_accepted_at: new Date().toISOString(),
-        privacy_accepted_at: new Date().toISOString(),
+        terms_accepted_at: now,
+        privacy_accepted_at: now,
         terms_version: '1.0',
         privacy_version: '1.0',
+      });
+
+      // 2. Atualizar metadata do usuário (Backup para fallback)
+      const { supabase } = await import('@/integrations/supabase/client');
+      await supabase.auth.updateUser({
+        data: {
+          terms_accepted_at: now,
+          privacy_accepted_at: now
+        }
       });
 
       toast({
         title: "✅ Termos aceitos",
         description: "Você aceitou os Termos de Uso e Política de Privacidade.",
       });
+
+      // ✅ Atualizar perfil localmente para evitar loop no TermsGuard
+      if (refreshProfile) {
+        await refreshProfile();
+      }
 
       navigate('/', { replace: true });
     } catch (error) {
@@ -91,7 +108,7 @@ export const AcceptTerms = () => {
                 Ler Termos de Uso completos →
               </a>
             </div>
-            
+
             <div className="border-t border-border pt-4">
               <h3 className="font-semibold mb-2">🔒 Política de Privacidade</h3>
               <p className="text-sm text-muted-foreground mb-2">
@@ -109,8 +126,8 @@ export const AcceptTerms = () => {
           </div>
 
           <div className="flex items-start gap-3 p-4 bg-accent/30 rounded-lg border-2 border-accent">
-            <Checkbox 
-              id="accept-terms" 
+            <Checkbox
+              id="accept-terms"
               checked={termsAccepted}
               onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
               className="mt-1"
@@ -121,7 +138,7 @@ export const AcceptTerms = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Button 
+            <Button
               onClick={handleAcceptTerms}
               disabled={!termsAccepted || loading}
               className="w-full"
@@ -129,7 +146,7 @@ export const AcceptTerms = () => {
             >
               {loading ? "Processando..." : "Aceitar e Continuar"}
             </Button>
-            
+
             <p className="text-xs text-center text-muted-foreground">
               Ao aceitar, você concorda em cumprir nossos termos e confirma que leu nossa política de privacidade.
             </p>

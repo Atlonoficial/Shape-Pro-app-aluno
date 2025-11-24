@@ -7,8 +7,8 @@ interface MobileContainerProps {
 
 export const MobileContainer = ({ children, className = "" }: MobileContainerProps) => {
   return (
-    <div 
-      className={`tab-container pb-safe ${className}`}
+    <div
+      className={`tab-container pb-32 safe-area-bottom ${className}`}
       style={{ position: 'relative' }}
     >
       {children}

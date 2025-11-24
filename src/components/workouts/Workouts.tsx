@@ -24,8 +24,8 @@ export const Workouts = () => {
 
   // Muscle groups derived from workout data - extract from sessions and exercises
   const muscleGroups = ["Todos", ...Array.from(new Set(
-    workouts.flatMap(w => 
-      w.sessions.flatMap(s => 
+    workouts.flatMap(w =>
+      w.sessions.flatMap(s =>
         s.exercises.flatMap(e => e.muscle_groups || [])
       )
     )
@@ -33,7 +33,7 @@ export const Workouts = () => {
 
   // Get all muscle groups from a workout
   const getWorkoutMuscleGroups = (workout: any) => {
-    const groups = workout.sessions?.flatMap((s: any) => 
+    const groups = workout.sessions?.flatMap((s: any) =>
       s.exercises?.flatMap((e: any) => e.muscle_groups || []) || []
     ) || [];
     return [...new Set(groups)];
@@ -44,7 +44,7 @@ export const Workouts = () => {
     if (!workout.sessions || workout.sessions.length === 0) return 30;
     const firstSession = workout.sessions[0];
     if (!firstSession.exercises || firstSession.exercises.length === 0) return 30;
-    
+
     // Rough estimate: 3 minutes per exercise on average
     return firstSession.exercises.length * 3;
   };
@@ -53,8 +53,8 @@ export const Workouts = () => {
   const estimateCalories = (workout: any) => {
     const duration = estimateWorkoutDuration(workout);
     const baseCalories = duration * 8; // ~8 calories per minute base
-    const multiplier = workout.difficulty === 'advanced' ? 1.3 : 
-                      workout.difficulty === 'intermediate' ? 1.1 : 1.0;
+    const multiplier = workout.difficulty === 'advanced' ? 1.3 :
+      workout.difficulty === 'intermediate' ? 1.1 : 1.0;
     return Math.round(baseCalories * multiplier);
   };
 
@@ -108,7 +108,7 @@ export const Workouts = () => {
       "🎯 Meta Atingida!"
     ];
     const randomAchievement = achievements[Math.floor(Math.random() * achievements.length)];
-    
+
     toast({
       title: `${randomAchievement}`,
       description: `Parabéns! Você ganhou ${points} pontos e completou mais um treino! 🎉`,
@@ -211,7 +211,7 @@ export const Workouts = () => {
     <div className="p-4 pt-8 pb-safe-4xl">
       {/* Header */}
       <div className="mb-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")} aria-label="Voltar para a Home">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/?tab=home")} aria-label="Voltar para a Home">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar para a Home
         </Button>
@@ -236,11 +236,10 @@ export const Workouts = () => {
           {muscleGroups.map((group) => (
             <button
               key={group}
-              className={`px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors ${
-                group === "Todos" 
-                  ? "bg-accent text-background" 
+              className={`px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors ${group === "Todos"
+                  ? "bg-accent text-background"
                   : "bg-card/50 text-muted-foreground hover:bg-card/70"
-              }`}
+                }`}
             >
               {group}
             </button>
@@ -257,8 +256,8 @@ export const Workouts = () => {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {workouts.map((workout) => (
-            <WorkoutCard 
-              key={workout.id} 
+            <WorkoutCard
+              key={workout.id}
               name={workout.name}
               duration={estimateWorkoutDuration(workout)}
               difficulty={difficultyPt(workout.difficulty)}

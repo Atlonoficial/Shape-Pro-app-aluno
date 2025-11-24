@@ -1,12 +1,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ConnectionStatus } from '@/hooks/useConnectionStatus';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "@/hooks/use-toast";
 
 interface Conversation {
   id: string;
@@ -29,9 +36,9 @@ interface ChatHeaderProps {
   isReconnecting?: boolean;
 }
 
-export const ChatHeader = ({ 
-  conversation, 
-  onlineUsers, 
+export const ChatHeader = ({
+  conversation,
+  onlineUsers,
   typingUsers,
   connectionStatus,
   isReconnecting = false
@@ -40,7 +47,7 @@ export const ChatHeader = ({
   const { userProfile } = useAuth();
   const [teacherName, setTeacherName] = useState<string>('Professor');
   const [teacherAvatar, setTeacherAvatar] = useState<string | null>(null);
-  
+
   // Sempre mostrar o professor no chat
   const chatPartner = teacherName;
   const chatPartnerId = conversation?.teacher_id;
@@ -49,14 +56,14 @@ export const ChatHeader = ({
   useEffect(() => {
     const fetchTeacherData = async () => {
       if (!conversation?.teacher_id) return;
-      
+
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('name, avatar_url')
           .eq('id', conversation.teacher_id)
           .maybeSingle();
-        
+
         if (data && !error) {
           setTeacherName(data.name || 'Professor');
           setTeacherAvatar(data.avatar_url);
@@ -70,7 +77,7 @@ export const ChatHeader = ({
       fetchTeacherData();
     }
   }, [conversation?.teacher_id]);
-  
+
   const isOnline = chatPartnerId ? onlineUsers.includes(chatPartnerId) : false;
   const isTyping = chatPartnerId ? typingUsers.includes(chatPartnerId) : false;
 
@@ -86,6 +93,18 @@ export const ChatHeader = ({
     return 'text-muted-foreground';
   };
 
+  const handleReport = () => {
+    // Logic to report user
+    const subject = `Denúncia de Usuário: ${chatPartner} (${chatPartnerId})`;
+    const body = "Por favor, descreva o motivo da denúncia:\n\n";
+    window.open(`mailto:suporte@shapepro.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+
+    toast({
+      title: "Denúncia Iniciada",
+      description: "Seu cliente de email foi aberto para formalizar a denúncia.",
+    });
+  };
+
   return (
     <div className="flex items-center justify-between p-4 border-b border-border bg-card">
       <div className="flex items-center gap-3">
@@ -98,7 +117,7 @@ export const ChatHeader = ({
         >
           <ArrowLeft size={20} />
         </Button>
-        
+
         {/* Avatar e info */}
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -108,13 +127,13 @@ export const ChatHeader = ({
                 {chatPartner.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            
+
             {/* Indicador online */}
             {isOnline && (
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success border-2 border-card rounded-full" />
             )}
           </div>
-          
+
           <div>
             <h3 className="font-semibold text-foreground">{chatPartner}</h3>
             <p className={`text-xs ${getStatusColor()}`}>
@@ -123,42 +142,49 @@ export const ChatHeader = ({
           </div>
         </div>
       </div>
-      
+
       {/* Status do Professor e Conexão */}
       <div className="flex items-center gap-2">
         {/* Status da conexão */}
         {connectionStatus !== 'connected' && (
-          <ConnectionIndicator 
-            status={connectionStatus} 
+          <ConnectionIndicator
+            status={connectionStatus}
             isReconnecting={isReconnecting}
             className="mr-2"
           />
         )}
-        
+
         {connectionStatus === 'connected' && (
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
-            isOnline 
-              ? 'border-success/30 bg-success/10 shadow-sm shadow-success/20' 
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${isOnline
+              ? 'border-success/30 bg-success/10 shadow-sm shadow-success/20'
               : 'border-border bg-muted/50'
-          }`}>
-            <div className={`w-2.5 h-2.5 rounded-full ${
-              isOnline ? 'bg-success animate-pulse shadow-lg shadow-success/50' : 'bg-muted-foreground'
-            }`} />
-            <span className={`text-xs font-semibold ${
-              isTyping ? 'text-primary' : isOnline ? 'text-success' : 'text-muted-foreground'
             }`}>
+            <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-success animate-pulse shadow-lg shadow-success/50' : 'bg-muted-foreground'
+              }`} />
+            <span className={`text-xs font-semibold ${isTyping ? 'text-primary' : isOnline ? 'text-success' : 'text-muted-foreground'
+              }`}>
               {getStatusText()}
             </span>
           </div>
         )}
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <MoreVertical size={18} />
-        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <MoreVertical size={18} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
+              <Flag className="mr-2 h-4 w-4" />
+              <span>Denunciar Conteúdo</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

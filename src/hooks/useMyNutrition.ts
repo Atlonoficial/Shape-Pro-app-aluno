@@ -97,14 +97,14 @@ export const useMyNutrition = () => {
   const getTodayMeals = useCallback(async (userId: string, forceRefresh = false, retryCount = 0) => {
     if (!forceRefresh && mealsCacheRef.current) {
       const hasInvalidVersion = !mealsCacheRef.current.version || mealsCacheRef.current.version !== CACHE_VERSION;
-      
+
       if (hasInvalidVersion) {
         mealsCacheRef.current = null;
       } else {
         const cacheAge = Date.now() - mealsCacheRef.current.timestamp;
         const isEmpty = mealsCacheRef.current.data.length === 0;
         const cacheValid = isEmpty ? cacheAge < 10000 : cacheAge < CACHE_DURATION;
-        
+
         if (cacheValid) {
           return mealsCacheRef.current.data;
         }
@@ -125,10 +125,10 @@ export const useMyNutrition = () => {
           .order('created_at', { ascending: false });
 
         data = [];
-        
+
         if (mealPlans && mealPlans.length > 0) {
-          const userPlan = mealPlans.find(plan => 
-            plan.created_by === userId || 
+          const userPlan = mealPlans.find(plan =>
+            plan.created_by === userId ||
             (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(userId))
           );
 
@@ -150,15 +150,15 @@ export const useMyNutrition = () => {
           }
         }
       }
-      
+
       const meals = data || [];
-      
+
       // ✅ BUILD 54: Retry automático se vazio (máx 3 tentativas)
       if (meals.length === 0 && retryCount < 3) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         return getTodayMeals(userId, true, retryCount + 1);
       }
-      
+
       mealsCacheRef.current = { data: meals, timestamp: Date.now(), version: CACHE_VERSION };
       return meals;
     } catch (error) {
@@ -200,21 +200,21 @@ export const useMyNutrition = () => {
           return [];
         }
 
-        const meals: TodayMeal[] = Array.isArray(userPlan.meals_data) 
+        const meals: TodayMeal[] = Array.isArray(userPlan.meals_data)
           ? userPlan.meals_data.map((item: any): TodayMeal => ({
-              meal_plan_item_id: item.meal_id || item.id,
-              meal_name: item.meal_name || item.name || 'Refeição',
-              meal_time: item.meal_time || '12:00',
-              meal_type: item.meal_type || 'almoço',
-              calories: item.calories || 0,
-              protein: item.protein || 0,
-              carbs: item.carbs || 0,
-              fat: item.fat || 0,
-              foods: item.foods || [],
-              is_logged: false,
-              log_id: undefined,
-              meal_plan_id: userPlan.id
-            }))
+            meal_plan_item_id: item.meal_id || item.id,
+            meal_name: item.meal_name || item.name || 'Refeição',
+            meal_time: item.meal_time || '12:00',
+            meal_type: item.meal_type || 'almoço',
+            calories: item.calories || 0,
+            protein: item.protein || 0,
+            carbs: item.carbs || 0,
+            fat: item.fat || 0,
+            foods: item.foods || [],
+            is_logged: false,
+            log_id: undefined,
+            meal_plan_id: userPlan.id
+          }))
           : [];
 
         mealsCacheRef.current = { data: meals, timestamp: Date.now(), version: CACHE_VERSION };
@@ -247,13 +247,13 @@ export const useMyNutrition = () => {
   // ✅ BUILD 54: Buscar refeições com retry automático
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       setLoading(true);
-      
+
       const todayMealsData = await getTodayMeals(user.id, false, 0);
       setTodaysMeals(todayMealsData);
-      
+
       const today = new Date().toISOString().split('T')[0];
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
@@ -269,27 +269,27 @@ export const useMyNutrition = () => {
       setLoading(false);
       return;
     }
-    
+
     console.log('🔄 [useMyNutrition] Mount with user:', user.id);
-    
+
     // ✅ Limpar cache para forçar RPC
     mealsCacheRef.current = null;
-    
+
     // ✅ Chamar RPC diretamente sem dependência de getTodayMeals
     (async () => {
       try {
         setLoading(true);
         console.log('📞 [useMyNutrition] Calling RPC get_meals_for_today_v2');
-        
+
         let { data, error } = await supabase
           .rpc('get_meals_for_today_v2', {
             p_user_id: user.id
           });
 
-        console.log('📦 [useMyNutrition] RPC result:', { 
-          hasData: !!data, 
+        console.log('📦 [useMyNutrition] RPC result:', {
+          hasData: !!data,
           length: data?.length || 0,
-          hasError: !!error 
+          hasError: !!error
         });
 
         if (error || !data || data.length === 0) {
@@ -301,10 +301,10 @@ export const useMyNutrition = () => {
             .order('created_at', { ascending: false });
 
           data = [];
-          
+
           if (mealPlans && mealPlans.length > 0) {
-            const userPlan = mealPlans.find(plan => 
-              plan.created_by === user.id || 
+            const userPlan = mealPlans.find(plan =>
+              plan.created_by === user.id ||
               (Array.isArray(plan.assigned_students) && plan.assigned_students.includes(user.id))
             );
 
@@ -345,7 +345,7 @@ export const useMyNutrition = () => {
         console.log('✅ [useMyNutrition] Setting meals:', formatted.length);
         mealsCacheRef.current = { data: formatted, timestamp: Date.now(), version: CACHE_VERSION };
         setTodaysMeals(formatted);
-        
+
         // Buscar logs de hoje
         const today = new Date().toISOString().split('T')[0];
         const { data: logsData } = await supabase
@@ -355,9 +355,9 @@ export const useMyNutrition = () => {
           .gte('date', `${today}T00:00:00`)
           .lt('date', `${today}T23:59:59`)
           .order('created_at', { ascending: false });
-        
+
         setMealLogs(logsData || []);
-        
+
       } catch (err) {
         console.error('[useMyNutrition] Unexpected error:', err);
         setTodaysMeals([]);
@@ -366,13 +366,13 @@ export const useMyNutrition = () => {
         setLoading(false);
       }
     })();
-    
+
   }, [user?.id]); // ✅ APENAS user?.id como dependência
 
   // ✅ BUILD 54: Escutar eventos de realtime global
   useEffect(() => {
     if (!user?.id) return;
-    
+
     const handleMealPlansUpdate = () => {
       console.log('📡 [useMyNutrition] Evento meal-plans-updated recebido');
       mealsCacheRef.current = null; // Limpar cache antes do refresh
@@ -386,7 +386,7 @@ export const useMyNutrition = () => {
 
     window.addEventListener('meal-plans-updated', handleMealPlansUpdate);
     window.addEventListener('meal-logs-updated', handleMealLogsUpdate);
-    
+
     return () => {
       window.removeEventListener('meal-plans-updated', handleMealPlansUpdate);
       window.removeEventListener('meal-logs-updated', handleMealLogsUpdate);
@@ -408,9 +408,9 @@ export const useMyNutrition = () => {
     // Se não, calcular a partir dos alimentos individuais
     let foods = [];
     try {
-      foods = Array.isArray(meal.foods) ? meal.foods : 
-              (meal.foods && typeof meal.foods === 'object') ? 
-              (meal.foods.foods || []) : [];
+      foods = Array.isArray(meal.foods) ? meal.foods :
+        (meal.foods && typeof meal.foods === 'object') ?
+          (meal.foods.foods || []) : [];
     } catch (e) {
       foods = [];
     }
@@ -479,38 +479,56 @@ export const useMyNutrition = () => {
     setDailyStats({ consumed, target, percentage });
   }, [todaysMeals, calculateMealNutrition]);
 
-  // ✅ BUILD 54: Função otimizada
+  // ✅ BUILD 54: Função otimizada para toggle de refeição
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
     if (!user?.id) return false;
 
     try {
-      const todayMealsData = await getTodayMeals(user.id, false, 0);
-      const mealData = todayMealsData.find(meal => meal.meal_plan_item_id === mealPlanItemId);
+      // 1. Obter estado atual da refeição
+      const currentMeals = mealsCacheRef.current?.data || [];
+      const mealData = currentMeals.find(meal => meal.meal_plan_item_id === mealPlanItemId);
 
-      if (!mealData) return false;
+      if (!mealData) {
+        console.warn('[logMeal] Refeição não encontrada no cache local:', mealPlanItemId);
+        return false;
+      }
 
-      if (mealData.is_logged && mealData.log_id && !consumed) return false;
+      // 2. Lógica de Toggle
+      if (mealData.is_logged && mealData.log_id) {
+        if (!consumed) {
+          // CASO 1: Desmarcar (Remover Log)
+          console.log('[logMeal] Removendo log:', mealData.log_id);
+          const { error } = await supabase
+            .from('meal_logs')
+            .delete()
+            .eq('id', mealData.log_id);
 
-      if (mealData.log_id) {
-        const { error } = await supabase
-          .from('meal_logs')
-          .update({
-            consumed,
-            notes,
-            actual_time: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', mealData.log_id);
+          if (error) throw error;
+        } else {
+          // CASO 2: Atualizar (ex: mudar notas)
+          console.log('[logMeal] Atualizando log:', mealData.log_id);
+          const { error } = await supabase
+            .from('meal_logs')
+            .update({
+              consumed,
+              notes,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', mealData.log_id);
 
-        if (error) return false;
-      } else {
+          if (error) throw error;
+        }
+      } else if (consumed) {
+        // CASO 3: Criar novo log
+        console.log('[logMeal] Criando novo log para:', mealData.meal_name);
+
         const mealLogData = {
           user_id: user.id,
           meal_plan_id: mealData.meal_plan_id,
           meal_plan_item_id: mealPlanItemId,
           meal_name: mealData.meal_name,
-          date: new Date().toISOString(),
-          consumed,
+          date: new Date().toISOString(), // Data completa ISO
+          consumed: true,
           notes,
           actual_time: new Date().toISOString()
         };
@@ -519,21 +537,20 @@ export const useMyNutrition = () => {
           .from('meal_logs')
           .insert(mealLogData);
 
-        if (error) return false;
+        if (error) throw error;
       }
 
-      const refreshedData = await getTodayMeals(user.id, true, 0);
-      setTodaysMeals(refreshedData);
-      
-      const today = new Date().toISOString().split('T')[0];
-      const logs = await getMealLogsByUserAndDate(user.id, today);
-      setMealLogs(logs);
+      // 3. Atualizar UI Otimista (opcional, mas recomendado)
+      // Por enquanto, forçamos refresh via cache invalidate
+      mealsCacheRef.current = null;
+      await fetchData();
 
       return true;
     } catch (error) {
+      console.error('[logMeal] Erro ao registrar refeição:', error);
       return false;
     }
-  }, [user?.id, getTodayMeals, getMealLogsByUserAndDate]);
+  }, [user?.id, fetchData]);
 
   const addMealLog = logMeal; // Alias para compatibilidade
 
@@ -541,10 +558,10 @@ export const useMyNutrition = () => {
     nutritionPlans: [], // Deprecated - usar todaysMeals
     mealLogs,
     // CORRIGIDO: Retornar activePlan baseado nas refeições disponíveis
-    activePlan: todaysMeals.length > 0 ? { 
+    activePlan: todaysMeals.length > 0 ? {
       id: todaysMeals[0]?.meal_plan_id || 'active-plan',
       name: 'Plano Nutricional Ativo',
-      meals: todaysMeals.length 
+      meals: todaysMeals.length
     } : null,
     todaysMeals,
     planMeals: todaysMeals.map(meal => {

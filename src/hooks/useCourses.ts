@@ -20,6 +20,8 @@ export interface Course {
   updated_at: string;
 }
 
+import { getCache, setCache } from '@/lib/cache';
+
 export const useCourses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,112 +29,78 @@ export const useCourses = () => {
 
   useEffect(() => {
     if (!user || !userProfile) {
-      console.log('useCourses: Aguardando user e profile...', { user: !!user, userProfile: !!userProfile });
       return;
     }
 
     const fetchCourses = async () => {
+      const cacheKey = `courses_${user.id}_${userProfile.user_type}`;
+      const cachedData = getCache(cacheKey);
+
+      if (cachedData) {
+        console.log('useCourses: ⚡ Usando cache');
+        setCourses(cachedData);
+        setLoading(false);
+        return;
+      }
+
       console.log('useCourses: 🔍 Iniciando busca de cursos para:', userProfile.user_type);
       try {
         // ✅ PROFESSORES: Ver apenas seus cursos
         if (userProfile?.user_type === 'teacher') {
-          console.log('useCourses: 👨‍🏫 Buscando cursos do professor:', user.id);
-          
           const { data, error } = await supabase
             .from('courses')
             .select('*')
-            .eq('instructor', user.id)
-            .eq('is_published', true)
+            .or(`instructor.eq.${user.id},is_public.eq.true`)
             .order('created_at', { ascending: false });
 
           if (error) {
             console.error('useCourses: ❌ Erro ao buscar cursos do professor:', error);
-            return;
+            throw error;
           }
 
-          console.log('useCourses: ✅ Cursos do professor:', data?.length);
           setCourses(data || []);
-          
+          setCache(cacheKey, data || []);
+
         } else {
           // ✅ ALUNOS: Buscar cursos do professor + cursos públicos
-          console.log('useCourses: 👨‍🎓 Buscando cursos para aluno...');
-          
-          // 1️⃣ Verificar se aluno tem professor
+
+          // 1️⃣ Verificar professor do aluno
           const { data: studentData, error: studentError } = await supabase
             .from('students')
             .select('teacher_id')
             .eq('user_id', user.id)
             .maybeSingle();
 
-          if (studentError) {
-            console.error('useCourses: ⚠️ Erro ao buscar dados do aluno:', studentError);
-          }
+          if (studentError) console.error('useCourses: Erro ao buscar dados do aluno:', studentError);
+          console.log('useCourses: 👨‍🏫 Professor do aluno:', studentData?.teacher_id);
 
-          console.log('useCourses: 📋 Dados do aluno:', { 
-            hasTeacher: !!studentData?.teacher_id,
-            teacherId: studentData?.teacher_id 
-          });
+          // 2️⃣ Query Otimizada: Buscar todos os cursos relevantes em uma única requisição
+          let query = supabase
+            .from('courses')
+            .select('*')
+            .eq('is_published', true);
 
-          let allCourses: Course[] = [];
-
-          // 2️⃣ Se tem professor, buscar cursos dele (públicos e privados)
           if (studentData?.teacher_id) {
-            const { data: teacherCourses, error: teacherError } = await supabase
-              .from('courses')
-              .select('*')
-              .eq('instructor', studentData.teacher_id)
-              .eq('is_published', true)
-              .order('created_at', { ascending: false });
-
-            if (teacherError) {
-              console.error('useCourses: ❌ Erro ao buscar cursos do professor:', teacherError);
-            } else {
-              console.log('useCourses: 👨‍🏫 Cursos do professor:', teacherCourses?.length);
-              allCourses = [...(teacherCourses || [])];
-            }
-          }
-
-          // 3️⃣ ✅ BUILD 39: Buscar TODOS os cursos públicos de OUTROS professores
-          const { data: publicCourses, error: publicError } = await supabase
-            .from('courses')
-            .select('*')
-            .eq('is_published', true)
-            .eq('is_public', true)
-            .neq('instructor', studentData?.teacher_id || '00000000-0000-0000-0000-000000000000')
-            .order('created_at', { ascending: false });
-
-          if (publicError) {
-            console.error('useCourses: ❌ Erro ao buscar cursos públicos:', publicError);
+            // Busca: Cursos do professor OU Cursos públicos OU Cursos globais
+            query = query.or(`instructor.eq.${studentData.teacher_id},is_public.eq.true,instructor.is.null`);
           } else {
-            console.log('useCourses: 🌍 Cursos públicos de outros professores:', publicCourses?.length);
-            allCourses = [...allCourses, ...(publicCourses || [])];
+            // Busca: Cursos públicos OU Cursos globais
+            query = query.or(`is_public.eq.true,instructor.is.null`);
           }
 
-          // 4️⃣ Buscar cursos globais (instructor = NULL)
-          const { data: globalCourses, error: globalError } = await supabase
-            .from('courses')
-            .select('*')
-            .is('instructor', null)
-            .eq('is_published', true)
-            .order('created_at', { ascending: false });
+          const { data, error } = await query.order('created_at', { ascending: false });
 
-          if (globalError) {
-            console.error('useCourses: ❌ Erro ao buscar cursos globais:', globalError);
-          } else {
-            console.log('useCourses: 🌐 Cursos globais:', globalCourses?.length);
-            allCourses = [...allCourses, ...(globalCourses || [])];
+          if (error) {
+            console.error('useCourses: ❌ Erro ao buscar cursos:', error);
+            throw error;
           }
 
-          // 5️⃣ Remover duplicatas por ID
-          const uniqueCourses = Array.from(
-            new Map(allCourses.map(c => [c.id, c])).values()
-          );
-
-          console.log('useCourses: ✅ Total de cursos únicos:', uniqueCourses.length);
-          setCourses(uniqueCourses);
+          console.log('useCourses: ✅ Cursos carregados:', data?.length);
+          setCourses(data || []);
+          setCache(cacheKey, data || []);
         }
       } catch (error) {
-        console.error('useCourses: ❌ Erro inesperado:', error);
+        console.error('useCourses: ❌ Erro ao buscar cursos:', error);
       } finally {
         setLoading(false);
       }

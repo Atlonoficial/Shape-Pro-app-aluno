@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useRealtimeManager } from './useRealtimeManager';
 import { useAuth } from './useAuth';
 import '@/utils/realtimeMonitor'; // ✅ BUILD 55: Import monitor (auto-inicia em DEV)
@@ -20,12 +20,12 @@ let globalRealtimeInitialized = false;
 export const useGlobalRealtime = () => {
   const { user } = useAuth();
   const initRef = useRef(false);
-  
+
   useEffect(() => {
     if (initRef.current || globalRealtimeInitialized) return;
     initRef.current = true;
     globalRealtimeInitialized = true;
-    
+
     return () => {
       initRef.current = false;
       globalRealtimeInitialized = false;
@@ -34,73 +34,97 @@ export const useGlobalRealtime = () => {
 
   // ✅ BUILD 55: Subscriptions consolidadas (6 canais → 1 canal = 83% redução)
   // ⚠️ EMERGENCY: Removido notifications do Realtime (array scan muito lento)
-  useRealtimeManager({
-    subscriptions: user?.id ? [
+
+  // ✅ OTIMIZAÇÃO: Memoizar array de subscrições para evitar recriação do canal
+  const subscriptions = useMemo(() => {
+    if (!user?.id) return [];
+
+    return [
       // Profile (crítico - dados do usuário)
-      { 
-        table: 'profiles', 
-        event: '*', 
-        filter: `id=eq.${user.id}`, 
+      {
+        table: 'profiles',
+        event: '*' as const,
+        filter: `id=eq.${user.id}`,
         callback: () => {
           window.dispatchEvent(new CustomEvent('profile-updated'));
-        } 
+        }
       },
-      
+
       // Chat messages (crítico - tempo real necessário)
       // ⚠️ NOTA: Filtro .like é lento mas necessário (conversation_id pode ser teacher-student ou student-teacher)
-      { 
-        table: 'chat_messages', 
-        event: 'INSERT',
+      {
+        table: 'chat_messages',
+        event: 'INSERT' as const,
         filter: `conversation_id.like.%${user.id}%`,
-        callback: (payload) => {
+        callback: (payload: any) => {
           if (import.meta.env.DEV) {
             console.log('📨 New chat message:', payload.new.id);
           }
           window.dispatchEvent(new CustomEvent('chat-messages-updated', {
             detail: payload.new
           }));
-        } 
+        }
       },
-      
+
       // User points (crítico - gamificação tempo real)
-      { 
-        table: 'user_points', 
-        event: '*', 
-        filter: `user_id=eq.${user.id}`, 
+      {
+        table: 'user_points',
+        event: '*' as const,
+        filter: `user_id=eq.${user.id}`,
         callback: () => {
           window.dispatchEvent(new CustomEvent('gamification-updated'));
-        } 
+        }
       },
-      
+
       // ✅ Conversations (consolidado de useUnreadMessages)
       {
         table: 'conversations',
-        event: '*',
+        event: '*' as const,
         filter: `student_id=eq.${user.id}`,
         callback: () => {
           window.dispatchEvent(new CustomEvent('conversations-updated'));
         }
       },
-      
+
       // ✅ Workout activities (consolidado de useGamificationStravaIntegration)
       {
         table: 'workout_activities',
-        event: 'INSERT',
+        event: 'INSERT' as const,
         filter: `user_id=eq.${user.id}`,
-        callback: (payload) => {
+        callback: (payload: any) => {
           window.dispatchEvent(new CustomEvent('workout-activity-created', {
             detail: payload.new
           }));
         }
       },
-    ] : [],
+
+      // ✅ Active Subscriptions (consolidado de useActiveSubscription)
+      {
+        table: 'active_subscriptions',
+        event: '*' as const,
+        filter: `user_id=eq.${user.id}`,
+        callback: () => {
+          window.dispatchEvent(new CustomEvent('subscription-updated'));
+        }
+      },
+
+      // ✅ Students (consolidado de useActiveSubscription - legacy status)
+      {
+        table: 'students',
+        event: '*' as const,
+        filter: `user_id=eq.${user.id}`,
+        callback: () => {
+          window.dispatchEvent(new CustomEvent('subscription-updated'));
+        }
+      },
+    ];
+  }, [user?.id]);
+
+  useRealtimeManager({
+    subscriptions,
     enabled: !!user?.id,
-    channelName: 'global-app-realtime',
-    debounceMs: 2000,
-    maxRetries: 3,
-    retryDelay: 8000,
   });
-  
+
   // ✅ BUILD 56: Performance metrics (DEV only)
   useEffect(() => {
     if (import.meta.env.DEV && user?.id) {

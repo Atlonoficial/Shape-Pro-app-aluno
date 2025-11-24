@@ -39,44 +39,45 @@ export const useAllModules = () => {
     }
 
     const fetchAllModules = async () => {
-        try {
-          let coursesQuery = supabase
-            .from('courses')
-            .select('id, title, description, thumbnail, instructor, is_free, price, total_lessons')
-            .eq('is_published', true);
+      try {
+        let coursesQuery = supabase
+          .from('courses')
+          .select('id, title, description, thumbnail, instructor, is_free, price, total_lessons')
+          .eq('is_published', true);
 
-          // Get courses based on user type
-          if (userProfile?.user_type === 'teacher') {
-            coursesQuery = coursesQuery.eq('instructor', user.id);
+        // Get courses based on user type
+        if (userProfile?.user_type === 'teacher') {
+          coursesQuery = coursesQuery.eq('instructor', user.id);
+        } else {
+          // For students, get courses from their teacher OR public courses OR global courses
+          const { data: studentData } = await supabase
+            .from('students')
+            .select('teacher_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          console.log('useAllModules: Student data:', studentData);
+
+          if (studentData?.teacher_id) {
+            // Busca: Cursos do professor OU Cursos públicos OU Cursos globais
+            coursesQuery = coursesQuery.or(`instructor.eq.${studentData.teacher_id},is_public.eq.true,instructor.is.null`);
           } else {
-            // For students, get courses from their teacher
-            const { data: studentData } = await supabase
-              .from('students')
-              .select('teacher_id')
-              .eq('user_id', user.id)
-              .maybeSingle();
-
-            console.log('useAllModules: Student data:', studentData);
-
-            if (studentData?.teacher_id) {
-              coursesQuery = coursesQuery.eq('instructor', studentData.teacher_id);
-            } else {
-              // If student has no teacher, show free courses
-              coursesQuery = coursesQuery.eq('is_free', true);
-            }
+            // Se não tem professor: Cursos públicos OU Cursos globais
+            coursesQuery = coursesQuery.or(`is_public.eq.true,instructor.is.null`);
           }
+        }
 
-          const { data: courses, error: coursesError } = await coursesQuery;
+        const { data: courses, error: coursesError } = await coursesQuery;
 
-          if (coursesError) {
-            console.error('useAllModules: Error fetching courses:', coursesError);
-            return;
-          }
+        if (coursesError) {
+          console.error('useAllModules: Error fetching courses:', coursesError);
+          return;
+        }
 
-          if (!courses || courses.length === 0) {
-            setCourses([]);
-            return;
-          }
+        if (!courses || courses.length === 0) {
+          setCourses([]);
+          return;
+        }
 
         // Check user purchases and active subscriptions for course access
         const { data: userPurchases } = await supabase
@@ -93,14 +94,14 @@ export const useAllModules = () => {
 
         const purchasedCourseIds = userPurchases?.map(p => p.course_id) || [];
         const hasActiveSubscription = activeSubscriptions && activeSubscriptions.length > 0;
-        
+
         console.log('useAllModules: User purchases:', purchasedCourseIds);
         console.log('useAllModules: Active subscriptions:', hasActiveSubscription);
 
         // Get all modules for these courses
         const courseIds = courses.map(course => course.id);
         console.log('useAllModules: Course IDs to fetch modules for:', courseIds);
-        
+
         const { data: modulesData, error: modulesError } = await supabase
           .from('course_modules' as any)
           .select(`
@@ -121,7 +122,7 @@ export const useAllModules = () => {
           console.error('useAllModules: Error fetching modules:', modulesError);
         }
 
-        
+
 
         // Get lesson counts for each module
         const moduleIds = modulesData.map((module: any) => module.id);
@@ -146,11 +147,11 @@ export const useAllModules = () => {
           const courseModules = (modulesData || [])
             .filter((module: any) => module.course_id === course.id)
             .map((module: any) => {
-              const hasAccess = course.is_free || 
-                               purchasedCourseIds.includes(course.id) || 
-                               hasActiveSubscription ||
-                               userProfile?.user_type === 'teacher';
-              
+              const hasAccess = course.is_free ||
+                purchasedCourseIds.includes(course.id) ||
+                hasActiveSubscription ||
+                userProfile?.user_type === 'teacher';
+
               return {
                 id: module.id,
                 title: module.title,
@@ -165,10 +166,10 @@ export const useAllModules = () => {
               };
             });
 
-          const hasAccess = course.is_free || 
-                           purchasedCourseIds.includes(course.id) || 
-                           hasActiveSubscription ||
-                           userProfile?.user_type === 'teacher';
+          const hasAccess = course.is_free ||
+            purchasedCourseIds.includes(course.id) ||
+            hasActiveSubscription ||
+            userProfile?.user_type === 'teacher';
 
           const courseWithModules = {
             id: course.id,

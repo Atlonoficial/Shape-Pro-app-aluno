@@ -36,7 +36,7 @@ import { LazyTeacherStudentChat } from "./pages/lazy/LazyTeacherStudentChat";
 import { LazyAgenda } from "./pages/lazy/LazyAgenda";
 import { LazyMetas } from "./pages/lazy/LazyMetas";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
-import ConfiguracoesPagamentosDocumentacao from "./pages/ConfiguracoesPagamentosDocumentacao";
+
 import { IniciarTreino } from "./pages/IniciarTreino";
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
 import Agenda from "./pages/Agenda";
@@ -76,13 +76,13 @@ const queryClient = new QueryClient({
 const RedirectToAuthConfirm = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     // Preservar query params e hash
     const newPath = `/auth/confirm${location.search}${location.hash}`;
     navigate(newPath, { replace: true });
   }, [location, navigate]);
-  
+
   return null; // Não renderiza nada durante o redirect
 };
 
@@ -90,7 +90,7 @@ const RedirectToAuthConfirm = () => {
 const AuthenticatedApp = () => {
   // ✅ BUILD 53: Consolidar TODAS as subscriptions realtime aqui
   useGlobalRealtime();
-  
+
   return (
     <GamificationProvider>
       <GamificationIntegrator>
@@ -98,14 +98,14 @@ const AuthenticatedApp = () => {
           {/* Public routes (no AuthGuard, no TermsGuard) */}
           <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
           <Route path="/accept-terms" element={<AcceptTerms />} />
-          
+
           {/* Authentication Routes */}
           <Route path="/auth/confirm" element={<AuthConfirm />} />
-          
+
           {/* ✅ Aliases de compatibilidade (redireciona para /auth/confirm) */}
           <Route path="/email/confirm" element={<RedirectToAuthConfirm />} />
           <Route path="/auth/app/confirm.html" element={<RedirectToAuthConfirm />} />
-          
+
           <Route path="/auth/recovery" element={<AuthRecovery />} />
           <Route path="/auth/invite" element={<AuthInvite />} />
           <Route path="/auth/magic-link" element={<AuthMagicLink />} />
@@ -113,10 +113,10 @@ const AuthenticatedApp = () => {
           <Route path="/auth/error" element={<AuthError />} />
           <Route path="/auth/verify" element={<AuthVerify />} />
           <Route path="/auth/verified" element={<AuthVerified />} />
-          
+
           {/* ✅ BUILD 37: Fallback para variações de URL de confirmação */}
           <Route path="/auth/callback" element={<AuthConfirm />} />
-          
+
           {/* Protected routes (with TermsGuard) */}
           <Route path="/" element={<TermsGuard><Index /></TermsGuard>} />
           <Route path="/cadastro-completo" element={<AuthGuard><TermsGuard><CadastroCompleto /></TermsGuard></AuthGuard>} />
@@ -125,7 +125,7 @@ const AuthenticatedApp = () => {
           <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><FotosProgresso /></TermsGuard></AuthGuard>} />
           <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><AvaliacoesFisicas /></TermsGuard></AuthGuard>} />
           <Route path="/configuracoes" element={<AuthGuard><TermsGuard><LazySettings /></TermsGuard></AuthGuard>} />
-          <Route path="/configuracoes-pagamentos-documentacao" element={<AuthGuard><TermsGuard><ConfiguracoesPagamentosDocumentacao /></TermsGuard></AuthGuard>} />
+
           <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
           <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
           <Route path="/cursos" element={<AuthGuard><TermsGuard><Cursos /></TermsGuard></AuthGuard>} />
@@ -138,7 +138,7 @@ const AuthenticatedApp = () => {
           <Route path="/teacher-chat" element={<AuthGuard><TermsGuard><LazyTeacherStudentChat /></TermsGuard></AuthGuard>} />
           <Route path="/strava-callback" element={<StravaCallback />} />
           {import.meta.env.DEV && <Route path="/strava-debug" element={<AuthGuard><StravaDebug /></AuthGuard>} />}
-          
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </GamificationIntegrator>
@@ -155,9 +155,9 @@ const App = () => {
   // - Plataforma nativa (iOS/Android)
   const isNative = Capacitor.isNativePlatform();
   const IS_PRODUCTION = import.meta.env.PROD;
-  
+
   const useStrictMode = !IS_PRODUCTION && !isNative;
-  
+
   const AppContent = (
     <ErrorBoundary>
       <Suspense fallback={<LoadingScreen />}>
@@ -166,27 +166,24 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-                <BrowserRouter>
-                  <AuthProvider>
-                    <NativeIntegration />
-                    <NotificationPermissionModal />
-                    <NetworkStatus />
-                    <AuthenticatedApp />
-                  </AuthProvider>
-                </BrowserRouter>
+              <BrowserRouter>
+                <AuthProvider>
+                  <NativeIntegration />
+                  <NotificationPermissionModal />
+                  <NetworkStatus />
+                  <AuthenticatedApp />
+                </AuthProvider>
+              </BrowserRouter>
             </TooltipProvider>
           </QueryClientProvider>
         </SecurityProvider>
       </Suspense>
     </ErrorBoundary>
   );
-  
-  // ✅ Retornar COM ou SEM StrictMode baseado no ambiente
-  return useStrictMode ? (
-    <StrictMode>{AppContent}</StrictMode>
-  ) : (
-    AppContent
-  );
+
+  // ✅ BUILD 50: StrictMode desativado globalmente para evitar double-render e loops
+  // Isso estabiliza o comportamento de hooks sensíveis como useAuth e Realtime
+  return AppContent;
 };
 
 export default App;

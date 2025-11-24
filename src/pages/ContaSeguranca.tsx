@@ -7,21 +7,73 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ContaSeguranca = () => {
   const navigate = useNavigate();
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
+  const { student } = useStudentProfile();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
-  
+  const [teacherPhone, setTeacherPhone] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     email: "",
     newPassword: "",
     confirmPassword: ""
   });
+
+  // Carregar telefone do professor
+  useEffect(() => {
+    const loadTeacherInfo = async () => {
+      if (!student?.teacher_id) return;
+      try {
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('phone')
+          .eq('id', student.teacher_id)
+          .single();
+
+        if (profile?.phone) {
+          setTeacherPhone(profile.phone);
+        }
+      } catch (e) {
+        console.error('Error loading teacher profile:', e);
+      }
+    };
+    loadTeacherInfo();
+  }, [student?.teacher_id]);
+
+  const handleDeleteAccountRequest = () => {
+    if (!teacherPhone) {
+      toast({
+        title: "Contato indisponível",
+        description: "O telefone do professor não está disponível para solicitar a exclusão. Entre em contato pelo suporte.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const message = `Olá! Gostaria de solicitar a EXCLUSÃO DA MINHA CONTA e de todos os meus dados pessoais do aplicativo Shape Pro. Meu email é: ${user?.email}`;
+    const cleanPhone = teacherPhone.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, '_blank');
+  };
 
   // Carrega dados reais do usuário
   useEffect(() => {
@@ -52,7 +104,7 @@ const ContaSeguranca = () => {
     }
 
     setLoadingEmail(true);
-    
+
     try {
       // Atualizar email no Supabase Auth
       const { error: authError } = await supabase.auth.updateUser({
@@ -98,7 +150,7 @@ const ContaSeguranca = () => {
       });
       return;
     }
-    
+
     if (formData.newPassword.length < 6) {
       toast({
         title: "Erro",
@@ -124,7 +176,7 @@ const ContaSeguranca = () => {
         title: "Senha alterada!",
         description: "Sua senha foi atualizada com sucesso.",
       });
-      
+
       // Limpar formulário
       setFormData(prev => ({
         ...prev,
@@ -148,8 +200,8 @@ const ContaSeguranca = () => {
       {/* Header */}
       <div className="p-4 pt-8 border-b border-border/30">
         <div className="flex items-center gap-3 mb-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate("/configuracoes")}
             className="text-foreground"
@@ -169,7 +221,7 @@ const ContaSeguranca = () => {
             </div>
             <h2 className="text-lg font-semibold text-foreground">Informações da Conta</h2>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
@@ -181,8 +233,8 @@ const ContaSeguranca = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   className="flex-1"
                 />
-                <Button 
-                  onClick={handleEmailChange} 
+                <Button
+                  onClick={handleEmailChange}
                   disabled={loadingEmail || !formData.email.trim() || formData.email === user?.email}
                 >
                   {loadingEmail ? (
@@ -205,7 +257,7 @@ const ContaSeguranca = () => {
             </div>
             <h2 className="text-lg font-semibold text-foreground">Segurança</h2>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="newPassword">Nova Senha</Label>
@@ -249,7 +301,7 @@ const ContaSeguranca = () => {
               </div>
             </div>
 
-            <Button 
+            <Button
               onClick={handlePasswordChange}
               className="w-full"
               disabled={loadingPassword || !formData.newPassword || !formData.confirmPassword}
@@ -273,6 +325,45 @@ const ContaSeguranca = () => {
             <li>• Não compartilhe sua senha com ninguém</li>
             <li>• Altere sua senha regularmente</li>
           </ul>
+        </Card>
+
+        {/* Excluir Conta */}
+        <Card className="p-6 border-destructive/20 bg-destructive/5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+              <User className="w-5 h-5 text-destructive" />
+            </div>
+            <h2 className="text-lg font-semibold text-destructive">Excluir Conta</h2>
+          </div>
+
+          <p className="text-sm text-muted-foreground mb-4">
+            Ao excluir sua conta, todos os seus dados, treinos e histórico serão permanentemente removidos. Esta ação não pode ser desfeita.
+          </p>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                Solicitar Exclusão de Conta
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta e removerá seus dados de nossos servidores.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleDeleteAccountRequest}
+                >
+                  Sim, solicitar exclusão
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </Card>
       </div>
     </div>

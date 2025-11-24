@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, TrendingUp, Scale, Ruler, Activity, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, TrendingUp, Scale, Ruler, Activity, FileText, ChevronDown, ChevronRight, Calendar, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { NewAssessmentDialog } from "@/components/physical-assessment/NewAssessmentDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface PhysicalAssessmentData {
   type: string;
@@ -27,6 +28,11 @@ interface PhysicalAssessment {
   lowerLimbs: PhysicalAssessmentData[];
   skinfolds: PhysicalAssessmentData[];
   protocol?: PhysicalAssessmentData;
+  // New fields for comprehensive evaluations
+  isComprehensive?: boolean;
+  templateName?: string;
+  overallScore?: number;
+  teacherNotes?: string;
 }
 
 export const AvaliacoesFisicas = () => {
@@ -38,32 +44,48 @@ export const AvaliacoesFisicas = () => {
 
   const fetchAssessments = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
-      // Buscar TODOS os dados de avaliações físicas
-      const { data, error } = await supabase
+      // 1. Buscar dados LEGADOS da tabela 'progress'
+      const { data: progressData, error: progressError } = await supabase
         .from("progress")
         .select("*")
         .eq("user_id", user.id)
         .eq("type", "physical_assessment")
         .order("date", { ascending: false });
 
-      if (error) throw error;
-      
-      // Agrupar dados por data para formar avaliações completas com todos os detalhes
-      const groupedData = (data || []).reduce((acc: any, item: any) => {
+      if (progressError) throw progressError;
+
+      // 2. Buscar NOVAS avaliações da tabela 'evaluations'
+      const { data: evaluationsData, error: evaluationsError } = await supabase
+        .from("evaluations")
+        .select(`
+          *,
+          template:evaluation_templates(name)
+        `)
+        .eq("student_id", user.id)
+        .order("evaluation_date", { ascending: false });
+
+      if (evaluationsError) {
+        console.error("Erro ao buscar novas avaliações:", evaluationsError);
+        // Não trava o app, apenas loga o erro
+      }
+
+      // Processar dados legados (agrupamento por data)
+      const legacyAssessments: Record<string, PhysicalAssessment> = (progressData || []).reduce((acc: any, item: any) => {
         const dateKey = item.date.split('T')[0];
         if (!acc[dateKey]) {
-          acc[dateKey] = { 
-            id: dateKey, 
-            date: dateKey, 
+          acc[dateKey] = {
+            id: `legacy-${dateKey}`,
+            date: dateKey,
             created_at: item.created_at,
             basicMeasures: [],
             upperLimbs: [],
             torso: [],
             lowerLimbs: [],
             skinfolds: [],
-            protocol: null
+            protocol: null,
+            isComprehensive: false
           };
         }
 
@@ -73,7 +95,7 @@ export const AvaliacoesFisicas = () => {
           unit: item.unit,
           notes: item.notes
         };
-        
+
         // Categorizar dados por tipo
         if (['weight', 'height', 'body_fat', 'muscle_mass'].includes(item.notes)) {
           acc[dateKey].basicMeasures.push(assessmentData);
@@ -88,11 +110,68 @@ export const AvaliacoesFisicas = () => {
         } else if (item.notes.includes('Protocolo')) {
           acc[dateKey].protocol = assessmentData;
         }
-        
+
         return acc;
       }, {});
 
-      setAssessments(Object.values(groupedData));
+      // Processar novas avaliações
+      const comprehensiveAssessments: PhysicalAssessment[] = (evaluationsData || []).map((evaluation: any) => {
+        const measures = evaluation.physical_measurements || {};
+
+        // Converter o formato JSON de medidas para o formato de array categorizado
+        const basicMeasures: PhysicalAssessmentData[] = [];
+        const upperLimbs: PhysicalAssessmentData[] = [];
+        const torso: PhysicalAssessmentData[] = [];
+        const lowerLimbs: PhysicalAssessmentData[] = [];
+        const skinfolds: PhysicalAssessmentData[] = [];
+
+        Object.entries(measures).forEach(([key, value]: [string, any]) => {
+          // Lógica simplificada de categorização baseada na chave ou metadados conhecidos
+          // Como o JSON não tem 'notes' categorizadas, vamos tentar inferir ou colocar em 'Outros' se necessário
+          // Para simplificar, vamos mapear alguns conhecidos
+
+          const data = {
+            type: 'physical_assessment',
+            value: Number(value),
+            unit: 'cm', // Default, ajustado abaixo
+            notes: key
+          };
+
+          if (['weight', 'peso'].includes(key)) { data.unit = 'kg'; data.notes = 'weight'; basicMeasures.push(data); }
+          else if (['height', 'altura'].includes(key)) { data.unit = 'cm'; data.notes = 'height'; basicMeasures.push(data); }
+          else if (['body_fat', 'gordura'].includes(key)) { data.unit = '%'; data.notes = 'body_fat'; basicMeasures.push(data); }
+          else if (['muscle_mass', 'massa_magra'].includes(key)) { data.unit = 'kg'; data.notes = 'muscle_mass'; basicMeasures.push(data); }
+          else if (key.includes('braco') || key.includes('antebraço')) upperLimbs.push(data);
+          else if (key.includes('peitoral') || key.includes('cintura') || key.includes('abdomen') || key.includes('quadril')) torso.push(data);
+          else if (key.includes('coxa') || key.includes('panturrilha')) lowerLimbs.push(data);
+          else if (key.includes('dobra')) skinfolds.push(data);
+          else basicMeasures.push(data); // Fallback
+        });
+
+        return {
+          id: evaluation.id,
+          date: evaluation.evaluation_date,
+          created_at: evaluation.created_at,
+          basicMeasures,
+          upperLimbs,
+          torso,
+          lowerLimbs,
+          skinfolds,
+          protocol: undefined,
+          isComprehensive: true,
+          templateName: evaluation.template?.name || 'Avaliação Completa',
+          overallScore: evaluation.overall_score,
+          teacherNotes: evaluation.teacher_notes
+        };
+      });
+
+      // Combinar e ordenar
+      const allAssessments = [
+        ...Object.values(legacyAssessments),
+        ...comprehensiveAssessments
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setAssessments(allAssessments);
     } catch (error) {
       console.error("Erro ao buscar avaliações:", error);
       toast.error("Erro ao carregar avaliações físicas");
@@ -116,7 +195,7 @@ export const AvaliacoesFisicas = () => {
       };
     })
     .reverse();
-  
+
   const toggleAssessmentExpansion = (assessmentId: string) => {
     setExpandedAssessments(prev => {
       const newSet = new Set(prev);
@@ -129,15 +208,13 @@ export const AvaliacoesFisicas = () => {
     });
   };
 
-  const latestAssessment = assessments[0];
-
   return (
     <div className="min-h-screen bg-background pb-safe-4xl">
       {/* Header */}
       <div className="p-4 pt-8 border-b border-border/30">
         <div className="flex items-center gap-3 mb-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate("/?tab=profile")}
             className="text-foreground"
@@ -169,10 +246,10 @@ export const AvaliacoesFisicas = () => {
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="weight" 
-                      stroke="hsl(var(--primary))" 
+                    <Line
+                      type="monotone"
+                      dataKey="weight"
+                      stroke="hsl(var(--primary))"
                       strokeWidth={2}
                       dot={{ fill: "hsl(var(--primary))" }}
                     />
@@ -199,7 +276,7 @@ export const AvaliacoesFisicas = () => {
 
         {/* Historical Assessments */}
         <h2 className="text-lg font-semibold mb-3">Histórico de Avaliações</h2>
-        
+
         {loading ? (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
@@ -226,27 +303,29 @@ export const AvaliacoesFisicas = () => {
               }, {} as Record<string, PhysicalAssessmentData>);
 
               return (
-                <Card key={assessment.id} className="overflow-hidden">
+                <Card key={assessment.id} className={`overflow-hidden ${assessment.isComprehensive ? 'border-l-4 border-l-blue-500' : ''}`}>
                   <CardContent className="p-0">
                     {/* Cabeçalho clicável */}
-                    <div 
+                    <div
                       className="p-4 cursor-pointer hover:bg-accent/30 transition-colors border-b"
                       onClick={() => toggleAssessmentExpansion(assessment.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-primary" />
+                          <FileText className={`w-5 h-5 ${assessment.isComprehensive ? 'text-blue-600' : 'text-primary'}`} />
                           <div>
-                            <h3 className="font-semibold text-foreground">
-                              Avaliação Física - {new Date(assessment.date).toLocaleDateString("pt-BR", {
+                            <h3 className="font-semibold text-foreground flex items-center gap-2">
+                              {assessment.templateName || 'Avaliação Física'}
+                              {assessment.isComprehensive && <Badge variant="secondary" className="text-[10px] h-5">Nova</Badge>}
+                            </h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(assessment.date).toLocaleDateString("pt-BR", {
                                 day: "2-digit",
-                                month: "2-digit", 
+                                month: "2-digit",
                                 year: "numeric"
                               })}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {assessment.basicMeasures.length + assessment.upperLimbs.length + assessment.torso.length + assessment.lowerLimbs.length + assessment.skinfolds.length} medidas registradas
-                            </p>
+                            </div>
                           </div>
                         </div>
                         {isExpanded ? (
@@ -255,7 +334,7 @@ export const AvaliacoesFisicas = () => {
                           <ChevronRight className="w-5 h-5 text-muted-foreground" />
                         )}
                       </div>
-                      
+
                       {/* Resumo básico quando fechado */}
                       {!isExpanded && (
                         <div className="grid grid-cols-2 gap-4 mt-4">
@@ -268,34 +347,14 @@ export const AvaliacoesFisicas = () => {
                               <p className="font-semibold text-foreground">{basicMeasuresMap.weight.value} {basicMeasuresMap.weight.unit}</p>
                             </div>
                           )}
-                          
-                          {basicMeasuresMap.body_fat && (
+
+                          {assessment.overallScore && (
                             <div className="text-center">
                               <div className="flex items-center justify-center gap-1 mb-1">
-                                <Activity className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">% Gordura</span>
+                                <BarChart3 className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm text-muted-foreground">Nota Geral</span>
                               </div>
-                              <p className="font-semibold text-foreground">{basicMeasuresMap.body_fat.value}{basicMeasuresMap.body_fat.unit}</p>
-                            </div>
-                          )}
-                          
-                          {basicMeasuresMap.muscle_mass && (
-                            <div className="text-center">
-                              <div className="flex items-center justify-center gap-1 mb-1">
-                                <TrendingUp className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Massa Magra</span>
-                              </div>
-                              <p className="font-semibold text-foreground">{basicMeasuresMap.muscle_mass.value} {basicMeasuresMap.muscle_mass.unit}</p>
-                            </div>
-                          )}
-                          
-                          {basicMeasuresMap.height && (
-                            <div className="text-center">
-                              <div className="flex items-center justify-center gap-1 mb-1">
-                                <Ruler className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Altura</span>
-                              </div>
-                              <p className="font-semibold text-foreground">{basicMeasuresMap.height.value} {basicMeasuresMap.height.unit}</p>
+                              <p className="font-semibold text-foreground">{assessment.overallScore.toFixed(1)}</p>
                             </div>
                           )}
                         </div>
@@ -305,6 +364,13 @@ export const AvaliacoesFisicas = () => {
                     {/* Detalhes expandidos */}
                     {isExpanded && (
                       <div className="p-4 space-y-4 bg-accent/10">
+                        {assessment.teacherNotes && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Observações do Professor</p>
+                            <p className="text-sm text-foreground">{assessment.teacherNotes}</p>
+                          </div>
+                        )}
+
                         {/* Medidas Básicas */}
                         {assessment.basicMeasures.length > 0 && (
                           <Collapsible defaultOpen>
@@ -318,10 +384,10 @@ export const AvaliacoesFisicas = () => {
                                 {assessment.basicMeasures.map((measure, idx) => (
                                   <div key={idx} className="bg-background p-3 rounded-lg border">
                                     <p className="text-xs text-muted-foreground capitalize">
-                                      {measure.notes === 'weight' ? 'Peso' : 
-                                       measure.notes === 'height' ? 'Altura' :
-                                       measure.notes === 'body_fat' ? '% Gordura' :
-                                       measure.notes === 'muscle_mass' ? 'Massa Magra' : measure.notes}
+                                      {measure.notes === 'weight' ? 'Peso' :
+                                        measure.notes === 'height' ? 'Altura' :
+                                          measure.notes === 'body_fat' ? '% Gordura' :
+                                            measure.notes === 'muscle_mass' ? 'Massa Magra' : measure.notes}
                                     </p>
                                     <p className="font-semibold">{measure.value} {measure.unit}</p>
                                   </div>
