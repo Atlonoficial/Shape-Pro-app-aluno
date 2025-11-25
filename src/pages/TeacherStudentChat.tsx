@@ -161,10 +161,10 @@ export default function Chat() {
             isReconnecting={reconnecting}
           />
 
-          {/* Chat messages with padding for input + bottom nav */}
+          {/* Chat messages with padding for input */}
           <div
             className="flex-1 overflow-hidden"
-            style={{ paddingBottom: 'calc(140px + env(safe-area-inset-bottom))' }}
+            style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
           >
             <ChatInterface
               messages={messages}
@@ -177,12 +177,12 @@ export default function Chat() {
             />
           </div>
 
-          {/* Fixed input above bottom navigation */}
+          {/* Fixed input at bottom */}
           <div
             className="fixed left-0 right-0 z-[var(--z-message-input)] transition-all duration-200"
             style={{
-              bottom: keyboardVisible ? `${keyboardHeight}px` : 'calc(72px + env(safe-area-inset-bottom))',
-              paddingBottom: keyboardVisible ? 0 : 0 // Padding handled by MessageInput container
+              bottom: keyboardVisible ? `${keyboardHeight}px` : 0,
+              paddingBottom: keyboardVisible ? 0 : 0 // MessageInput handles safe area
             }}
           >
             <MessageInput
@@ -194,12 +194,6 @@ export default function Chat() {
           </div>
         </div>
       </MobileContainer>
-
-      {/* Bottom Navigation fixed at bottom */}
-      <BottomNavigation
-        activeTab="assistant"
-        onTabChange={handleTabChange}
-      />
     </>
   );
 }

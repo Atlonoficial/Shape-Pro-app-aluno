@@ -50,35 +50,59 @@ export const YouTubePlayer = ({ videoUrl, exerciseName, className = "" }: YouTub
   if (hasError || !videoId) {
     return (
       <div className={`relative aspect-video bg-surface/30 rounded-xl flex items-center justify-center border border-border/20 overflow-hidden ${className}`}>
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3 mx-auto">
-            <Play className="w-6 h-6 text-muted-foreground" />
+        <div className="text-center p-4">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3 mx-auto">
+            <Play className="w-5 h-5 text-muted-foreground" />
           </div>
-          <p className="text-foreground font-medium text-sm">{exerciseName}</p>
-          <p className="text-muted-foreground text-xs">URL de vídeo inválida</p>
+          <p className="text-foreground font-medium text-sm mb-1">{exerciseName}</p>
+          <p className="text-muted-foreground text-xs mb-3">Não foi possível carregar o player.</p>
+
+          {videoId && (
+            <a
+              href={`https://www.youtube.com/watch?v=${videoId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-semibold hover:bg-primary/20 transition-colors"
+            >
+              <Play size={12} className="fill-current" />
+              Assistir no YouTube
+            </a>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`relative aspect-video bg-black rounded-xl overflow-hidden border border-border/20 ${className}`}>
-      <iframe
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&controls=1&showinfo=0&playsinline=1&enablejsapi=1&origin=${window.location.origin}`}
-        title={exerciseName}
-        className="absolute inset-0 w-full h-full"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-        loading="lazy"
-      />
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-border/20">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&controls=1&showinfo=0&playsinline=1&enablejsapi=1&origin=${window.location.origin}`}
+          title={exerciseName}
+          className="absolute inset-0 w-full h-full"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          loading="lazy"
+        />
 
-      {/* Overlay com informações */}
-      <div className="absolute top-3 left-3 right-3 z-10">
-        <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
-          <p className="text-white font-medium text-sm truncate">{exerciseName}</p>
+        {/* Overlay com informações */}
+        <div className="absolute top-3 left-3 right-3 z-10 pointer-events-none">
+          <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 inline-block">
+            <p className="text-white font-medium text-sm truncate">{exerciseName}</p>
+          </div>
         </div>
       </div>
+
+      <a
+        href={`https://www.youtube.com/watch?v=${videoId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 px-4 py-3 bg-surface border border-border/40 rounded-xl text-sm font-medium text-foreground hover:bg-surface-highlight transition-colors active:scale-[0.98]"
+      >
+        <Play size={16} className="fill-current text-red-600" />
+        Abrir no YouTube
+      </a>
     </div>
   );
 };

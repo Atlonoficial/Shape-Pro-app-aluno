@@ -120,7 +120,7 @@ export default function AIChat() {
           <div
             className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
             style={{
-              paddingBottom: 'calc(140px + env(safe-area-inset-bottom))'
+              paddingBottom: 'calc(80px + env(safe-area-inset-bottom))'
             }}
           >
             {/* Daily limit error card */}
@@ -207,7 +207,7 @@ export default function AIChat() {
             style={{
               bottom: keyboardVisible
                 ? `${keyboardHeight}px`
-                : 'calc(72px + env(safe-area-inset-bottom))',
+                : 0,
               paddingBottom: 0
             }}
           >
@@ -233,8 +233,8 @@ export default function AIChat() {
                   disabled={!input.trim() || loading || dailyLimitReached}
                   size="icon"
                   className={`h-10 w-10 rounded-full flex-shrink-0 transition-all duration-300 ${input.trim()
-                      ? 'bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-105'
-                      : 'bg-muted text-muted-foreground'
+                    ? 'bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-105'
+                    : 'bg-muted text-muted-foreground'
                     }`}
                 >
                   {loading ? (
@@ -248,12 +248,6 @@ export default function AIChat() {
           </div>
         </div>
       </MobileContainer>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation
-        activeTab=""
-        onTabChange={handleTabChange}
-      />
     </>
   );
 }
