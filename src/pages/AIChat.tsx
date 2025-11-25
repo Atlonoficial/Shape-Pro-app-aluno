@@ -231,7 +231,7 @@ export default function AIChat() {
           </div>
 
           {/* Input Area - Natural flow */}
-          <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
+          <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-3' : 'pb-safe'}`}>
             <div className="p-3">
               <div className="flex items-end gap-2 max-w-4xl mx-auto">
                 <div className="flex-1 relative bg-muted/30 rounded-3xl border border-border/50 focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">

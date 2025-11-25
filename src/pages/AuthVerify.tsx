@@ -27,7 +27,7 @@ export const AuthVerify = () => {
   // ✅ BUILD 37: Listener de autenticação em tempo real
   useEffect(() => {
     console.log('[AuthVerify] 🎧 Configurando listener de autenticação...');
-    
+
     // Inscrever-se para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -36,18 +36,18 @@ export const AuthVerify = () => {
           userId: session?.user?.id,
           emailConfirmed: session?.user?.email_confirmed_at
         });
-        
+
         // ✅ Se sessão foi estabelecida = email foi confirmado!
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
           console.log('[AuthVerify] ✅ Usuário autenticado! Email confirmado.');
           setIsVerified(true);
-          
+
           // Parar polling se estiver rodando
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
           }
-          
+
           toast({
             title: "✅ Email verificado!",
             description: "Bem-vindo ao Shape Pro!",
@@ -62,7 +62,7 @@ export const AuthVerify = () => {
         }
       }
     );
-    
+
     return () => {
       console.log('[AuthVerify] 🧹 Removendo listener de autenticação');
       subscription.unsubscribe();
@@ -85,9 +85,9 @@ export const AuthVerify = () => {
       if (!silent) {
         console.log('[AuthVerify] 🔍 Verificando status do email...', { autoCheckCount });
       }
-      
+
       const { data: { user }, error } = await supabase.auth.getUser();
-      
+
       if (error) {
         console.error('[AuthVerify] ❌ Erro ao verificar usuário:', error);
         return false;
@@ -115,19 +115,19 @@ export const AuthVerify = () => {
   // Polling automático
   useEffect(() => {
     console.log('[AuthVerify] 🚀 Iniciando verificação automática...');
-    
+
     const autoCheck = async () => {
       const confirmed = await checkEmailVerification(true);
-      
+
       if (confirmed) {
         console.log('[AuthVerify] ✅ Email já confirmado! Redirecionando...');
         setIsVerified(true);
-        
+
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
-        
+
         toast({
           title: "✅ Email verificado!",
           description: "Bem-vindo ao Shape Pro!",
@@ -145,7 +145,7 @@ export const AuthVerify = () => {
           setAutoCheckCount(prev => {
             const newCount = prev + 1;
             console.log(`[AuthVerify] 🔄 Tentativa automática ${newCount}/24`);
-            
+
             if (newCount >= 24) {
               console.log('[AuthVerify] ⏹️ Limite de tentativas atingido (2 min)');
               if (pollingIntervalRef.current) {
@@ -153,21 +153,21 @@ export const AuthVerify = () => {
                 pollingIntervalRef.current = null;
               }
             }
-            
+
             return newCount;
           });
 
           const isConfirmed = await checkEmailVerification(true);
-          
+
           if (isConfirmed) {
             console.log('[AuthVerify] ✅ Email confirmado via polling!');
             setIsVerified(true);
-            
+
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
-            
+
             toast({
               title: "✅ Email verificado!",
               description: "Bem-vindo ao Shape Pro!",
@@ -198,26 +198,36 @@ export const AuthVerify = () => {
     console.log('[AuthVerify] 👆 Verificação manual solicitada');
     setChecking(true);
     setErrorMessage("");
-    
+
     try {
-      // ✅ BUILD 37: Verificar sessão em vez de getUser()
+      // ✅ Forçar atualização da sessão para garantir dados mais recentes
+      const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        console.warn('[AuthVerify] ⚠️ Erro ao atualizar sessão, tentando obter sessão atual:', refreshError);
+      }
+
+      // ✅ Verificar sessão atual (seja a refrescada ou a cacheada)
       const { data: { session }, error } = await supabase.auth.getSession();
-      
+
       if (error) {
         console.error('[AuthVerify] ❌ Erro ao verificar sessão:', error);
         throw error;
       }
-      
-      if (session?.user?.email_confirmed_at) {
+
+      // Usar a sessão mais recente disponível
+      const currentSession = refreshedSession || session;
+
+      if (currentSession?.user?.email_confirmed_at) {
         console.log('[AuthVerify] ✅ Sessão ativa encontrada! Email confirmado.');
         setIsVerified(true);
-        
+
         // Parar polling
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
-        
+
         toast({
           title: "✅ Email verificado!",
           description: "Bem-vindo ao Shape Pro!",
@@ -229,8 +239,21 @@ export const AuthVerify = () => {
           navigate(redirectPath, { replace: true });
         }, 1500);
       } else {
-        console.log('[AuthVerify] ⏳ Nenhuma sessão ativa. Clique no link do email.');
-        setErrorMessage("📧 Por favor, clique no link enviado para seu email para confirmar sua conta.");
+        console.log('[AuthVerify] ⏳ Nenhuma sessão ativa ou email não confirmado.');
+        // Tentar recarregar o usuário para ter certeza
+        const { data: { user: freshUser } } = await supabase.auth.getUser();
+
+        if (freshUser?.email_confirmed_at) {
+          console.log('[AuthVerify] ✅ Usuário confirmado encontrado via getUser!');
+          setIsVerified(true);
+          // ... mesmo código de sucesso ...
+          setTimeout(async () => {
+            const redirectPath = await getRedirectPath();
+            navigate(redirectPath, { replace: true });
+          }, 1500);
+        } else {
+          setErrorMessage("📧 Email ainda não confirmado. Por favor, verifique sua caixa de entrada.");
+        }
       }
     } catch (error) {
       console.error('[AuthVerify] ❌ Erro na verificação manual:', error);
@@ -242,7 +265,7 @@ export const AuthVerify = () => {
 
   const handleResend = async () => {
     console.log('[AuthVerify] 📧 Reenviando email de confirmação...');
-    
+
     if (!email) {
       console.error('[AuthVerify] ❌ Email não informado');
       toast({
@@ -252,13 +275,13 @@ export const AuthVerify = () => {
       });
       return;
     }
-    
+
     setSending(true);
-    
+
     try {
       // FASE 2: Verificar se email já está confirmado antes de reenviar
       console.log('[AuthVerify] 🔍 Verificando se email já está confirmado...');
-      
+
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('email')
@@ -268,19 +291,19 @@ export const AuthVerify = () => {
       if (!profileError && profiles) {
         // Email existe, verificar se está confirmado
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
+
         if (!authError && user?.email_confirmed_at) {
           console.log('[AuthVerify] ✅ Email já confirmado! Redirecionando...');
           toast({
             title: "✅ Email já confirmado!",
             description: "Você já pode acessar o app.",
           });
-          
+
           setTimeout(async () => {
             const redirectPath = await getRedirectPath();
             navigate(redirectPath, { replace: true });
           }, 1500);
-          
+
           setSending(false);
           return;
         }
@@ -290,36 +313,36 @@ export const AuthVerify = () => {
       const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
       const meta = detectOrigin('student');
       const redirectUrl = calculateRedirectUrl(meta);
-      
+
       console.log('[AuthVerify] 📤 Reenviando para:', email);
       console.log('[AuthVerify] 🎯 redirectUrl:', redirectUrl);
-      
-      const { error } = await supabase.auth.resend({ 
-        type: "signup", 
+
+      const { error } = await supabase.auth.resend({
+        type: "signup",
         email,
-        options: { 
-          emailRedirectTo: redirectUrl 
+        options: {
+          emailRedirectTo: redirectUrl
         }
       });
-      
-    if (error) {
-      console.error('[AuthVerify] ❌ Erro ao reenviar:', error);
-      
-      // ✅ BUILD 35: Detectar rate limit
-      if (error.message?.includes('rate') || 
+
+      if (error) {
+        console.error('[AuthVerify] ❌ Erro ao reenviar:', error);
+
+        // ✅ BUILD 35: Detectar rate limit
+        if (error.message?.includes('rate') ||
           error.message?.includes('after') ||
           error.message?.includes('Email rate limit exceeded') ||
           error.status === 429) {
-        toast({
-          title: "⏰ Aguarde um momento",
-          description: "Por segurança, aguarde 60 segundos antes de reenviar novamente.",
-          variant: "destructive",
-        });
+          toast({
+            title: "⏰ Aguarde um momento",
+            description: "Por segurança, aguarde 60 segundos antes de reenviar novamente.",
+            variant: "destructive",
+          });
+          throw error;
+        }
+
         throw error;
       }
-      
-      throw error;
-    }
 
       console.log('[AuthVerify] ✅ Email reenviado com sucesso');
       toast({
@@ -375,7 +398,7 @@ export const AuthVerify = () => {
     <main className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4 md:p-6 lg:p-8">
       <div className="w-full max-w-md md:max-w-lg">
         <div className="bg-black/40 backdrop-blur-xl border border-gray-800/50 rounded-2xl md:rounded-3xl shadow-2xl shadow-yellow-500/5 p-6 md:p-8">
-          
+
           {/* Email Banner */}
           {email && (
             <div className="bg-gradient-to-r from-yellow-900/30 via-yellow-800/20 to-yellow-900/30 border border-yellow-600/50 rounded-xl p-4 mb-8 animate-in fade-in-50 slide-in-from-top-5 duration-500">
@@ -444,7 +467,7 @@ export const AuthVerify = () => {
 
             {/* Error Message */}
             {errorMessage && (
-              <div 
+              <div
                 className="bg-red-500/10 border-l-4 border-red-500 p-3 rounded-lg animate-in slide-in-from-top-2 duration-300"
                 role="alert"
                 aria-live="polite"

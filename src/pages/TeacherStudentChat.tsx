@@ -187,7 +187,7 @@ export default function Chat() {
         </div>
 
         {/* Input at bottom - Natural flow, no fixed positioning needed with flex col */}
-        <div className={`w-full z-[var(--z-message-input)] bg-background border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
+        <div className="w-full z-[var(--z-message-input)] transition-all duration-300 ease-out">
           <MessageInput
             onSendMessage={handleSendMessage}
             onTyping={handleTyping}

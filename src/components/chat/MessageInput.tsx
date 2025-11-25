@@ -95,7 +95,7 @@ export const MessageInput = ({
   }, []);
 
   return (
-    <div className={`border-t border-border bg-background/95 backdrop-blur-xl p-3 ${keyboardVisible ? 'pb-3' : 'pb-safe'}`}>
+    <div className={`border-t border-border bg-background/95 backdrop-blur-xl p-3 transition-all duration-300 ease-out ${keyboardVisible ? 'pb-3' : 'pb-[calc(env(safe-area-inset-bottom)+0.75rem)]'}`}>
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
         {/* Botão de anexo (futuro) */}
         <Button
