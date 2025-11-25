@@ -119,7 +119,7 @@ export const TeacherCard = () => {
                 {teacher.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-foreground truncate">{teacher.name}</h4>
               {teacher.bio ? (
@@ -129,7 +129,7 @@ export const TeacherCard = () => {
                   Entre em contato para mais informações
                 </p>
               )}
-              
+
               {teacher.specialties && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {(Array.isArray(teacher.specialties) ? teacher.specialties : [teacher.specialties]).slice(0, 3).map((specialty, index) => (
@@ -160,7 +160,7 @@ export const TeacherCard = () => {
                   <Instagram className="h-4 w-4" />
                 </Button>
               )}
-              
+
               {teacher.facebook_url && (
                 <Button
                   variant="ghost"
@@ -171,18 +171,9 @@ export const TeacherCard = () => {
                   <Facebook className="h-4 w-4" />
                 </Button>
               )}
-              
-              {teacher.youtube_url && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleYouTubeClick}
-                  className="h-8 w-8 p-0 hover:bg-red-600/10 hover:text-red-600"
-                >
-                  <Youtube className="h-4 w-4" />
-                </Button>
-              )}
-              
+
+
+
               {teacher.whatsapp_url && (
                 <Button
                   variant="ghost"

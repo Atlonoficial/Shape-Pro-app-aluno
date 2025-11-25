@@ -151,8 +151,8 @@ export default function Chat() {
 
   return (
     <>
-      <MobileContainer className="!pb-0">
-        <div className="flex flex-col h-screen">
+      <MobileContainer className="!pb-0 !h-[100dvh] overflow-hidden">
+        <div className="flex flex-col h-full w-full relative">
           <ChatHeader
             conversation={conversation}
             onlineUsers={onlineUsers}
@@ -161,30 +161,23 @@ export default function Chat() {
             isReconnecting={reconnecting}
           />
 
-          {/* Chat messages with padding for input */}
-          <div
-            className="flex-1 overflow-hidden"
-            style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
-          >
-            <ChatInterface
-              messages={messages}
-              currentUserId={user?.id}
-              connectionStatus={connectionStatus}
-              isReconnecting={reconnecting}
-              onMessagesRead={markAsRead}
-              onRetryMessage={retryMessage}
-              onMessageVisible={markMessageAsRead}
-            />
+          {/* Chat messages - Flex 1 to take available space */}
+          <div className="flex-1 overflow-hidden relative w-full">
+            <div className="absolute inset-0 overflow-y-auto pb-safe">
+              <ChatInterface
+                messages={messages}
+                currentUserId={user?.id}
+                connectionStatus={connectionStatus}
+                isReconnecting={reconnecting}
+                onMessagesRead={markAsRead}
+                onRetryMessage={retryMessage}
+                onMessageVisible={markMessageAsRead}
+              />
+            </div>
           </div>
 
-          {/* Fixed input at bottom */}
-          <div
-            className="fixed left-0 right-0 z-[var(--z-message-input)] transition-all duration-200"
-            style={{
-              bottom: keyboardVisible ? `${keyboardHeight}px` : 0,
-              paddingBottom: 0
-            }}
-          >
+          {/* Input at bottom - Natural flow, no fixed positioning needed with flex col */}
+          <div className={`w-full z-[var(--z-message-input)] bg-background border-t border-border ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
             <MessageInput
               onSendMessage={handleSendMessage}
               onTyping={handleTyping}

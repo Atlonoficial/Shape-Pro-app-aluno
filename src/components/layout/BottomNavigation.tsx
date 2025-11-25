@@ -28,6 +28,11 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
 
   // ✅ BUILD 31: Anti-duplicação removida - CSS já previne duplicação via .bottom-nav-container ~ .bottom-nav-container
 
+  // Se o teclado estiver visível, não renderizar a barra de navegação
+  if (keyboardVisible) {
+    return null;
+  }
+
   return (
     <nav
       {...(isMobileApp ? gestures : {})}
@@ -36,24 +41,23 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 999999,
+        zIndex: 50, // Reduzido de 999999 para um valor sensato, mas acima de conteúdo normal
         touchAction: 'none',
+        paddingBottom: 'env(safe-area-inset-bottom)', // Garante padding nativo
       }}
-      className={`
+      className="
         bottom-nav-container
-        !fixed !bottom-0 !left-0 !right-0 !w-full
-        transition-transform duration-300 ease-smooth
-        ${keyboardVisible ? 'translate-y-full' : 'translate-y-0'}
-      `}
+        bg-card/95 backdrop-blur-lg
+        border-t border-border
+        w-full
+        shadow-lg
+      "
       role="navigation"
       aria-label="Main navigation"
     >
       <div className="
         bottom-nav-wrapper
         w-full
-        bg-card/95 backdrop-blur-lg
-        border-t border-border
-        pb-[env(safe-area-inset-bottom)]
         md:max-w-md md:mx-auto
         lg:max-w-lg
       ">
@@ -79,6 +83,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                   relative
                   focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card
                   transition-all duration-200
+                  flex flex-col items-center justify-center gap-1
                 `}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}

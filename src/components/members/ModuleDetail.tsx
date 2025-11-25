@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Play, Download, CheckCircle2, Clock, Loader2, MessageCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { VideoPlayer } from "@/components/workouts/VideoPlayer";
+import NativeVideoPlayer from "@/components/workouts/NativeVideoPlayer";
 import { useCourseModules, CourseModule } from "@/hooks/useCourseModules";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ModuleDetailProps {
   module: any; // This is actually the COURSE object
@@ -123,6 +124,7 @@ export const ModuleDetail = ({ module: course, courseTitle, onBack }: ModuleDeta
 const LessonList = ({ module, onBack }: { module: CourseModule, onBack: () => void }) => {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Use lessons directly from the module object (fetched eagerly)
@@ -135,6 +137,29 @@ const LessonList = ({ module, onBack }: { module: CourseModule, onBack: () => vo
       setSelectedLesson(lessons[0]);
     }
   }, [lessons, selectedLesson]);
+
+  // Fetch signed URL when selected lesson changes
+  useEffect(() => {
+    const fetchVideoUrl = async () => {
+      if (selectedLesson?.storage_path) {
+        try {
+          const { data, error } = await supabase.storage
+            .from('course-videos')
+            .createSignedUrl(selectedLesson.storage_path, 21600); // 6 hours
+
+          if (error) throw error;
+          setVideoUrl(data?.signedUrl || null);
+        } catch (err) {
+          console.error('Error fetching signed URL:', err);
+          setVideoUrl(null);
+        }
+      } else {
+        setVideoUrl(null);
+      }
+    };
+
+    fetchVideoUrl();
+  }, [selectedLesson]);
 
   const handleLessonComplete = (lessonId: string) => {
     setCompletedLessons(prev => new Set([...prev, lessonId]));
@@ -176,11 +201,17 @@ const LessonList = ({ module, onBack }: { module: CourseModule, onBack: () => vo
       {/* Video Player */}
       {selectedLesson && (
         <div className="mb-6">
-          <VideoPlayer
-            exerciseName={selectedLesson.title}
-            videoUrl={selectedLesson.video_url}
-            className="w-full rounded-lg overflow-hidden shadow-lg border border-border/50"
+          <NativeVideoPlayer
+            videoUrl={videoUrl}
+            autoPlay={false}
           />
+
+          <div className="mt-3">
+            <h2 className="text-lg font-semibold text-foreground">{selectedLesson.title}</h2>
+            {selectedLesson.description && (
+              <p className="text-sm text-muted-foreground mt-1">{selectedLesson.description}</p>
+            )}
+          </div>
 
           {selectedLesson.is_free && (
             <Card className="mt-4 border-primary/20 bg-primary/5">
