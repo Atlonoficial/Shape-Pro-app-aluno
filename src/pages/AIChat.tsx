@@ -135,7 +135,7 @@ export default function AIChat() {
                       Limite Diário Atingido
                     </h3>
                     <p className="text-sm text-muted-foreground text-center mb-1">
-                      Você fez 3 perguntas hoje (3/3)
+                      Você atingiu o limite de perguntas por hoje.
                     </p>
                     <p className="text-sm text-muted-foreground text-center">
                       Volte amanhã para continuar! 🌅
@@ -145,7 +145,7 @@ export default function AIChat() {
               </div>
             )}
 
-            {/* Welcome message & Suggestions */}
+            {/* Welcome message */}
             {messages.length === 0 && !loading && !dailyLimitReached ? (
               <div className="flex flex-col items-center justify-center h-full px-6 animate-fade-up">
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 shadow-glow">
@@ -157,22 +157,6 @@ export default function AIChat() {
                 <p className="text-muted-foreground text-center mb-8 max-w-xs">
                   Sou seu assistente pessoal de treino e nutrição. Como posso ajudar hoje?
                 </p>
-
-                <div className="grid grid-cols-1 gap-3 w-full max-w-sm">
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setInput(suggestion);
-                        // Optional: auto-send or just fill input
-                      }}
-                      className="text-left px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-muted/50 transition-all duration-200 text-sm font-medium flex items-center justify-between group"
-                    >
-                      {suggestion}
-                      <Send className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
-                    </button>
-                  ))}
-                </div>
               </div>
             ) : (
               messages.map((msg) => (
@@ -219,34 +203,38 @@ export default function AIChat() {
 
           {/* Input Area */}
           <div
-            className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-200 z-[100]"
+            className="fixed left-0 right-0 z-[100] transition-all duration-200"
             style={{
               bottom: keyboardVisible
                 ? `${keyboardHeight}px`
                 : 'calc(72px + env(safe-area-inset-bottom))',
-              paddingBottom: keyboardVisible ? 0 : 'env(safe-area-inset-bottom)'
+              paddingBottom: 0
             }}
           >
-            <div className="px-4 py-3 max-w-4xl mx-auto">
-              <div className="flex gap-3 items-end bg-muted/50 p-1.5 rounded-3xl border border-border focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={
-                    dailyLimitReached
-                      ? "Volte amanhã para mais perguntas..."
-                      : "Digite sua dúvida..."
-                  }
-                  disabled={loading || dailyLimitReached}
-                  className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 px-4 py-3 text-base"
-                  rows={1}
-                />
+            <div className="border-t border-border bg-background/95 backdrop-blur-xl p-3 pb-safe">
+              <div className="flex items-end gap-2 max-w-4xl mx-auto">
+                <div className="flex-1 relative bg-muted/30 rounded-3xl border border-border/50 focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder={
+                      dailyLimitReached
+                        ? "Volte amanhã para mais perguntas..."
+                        : "Digite sua dúvida..."
+                    }
+                    disabled={loading || dailyLimitReached}
+                    className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 shadow-none text-base placeholder:text-muted-foreground/70 px-4 py-3"
+                    rows={1}
+                  />
+                </div>
                 <Button
                   onClick={handleSendMessage}
                   disabled={!input.trim() || loading || dailyLimitReached}
                   size="icon"
-                  className={`shrink-0 h-11 w-11 rounded-full transition-all duration-300 ${input.trim() ? 'bg-primary text-primary-foreground shadow-glow' : 'bg-muted text-muted-foreground'
+                  className={`h-10 w-10 rounded-full flex-shrink-0 transition-all duration-300 ${input.trim()
+                      ? 'bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-105'
+                      : 'bg-muted text-muted-foreground'
                     }`}
                 >
                   {loading ? (

@@ -47,25 +47,27 @@ export default function Chat() {
     }
   }, [conversation, messages, markAsRead]);
 
-  // Auto-delete chat notifications when entering conversation
+  // Auto-delete chat notifications and cleanup old messages when entering conversation
   useEffect(() => {
     if (conversation?.id && user?.id) {
-      const deleteNotifications = async () => {
+      const performCleanup = async () => {
         try {
-          const { error } = await supabase.rpc('delete_chat_notifications', {
+          // Clear notifications
+          await supabase.rpc('delete_chat_notifications', {
             p_user_id: user.id,
             p_conversation_id: conversation.id
           });
 
-          if (error) {
-            console.error('Erro ao deletar notificações:', error);
-          }
+          // Cleanup old messages (older than 7 days)
+          // We call this here to ensure the chat is clean when opened
+          await supabase.rpc('cleanup_old_messages' as any);
+
         } catch (error) {
-          console.error('Erro ao deletar notificações:', error);
+          console.error('Erro na limpeza do chat:', error);
         }
       };
 
-      deleteNotifications();
+      performCleanup();
     }
   }, [conversation?.id, user?.id]);
 
@@ -177,10 +179,10 @@ export default function Chat() {
 
           {/* Fixed input above bottom navigation */}
           <div
-            className="fixed left-0 right-0 z-[var(--z-message-input)] bg-background border-t border-border transition-all duration-200"
+            className="fixed left-0 right-0 z-[var(--z-message-input)] transition-all duration-200"
             style={{
-              bottom: getBottomPosition(),
-              paddingBottom: keyboardVisible ? 0 : 'env(safe-area-inset-bottom)'
+              bottom: keyboardVisible ? `${keyboardHeight}px` : 'calc(72px + env(safe-area-inset-bottom))',
+              paddingBottom: keyboardVisible ? 0 : 0 // Padding handled by MessageInput container
             }}
           >
             <MessageInput

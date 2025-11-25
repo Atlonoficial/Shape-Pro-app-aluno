@@ -18,7 +18,7 @@ export const YouTubePlayer = ({ videoUrl, exerciseName, className = "" }: YouTub
       /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
       /^([a-zA-Z0-9_-]{11})$/ // ID direto
     ];
-    
+
     for (const pattern of regexPatterns) {
       const match = url.match(pattern);
       if (match) return match[1];
@@ -64,14 +64,15 @@ export const YouTubePlayer = ({ videoUrl, exerciseName, className = "" }: YouTub
   return (
     <div className={`relative aspect-video bg-black rounded-xl overflow-hidden border border-border/20 ${className}`}>
       <iframe
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&controls=1&showinfo=0`}
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&controls=1&showinfo=0&playsinline=1&enablejsapi=1&origin=${window.location.origin}`}
         title={exerciseName}
         className="absolute inset-0 w-full h-full"
         frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
+        loading="lazy"
       />
-      
+
       {/* Overlay com informações */}
       <div className="absolute top-3 left-3 right-3 z-10">
         <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
