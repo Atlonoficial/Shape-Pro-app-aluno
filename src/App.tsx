@@ -27,7 +27,6 @@ import { AuthError } from "./pages/auth/AuthError";
 import { AcceptTerms } from "./pages/AcceptTerms";
 import { Anamnese } from "./pages/Anamnese";
 import { LoadingScreen } from "@/components/auth/LoadingScreen";
-import Configuracoes from "./pages/Configuracoes";
 import ContaSeguranca from "./pages/ContaSeguranca";
 import AssinaturasPlanos from "./pages/AssinaturasPlanos";
 import { LazySettings } from "./pages/lazy/LazySettings";
@@ -39,19 +38,20 @@ import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 
 import { IniciarTreino } from "./pages/IniciarTreino";
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
-import Agenda from "./pages/Agenda";
-import { Metas } from "./pages/Metas";
 
-import { ExamesMedicos } from "./pages/ExamesMedicos";
-import { FotosProgresso } from "./pages/FotosProgresso";
-import { AvaliacoesFisicas } from "./pages/AvaliacoesFisicas";
+import { LazyCursos } from "./pages/lazy/LazyCursos";
+import { LazyExames } from "./pages/lazy/LazyExames";
+import { LazyFotos } from "./pages/lazy/LazyFotos";
+import { LazyAvaliacoes } from "./pages/lazy/LazyAvaliacoes";
+
 import { AuthVerify } from "./pages/AuthVerify";
 import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
 import StravaCallback from "./pages/StravaCallback";
 import StravaDebug from "./pages/StravaDebug";
-import Cursos from "./pages/Cursos";
+
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,14 +121,14 @@ const AuthenticatedApp = () => {
           <Route path="/" element={<TermsGuard><Index /></TermsGuard>} />
           <Route path="/cadastro-completo" element={<AuthGuard><TermsGuard><CadastroCompleto /></TermsGuard></AuthGuard>} />
           <Route path="/anamnese" element={<AuthGuard><TermsGuard><Anamnese /></TermsGuard></AuthGuard>} />
-          <Route path="/exames-medicos" element={<AuthGuard><TermsGuard><ExamesMedicos /></TermsGuard></AuthGuard>} />
-          <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><FotosProgresso /></TermsGuard></AuthGuard>} />
-          <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><AvaliacoesFisicas /></TermsGuard></AuthGuard>} />
+          <Route path="/exames-medicos" element={<AuthGuard><TermsGuard><LazyExames /></TermsGuard></AuthGuard>} />
+          <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><LazyFotos /></TermsGuard></AuthGuard>} />
+          <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><LazyAvaliacoes /></TermsGuard></AuthGuard>} />
           <Route path="/configuracoes" element={<AuthGuard><TermsGuard><LazySettings /></TermsGuard></AuthGuard>} />
 
           <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
           <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
-          <Route path="/cursos" element={<AuthGuard><TermsGuard><Cursos /></TermsGuard></AuthGuard>} />
+          <Route path="/cursos" element={<AuthGuard><TermsGuard><LazyCursos /></TermsGuard></AuthGuard>} />
           <Route path="/iniciar-treino" element={<AuthGuard><TermsGuard><IniciarTreino /></TermsGuard></AuthGuard>} />
           <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
           <Route path="/agenda" element={<AuthGuard><TermsGuard><LazyAgenda /></TermsGuard></AuthGuard>} />
@@ -147,9 +147,14 @@ const AuthenticatedApp = () => {
 };
 
 import { Capacitor } from '@capacitor/core';
-import { StrictMode } from 'react';
+import { syncManager } from '@/services/offline/syncManager';
 
 const App = () => {
+  // ✅ Initialize SyncManager
+  useEffect(() => {
+    syncManager.sync();
+  }, []);
+
   // ✅ BUILD 50: NUNCA usar StrictMode em:
   // - Produção (evita double render que causa loops infinitos)
   // - Plataforma nativa (iOS/Android)

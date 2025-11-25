@@ -17,7 +17,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
-  
+
   // Integração automática de gamificação
   useGamificationIntegration();
   useGamificationStravaIntegration();
@@ -62,9 +62,10 @@ const Index = () => {
     })();
 
     return (
-      <div 
-        key={activeTab} 
+      <div
+        key={activeTab}
         style={{ isolation: 'isolate' }}
+        className="animate-in fade-in slide-in-from-bottom-4 duration-300"
       >
         {content}
       </div>
@@ -77,10 +78,10 @@ const Index = () => {
       <MobileContainer key={`container-${activeTab}`}>
         {renderContent()}
       </MobileContainer>
-      <BottomNavigation 
+      <BottomNavigation
         key={`bottom-nav-${activeTab}`}
-        activeTab={activeTab} 
-        onTabChange={handleTabChange} 
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
       />
     </>
   );

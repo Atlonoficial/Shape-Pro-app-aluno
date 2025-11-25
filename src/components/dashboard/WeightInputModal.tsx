@@ -22,7 +22,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
 
   const handleSave = async () => {
     const weightValue = parseFloat(weight);
-    
+
     if (!weightValue || weightValue <= 0 || weightValue > 300) {
       toast({
         title: "Peso inválido",
@@ -32,18 +32,16 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
       return;
     }
 
-    // ✅ Verificar conexão ANTES de tentar salvar
+    // ✅ Verificar conexão apenas para aviso, não bloquear
     if (!isOnline) {
       toast({
-        title: "Sem conexão",
-        description: "Verifique sua conexão com a internet e tente novamente.",
-        variant: "destructive"
+        title: "Modo Offline",
+        description: "Seu peso será salvo localmente e sincronizado quando houver conexão.",
       });
-      return;
     }
 
     setLoading(true);
-    
+
     // ✅ Timeout visual aumentado para 30s
     const timeoutId = setTimeout(() => {
       toast({
@@ -51,11 +49,11 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
         description: "A operação está demorando mais que o esperado. Continue aguardando...",
       });
     }, 30000);
-    
+
     try {
       const success = await onSave(weightValue);
       clearTimeout(timeoutId);
-      
+
       if (success) {
         toast({
           title: "Peso registrado!",
@@ -94,7 +92,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
           <DialogTitle className="flex items-center gap-2 text-primary text-base sm:text-lg">
             <Scale className="w-5 h-5" />
             <span className="text-sm sm:text-base">
-              Registrar Peso - {new Date().toLocaleDateString('pt-BR', { 
+              Registrar Peso - {new Date().toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: '2-digit',
                 month: 'short'
@@ -102,7 +100,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
             </span>
           </DialogTitle>
         </DialogHeader>
-        
+
         {/* ✅ Show warning if offline */}
         {!isOnline && (
           <div className="bg-destructive/10 text-destructive p-3 rounded-md flex items-center gap-2">
@@ -110,14 +108,14 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
             <p className="text-sm">Você está offline. Conecte-se para salvar seu peso.</p>
           </div>
         )}
-        
+
         <div className="space-y-4 py-2 sm:py-4">
           <div className="text-center px-2">
             <p className="text-xs sm:text-sm text-muted-foreground mb-4">
               Registre seu peso semanal para acompanhar sua evolução!
             </p>
           </div>
-          
+
           <div className="space-y-2 px-2">
             <Label htmlFor="weight" className="text-sm">Peso atual (kg)</Label>
             <Input
@@ -132,7 +130,7 @@ export const WeightInputModal = ({ isOpen, onClose, onSave, error }: WeightInput
               className="text-center text-base sm:text-lg h-12"
             />
           </div>
-          
+
           <div className="flex gap-2 pt-2 px-2">
             <Button
               variant="outline"

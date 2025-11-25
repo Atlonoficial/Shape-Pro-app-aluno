@@ -5,10 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyNutrition } from "@/hooks/useMyNutrition";
 import { Loader2 } from "lucide-react";
 
 interface AddCustomMealDialogProps {
@@ -21,6 +21,8 @@ interface AddCustomMealDialogProps {
 export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMealAdded }: AddCustomMealDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  // ✅ BUILD 55: Usar hook otimizado
+  const { addCustomMeal } = useMyNutrition();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -36,7 +38,7 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user?.id || !nutritionPlanId) {
       toast({
         title: "Erro",
@@ -58,77 +60,33 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
     setLoading(true);
 
     try {
-      // Criar a refeição customizada
-      const { data: meal, error: mealError } = await supabase
-        .from('meals')
-        .insert({
-          name: formData.name,
-          time: formData.time || null,
-          meal_type: formData.meal_type,
-          calories: parseInt(formData.calories),
-          protein: parseFloat(formData.protein) || 0,
-          carbs: parseFloat(formData.carbs) || 0,
-          fat: parseFloat(formData.fat) || 0,
-          portion_amount: parseFloat(formData.portion_amount),
-          portion_unit: formData.portion_unit,
-          created_by: user.id,
-          foods: []
-        })
-        .select()
-        .single();
+      // ✅ Usar função inteligente do hook (Offline + Optimistic)
+      const success = await addCustomMeal(formData, nutritionPlanId);
 
-      if (mealError) {
-        console.error('Error creating meal:', mealError);
-        throw mealError;
+      if (success) {
+        toast({
+          title: "Refeição adicionada!",
+          description: `${formData.name} foi adicionada ao seu plano.`,
+        });
+
+        // Reset form
+        setFormData({
+          name: "",
+          time: "",
+          meal_type: "meal",
+          calories: "",
+          protein: "",
+          carbs: "",
+          fat: "",
+          portion_amount: "100",
+          portion_unit: "g"
+        });
+
+        onOpenChange(false);
+        onMealAdded?.();
+      } else {
+        throw new Error("Falha ao adicionar refeição");
       }
-
-      // Buscar o plano nutricional atual para atualizar os meals_data
-      const { data: plan, error: planError } = await supabase
-        .from('meal_plans')
-        .select('meals_data')
-        .eq('id', nutritionPlanId)
-        .single();
-
-      if (planError) {
-        console.error('Error fetching plan:', planError);
-        throw planError;
-      }
-
-      // Adicionar o novo meal ao meals_data existente
-      const currentMealsData = (plan.meals_data as any[]) || [];
-      const updatedMealsData = [...currentMealsData, { meal_id: meal.id, added_at: new Date().toISOString() }];
-
-      // Atualizar o plano nutricional com o novo meal
-      const { error: updateError } = await supabase
-        .from('meal_plans')
-        .update({ meals_data: updatedMealsData })
-        .eq('id', nutritionPlanId);
-
-      if (updateError) {
-        console.error('Error updating plan:', updateError);
-        throw updateError;
-      }
-
-      toast({
-        title: "Refeição adicionada!",
-        description: `${formData.name} foi adicionada ao seu plano nutricional.`,
-      });
-
-      // Reset form
-      setFormData({
-        name: "",
-        time: "",
-        meal_type: "meal",
-        calories: "",
-        protein: "",
-        carbs: "",
-        fat: "",
-        portion_amount: "100",
-        portion_unit: "g"
-      });
-
-      onOpenChange(false);
-      onMealAdded?.();
 
     } catch (error) {
       console.error('Error adding custom meal:', error);
@@ -152,6 +110,9 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
             <Plus size={20} />
             Nova Refeição
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Adicione uma nova refeição personalizada ao seu plano nutricional.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -206,7 +167,7 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
               <Calculator size={16} />
               Informações Nutricionais
             </Label>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="calories">Calorias (kcal) *</Label>
@@ -314,8 +275,8 @@ export const AddCustomMealDialog = ({ open, onOpenChange, nutritionPlanId, onMea
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || !formData.name || !formData.calories}
               className="flex-1"
             >

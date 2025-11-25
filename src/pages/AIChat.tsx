@@ -125,7 +125,7 @@ export default function AIChat() {
 
   return (
     <>
-      <MobileContainer className="!pb-0 !h-[100dvh] overflow-hidden">
+      <MobileContainer className="!pb-0 !h-[100dvh] overflow-hidden" withBottomPadding={false}>
         <div className="flex flex-col h-full w-full relative bg-background">
           {/* Header */}
           <div className="flex-none bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 z-10">

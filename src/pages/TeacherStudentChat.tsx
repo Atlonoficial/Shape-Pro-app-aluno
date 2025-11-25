@@ -93,6 +93,25 @@ export default function Chat() {
     navigate(`/?tab=${tab}`);
   };
 
+  // Ref for auto-scrolling
+  const chatMessagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (chatMessagesContainerRef.current) {
+      chatMessagesContainerRef.current.scrollTop = chatMessagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Auto-scroll when keyboard opens
+  useEffect(() => {
+    if (keyboardVisible) {
+      // Small delay to allow layout to resize
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [keyboardVisible]);
+
   if (loading) {
     return (
       <MobileContainer>
@@ -141,27 +160,8 @@ export default function Chat() {
     );
   }
 
-  // Ref for auto-scrolling
-  const chatMessagesContainerRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    if (chatMessagesContainerRef.current) {
-      chatMessagesContainerRef.current.scrollTop = chatMessagesContainerRef.current.scrollHeight;
-    }
-  };
-
-  // Auto-scroll when keyboard opens
-  useEffect(() => {
-    if (keyboardVisible) {
-      // Small delay to allow layout to resize
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
-    }
-  }, [keyboardVisible]);
-
   return (
-    <MobileContainer className="!h-[100dvh] bg-background">
+    <MobileContainer className="!h-[100dvh] bg-background" withBottomPadding={false}>
       <div className="flex flex-col h-full w-full relative">
         <ChatHeader
           conversation={conversation}

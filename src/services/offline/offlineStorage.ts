@@ -1,5 +1,13 @@
 // Writing a native wrapper is safer to avoid "npm install" issues if the user environment is strict.
 
+export interface OfflineAction {
+    id?: number;
+    type: 'LOG_WEIGHT' | 'LOG_MEAL' | 'LOG_WORKOUT' | 'ADD_CUSTOM_MEAL';
+    payload: any;
+    userId: string;
+    timestamp: number;
+}
+
 class OfflineStorage {
     private dbName = 'shape-pro-db';
     private version = 1;
@@ -71,7 +79,7 @@ class OfflineStorage {
         });
     }
 
-    async addAction(action: any): Promise<void> {
+    async addAction(action: Omit<OfflineAction, 'id' | 'timestamp'>): Promise<void> {
         const db = await this.initDB();
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(['actions'], 'readwrite');
@@ -83,7 +91,7 @@ class OfflineStorage {
         });
     }
 
-    async getPendingActions(): Promise<any[]> {
+    async getPendingActions(): Promise<OfflineAction[]> {
         const db = await this.initDB();
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(['actions'], 'readonly');

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getFridayOfWeek } from '@/utils/dateHelpers';
 import { retryWithBackoff } from '@/utils/retryWithBackoff';
+import { offlineStorage } from '@/services/offline/offlineStorage';
 
 // ✅ Circuit breaker para peso (impede cascata de falhas)
 let weightCircuitOpen = false;
@@ -32,6 +33,13 @@ export const useWeightProgress = (userId: string) => {
       setLoading(true);
       setError(null);
 
+      // ✅ OFFLINE FIRST: Load from local storage immediately
+      const cachedWeight = await offlineStorage.get<WeightEntry[]>(`weight_progress_${userId}`);
+      if (cachedWeight && cachedWeight.length > 0) {
+        console.log('📦 [useWeightProgress] Loaded weight from offline storage');
+        setWeightData(cachedWeight);
+      }
+
       if (import.meta.env.DEV) {
         console.log('🔍 Fetching weight progress for user:', userId);
       }
@@ -52,34 +60,41 @@ export const useWeightProgress = (userId: string) => {
         if (import.meta.env.DEV) {
           console.error('❌ Error fetching weight data:', fetchError);
         }
-        throw fetchError;
+        // Don't throw if we have cached data
+        if (!cachedWeight) throw fetchError;
       }
 
-      if (import.meta.env.DEV) {
-        console.log('📊 Raw weight data from DB:', data);
+      if (data) {
+        if (import.meta.env.DEV) {
+          console.log('📊 Raw weight data from DB:', data);
+        }
+
+        // Format data for the chart - current month only
+        const formattedData = data.map(entry => {
+          const entryDate = new Date(entry.date);
+          return {
+            date: entryDate.toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: 'short'
+            }),
+            weight: Number(entry.value),
+            weekDay: entryDate.toLocaleDateString('pt-BR', { weekday: 'short' }),
+            rawDate: entry.date // Keep original date for calculations
+          };
+        });
+
+        console.log('📈 Formatted chart data:', formattedData);
+
+        setWeightData(formattedData);
+        // Save to offline storage
+        offlineStorage.set(`weight_progress_${userId}`, formattedData).catch(console.error);
       }
-
-      // Format data for the chart - current month only
-      const formattedData = (data || []).map(entry => {
-        const entryDate = new Date(entry.date);
-        return {
-          date: entryDate.toLocaleDateString('pt-BR', { 
-            day: '2-digit', 
-            month: 'short' 
-          }),
-          weight: Number(entry.value),
-          weekDay: entryDate.toLocaleDateString('pt-BR', { weekday: 'short' }),
-          rawDate: entry.date // Keep original date for calculations
-        };
-      });
-
-      console.log('📈 Formatted chart data:', formattedData);
-      
-      setWeightData(formattedData);
     } catch (err) {
       console.error('Error fetching weight progress:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao buscar dados de peso');
-      setWeightData([]);
+      // Only show error if no data
+      if (weightData.length === 0) {
+        setError(err instanceof Error ? err.message : 'Erro ao buscar dados de peso');
+      }
     } finally {
       setLoading(false);
     }
@@ -88,80 +103,9 @@ export const useWeightProgress = (userId: string) => {
   // Helper function that performs the actual weight entry logic
   const performWeightEntry = async (weight: number) => {
     console.log('🔍 Starting weight entry process for userId:', userId);
-    
+
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=Dom, 5=Sex, 6=Sáb
-    
-    // ✅ BUILD 36: Verificar se é o PRIMEIRO registro de peso do usuário COM RETRY
-    const { data: existingEntries, error: checkError } = await retryWithBackoff(async () => {
-      const result = await supabase
-        .from('progress')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('type', 'weight')
-        .limit(1);
-      return result;
-    });
-    
-    if (checkError) {
-      console.error('❌ Erro ao verificar registros existentes:', checkError);
-      throw checkError;
-    }
-    
-    const isFirstWeight = !existingEntries || existingEntries.length === 0;
-    
-    console.log('📊 Weight registration check:', {
-      isFirstWeight,
-      dayOfWeek,
-      existingEntriesCount: existingEntries?.length || 0
-    });
-    
-    // ✅ REGRA 1: Se é o PRIMEIRO peso, permitir em QUALQUER dia
-    if (isFirstWeight) {
-      console.log('✅ Primeiro registro de peso - permitido em qualquer dia');
-      
-      const insertData = {
-        user_id: userId,
-        type: 'weight',
-        value: weight,
-        unit: 'kg',
-        date: today.toISOString() // Registra no dia atual
-      };
-      
-      console.log('💾 Inserting first weight entry:', insertData);
 
-      const { data, error: insertError } = await retryWithBackoff(async () => {
-        const result = await supabase
-          .from('progress')
-          .insert(insertData)
-          .select()
-          .single();
-        return result;
-      });
-
-      if (insertError) {
-        console.error('❌ Supabase insert error:', insertError);
-        throw insertError;
-      }
-
-      console.log('✅ First weight entry added successfully:', data);
-      await fetchWeightProgress();
-      return true;
-    }
-    
-    // ✅ REGRA 2: Para demais registros, verificar apenas se já pesou essa semana
-    // Permite registro em QUALQUER dia da semana, mas apenas 1 vez por semana
-    const alreadyWeighed = await hasWeighedThisWeek();
-    console.log('📅 Already weighed this week?', alreadyWeighed);
-    
-    if (alreadyWeighed) {
-      console.log('❌ User already weighed this week');
-      setError('Você já registrou seu peso esta semana. Aguarde até a próxima semana para um novo registro.');
-      return false;
-    }
-
-    console.log('✅ All validations passed - User has NOT weighed this week');
-    
     // ✅ Salvar o peso no dia ATUAL do registro
     const insertData = {
       user_id: userId,
@@ -170,7 +114,7 @@ export const useWeightProgress = (userId: string) => {
       unit: 'kg',
       date: today.toISOString().split('T')[0] // Salva no dia atual
     };
-    
+
     console.log('💾 Inserting weight entry:', insertData);
 
     const { data, error: insertError } = await retryWithBackoff(async () => {
@@ -183,12 +127,7 @@ export const useWeightProgress = (userId: string) => {
     });
 
     if (insertError) {
-      console.error('❌ Supabase insert error:', {
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        code: insertError.code
-      });
+      console.error('❌ Supabase insert error:', insertError);
       throw insertError;
     }
 
@@ -206,68 +145,66 @@ export const useWeightProgress = (userId: string) => {
       return false;
     }
 
-    // ✅ Circuit breaker - parar de tentar se já falhou 3x
-    if (weightCircuitOpen) {
-      setError('Servidor temporariamente indisponível. Tente novamente em 5 minutos.');
-      return false;
-    }
-
-    // ✅ Create promise with 30 second timeout
-    const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout: Servidor não respondeu em 30s')), 30000)
-    );
-
     try {
-      // ✅ Race between actual operation and timeout
-      const result = await Promise.race([
-        performWeightEntry(weight),
-        timeoutPromise
-      ]);
-      
-      // ✅ Reset failure count on success
-      weightFailureCount = 0;
-      return result;
+      // Try online first
+      await performWeightEntry(weight);
+      return true;
     } catch (err: any) {
-      console.error('❌ Error adding weight entry:', err);
-      
-      // ✅ Incrementar contador de falhas
-      weightFailureCount++;
-      
-      // ✅ Abrir circuit breaker se atingiu o threshold
-      if (weightFailureCount >= CIRCUIT_THRESHOLD) {
-        weightCircuitOpen = true;
-        console.warn(`⚠️ Circuit breaker ABERTO após ${CIRCUIT_THRESHOLD} falhas consecutivas`);
-        
-        // ✅ Auto-reset após 5 minutos
-        setTimeout(() => {
-          weightCircuitOpen = false;
-          weightFailureCount = 0;
-          console.log('✅ Circuit breaker FECHADO - tentativas habilitadas novamente');
-        }, CIRCUIT_TIMEOUT);
+      console.error('❌ Error adding weight entry (trying offline):', err);
+
+      // ✅ OFFLINE FALLBACK
+      try {
+        await offlineStorage.addAction({
+          type: 'LOG_WEIGHT',
+          payload: { weight, date: new Date().toISOString() },
+          userId
+        });
+
+        // Optimistic update
+        const today = new Date();
+        const newEntry: WeightEntry = {
+          date: today.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+          weight: weight,
+          weekDay: today.toLocaleDateString('pt-BR', { weekday: 'short' }),
+          rawDate: today.toISOString()
+        };
+
+        const newData = [...weightData, newEntry].sort((a, b) =>
+          new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime()
+        );
+
+        setWeightData(newData);
+        offlineStorage.set(`weight_progress_${userId}`, newData).catch(console.error);
+
+        console.log('✅ Saved weight action to offline queue');
+        return true;
+      } catch (offlineErr) {
+        console.error('Failed to save offline action', offlineErr);
+        setError('Erro ao salvar peso. Verifique sua conexão.');
+        return false;
       }
-      
-      // ✅ Specific message for timeout
-      if (err?.message?.includes('Timeout')) {
-        setError('Servidor não respondeu. Verifique sua conexão e tente novamente.');
-      } else if (weightCircuitOpen) {
-        setError('Múltiplas falhas detectadas. Sistema em proteção por 5 minutos.');
-      } else {
-        const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar peso';
-        setError(errorMessage);
-      }
-      
-      return false;
     }
   };
 
   const hasWeighedThisWeek = async () => {
     if (!userId) return false;
-    
+
+    // Check local cache first
+    if (weightData.length > 0) {
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const hasLocal = weightData.some(entry => new Date(entry.rawDate) >= startOfWeek);
+      if (hasLocal) return true;
+    }
+
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
-    
+
     try {
       // ✅ Use retry logic for weekly check
       const { data, error } = await retryWithBackoff(async () => {
@@ -282,6 +219,7 @@ export const useWeightProgress = (userId: string) => {
       });
 
       if (error) {
+        // If error (offline), assume false unless we found it in cache above
         console.error('Error checking weekly weight:', error);
         return false;
       }
@@ -309,10 +247,10 @@ export const useWeightProgress = (userId: string) => {
 
     try {
       // Garantir formato ISO completo se a data vier em formato simples
-      const formattedDate = assessmentDate.includes('T') 
-        ? assessmentDate 
+      const formattedDate = assessmentDate.includes('T')
+        ? assessmentDate
         : new Date(assessmentDate + 'T00:00:00').toISOString();
-      
+
       console.log('💾 Adding weight from assessment:', { userId, weight, date: formattedDate });
 
       const { data, error: insertError } = await supabase

@@ -514,10 +514,12 @@ export const useMyNutrition = () => {
   const logMeal = useCallback(async (mealPlanItemId: string, consumed: boolean, notes?: string): Promise<boolean> => {
     if (!user?.id) return false;
 
+    let mealData: any = null;
+
     try {
       // 1. Obter estado atual da refeição
       const currentMeals = mealsCacheRef.current?.data || [];
-      const mealData = currentMeals.find(meal => meal.meal_plan_item_id === mealPlanItemId);
+      mealData = currentMeals.find(meal => meal.meal_plan_item_id === mealPlanItemId);
 
       if (!mealData) {
         console.warn('[logMeal] Refeição não encontrada no cache local:', mealPlanItemId);
@@ -584,7 +586,12 @@ export const useMyNutrition = () => {
       try {
         await offlineStorage.addAction({
           type: 'LOG_MEAL',
-          payload: { mealPlanItemId, consumed, notes },
+          payload: {
+            mealPlanItemId,
+            consumed,
+            notes,
+            mealData: mealData // ✅ Include full meal data for offline sync
+          },
           userId: user.id
         });
         console.log('Saved action to offline queue');
@@ -595,6 +602,108 @@ export const useMyNutrition = () => {
       }
     }
   }, [user?.id, fetchData]);
+
+  // ✅ BUILD 55: Adicionar refeição customizada (Intelligent Save)
+  const addCustomMeal = useCallback(async (mealData: any, nutritionPlanId: string): Promise<boolean> => {
+    if (!user?.id) return false;
+
+    const tempId = crypto.randomUUID();
+    const newMeal: TodayMeal = {
+      meal_plan_item_id: tempId,
+      meal_name: mealData.name,
+      meal_time: mealData.time || '00:00',
+      meal_type: mealData.meal_type || 'meal',
+      calories: parseFloat(mealData.calories) || 0,
+      protein: parseFloat(mealData.protein) || 0,
+      carbs: parseFloat(mealData.carbs) || 0,
+      fat: parseFloat(mealData.fat) || 0,
+      foods: [],
+      is_logged: false,
+      meal_plan_id: nutritionPlanId
+    };
+
+    // 1. Optimistic Update
+    const currentMeals = mealsCacheRef.current?.data || [];
+    const updatedMeals = [...currentMeals, newMeal];
+
+    mealsCacheRef.current = {
+      data: updatedMeals,
+      timestamp: Date.now(),
+      version: CACHE_VERSION
+    };
+    setTodaysMeals(updatedMeals);
+
+    // Save to offline storage immediately
+    offlineStorage.set(`meals_${user.id}`, updatedMeals).catch(console.error);
+
+    try {
+      // 2. Try Online Save
+      // Criar a refeição customizada com ID gerado no cliente para consistência
+      const { data: meal, error: mealError } = await supabase
+        .from('meals')
+        .insert({
+          id: tempId, // ✅ USAR O MESMO ID
+          name: mealData.name,
+          time: mealData.time || null,
+          meal_type: mealData.meal_type,
+          calories: parseFloat(mealData.calories),
+          protein: parseFloat(mealData.protein) || 0,
+          carbs: parseFloat(mealData.carbs) || 0,
+          fat: parseFloat(mealData.fat) || 0,
+          portion_amount: parseFloat(mealData.portion_amount) || 100,
+          portion_unit: mealData.portion_unit || 'g',
+          created_by: user.id,
+          foods: []
+        })
+        .select()
+        .single();
+
+      if (mealError) throw mealError;
+
+      // Buscar o plano nutricional atual para atualizar os meals_data
+      const { data: plan, error: planError } = await supabase
+        .from('meal_plans')
+        .select('meals_data')
+        .eq('id', nutritionPlanId)
+        .single();
+
+      if (planError) throw planError;
+
+      // Adicionar o novo meal ao meals_data existente
+      const currentMealsData = (plan.meals_data as any[]) || [];
+      const updatedMealsData = [...currentMealsData, { meal_id: meal.id, added_at: new Date().toISOString() }];
+
+      // Atualizar o plano nutricional com o novo meal
+      const { error: updateError } = await supabase
+        .from('meal_plans')
+        .update({ meals_data: updatedMealsData })
+        .eq('id', nutritionPlanId);
+
+      if (updateError) throw updateError;
+
+      return true;
+
+    } catch (error) {
+      console.error('[addCustomMeal] Erro ao salvar online, enfileirando offline:', error);
+
+      // 3. Offline Fallback
+      try {
+        await offlineStorage.addAction({
+          type: 'ADD_CUSTOM_MEAL',
+          payload: {
+            mealId: tempId, // ✅ Passar o ID gerado
+            mealData,
+            nutritionPlanId
+          },
+          userId: user.id
+        });
+        return true;
+      } catch (e) {
+        console.error('Failed to save offline action', e);
+        return false;
+      }
+    }
+  }, [user?.id]);
 
   const addMealLog = logMeal; // Alias para compatibilidade
 
@@ -626,6 +735,7 @@ export const useMyNutrition = () => {
     loading,
     logMeal,
     addMealLog,
+    addCustomMeal,
     // Função adicional para verificar se tem acesso nutricional
     hasNutritionAccess: () => todaysMeals.length > 0
   };
