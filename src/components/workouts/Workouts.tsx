@@ -208,7 +208,7 @@ export const Workouts = () => {
   }
 
   return (
-    <div className="p-4 pt-8 pb-safe-4xl">
+    <div className="p-4 pt-8">
       {/* Header */}
       <div className="mb-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/?tab=home")} aria-label="Voltar para a Home">
@@ -237,8 +237,8 @@ export const Workouts = () => {
             <button
               key={group}
               className={`px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors ${group === "Todos"
-                  ? "bg-accent text-background"
-                  : "bg-card/50 text-muted-foreground hover:bg-card/70"
+                ? "bg-accent text-background"
+                : "bg-card/50 text-muted-foreground hover:bg-card/70"
                 }`}
             >
               {group}

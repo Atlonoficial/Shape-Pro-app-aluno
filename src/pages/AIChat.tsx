@@ -7,7 +7,7 @@ import { MobileContainer } from '@/components/layout/MobileContainer';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Loader2, Sparkles, Calendar } from 'lucide-react';
+import { Send, Loader2, Sparkles, Calendar, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
@@ -108,11 +108,22 @@ export default function AIChat() {
         <div className="flex flex-col h-screen bg-background">
           {/* Header */}
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
-            <div className="flex items-center justify-center relative">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/')}
+                className="text-foreground hover:bg-muted -ml-2"
+              >
+                <ArrowLeft size={20} />
+              </Button>
+
+              <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
                 <ShapeProLogo className="h-8 w-8" />
                 <span className="font-semibold text-lg">Shape AI</span>
               </div>
+
+              <div className="w-10" /> {/* Spacer for alignment */}
             </div>
           </div>
 
@@ -211,7 +222,7 @@ export default function AIChat() {
               paddingBottom: 0
             }}
           >
-            <div className="border-t border-border bg-background/95 backdrop-blur-xl p-3 pb-safe">
+            <div className={`border-t border-border bg-background/95 backdrop-blur-xl p-3 ${keyboardVisible ? 'pb-3' : 'pb-safe'}`}>
               <div className="flex items-end gap-2 max-w-4xl mx-auto">
                 <div className="flex-1 relative bg-muted/30 rounded-3xl border border-border/50 focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
                   <Textarea

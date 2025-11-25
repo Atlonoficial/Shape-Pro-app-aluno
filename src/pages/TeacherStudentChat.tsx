@@ -182,7 +182,7 @@ export default function Chat() {
             className="fixed left-0 right-0 z-[var(--z-message-input)] transition-all duration-200"
             style={{
               bottom: keyboardVisible ? `${keyboardHeight}px` : 0,
-              paddingBottom: keyboardVisible ? 0 : 0 // MessageInput handles safe area
+              paddingBottom: 0
             }}
           >
             <MessageInput
@@ -190,6 +190,7 @@ export default function Chat() {
               onTyping={handleTyping}
               disabled={!conversation}
               connectionStatus={connectionStatus}
+              keyboardVisible={keyboardVisible}
             />
           </div>
         </div>

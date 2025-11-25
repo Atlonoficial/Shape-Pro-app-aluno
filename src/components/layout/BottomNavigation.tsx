@@ -20,10 +20,10 @@ interface BottomNavigationProps {
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
   const { isVisible: keyboardVisible } = useKeyboardState();
   const { isMobileApp } = useIsMobileApp();
-  const gestures = useBottomNavGestures({ 
-    activeTab, 
-    tabs: navItems, 
-    onTabChange 
+  const gestures = useBottomNavGestures({
+    activeTab,
+    tabs: navItems,
+    onTabChange
   });
 
   // ✅ BUILD 31: Anti-duplicação removida - CSS já previne duplicação via .bottom-nav-container ~ .bottom-nav-container
@@ -53,21 +53,19 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
         w-full
         bg-card/95 backdrop-blur-lg
         border-t border-border
-        safe-area-bottom
+        pb-[env(safe-area-inset-bottom)]
         md:max-w-md md:mx-auto
         lg:max-w-lg
       ">
         <div className="
           flex justify-around items-center
-          px-safe py-2
-          min-h-[64px]
-          xs:min-h-[68px]
-          sm:min-h-[72px]
+          px-2 py-2
+          h-[72px]
         ">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            
+
             return (
               <button
                 key={item.id}
@@ -86,7 +84,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                 aria-current={isActive ? 'page' : undefined}
                 tabIndex={0}
               >
-                <Icon 
+                <Icon
                   size={22}
                   className={`
                     transition-all duration-300
@@ -94,7 +92,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                   `}
                   aria-hidden="true"
                 />
-                <span 
+                <span
                   className={`
                     text-[10px] xs:text-[11px] font-medium
                     transition-all duration-300

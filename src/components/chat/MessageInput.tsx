@@ -8,13 +8,15 @@ interface MessageInputProps {
   onTyping?: (isTyping: boolean) => void;
   disabled?: boolean;
   connectionStatus?: 'connected' | 'connecting' | 'disconnected';
+  keyboardVisible?: boolean;
 }
 
 export const MessageInput = ({
   onSendMessage,
   onTyping,
   disabled = false,
-  connectionStatus = 'connected'
+  connectionStatus = 'connected',
+  keyboardVisible = false
 }: MessageInputProps) => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -93,7 +95,7 @@ export const MessageInput = ({
   }, []);
 
   return (
-    <div className="border-t border-border bg-background/95 backdrop-blur-xl p-3 pb-safe">
+    <div className={`border-t border-border bg-background/95 backdrop-blur-xl p-3 ${keyboardVisible ? 'pb-3' : 'pb-safe'}`}>
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
         {/* Botão de anexo (futuro) */}
         <Button
@@ -133,8 +135,8 @@ export const MessageInput = ({
           disabled={!message.trim() || disabled || connectionStatus === 'disconnected'}
           size="icon"
           className={`h-10 w-10 rounded-full flex-shrink-0 transition-all duration-300 ${message.trim()
-              ? 'bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-105'
-              : 'bg-muted text-muted-foreground'
+            ? 'bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-105'
+            : 'bg-muted text-muted-foreground'
             }`}
         >
           <Send size={18} className={message.trim() ? 'ml-0.5' : ''} />
