@@ -31,7 +31,7 @@ const waitForCapacitor = async () => {
   if (Capacitor.isNativePlatform()) {
     const platform = Capacitor.getPlatform();
     const isIOS = platform === 'ios';
-    
+
     logger.info('Boot', '🔄 STEP 2: Native platform detected', {
       platform,
       isIOS,
@@ -39,52 +39,52 @@ const waitForCapacitor = async () => {
       timestamp: Date.now()
     });
     bootHealthCheck.addStep('STEP 2: Native platform detected');
-    
+
     // ✅ BUILD 49: Tempo reduzido para iOS
     const waitTime = isIOS ? 200 : 100;
     logger.info('Boot', `⏳ Waiting ${waitTime}ms for plugins...`);
     bootHealthCheck.addStep(`STEP 3: Waiting ${waitTime}ms`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
     bootHealthCheck.addStep('STEP 3: Wait complete');
-    
+
     // ✅ BUILD 51: NUNCA aguardar storage - Supabase usa localStorage imediatamente
     logger.info('Boot', '🔐 STEP 4: Creating Supabase client (no storage wait)...', {
       timestamp: Date.now()
     });
     bootHealthCheck.addStep('STEP 4: Creating Supabase client');
-    
+
     try {
       // ✅ Import Supabase IMEDIATAMENTE (sem aguardar storage)
       const supabaseModule = await import('@/integrations/supabase/client');
       const supabase = supabaseModule.getSupabase();
-      
+
       logger.info('Boot', '✅ STEP 5: Supabase client ready', {
         timestamp: Date.now()
       });
       bootHealthCheck.addStep('STEP 5: Supabase client ready');
-      
+
       // ✅ BUILD 51: Inicializar storage EM BACKGROUND (não bloquear boot)
-      if (isIOS) {
-        setTimeout(async () => {
-          try {
-            logger.info('Boot', 'Background: Initializing Capacitor Storage...');
-            await createCapacitorStorage();
-            
-            // ✅ Migrar sessão de localStorage → Capacitor Storage
-            const storageKey = 'sb-bqbopkqzkavhmenjlhab-auth-token';
-            const session = localStorage.getItem(storageKey);
-            if (session) {
-              logger.info('Boot', 'Migrating session to Capacitor Storage');
-              // A migração acontece automaticamente no próximo setItem()
-            }
-            
-            logger.info('Boot', '✅ Background: Storage initialized and migrated');
-          } catch (err) {
-            logger.warn('Boot', 'Background: Storage init failed, continuing with localStorage:', err);
+      // ✅ BUILD 51: Inicializar storage EM BACKGROUND (não bloquear boot)
+      // Modificado: Executar para TODAS as plataformas nativas (Android e iOS)
+      setTimeout(async () => {
+        try {
+          logger.info('Boot', 'Background: Initializing Capacitor Storage...');
+          await createCapacitorStorage();
+
+          // ✅ Migrar sessão de localStorage → Capacitor Storage
+          const storageKey = 'sb-bqbopkqzkavhmenjlhab-auth-token';
+          const session = localStorage.getItem(storageKey);
+          if (session) {
+            logger.info('Boot', 'Migrating session to Capacitor Storage');
+            // A migração acontece automaticamente no próximo setItem()
           }
-        }, 1000); // Aguardar 1s após boot
-      }
-      
+
+          logger.info('Boot', '✅ Background: Storage initialized and migrated');
+        } catch (err) {
+          logger.warn('Boot', 'Background: Storage init failed, continuing with localStorage:', err);
+        }
+      }, 1000); // Aguardar 1s após boot
+
       // ✅ Health check em background (não bloquear)
       setTimeout(async () => {
         try {
@@ -95,14 +95,14 @@ const waitForCapacitor = async () => {
           logger.warn('Boot', 'Background health check failed:', err);
         }
       }, 2000);
-      
+
     } catch (error) {
       // ✅ BUILD 51: Se Supabase falhar, é erro crítico (mas não deve acontecer)
       logger.error('Boot', '❌ CRITICAL: Supabase init failed:', error);
       bootHealthCheck.addStep('STEP 4: Supabase FAILED');
       throw new Error(`Boot initialization failed: ${error}`);
     }
-    
+
     logger.info('Boot', '🎯 STEP 8: Ready to render React', {
       timestamp: Date.now(),
       totalTime: `${Date.now() - performance.now()}ms`
@@ -115,30 +115,30 @@ const waitForCapacitor = async () => {
   // ✅ BUILD 51: Timeout de emergência reduzido para 5s
   const emergencyTimeout = setTimeout(() => {
     logger.error('Boot', '🚨 EMERGENCY: Boot taking too long (5s), forcing render');
-    
+
     bootManager.markBootComplete();
-    
+
     // ✅ BUILD 51: NUNCA usar StrictMode em nativo ou produção
     const isNative = Capacitor.isNativePlatform();
     const IS_PRODUCTION = import.meta.env.PROD;
     const AppWrapper = (isNative || IS_PRODUCTION) ? <App /> : <StrictMode><App /></StrictMode>;
-    
+
     createRoot(document.getElementById('root')!).render(AppWrapper);
-    
+
     // Esconder loader
     const loader = document.getElementById('native-loader');
     if (loader) loader.remove();
   }, 5000); // 8s → 5s (mais agressivo)
-  
+
   try {
     logger.debug('Boot', '🔄 STEP 1: Starting boot sequence...');
-    
+
     if (Capacitor.isNativePlatform()) {
       await waitForCapacitor();
-      
+
       logger.info('Boot', '🚀 Starting native platform initialization...');
       logger.debug('Boot', 'Platform:', Capacitor.getPlatform());
-      
+
       // LOGGING APRIMORADO: Capturar TODOS os erros com detalhes completos
       window.addEventListener('error', (e) => {
         const errorDetails = {
@@ -149,17 +149,17 @@ const waitForCapacitor = async () => {
           colno: e.colno || 0,
           timestamp: new Date().toISOString()
         };
-        
+
         logger.error('Boot', '❌ CRITICAL ERROR:', JSON.stringify(errorDetails, null, 2));
       });
-      
+
       window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
         const rejectionDetails = {
           reason: e?.reason?.message || e?.reason || 'Unknown rejection',
           stack: e?.reason?.stack || 'No stack trace',
           timestamp: new Date().toISOString()
         };
-        
+
         logger.error('Boot', '❌ UNHANDLED PROMISE REJECTION:', JSON.stringify(rejectionDetails, null, 2));
       });
 
@@ -187,20 +187,20 @@ const waitForCapacitor = async () => {
     logger.info('Boot', '🎯 STEP 8: Marking boot as complete');
     bootManager.markBootComplete();
     bootHealthCheck.addStep('STEP 8: Boot marked complete');
-    
+
     // ✅ BUILD 48: Cancelar emergency timeout
     clearTimeout(emergencyTimeout);
-    
+
     // ✅ BUILD 26: Aguardar 50ms para garantir propagação do flag
     logger.info('Boot', '⏳ STEP 8.5: Waiting 50ms for flag propagation...');
     await new Promise(resolve => setTimeout(resolve, 50));
 
     // ✅ BUILD 51: Renderizar React NUNCA com StrictMode em nativo ou produção
     logger.info('Boot', '🔄 STEP 9: Rendering React application...');
-    
+
     const isNative = Capacitor.isNativePlatform();
     const IS_PRODUCTION = import.meta.env.PROD;
-    
+
     // ✅ NUNCA usar StrictMode em produção ou plataforma nativa
     const AppWrapper = (isNative || IS_PRODUCTION) ? (
       <App />
@@ -226,15 +226,15 @@ const waitForCapacitor = async () => {
         }, 500);
       }
     }, 100);
-    
+
   } catch (error) {
     clearTimeout(emergencyTimeout);
     // ✅ BUILD 21: SEMPRE esconder loader mesmo com erro
     logger.error('Boot', '❌ FATAL ERROR:', error);
-    
+
     const loader = document.getElementById('native-loader');
     if (loader) loader.remove();
-    
+
     // ✅ Mostrar tela de erro ao invés de tela preta
     const rootEl = document.getElementById('root');
     if (rootEl) {

@@ -259,12 +259,21 @@ export const signInUser = async (email: string, password: string) => {
 
     if (Capacitor.isNativePlatform()) {
       const { capacitorStorage } = await import('@/lib/capacitorStorage');
+
+      // ✅ BUILD 64: Aguardar inicialização em vez de lançar erro
       if (!capacitorStorage.initialized) {
-        logger.error('signInUser', 'Storage not ready on native platform', {
-          initialized: capacitorStorage.initialized,
-          platform: Capacitor.getPlatform()
-        });
-        throw new Error('Aguarde a inicialização do app antes de fazer login');
+        logger.warn('signInUser', 'Storage not ready, waiting for initialization...');
+        try {
+          // Tentar inicializar sob demanda (com timeout interno)
+          await capacitorStorage.initialize();
+
+          if (!capacitorStorage.initialized) {
+            throw new Error('Falha na inicialização do armazenamento. Tente reiniciar o app.');
+          }
+        } catch (err) {
+          logger.error('signInUser', 'Storage init failed during login', err);
+          throw new Error('Aguarde a inicialização do app antes de fazer login');
+        }
       }
     }
   }

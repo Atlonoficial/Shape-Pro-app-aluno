@@ -11,6 +11,7 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { useCheckout } from "@/hooks/useCheckout";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectionStatus } from "@/components/ui/ConnectionStatus";
+import { Capacitor } from "@capacitor/core";
 
 // Mapeamento de ícones dos planos
 const PLAN_ICONS = {
@@ -136,14 +137,40 @@ const AssinaturasPlanos = () => {
   }, [planoAtual]);
 
 
+  // Interfaces
+  interface PlanFeature {
+    name: string;
+    included: boolean;
+  }
+
+  interface Plan {
+    id: string;
+    teacher_id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    currency: string;
+    interval: 'monthly' | 'quarterly' | 'yearly';
+    features: string[];
+    is_active: boolean;
+    highlighted: boolean;
+    icon?: string;
+    created_at: string;
+    updated_at: string;
+  }
+
+  interface TeacherProfile {
+    phone: string | null;
+  }
+
   const [teacherPhone, setTeacherPhone] = useState<string | null>(null);
-  const [planosDisponiveis, setPlanosDisponiveis] = useState<any[]>([]);
+  const [planosDisponiveis, setPlanosDisponiveis] = useState<Plan[]>([]);
 
   useEffect(() => {
     const loadTeacherInfo = async () => {
       if (!student?.teacher_id) return;
       try {
-        const { data: profile } = await (supabase as any)
+        const { data: profile } = await supabase
           .from('profiles')
           .select('phone')
           .eq('id', student.teacher_id)
@@ -164,14 +191,15 @@ const AssinaturasPlanos = () => {
       if (!student?.teacher_id) return;
 
       try {
-        const { data: planos } = await (supabase as any)
+        const { data: planos } = await supabase
           .from('plan_catalog')
           .select('*')
           .eq('teacher_id', student.teacher_id)
           .eq('is_active', true)
           .order('price', { ascending: true });
 
-        setPlanosDisponiveis(planos || []);
+        // Cast seguro pois sabemos a estrutura do banco
+        setPlanosDisponiveis((planos as unknown as Plan[]) || []);
       } catch (e) {
         console.error('Error loading plans:', e);
       }
@@ -505,17 +533,25 @@ const AssinaturasPlanos = () => {
 
                       {/* Preço */}
                       <div className="text-center">
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className={`text-2xl font-bold ${plano.highlighted ? 'text-gradient-primary' : 'text-foreground'}`}>
-                            {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: plano.currency || 'BRL'
-                            }).format(plano.price)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            /{plano.interval === 'monthly' ? 'mês' : plano.interval === 'yearly' ? 'ano' : plano.interval}
-                          </span>
-                        </div>
+                        {Capacitor.getPlatform() === 'ios' ? (
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-lg font-medium text-muted-foreground">
+                              Consulte valores
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className={`text-2xl font-bold ${plano.highlighted ? 'text-gradient-primary' : 'text-foreground'}`}>
+                              {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: plano.currency || 'BRL'
+                              }).format(plano.price)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              /{plano.interval === 'monthly' ? 'mês' : plano.interval === 'yearly' ? 'ano' : plano.interval}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Features */}
@@ -546,17 +582,40 @@ const AssinaturasPlanos = () => {
 
                       {/* Botão de Ação */}
                       <div className="pt-2">
-                        <Button
-                          onClick={() => handleContratarPlano(plano.id)}
-                          disabled={checkoutLoading}
-                          className={`w-full h-10 text-sm font-semibold transition-all duration-300 ${plano.highlighted
-                            ? 'btn-primary animate-glow'
-                            : 'btn-secondary hover:btn-primary'
-                            }`}
-                          size="sm"
-                        >
-                          {checkoutLoading ? 'Processando...' : 'Contratar Agora'}
-                        </Button>
+                        {Capacitor.getPlatform() === 'ios' ? (
+                          <Button
+                            onClick={() => {
+                              // iOS: Apenas abrir WhatsApp sem mensagem de compra específica
+                              if (!teacherPhone) {
+                                toast({
+                                  title: "Contato indisponível",
+                                  description: "O telefone do professor não está cadastrado.",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              const cleanPhone = teacherPhone.replace(/\D/g, '');
+                              const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Olá! Gostaria de saber mais sobre o plano ${plano.name}.`)}`;
+                              window.open(whatsappUrl, '_blank');
+                            }}
+                            className="w-full h-10 text-sm font-semibold btn-secondary"
+                            size="sm"
+                          >
+                            Falar com Professor
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleContratarPlano(plano.id)}
+                            disabled={checkoutLoading}
+                            className={`w-full h-10 text-sm font-semibold transition-all duration-300 ${plano.highlighted
+                              ? 'btn-primary animate-glow'
+                              : 'btn-secondary hover:btn-primary'
+                              }`}
+                            size="sm"
+                          >
+                            {checkoutLoading ? 'Processando...' : 'Contratar Agora'}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </Card>

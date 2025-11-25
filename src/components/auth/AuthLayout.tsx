@@ -14,9 +14,9 @@ export const AuthLayout = ({ children, title, description }: AuthLayoutProps) =>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mb-6">
-            <img 
-              src="/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png" 
-              alt="Shape Pro - Consultoria Online" 
+            <img
+              src="/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png"
+              alt="Shape Pro - Consultoria Online"
               className="h-16 w-auto mx-auto"
             />
           </div>
@@ -26,6 +26,19 @@ export const AuthLayout = ({ children, title, description }: AuthLayoutProps) =>
         <CardContent>
           {children}
         </CardContent>
+        <div className="px-6 pb-6 text-center text-xs text-muted-foreground">
+          <p>
+            Ao continuar, você concorda com nossos{" "}
+            <a href="/politica-privacidade" className="underline hover:text-primary">
+              Termos de Uso
+            </a>{" "}
+            e{" "}
+            <a href="/politica-privacidade" className="underline hover:text-primary">
+              Política de Privacidade
+            </a>
+            .
+          </p>
+        </div>
       </Card>
     </div>
   );

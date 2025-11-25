@@ -28,6 +28,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="shapepro" android:host="app" />
+                <data android:scheme="shapepro" android:host="auth" />
             </intent-filter>
 
             <!-- App Links for Strava Callback -->

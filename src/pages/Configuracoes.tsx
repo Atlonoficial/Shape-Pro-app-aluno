@@ -8,16 +8,108 @@ import { toast } from "@/hooks/use-toast";
 import { signOutUser } from "@/lib/supabase";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+const DeleteAccountButton = () => {
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuthContext();
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Call Edge Function to delete user
+      const { error } = await supabase.functions.invoke('delete-account');
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta excluída",
+        description: "Sua conta foi excluída permanentemente.",
+      });
+
+      // Force logout and redirect
+      await signOutUser();
+      window.location.href = '/';
+
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir sua conta. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-transparent p-0"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-destructive" />
+              ) : (
+                <Trash2 className="w-5 h-5 text-destructive" />
+              )}
+            </div>
+            <div className="text-left">
+              <h3 className="font-semibold">Excluir Minha Conta</h3>
+              <p className="text-sm text-destructive/70">Ação irreversível</p>
+            </div>
+          </div>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="max-w-[90%] rounded-xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-destructive">Tem certeza absoluta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação não pode ser desfeita. Isso excluirá permanentemente sua conta, seus treinos, histórico e dados pessoais de nossos servidores.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDeleteAccount}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {loading ? "Excluindo..." : "Sim, excluir minha conta"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 const Configuracoes = () => {
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { 
-    preferences, 
-    loading: prefsLoading, 
+  const {
+    preferences,
+    loading: prefsLoading,
     togglePush,
-    permissionStatus 
+    permissionStatus
   } = useNotificationPreferences(user?.id);
 
   const handleSair = async () => {
@@ -46,20 +138,20 @@ const Configuracoes = () => {
     {
       icon: Bell,
       title: "Notificações Push",
-      description: preferences?.push_enabled 
-        ? "Recebendo alertas e lembretes" 
+      description: preferences?.push_enabled
+        ? "Recebendo alertas e lembretes"
         : "Notificações desativadas",
       action: prefsLoading ? (
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
       ) : (
-        <Switch 
+        <Switch
           checked={preferences?.push_enabled ?? true}
           onCheckedChange={togglePush}
           disabled={prefsLoading || permissionStatus === 'denied'}
         />
       ),
-      subtitle: permissionStatus === 'denied' 
-        ? "Permissão negada nas configurações do dispositivo" 
+      subtitle: permissionStatus === 'denied'
+        ? "Permissão negada nas configurações do dispositivo"
         : undefined
     },
     {
@@ -90,8 +182,8 @@ const Configuracoes = () => {
       {/* Header */}
       <div className="p-4 pt-8 border-b border-border/30">
         <div className="flex items-center gap-3 mb-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate("/?tab=profile")}
             className="text-foreground"
@@ -106,8 +198,8 @@ const Configuracoes = () => {
         {/* Configuration Items */}
         <div className="space-y-2">
           {configItems.map((item, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               className="p-4 bg-card/50 border-border/50 hover:bg-card/70 transition-colors cursor-pointer"
               onClick={item.onClick}
             >
@@ -133,23 +225,31 @@ const Configuracoes = () => {
         </div>
 
         {/* Logout Button */}
-        <Card className="p-4 bg-destructive/10 border-destructive/20 hover:bg-destructive/20 transition-colors cursor-pointer">
+        <Card className="p-4 bg-muted/30 border-border/30 hover:bg-muted/50 transition-colors cursor-pointer">
           <Button
             variant="ghost"
             onClick={handleSair}
-            className="w-full justify-start text-destructive hover:text-destructive hover:bg-transparent p-0"
+            className="w-full justify-start text-foreground hover:text-foreground hover:bg-transparent p-0"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-destructive/20 rounded-lg flex items-center justify-center">
-                <LogOut className="w-5 h-5 text-destructive" />
+              <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                <LogOut className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="text-left">
                 <h3 className="font-semibold">Sair</h3>
-                <p className="text-sm text-destructive/70">Desconectar da conta</p>
+                <p className="text-sm text-muted-foreground">Desconectar da conta</p>
               </div>
             </div>
           </Button>
         </Card>
+
+        {/* Danger Zone - Delete Account */}
+        <div className="pt-6">
+          <h3 className="text-sm font-bold text-destructive mb-3 uppercase tracking-wider px-1">Zona de Perigo</h3>
+          <Card className="p-4 bg-destructive/5 border-destructive/20 hover:bg-destructive/10 transition-colors cursor-pointer">
+            <DeleteAccountButton />
+          </Card>
+        </div>
 
         {/* Footer Note */}
         <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mt-6">
