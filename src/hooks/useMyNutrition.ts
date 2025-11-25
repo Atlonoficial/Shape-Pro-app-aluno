@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineStorage } from '@/services/offline/offlineStorage';
 
 export interface MealLog {
   id: string;
@@ -272,13 +273,34 @@ export const useMyNutrition = () => {
 
     console.log('🔄 [useMyNutrition] Mount with user:', user.id);
 
+    // ✅ OFFLINE FIRST: Load from local storage immediately
+    (async () => {
+      try {
+        const cachedMeals = await offlineStorage.get<TodayMeal[]>(`meals_${user.id}`);
+        const cachedLogs = await offlineStorage.get<MealLog[]>(`meal_logs_${user.id}`);
+
+        if (cachedMeals && cachedMeals.length > 0) {
+          console.log('📦 [useMyNutrition] Loaded meals from offline storage');
+          setTodaysMeals(cachedMeals);
+          if (cachedLogs) setMealLogs(cachedLogs);
+          setLoading(false); // Show data immediately
+        }
+      } catch (err) {
+        console.error('Failed to load offline nutrition', err);
+      }
+    })();
+
     // ✅ Limpar cache para forçar RPC
     mealsCacheRef.current = null;
 
     // ✅ Chamar RPC diretamente sem dependência de getTodayMeals
     (async () => {
       try {
-        setLoading(true);
+        // Only set loading if we didn't have offline data
+        // But for now, let's keep it simple and just update in background if offline data exists
+        // Or set loading true if no offline data
+        // We'll rely on the offline load above to unset loading if found.
+
         console.log('📞 [useMyNutrition] Calling RPC get_meals_for_today_v2');
 
         let { data, error } = await supabase
@@ -346,6 +368,9 @@ export const useMyNutrition = () => {
         mealsCacheRef.current = { data: formatted, timestamp: Date.now(), version: CACHE_VERSION };
         setTodaysMeals(formatted);
 
+        // Save to offline storage
+        offlineStorage.set(`meals_${user.id}`, formatted).catch(console.error);
+
         // Buscar logs de hoje
         const today = new Date().toISOString().split('T')[0];
         const { data: logsData } = await supabase
@@ -358,10 +383,16 @@ export const useMyNutrition = () => {
 
         setMealLogs(logsData || []);
 
+        // Save logs to offline storage
+        if (logsData) {
+          offlineStorage.set(`meal_logs_${user.id}`, logsData).catch(console.error);
+        }
+
       } catch (err) {
         console.error('[useMyNutrition] Unexpected error:', err);
-        setTodaysMeals([]);
-        setMealLogs([]);
+        // Don't clear state on error if we have offline data
+        // setTodaysMeals([]);
+        // setMealLogs([]);
       } finally {
         setLoading(false);
       }
@@ -548,7 +579,20 @@ export const useMyNutrition = () => {
       return true;
     } catch (error) {
       console.error('[logMeal] Erro ao registrar refeição:', error);
-      return false;
+
+      // OFFLINE FALLBACK: Save action to sync later
+      try {
+        await offlineStorage.addAction({
+          type: 'LOG_MEAL',
+          payload: { mealPlanItemId, consumed, notes },
+          userId: user.id
+        });
+        console.log('Saved action to offline queue');
+        return true; // Optimistic success
+      } catch (e) {
+        console.error('Failed to save offline action', e);
+        return false;
+      }
     }
   }, [user?.id, fetchData]);
 

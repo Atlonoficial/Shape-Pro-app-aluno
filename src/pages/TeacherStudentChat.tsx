@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversation } from '@/hooks/useConversation';
@@ -141,53 +141,62 @@ export default function Chat() {
     );
   }
 
-  // Helper to calculate bottom position
-  const getBottomPosition = () => {
-    if (keyboardVisible) {
-      return `${keyboardHeight}px`;
+  // Ref for auto-scrolling
+  const chatMessagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (chatMessagesContainerRef.current) {
+      chatMessagesContainerRef.current.scrollTop = chatMessagesContainerRef.current.scrollHeight;
     }
-    return 'calc(72px + env(safe-area-inset-bottom))';
   };
 
+  // Auto-scroll when keyboard opens
+  useEffect(() => {
+    if (keyboardVisible) {
+      // Small delay to allow layout to resize
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [keyboardVisible]);
+
   return (
-    <>
-      <MobileContainer className="!pb-0 !h-[100dvh] overflow-hidden">
-        <div className="flex flex-col h-full w-full relative">
-          <ChatHeader
-            conversation={conversation}
-            onlineUsers={onlineUsers}
-            typingUsers={typingUsers}
-            connectionStatus={connectionStatus}
-            isReconnecting={reconnecting}
-          />
+    <MobileContainer className="!h-[100dvh] bg-background">
+      <div className="flex flex-col h-full w-full relative">
+        <ChatHeader
+          conversation={conversation}
+          onlineUsers={onlineUsers}
+          typingUsers={typingUsers}
+          connectionStatus={connectionStatus}
+          isReconnecting={reconnecting}
+        />
 
-          {/* Chat messages - Flex 1 to take available space */}
-          <div className="flex-1 overflow-hidden relative w-full">
-            <div className="absolute inset-0 overflow-y-auto pb-safe">
-              <ChatInterface
-                messages={messages}
-                currentUserId={user?.id}
-                connectionStatus={connectionStatus}
-                isReconnecting={reconnecting}
-                onMessagesRead={markAsRead}
-                onRetryMessage={retryMessage}
-                onMessageVisible={markMessageAsRead}
-              />
-            </div>
-          </div>
-
-          {/* Input at bottom - Natural flow, no fixed positioning needed with flex col */}
-          <div className={`w-full z-[var(--z-message-input)] bg-background border-t border-border ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              onTyping={handleTyping}
-              disabled={!conversation}
+        {/* Chat messages - Flex 1 to take available space */}
+        <div className="flex-1 overflow-hidden relative w-full">
+          <div className="absolute inset-0 overflow-y-auto pb-safe" id="chat-messages-container" ref={chatMessagesContainerRef}>
+            <ChatInterface
+              messages={messages}
+              currentUserId={user?.id}
               connectionStatus={connectionStatus}
-              keyboardVisible={keyboardVisible}
+              isReconnecting={reconnecting}
+              onMessagesRead={markAsRead}
+              onRetryMessage={retryMessage}
+              onMessageVisible={markMessageAsRead}
             />
           </div>
         </div>
-      </MobileContainer>
-    </>
+
+        {/* Input at bottom - Natural flow, no fixed positioning needed with flex col */}
+        <div className={`w-full z-[var(--z-message-input)] bg-background border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            onTyping={handleTyping}
+            disabled={!conversation}
+            connectionStatus={connectionStatus}
+            keyboardVisible={keyboardVisible}
+          />
+        </div>
+      </div>
+    </MobileContainer>
   );
 }

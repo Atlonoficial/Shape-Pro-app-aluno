@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAIConversation } from '@/hooks/useAIConversation';
 import { useKeyboardState } from '@/hooks/useKeyboardState';
@@ -102,6 +102,27 @@ export default function AIChat() {
     "Sugestão de café da manhã"
   ];
 
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Auto-scroll when messages change or keyboard opens
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (keyboardVisible) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [keyboardVisible]);
+
   return (
     <>
       <MobileContainer className="!pb-0 !h-[100dvh] overflow-hidden">
@@ -129,7 +150,7 @@ export default function AIChat() {
 
           {/* Messages Area - Flex 1 to take available space */}
           <div className="flex-1 overflow-hidden relative w-full">
-            <div className="absolute inset-0 overflow-y-auto px-4 py-4 space-y-6 pb-safe">
+            <div className="absolute inset-0 overflow-y-auto px-4 py-4 space-y-6 pb-safe" ref={messagesContainerRef}>
               {/* Daily limit error card */}
               {dailyLimitReached && (
                 <div className="sticky top-0 z-10 mb-4 animate-fade-in">
@@ -210,7 +231,7 @@ export default function AIChat() {
           </div>
 
           {/* Input Area - Natural flow */}
-          <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
+          <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-2' : 'pb-safe'}`}>
             <div className="p-3">
               <div className="flex items-end gap-2 max-w-4xl mx-auto">
                 <div className="flex-1 relative bg-muted/30 rounded-3xl border border-border/50 focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">

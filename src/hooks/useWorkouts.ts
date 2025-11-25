@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { useWorkoutPlans, type WorkoutPlan } from './useWorkoutPlans';
+import { offlineStorage } from '@/services/offline/offlineStorage';
 
 export interface Exercise {
   id: string;
@@ -121,25 +122,57 @@ export const useWorkouts = () => {
     };
   };
 
-  // Convert workout plans to workouts format
+  // Load from Offline Storage on mount
+  useEffect(() => {
+    const loadOfflineWorkouts = async () => {
+      if (!user?.id) return;
+      try {
+        const cachedWorkouts = await offlineStorage.get<Workout[]>(`workouts_${user.id}`);
+        if (cachedWorkouts && cachedWorkouts.length > 0) {
+          console.log('📦 [useWorkouts] Loaded from offline storage');
+          setWorkouts(cachedWorkouts);
+          setLoading(false); // Show data immediately
+        }
+      } catch (error) {
+        console.error('Failed to load offline workouts', error);
+      }
+    };
+
+    loadOfflineWorkouts();
+  }, [user?.id]);
+
+  // Convert workout plans to workouts format and save to offline storage
   useEffect(() => {
     if (workoutPlans && workoutPlans.length > 0) {
       const convertedWorkouts = workoutPlans
         .filter(plan => plan.status === 'active')
         .map(convertWorkoutPlan);
+
       setWorkouts(convertedWorkouts);
-    } else {
+
+      // Save to offline storage
+      if (user?.id) {
+        offlineStorage.set(`workouts_${user.id}`, convertedWorkouts)
+          .then(() => console.log('💾 [useWorkouts] Saved to offline storage'))
+          .catch(err => console.error('Failed to save offline workouts', err));
+      }
+    } else if (!plansLoading && workoutPlans) {
+      // Only clear if we are sure there are no plans (loaded and empty)
+      // But be careful not to wipe offline data if fetch failed (plansLoading would be false but maybe error?)
+      // For now, we trust workoutPlans source.
       setWorkouts([]);
     }
-  }, [workoutPlans]);
+  }, [workoutPlans, user?.id, plansLoading]);
 
-  // Update loading state
+  // Update loading state only if we didn't have offline data
   useEffect(() => {
-    setLoading(plansLoading);
-  }, [plansLoading]);
+    if (workouts.length === 0) {
+      setLoading(plansLoading);
+    }
+  }, [plansLoading, workouts.length]);
 
   // Get current workout (from current plan)
-  const currentWorkout = currentPlan ? convertWorkoutPlan(currentPlan) : null;
+  const currentWorkout = currentPlan ? convertWorkoutPlan(currentPlan) : (workouts.length > 0 ? workouts[0] : null);
 
   return {
     workouts,
