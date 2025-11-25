@@ -37,10 +37,10 @@ export const AuthScreen = () => {
   useEffect(() => {
     const autoLogin = searchParams.get('autoLogin');
     const confirmed = searchParams.get('confirmed');
-    
+
     if (autoLogin === 'true' || confirmed === 'true') {
       setActiveTab('signin');
-      
+
       // Mostrar toast de sucesso
       if (confirmed === 'true') {
         toast({
@@ -72,39 +72,39 @@ export const AuthScreen = () => {
           if (attempt > 0) {
             // Aguardar antes de retry (2s, 4s, 8s...)
             const waitTime = Math.pow(2, attempt) * 1000;
-            
+
             toast({
               title: `🔄 Tentativa ${attempt + 1}/${maxRetries + 1}`,
               description: `Aguardando ${waitTime / 1000}s antes de tentar novamente...`,
             });
-            
+
             await new Promise(resolve => setTimeout(resolve, waitTime));
           }
-          
+
           // Tentar login
           await signInUser(email, password);
-          
+
           // Sucesso!
           toast({
             title: "Login realizado com sucesso!",
             description: "Bem-vindo de volta ao Shape Pro.",
           });
-          
+
           return; // Sair do loop
-          
+
         } catch (error: any) {
           // Se for último retry, propagar erro
           if (attempt === maxRetries) {
             throw error;
           }
-          
+
           // Se não for erro de timeout, não fazer retry
-          if (!error.message.includes('timeout') && 
-              !error.message.includes('não está respondendo') &&
-              !error.message.includes('Problema de conexão')) {
+          if (!error.message.includes('timeout') &&
+            !error.message.includes('não está respondendo') &&
+            !error.message.includes('Problema de conexão')) {
             throw error;
           }
-          
+
           // Continuar para próximo retry
           console.log(`[Login] Tentativa ${attempt + 1} falhou, tentando novamente...`);
         }
@@ -115,9 +115,9 @@ export const AuthScreen = () => {
       await loginWithRetry(2); // Até 3 tentativas (0, 1, 2)
     } catch (error: any) {
       // ✅ Detectar timeout do banco
-      if (error.message.includes('timeout') || 
-          error.message.includes('não está respondendo') ||
-          error.message.includes('Problema de conexão')) {
+      if (error.message.includes('timeout') ||
+        error.message.includes('não está respondendo') ||
+        error.message.includes('Problema de conexão')) {
         toast({
           title: "⏱️ Servidor está demorando",
           description: "O banco de dados pode estar acordando. Aguarde 10 segundos e tente novamente.",
@@ -125,7 +125,7 @@ export const AuthScreen = () => {
         });
         return;
       }
-      
+
       // ✅ Detectar erro de email não confirmado
       if (error.message.includes('não confirmado')) {
         toast({
@@ -133,17 +133,17 @@ export const AuthScreen = () => {
           description: "Verifique sua caixa de entrada antes de fazer login.",
           variant: "destructive",
         });
-        
+
         setTimeout(() => {
           toast({
             title: "💡 Dica",
             description: "Não recebeu o email? Clique em 'Criar Conta' novamente para reenviar.",
           });
         }, 2000);
-        
+
         return;
       }
-      
+
       // Erro genérico
       toast({
         title: "Erro no login",
@@ -157,7 +157,7 @@ export const AuthScreen = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar aceitação dos termos
     if (!termsAccepted) {
       toast({
@@ -167,7 +167,7 @@ export const AuthScreen = () => {
       });
       return;
     }
-    
+
     setLoading(true);
 
     try {
@@ -187,11 +187,11 @@ export const AuthScreen = () => {
           return;
         } else {
           // Email existe mas não está confirmado → reenviar email
-          
+
           const { detectOrigin, calculateRedirectUrl } = await import('@/utils/domainDetector');
           const meta = detectOrigin('student');
           const redirectUrl = calculateRedirectUrl(meta);
-          
+
           const { error } = await supabase.auth.resend({
             type: 'signup',
             email,
@@ -202,10 +202,10 @@ export const AuthScreen = () => {
 
           if (error) {
             // ✅ BUILD 35: Detectar erro de template
-            if (error.message?.includes('template') || 
-                error.message?.includes('function') ||
-                error.message?.includes('date') ||
-                error.message?.includes('Error rendering email')) {
+            if (error.message?.includes('template') ||
+              error.message?.includes('function') ||
+              error.message?.includes('date') ||
+              error.message?.includes('Error rendering email')) {
               toast({
                 title: "⚠️ Erro no servidor de email",
                 description: "Entre em contato com suporte. Erro técnico: template de email incorreto.",
@@ -214,7 +214,7 @@ export const AuthScreen = () => {
               setLoading(false);
               return;
             }
-            
+
             toast({
               title: "Email já cadastrado",
               description: "Complete a confirmação do email. Verifique sua caixa de entrada.",
@@ -306,7 +306,7 @@ export const AuthScreen = () => {
       // Como não temos acesso direto ao auth.users, vamos tentar fazer login sem senha
       // para verificar se o email está confirmado
       const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-      
+
       // Se não houver usuário logado, assumimos que existe mas não está confirmado
       // (método alternativo já que não temos acesso direto ao auth.users)
       return { exists: true, confirmed: false };
@@ -327,7 +327,7 @@ export const AuthScreen = () => {
           .select('id')
           .eq('email', email.toLowerCase().trim())
           .maybeSingle();
-        
+
         if (data && !error) {
           setEmailExistsStatus('exists');
           setIsEmailConfirmed(true); // Assumir que está confirmado se existe no profiles
@@ -378,7 +378,7 @@ export const AuthScreen = () => {
     try {
       // Verificar se o email existe no sistema
       await checkEmailExists(email);
-      
+
       if (emailExists === false) {
         toast({
           title: "Email não encontrado",
@@ -390,7 +390,7 @@ export const AuthScreen = () => {
 
       // Tentar enviar o email de reset
       await resetPasswordForEmail(email, isNative);
-      
+
       toast({
         title: "Email enviado com sucesso!",
         description: "Verifique sua caixa de entrada e spam. O link é válido por 1 hora.",
@@ -407,7 +407,7 @@ export const AuthScreen = () => {
     } catch (error: any) {
       // Mensagens de erro mais específicas
       let errorMessage = "Tente novamente mais tarde.";
-      
+
       if (error.message?.includes('network')) {
         errorMessage = "Verifique sua conexão com a internet.";
       } else if (error.message?.includes('rate limit')) {
@@ -430,9 +430,9 @@ export const AuthScreen = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img 
-            src="/bispo-shape-pro.png" 
-            alt="Bispo - Shape Pro Consultoria Online" 
+          <img
+            src="/bispo-shape-pro.png"
+            alt="Bispo - Shape Pro Consultoria Online"
             className="h-32 w-auto mx-auto mb-4"
           />
           <p className="text-muted-foreground">Sua jornada fitness começa aqui</p>
@@ -494,31 +494,31 @@ export const AuthScreen = () => {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                  <Button 
-                    type="button" 
-                    variant="link" 
-                    size="sm" 
-                    onClick={handleResetPassword}
-                    disabled={resetLoading || resetCooldown > 0}
-                    className="flex items-center gap-2"
-                  >
-                    {resetLoading ? (
-                      <>
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        Enviando...
-                      </>
-                    ) : resetCooldown > 0 ? (
-                      <>
-                        <Mail className="h-3 w-3" />
-                        Aguarde {resetCooldown}s
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="h-3 w-3" />
-                        Esqueceu a senha?
-                      </>
-                    )}
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={handleResetPassword}
+                      disabled={resetLoading || resetCooldown > 0}
+                      className="flex items-center gap-2"
+                    >
+                      {resetLoading ? (
+                        <>
+                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Enviando...
+                        </>
+                      ) : resetCooldown > 0 ? (
+                        <>
+                          <Mail className="h-3 w-3" />
+                          Aguarde {resetCooldown}s
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-3 w-3" />
+                          Esqueceu a senha?
+                        </>
+                      )}
+                    </Button>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Entrando..." : "Entrar"}
@@ -581,8 +581,8 @@ export const AuthScreen = () => {
                       <p className="text-xs text-destructive mt-1 flex items-center gap-1">
                         <XCircle className="h-3 w-3" />
                         Email já cadastrado.{' '}
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => setActiveTab('signin')}
                           className="underline font-medium hover:text-destructive/80"
                         >
@@ -621,45 +621,41 @@ export const AuthScreen = () => {
 
                   {/* Checkbox de Termos de Uso */}
                   <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-                    <Checkbox 
-                      id="terms" 
+                    <Checkbox
+                      id="terms"
                       checked={termsAccepted}
                       onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
                       className="mt-1"
                     />
                     <Label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
                       Li e concordo com os{' '}
-                      <a 
-                        href="https://shapepro.site/app/terms" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary underline hover:text-primary/80 font-medium"
+                      <span
+                        onClick={() => import('@capacitor/browser').then(({ Browser }) => Browser.open({ url: 'https://shapepro.site/app/terms' }))}
+                        className="text-primary underline hover:text-primary/80 font-medium cursor-pointer"
                       >
                         Termos de Uso
-                      </a>
+                      </span>
                       {' '}e a{' '}
-                      <a 
-                        href="https://shapepro.site/app/privacy" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary underline hover:text-primary/80 font-medium"
+                      <span
+                        onClick={() => import('@capacitor/browser').then(({ Browser }) => Browser.open({ url: 'https://shapepro.site/app/privacy' }))}
+                        className="text-primary underline hover:text-primary/80 font-medium cursor-pointer"
                       >
                         Política de Privacidade
-                      </a>
+                      </span>
                     </Label>
                   </div>
 
                   {/* FASE 4: Feedback no botão */}
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={loading || !termsAccepted || (emailExistsStatus === 'exists' && isEmailConfirmed)}
                   >
-                    {loading 
-                      ? "Criando conta..." 
+                    {loading
+                      ? "Criando conta..."
                       : (emailExistsStatus === 'exists' && isEmailConfirmed)
-                      ? "Email já cadastrado"
-                      : "Criar Conta"}
+                        ? "Email já cadastrado"
+                        : "Criar Conta"}
                   </Button>
                 </form>
               </CardContent>

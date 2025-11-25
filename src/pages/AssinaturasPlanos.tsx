@@ -137,6 +137,7 @@ const AssinaturasPlanos = () => {
 
 
   const [teacherPhone, setTeacherPhone] = useState<string | null>(null);
+  const [planosDisponiveis, setPlanosDisponiveis] = useState<any[]>([]);
 
   useEffect(() => {
     const loadTeacherInfo = async () => {
@@ -376,23 +377,23 @@ const AssinaturasPlanos = () => {
             {/* Informações de Cobrança - apenas se existir detalhamento */}
             {planoAtual.preco !== '-' && planoAtual.dataRenovacao !== '-' && (
               <Card className={`p-6 ${planoAtual.expirationStatus === 'expiring_soon'
-                  ? "border-warning/30 bg-warning/5"
-                  : planoAtual.expirationStatus === 'expired'
-                    ? "border-destructive/30 bg-destructive/5"
-                    : ""
+                ? "border-warning/30 bg-warning/5"
+                : planoAtual.expirationStatus === 'expired'
+                  ? "border-destructive/30 bg-destructive/5"
+                  : ""
                 }`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${planoAtual.expirationStatus === 'expiring_soon'
-                      ? "bg-warning/20"
-                      : planoAtual.expirationStatus === 'expired'
-                        ? "bg-destructive/20"
-                        : "bg-primary/20"
+                    ? "bg-warning/20"
+                    : planoAtual.expirationStatus === 'expired'
+                      ? "bg-destructive/20"
+                      : "bg-primary/20"
                     }`}>
                     <Calendar className={`w-5 h-5 ${planoAtual.expirationStatus === 'expiring_soon'
-                        ? "text-warning"
-                        : planoAtual.expirationStatus === 'expired'
-                          ? "text-destructive"
-                          : "text-primary"
+                      ? "text-warning"
+                      : planoAtual.expirationStatus === 'expired'
+                        ? "text-destructive"
+                        : "text-primary"
                       }`} />
                   </div>
                   <h2 className="text-lg font-semibold text-foreground">Informações de Cobrança</h2>
@@ -426,8 +427,8 @@ const AssinaturasPlanos = () => {
                     <div className="flex justify-between items-center py-2">
                       <span className="text-muted-foreground">Tempo restante</span>
                       <span className={`font-semibold ${planoAtual.expirationStatus === 'expiring_soon'
-                          ? "text-warning"
-                          : "text-foreground"
+                        ? "text-warning"
+                        : "text-foreground"
                         }`}>
                         {planoAtual.daysRemaining === 0
                           ? "Vence hoje"
@@ -470,8 +471,8 @@ const AssinaturasPlanos = () => {
                   <Card
                     key={plano.id}
                     className={`group relative overflow-hidden transition-all duration-300 hover-lift max-w-sm mx-auto w-full ${plano.highlighted
-                        ? 'card-premium border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5'
-                        : 'card-gradient border-border/20 hover:border-primary/20'
+                      ? 'card-premium border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5'
+                      : 'card-gradient border-border/20 hover:border-primary/20'
                       }`}
                   >
                     {/* Plano Recomendado Badge */}
@@ -549,8 +550,8 @@ const AssinaturasPlanos = () => {
                           onClick={() => handleContratarPlano(plano.id)}
                           disabled={checkoutLoading}
                           className={`w-full h-10 text-sm font-semibold transition-all duration-300 ${plano.highlighted
-                              ? 'btn-primary animate-glow'
-                              : 'btn-secondary hover:btn-primary'
+                            ? 'btn-primary animate-glow'
+                            : 'btn-secondary hover:btn-primary'
                             }`}
                           size="sm"
                         >

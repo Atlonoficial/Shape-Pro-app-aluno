@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useConversation } from '@/hooks/useConversation';
 import { useEnhancedPresence } from '@/hooks/useEnhancedPresence';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useKeyboardState } from '@/hooks/useKeyboardState';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { MessageInput } from '@/components/chat/MessageInput';
@@ -16,10 +17,11 @@ export default function Chat() {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const [isTyping, setIsTyping] = useState(false);
-  
+
   // Status de conexão
   const { status: globalConnectionStatus } = useConnectionStatus();
-  
+  const { isVisible: keyboardVisible, height: keyboardHeight } = useKeyboardState();
+
   const {
     conversation,
     messages,
@@ -54,7 +56,7 @@ export default function Chat() {
             p_user_id: user.id,
             p_conversation_id: conversation.id
           });
-          
+
           if (error) {
             console.error('Erro ao deletar notificações:', error);
           }
@@ -62,14 +64,14 @@ export default function Chat() {
           console.error('Erro ao deletar notificações:', error);
         }
       };
-      
+
       deleteNotifications();
     }
   }, [conversation?.id, user?.id]);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
-    
+
     try {
       await sendMessage(content);
       setIsTyping(false);
@@ -109,13 +111,13 @@ export default function Chat() {
                 <Loader2 className="h-16 w-16 text-destructive" />
               </div>
             </div>
-            
+
             <h2 className="text-xl font-semibold text-foreground mb-2">
               Não foi possível carregar o chat
             </h2>
-            
+
             <p className="text-muted-foreground mb-4">{error}</p>
-            
+
             {error.includes('vinculado a um professor') && (
               <div className="bg-muted rounded-lg p-4 mt-4">
                 <p className="text-sm text-muted-foreground">
@@ -124,7 +126,7 @@ export default function Chat() {
                 </p>
               </div>
             )}
-            
+
             <button
               onClick={() => navigate('/')}
               className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
@@ -137,46 +139,65 @@ export default function Chat() {
     );
   }
 
+  // Helper to calculate bottom position
+  const getBottomPosition = () => {
+    if (keyboardVisible) {
+      return `${keyboardHeight}px`;
+    }
+    return 'calc(72px + env(safe-area-inset-bottom))';
+  };
+
   return (
-    <MobileContainer>
-      <div className="flex flex-col h-screen">
-        <ChatHeader 
-          conversation={conversation}
-          onlineUsers={onlineUsers}
-          typingUsers={typingUsers}
-          connectionStatus={connectionStatus}
-          isReconnecting={reconnecting}
-        />
-        
-        {/* Chat messages with padding for input + bottom nav */}
-        <div className="flex-1 overflow-hidden pb-[168px]">
-          <ChatInterface 
-            messages={messages}
-            currentUserId={user?.id}
+    <>
+      <MobileContainer className="!pb-0">
+        <div className="flex flex-col h-screen">
+          <ChatHeader
+            conversation={conversation}
+            onlineUsers={onlineUsers}
+            typingUsers={typingUsers}
             connectionStatus={connectionStatus}
             isReconnecting={reconnecting}
-            onMessagesRead={markAsRead}
-            onRetryMessage={retryMessage}
-            onMessageVisible={markMessageAsRead}
           />
-        </div>
-        
-        {/* Fixed input above bottom navigation */}
-        <div className="fixed bottom-[72px] left-0 right-0 z-[var(--z-message-input)]">
-          <MessageInput 
-            onSendMessage={handleSendMessage}
-            onTyping={handleTyping}
-            disabled={!conversation}
-            connectionStatus={connectionStatus}
-          />
-        </div>
 
-        {/* Bottom Navigation fixed at bottom */}
-        <BottomNavigation 
-          activeTab="assistant" 
-          onTabChange={handleTabChange} 
-        />
-      </div>
-    </MobileContainer>
+          {/* Chat messages with padding for input + bottom nav */}
+          <div
+            className="flex-1 overflow-hidden"
+            style={{ paddingBottom: 'calc(140px + env(safe-area-inset-bottom))' }}
+          >
+            <ChatInterface
+              messages={messages}
+              currentUserId={user?.id}
+              connectionStatus={connectionStatus}
+              isReconnecting={reconnecting}
+              onMessagesRead={markAsRead}
+              onRetryMessage={retryMessage}
+              onMessageVisible={markMessageAsRead}
+            />
+          </div>
+
+          {/* Fixed input above bottom navigation */}
+          <div
+            className="fixed left-0 right-0 z-[var(--z-message-input)] bg-background border-t border-border transition-all duration-200"
+            style={{
+              bottom: getBottomPosition(),
+              paddingBottom: keyboardVisible ? 0 : 'env(safe-area-inset-bottom)'
+            }}
+          >
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              onTyping={handleTyping}
+              disabled={!conversation}
+              connectionStatus={connectionStatus}
+            />
+          </div>
+        </div>
+      </MobileContainer>
+
+      {/* Bottom Navigation fixed at bottom */}
+      <BottomNavigation
+        activeTab="assistant"
+        onTabChange={handleTabChange}
+      />
+    </>
   );
 }

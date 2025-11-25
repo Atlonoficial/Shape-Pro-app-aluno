@@ -19,22 +19,22 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const { isVisible: keyboardVisible, height: keyboardHeight } = useKeyboardState();
-  
+
   const {
     messages,
     loading,
     error,
     sendMessage,
   } = useAIConversation();
-  
+
   const firstName = userProfile?.name?.split(' ')[0] || 'Usuário';
 
   // Helper para detectar erro de limite diário - usar diretamente sem estado derivado
   const isDailyLimitError = (errorMsg: string | null) => {
     if (!errorMsg) return false;
     const lowerError = errorMsg.toLowerCase();
-    return lowerError.includes('limite') && 
-           (lowerError.includes('diário') || lowerError.includes('dia') || lowerError.includes('perguntas'));
+    return lowerError.includes('limite') &&
+      (lowerError.includes('diário') || lowerError.includes('dia') || lowerError.includes('perguntas'));
   };
 
   // Computed value - evita race condition do useEffect
@@ -42,7 +42,7 @@ export default function AIChat() {
 
   const handleSendMessage = async () => {
     if (!input.trim() || loading) return;
-    
+
     // Prevent sending if daily limit is reached
     if (dailyLimitReached) {
       toast({
@@ -52,16 +52,16 @@ export default function AIChat() {
       });
       return;
     }
-    
+
     const messageText = input.trim();
     setInput('');
     setIsTyping(false);
-    
+
     try {
       await sendMessage(messageText);
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
-      
+
       // Toast específico para erro de limite diário
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMsg = String(error.message);
@@ -94,39 +94,44 @@ export default function AIChat() {
     }).format(date);
   };
 
+
+  const suggestions = [
+    "Criar treino de hipertrofia",
+    "Dicas para perder gordura",
+    "Explicar exercício Agachamento",
+    "Sugestão de café da manhã"
+  ];
+
   return (
     <>
-      <MobileContainer>
+      <MobileContainer className="!pb-0">
         <div className="flex flex-col h-screen bg-background">
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-4">
-            <div className="flex items-center gap-3">
-              <ShapeProLogo className="h-10 w-10" />
-              <div>
-                <h1 className="text-lg font-semibold">Assistente IA</h1>
-                <p className="text-xs text-muted-foreground">
-                  Olá, {firstName}! Como posso ajudar?
-                </p>
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
+            <div className="flex items-center justify-center relative">
+              <div className="flex items-center gap-2">
+                <ShapeProLogo className="h-8 w-8" />
+                <span className="font-semibold text-lg">Shape AI</span>
               </div>
             </div>
           </div>
 
           {/* Messages Area */}
-          <div 
-            className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+          <div
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
             style={{
-              paddingBottom: '160px'
+              paddingBottom: 'calc(140px + env(safe-area-inset-bottom))'
             }}
           >
-            {/* Daily limit error card - sempre visível no topo quando ativo */}
+            {/* Daily limit error card */}
             {dailyLimitReached && (
-              <div className="sticky top-0 z-10 mb-4">
-                <Card className="p-6 bg-card/95 backdrop-blur-md border-border/50 shadow-xl">
+              <div className="sticky top-0 z-10 mb-4 animate-fade-in">
+                <Card className="p-6 bg-card/95 backdrop-blur-md border-destructive/30 shadow-xl">
                   <CardContent className="p-0">
-                    <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-glow">
-                      <Calendar className="w-8 h-8 text-primary-foreground" />
+                    <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Calendar className="w-8 h-8 text-destructive" />
                     </div>
-                    <h3 className="text-lg font-semibold text-center mb-2">
+                    <h3 className="text-lg font-semibold text-center mb-2 text-destructive">
                       Limite Diário Atingido
                     </h3>
                     <p className="text-sm text-muted-foreground text-center mb-1">
@@ -140,102 +145,114 @@ export default function AIChat() {
               </div>
             )}
 
-            {/* Welcome message - só quando não há mensagens E não há erro de limite */}
+            {/* Welcome message & Suggestions */}
             {messages.length === 0 && !loading && !dailyLimitReached ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-8">
-                <Sparkles className="w-16 h-16 text-primary mb-4" />
-                <h2 className="text-xl font-semibold mb-2">
-                  {new Date().getHours() < 12 
-                    ? "Bom dia! Novo dia, novas perguntas! 🌅"
-                    : "Bem-vindo ao Assistente IA!"
-                  }
+              <div className="flex flex-col items-center justify-center h-full px-6 animate-fade-up">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 shadow-glow">
+                  <Sparkles className="w-10 h-10 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-3 text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  Olá, {firstName}!
                 </h2>
-                <p className="text-muted-foreground">
-                  {new Date().getHours() < 12
-                    ? "Você tem 3 perguntas disponíveis hoje."
-                    : "Faça uma pergunta para começar a conversa."
-                  }
+                <p className="text-muted-foreground text-center mb-8 max-w-xs">
+                  Sou seu assistente pessoal de treino e nutrição. Como posso ajudar hoje?
                 </p>
+
+                <div className="grid grid-cols-1 gap-3 w-full max-w-sm">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setInput(suggestion);
+                        // Optional: auto-send or just fill input
+                      }}
+                      className="text-left px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-muted/50 transition-all duration-200 text-sm font-medium flex items-center justify-between group"
+                    >
+                      {suggestion}
+                      <Send className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : messages.length > 0 ? (
+            ) : (
               messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
+                    className={`max-w-[85%] rounded-2xl px-5 py-3 shadow-sm ${msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                      : 'bg-card border border-border rounded-tl-sm'
+                      }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                    <p className="text-xs opacity-70 mt-1">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    <p className={`text-[10px] mt-1.5 text-right ${msg.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                      }`}>
                       {formatTime(msg.timestamp)}
                     </p>
                   </div>
                 </div>
               ))
-            ) : null}
-            
+            )}
+
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-muted rounded-lg px-4 py-2 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Pensando...</span>
+              <div className="flex justify-start animate-pulse">
+                <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-3">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
             )}
-            
+
             {error && !dailyLimitReached && (
-              <div className="flex justify-center">
-                <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-2 text-sm">
+              <div className="flex justify-center animate-fade-in">
+                <div className="bg-destructive/10 text-destructive border border-destructive/20 rounded-lg px-4 py-2 text-sm font-medium">
                   {error}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Input Area - Fixed at bottom with safe area support */}
+          {/* Input Area */}
           <div
-            className="fixed left-0 right-0 bg-background border-t border-border transition-all duration-200 pointer-events-auto"
+            className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-200 z-[100]"
             style={{
-              bottom: keyboardVisible 
-                ? `${keyboardHeight}px` 
+              bottom: keyboardVisible
+                ? `${keyboardHeight}px`
                 : 'calc(72px + env(safe-area-inset-bottom))',
-              zIndex: 10001,
-              isolation: 'isolate',
-              paddingBottom: 'env(safe-area-inset-bottom)'
+              paddingBottom: keyboardVisible ? 0 : 'env(safe-area-inset-bottom)'
             }}
           >
-            <div className="px-4 py-3">
-              <div className="flex gap-2 items-end">
+            <div className="px-4 py-3 max-w-4xl mx-auto">
+              <div className="flex gap-3 items-end bg-muted/50 p-1.5 rounded-3xl border border-border focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder={
-                    dailyLimitReached 
-                      ? "Limite diário atingido. Volte amanhã! 🕐" 
-                      : loading 
-                      ? "Aguarde..." 
-                      : "Digite sua mensagem..."
+                    dailyLimitReached
+                      ? "Volte amanhã para mais perguntas..."
+                      : "Digite sua dúvida..."
                   }
                   disabled={loading || dailyLimitReached}
-                  className="min-h-[44px] max-h-[120px] resize-none"
+                  className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 px-4 py-3 text-base"
                   rows={1}
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!input.trim() || loading || dailyLimitReached}
                   size="icon"
-                  className="shrink-0 h-11 w-11"
+                  className={`shrink-0 h-11 w-11 rounded-full transition-all duration-300 ${input.trim() ? 'bg-primary text-primary-foreground shadow-glow' : 'bg-muted text-muted-foreground'
+                    }`}
                 >
                   {loading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <Send className="h-5 w-5" />
+                    <Send className="h-5 w-5 ml-0.5" />
                   )}
                 </Button>
               </div>
@@ -244,9 +261,9 @@ export default function AIChat() {
         </div>
       </MobileContainer>
 
-      {/* Bottom Navigation - Completely outside MobileContainer */}
-      <BottomNavigation 
-        activeTab="" 
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeTab=""
         onTabChange={handleTabChange}
       />
     </>
