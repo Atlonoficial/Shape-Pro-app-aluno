@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>4.0.1</string>
 	<key>CFBundleVersion</key>
-	<string>64</string>
+	<string>65</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -49,7 +49,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Precisamos salvar imagens na sua galeria quando você exporta ou baixa mídias pelo app.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Precisamos da câmera para tirar fotos dentro do app.</string>
+	<string>Precisamos da câmera para que você possa enviar fotos do seu progresso físico e das suas refeições para o acompanhamento do professor.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Seus dados serão usados para entregar anúncios personalizados e melhorar sua experiência no app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

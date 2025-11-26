@@ -475,9 +475,11 @@ const AssinaturasPlanos = () => {
               <p className="text-sm text-primary/80 mb-3">
                 Fale com seu professor para ajustar seu plano ou tirar dúvidas.
               </p>
-              <Button variant="outline" size="sm" className="text-primary border-primary/30">
-                Contatar Professor
-              </Button>
+              {Capacitor.getPlatform() !== 'ios' && (
+                <Button variant="outline" size="sm" className="text-primary border-primary/30">
+                  Contatar Professor
+                </Button>
+              )}
             </Card>
           </>
         )}
@@ -584,24 +586,11 @@ const AssinaturasPlanos = () => {
                       <div className="pt-2">
                         {Capacitor.getPlatform() === 'ios' ? (
                           <Button
-                            onClick={() => {
-                              // iOS: Apenas abrir WhatsApp sem mensagem de compra específica
-                              if (!teacherPhone) {
-                                toast({
-                                  title: "Contato indisponível",
-                                  description: "O telefone do professor não está cadastrado.",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                              const cleanPhone = teacherPhone.replace(/\D/g, '');
-                              const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Olá! Gostaria de saber mais sobre o plano ${plano.name}.`)}`;
-                              window.open(whatsappUrl, '_blank');
-                            }}
-                            className="w-full h-10 text-sm font-semibold btn-secondary"
+                            disabled
+                            className="w-full h-10 text-sm font-semibold btn-secondary opacity-50 cursor-not-allowed"
                             size="sm"
                           >
-                            Falar com Professor
+                            Disponível com seu Professor
                           </Button>
                         ) : (
                           <Button

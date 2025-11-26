@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/components/auth/AuthProvider";
 import { useEffect, useRef } from "react";
 import { openExternalLink } from "@/utils/openExternalLink";
+import { Capacitor } from "@capacitor/core";
 
 export const TeacherCard = () => {
   const { teacher, loading } = useTeacherProfile();
@@ -174,7 +175,7 @@ export const TeacherCard = () => {
 
 
 
-              {teacher.whatsapp_url && (
+              {teacher.whatsapp_url && Capacitor.getPlatform() !== 'ios' && (
                 <Button
                   variant="ghost"
                   size="sm"

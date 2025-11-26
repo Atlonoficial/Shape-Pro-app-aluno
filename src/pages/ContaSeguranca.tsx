@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { Capacitor } from "@capacitor/core";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +65,16 @@ const ContaSeguranca = () => {
         title: "Contato indisponível",
         description: "O telefone do professor não está disponível para solicitar a exclusão. Entre em contato pelo suporte.",
         variant: "destructive"
+      });
+      return;
+    }
+
+    // iOS Compliance: Não abrir WhatsApp diretamente para evitar rejeição por "Links Externos"
+    if (Capacitor.getPlatform() === 'ios') {
+      toast({
+        title: "Solicitação de Exclusão",
+        description: "Para excluir sua conta, por favor envie um email para o suporte ou solicite diretamente ao seu professor.",
+        duration: 5000
       });
       return;
     }

@@ -148,11 +148,19 @@ const AuthenticatedApp = () => {
 
 import { Capacitor } from '@capacitor/core';
 import { syncManager } from '@/services/offline/syncManager';
+import { AppTrackingTransparency } from 'capacitor-plugin-app-tracking-transparency';
 
 const App = () => {
   // ✅ Initialize SyncManager
   useEffect(() => {
     syncManager.sync();
+
+    // Request tracking permission on iOS
+    if (Capacitor.getPlatform() === 'ios') {
+      AppTrackingTransparency.requestPermission().then((status) => {
+        console.log('Tracking status:', status);
+      });
+    }
   }, []);
 
   // ✅ BUILD 50: NUNCA usar StrictMode em:
