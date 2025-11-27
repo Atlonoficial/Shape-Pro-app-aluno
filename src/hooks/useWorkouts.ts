@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 import { useWorkoutPlans, type WorkoutPlan } from './useWorkoutPlans';
 import { offlineStorage } from '@/services/offline/offlineStorage';
 
@@ -43,7 +43,7 @@ export interface Workout {
 }
 
 export const useWorkouts = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { currentPlan, loading: plansLoading, workoutPlans } = useWorkoutPlans();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);

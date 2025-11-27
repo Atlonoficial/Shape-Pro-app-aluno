@@ -37,7 +37,7 @@ interface WorkoutDetailProps {
 // Componente para exibir nome do exercício com informações da base de dados
 const ExerciseNameDisplay = ({ exerciseName }: { exerciseName: string }) => {
   const { exercise, loading } = useExerciseVideo(exerciseName);
-  
+
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1">
@@ -62,9 +62,9 @@ const ExerciseNameDisplay = ({ exerciseName }: { exerciseName: string }) => {
 // Componente para exibir informações completas do exercício
 const ExerciseInfoDisplay = ({ exerciseName }: { exerciseName: string }) => {
   const { exercise, loading } = useExerciseVideo(exerciseName);
-  
+
   if (loading || !exercise) return null;
-  
+
   return (
     <div className="space-y-2">
       {exercise.instructions && (
@@ -149,7 +149,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
   return (
     <div className="relative min-h-screen bg-background">
       {/* Header with background image */}
-      <div 
+      <div
         className="relative h-40 sm:h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex flex-col pt-safe"
         style={{
           backgroundImage: workout.image ? `url(${workout.image})` : undefined,
@@ -158,16 +158,16 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/20" />
-        
+
         {/* Top Bar: Botões de navegação */}
         <div className="relative z-10 flex items-center justify-between px-4 py-3">
-          <button 
+          <button
             onClick={onBack}
             className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-background/30 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          
+
           <div className="w-10 h-10" /> {/* Spacer para centralizar */}
         </div>
 
@@ -190,7 +190,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
               <p className="text-[11px] text-muted-foreground">Duração</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
             <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
               <Dumbbell className="w-4.5 h-4.5 text-purple-400" />
@@ -200,7 +200,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
               <p className="text-[11px] text-muted-foreground">Exercícios</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
             <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
               <Flame className="w-4.5 h-4.5 text-orange-400" />
@@ -210,7 +210,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
               <p className="text-[11px] text-muted-foreground">Dificuldade</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2.5 bg-card backdrop-blur-md border border-border px-3 py-2.5 rounded-xl">
             <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
               <Zap className="w-4.5 h-4.5 text-yellow-400" />
@@ -226,10 +226,10 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       {/* Exercises list */}
       <div className="px-4 pt-2 pb-40">
         <h2 className="text-xl font-bold text-foreground mb-4">Exercícios</h2>
-        
+
         <div className="space-y-3">
           {workout.exercises.map((exercise) => (
-            <div 
+            <div
               key={exercise.id}
               className="bg-card/50 backdrop-blur-sm border border-border/30 rounded-2xl p-4 transition-all duration-300"
             >
@@ -238,7 +238,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                 <div className="flex-1">
                   <ExerciseNameDisplay exerciseName={exercise.name} />
                   <p className="text-muted-foreground text-sm font-medium mt-1">{exercise.type}</p>
-                  
+
                   {/* Informações formatadas */}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {exercise.sets && exercise.reps && (
@@ -259,10 +259,10 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                     )}
                   </div>
                 </div>
-                
+
                 {/* Botões de ação compactos */}
                 <div className="flex items-center gap-2">
-                  <button 
+                  <button
                     onClick={(e) => handlePlayClick(e, exercise)}
                     className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-all active:scale-95"
                     aria-label="Ver vídeo do exercício"
@@ -274,15 +274,14 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
                     className="w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center hover:bg-muted transition-all active:scale-95"
                     aria-label="Ver detalhes do exercício"
                   >
-                    <ChevronDown 
-                      className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${
-                        expandedExercise === exercise.id ? 'rotate-180' : ''
-                      }`} 
+                    <ChevronDown
+                      className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${expandedExercise === exercise.id ? 'rotate-180' : ''
+                        }`}
                     />
                   </button>
                 </div>
               </div>
-              
+
               {/* Detalhes expandíveis com animação */}
               {expandedExercise === exercise.id && (
                 <div className="mt-3 pt-3 border-t border-border/20 animate-in slide-in-from-top-2 duration-300">
@@ -296,7 +295,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
 
       {/* Start workout button - próximo à navbar */}
       <div className="fixed bottom-0 left-0 right-0 px-4 pb-28 bg-gradient-to-t from-background via-background/98 to-transparent z-[9999]">
-        <button 
+        <button
           onClick={handleStartWorkout}
           className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground w-full h-12 text-base font-semibold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
         >
@@ -307,7 +306,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
 
       {/* Modal de vídeo fullscreen */}
       {videoModalExercise && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/95 z-50 flex flex-col animate-fade-in"
           onClick={() => setVideoModalExercise(null)}
         >
@@ -315,7 +314,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
             <h3 className="text-white font-semibold text-lg truncate flex-1">
               {videoModalExercise.name}
             </h3>
-            <button 
+            <button
               onClick={() => setVideoModalExercise(null)}
               className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors ml-4"
               aria-label="Fechar vídeo"
@@ -332,7 +331,7 @@ export const WorkoutDetail = ({ workout, onBack, onStartWorkout, onExerciseSelec
       )}
 
       {/* Bottom Navigation */}
-      <BottomNavigation activeTab="workouts" onTabChange={handleTabChange} />
+      {/* Bottom Navigation removed to avoid duplication */}
     </div>
   );
 };

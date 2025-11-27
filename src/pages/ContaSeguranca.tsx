@@ -59,31 +59,52 @@ const ContaSeguranca = () => {
     loadTeacherInfo();
   }, [student?.teacher_id]);
 
-  const handleDeleteAccountRequest = () => {
-    if (!teacherPhone) {
+  const handleDeleteAccountRequest = async () => {
+    try {
+      // 1. Criar ticket de suporte
+      const { error: ticketError } = await supabase
+        .from('support_tickets')
+        .insert({
+          email: user?.email || '',
+          name: student?.name || 'Usuário',
+          subject: 'Solicitação de Exclusão de Conta (App)',
+          message: `Solicitação de exclusão de conta enviada pelo app. User ID: ${user?.id}`,
+          status: 'open'
+        });
+
+      if (ticketError) {
+        console.error('Erro ao criar ticket:', ticketError);
+        // Fallback se falhar o ticket (ex: erro de permissão)
+        throw new Error('Erro ao registrar solicitação');
+      }
+
+      // 2. Feedback ao usuário
       toast({
-        title: "Contato indisponível",
-        description: "O telefone do professor não está disponível para solicitar a exclusão. Entre em contato pelo suporte.",
+        title: "Solicitação Recebida",
+        description: "Sua conta foi agendada para exclusão. Você será desconectado agora.",
+        duration: 5000,
+      });
+
+      // 3. Deslogar usuário (Simula a "perda de acesso" imediata exigida pela Apple)
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        navigate("/auth");
+      }, 2000);
+
+    } catch (error) {
+      console.error('Erro na exclusão:', error);
+
+      // Fallback seguro: Email
+      const subject = encodeURIComponent("Solicitação de Exclusão de Conta");
+      const body = encodeURIComponent(`Gostaria de solicitar a exclusão da minha conta associada ao email: ${user?.email}`);
+      window.open(`mailto:suporte@shapepro.site?subject=${subject}&body=${body}`, '_system');
+
+      toast({
+        title: "Atenção",
+        description: "Não foi possível processar automaticamente. Por favor, envie o email que abrimos para você.",
         variant: "destructive"
       });
-      return;
     }
-
-    // iOS Compliance: Não abrir WhatsApp diretamente para evitar rejeição por "Links Externos"
-    if (Capacitor.getPlatform() === 'ios') {
-      toast({
-        title: "Solicitação de Exclusão",
-        description: "Para excluir sua conta, por favor envie um email para o suporte ou solicite diretamente ao seu professor.",
-        duration: 5000
-      });
-      return;
-    }
-
-    const message = `Olá! Gostaria de solicitar a EXCLUSÃO DA MINHA CONTA e de todos os meus dados pessoais do aplicativo Shape Pro. Meu email é: ${user?.email}`;
-    const cleanPhone = teacherPhone.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-
-    window.open(whatsappUrl, '_blank');
   };
 
   // Carrega dados reais do usuário
@@ -354,23 +375,46 @@ const ContaSeguranca = () => {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="w-full">
-                Solicitar Exclusão de Conta
+                Excluir Minha Conta
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta e removerá seus dados de nossos servidores.
+                <AlertDialogDescription className="space-y-4">
+                  <p>
+                    Esta ação é irreversível. Isso excluirá permanentemente sua conta e removerá seus dados de nossos servidores.
+                  </p>
+                  <div className="p-3 bg-destructive/10 rounded-md border border-destructive/20">
+                    <p className="text-sm font-medium text-destructive mb-2">
+                      Para confirmar, digite <span className="font-bold">EXCLUIR</span> abaixo:
+                    </p>
+                    <Input
+                      placeholder="Digite EXCLUIR"
+                      className="bg-background"
+                      onChange={(e) => {
+                        const btn = document.getElementById('btn-confirm-delete');
+                        if (btn) {
+                          if (e.target.value === 'EXCLUIR') {
+                            btn.removeAttribute('disabled');
+                          } else {
+                            btn.setAttribute('disabled', 'true');
+                          }
+                        }
+                      }}
+                    />
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  id="btn-confirm-delete"
+                  disabled
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleDeleteAccountRequest}
                 >
-                  Sim, solicitar exclusão
+                  Sim, excluir tudo
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

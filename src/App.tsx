@@ -36,7 +36,7 @@ import { LazyAgenda } from "./pages/lazy/LazyAgenda";
 import { LazyMetas } from "./pages/lazy/LazyMetas";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 
-import { IniciarTreino } from "./pages/IniciarTreino";
+
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
 
 import { LazyCursos } from "./pages/lazy/LazyCursos";
@@ -49,7 +49,7 @@ import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
 import StravaCallback from "./pages/StravaCallback";
-import StravaDebug from "./pages/StravaDebug";
+
 
 
 
@@ -129,7 +129,7 @@ const AuthenticatedApp = () => {
           <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
           <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
           <Route path="/cursos" element={<AuthGuard><TermsGuard><LazyCursos /></TermsGuard></AuthGuard>} />
-          <Route path="/iniciar-treino" element={<AuthGuard><TermsGuard><IniciarTreino /></TermsGuard></AuthGuard>} />
+
           <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
           <Route path="/agenda" element={<AuthGuard><TermsGuard><LazyAgenda /></TermsGuard></AuthGuard>} />
           <Route path="/metas" element={<AuthGuard><TermsGuard><LazyMetas /></TermsGuard></AuthGuard>} />
@@ -137,7 +137,7 @@ const AuthenticatedApp = () => {
           <Route path="/chat" element={<AuthGuard><TermsGuard><LazyAIChat /></TermsGuard></AuthGuard>} />
           <Route path="/teacher-chat" element={<AuthGuard><TermsGuard><LazyTeacherStudentChat /></TermsGuard></AuthGuard>} />
           <Route path="/strava-callback" element={<StravaCallback />} />
-          {import.meta.env.DEV && <Route path="/strava-debug" element={<AuthGuard><StravaDebug /></AuthGuard>} />}
+
 
           <Route path="*" element={<NotFound />} />
         </Routes>

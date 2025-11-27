@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 
 
 export interface ActiveSubscription {
@@ -20,7 +20,7 @@ export interface ActiveSubscription {
 }
 
 export const useActiveSubscription = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

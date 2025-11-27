@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 
 export interface Course {
   id: string;
@@ -25,7 +25,7 @@ import { getCache, setCache } from '@/lib/cache';
 export const useCourses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, userProfile } = useAuth();
+  const { user, userProfile } = useAuthContext();
 
   useEffect(() => {
     if (!user || !userProfile) {
@@ -33,15 +33,15 @@ export const useCourses = () => {
     }
 
     const fetchCourses = async () => {
-      const cacheKey = `courses_${user.id}_${userProfile.user_type}`;
-      const cachedData = getCache(cacheKey);
+      // const cacheKey = `courses_${user.id}_${userProfile.user_type}`;
+      // const cachedData = getCache(cacheKey);
 
-      if (cachedData) {
-        console.log('useCourses: ⚡ Usando cache');
-        setCourses(cachedData);
-        setLoading(false);
-        return;
-      }
+      // if (cachedData) {
+      //   console.log('useCourses: ⚡ Usando cache');
+      //   setCourses(cachedData);
+      //   setLoading(false);
+      //   return;
+      // }
 
       console.log('useCourses: 🔍 Iniciando busca de cursos para:', userProfile.user_type);
       try {
@@ -59,7 +59,7 @@ export const useCourses = () => {
           }
 
           setCourses(data || []);
-          setCache(cacheKey, data || []);
+          // setCache(cacheKey, data || []);
 
         } else {
           // ✅ ALUNOS: Buscar cursos do professor + cursos públicos
@@ -96,8 +96,12 @@ export const useCourses = () => {
           }
 
           console.log('useCourses: ✅ Cursos carregados:', data?.length);
+          if (data) {
+            data.forEach(c => console.log(`📦 Curso: ${c.title} | Thumb: ${c.thumbnail}`));
+          }
+
           setCourses(data || []);
-          setCache(cacheKey, data || []);
+          // setCache(cacheKey, data || []);
         }
       } catch (error) {
         console.error('useCourses: ❌ Erro ao buscar cursos:', error);

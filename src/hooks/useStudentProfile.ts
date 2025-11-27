@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 import { getStudentByUserId, createStudent, updateStudentProfile, Student } from '@/lib/supabase';
 
 export const useStudentProfile = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export const useStudentProfile = () => {
     }
 
     return () => {
-      try { unsubscribe && unsubscribe(); } catch {}
+      try { unsubscribe && unsubscribe(); } catch { }
     };
   }, [user?.id]);
 

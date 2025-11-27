@@ -25,7 +25,7 @@ const config: CapacitorConfig = {
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
-  
+
   server: {
     ...(maybeServer as any).server,
     cleartext: true,
@@ -36,7 +36,7 @@ const config: CapacitorConfig = {
       'https://*.lovable.app'
     ]
   },
-  
+
   deepLinkingConfig: {
     customURLScheme: 'shapepro'
   },
@@ -47,8 +47,8 @@ const config: CapacitorConfig = {
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 54: Fix botão Iniciar Treino e bottom nav móvel
-    CFBundleVersion: '54',
+    // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
+    CFBundleVersion: '66',
     CFBundleShortVersionString: "4.0.1",
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
@@ -62,7 +62,7 @@ const config: CapacitorConfig = {
         "Precisamos da câmera para tirar fotos dentro do app.",
       NSUserTrackingUsageDescription:
         "Este app usa dados de atividade para personalizar sua experiência de treino e fornecer conteúdo relevante.",
-      
+
       // ---- Localização (ITMS-90683) ----
       NSLocationWhenInUseUsageDescription:
         "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.",
@@ -91,8 +91,8 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.1",
-      CFBundleVersion: "54", // ✅ BUILD 54: Fix botão Iniciar Treino e bottom nav móvel
-      
+      CFBundleVersion: "66", // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
+
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
     },
@@ -108,7 +108,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 54, // ✅ BUILD 54: Fix botão Iniciar Treino e bottom nav móvel
+    versionCode: 66, // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
     versionName: "4.0.1"
   },
 
