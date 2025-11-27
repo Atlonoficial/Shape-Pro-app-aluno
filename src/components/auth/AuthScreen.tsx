@@ -436,6 +436,14 @@ export const AuthScreen = () => {
             className="h-32 w-auto mx-auto mb-4"
           />
           <p className="text-muted-foreground">Sua jornada fitness começa aqui</p>
+
+          {/* Health Disclaimer - Google Play Compliance */}
+          <div className="mt-6 px-4 text-[10px] text-muted-foreground/40 text-center leading-tight">
+            <p>
+              <strong>Aviso de Saúde:</strong> Este aplicativo oferece sugestões de exercícios e nutrição para fins informativos.
+              Consulte um médico antes de iniciar qualquer programa.
+            </p>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')} className="w-full">

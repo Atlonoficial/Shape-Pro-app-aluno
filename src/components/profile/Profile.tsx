@@ -266,8 +266,8 @@ export const Profile = () => {
               <CreditCard className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Assinaturas & Planos</p>
-              <p className="text-sm text-muted-foreground">Gerencie sua assinatura</p>
+              <p className="font-medium">Meu Acesso</p>
+              <p className="text-sm text-muted-foreground">Gerencie seu acesso</p>
             </div>
           </CardContent>
         </Card>

@@ -51,9 +51,8 @@ export const useWeightProgress = (userId: string) => {
           .select('*')
           .eq('user_id', userId)
           .eq('type', 'weight')
-          .gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
-          .lt('date', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0])
-          .order('date', { ascending: true });
+          .order('date', { ascending: false }) // ✅ Fetch newest first
+          .limit(5); // ✅ Limit to 5 records
       });
 
       if (fetchError) {
@@ -69,8 +68,13 @@ export const useWeightProgress = (userId: string) => {
           console.log('📊 Raw weight data from DB:', data);
         }
 
-        // Format data for the chart - current month only
-        const formattedData = data.map(entry => {
+        // ✅ Sort by date ascending for the chart
+        const sortedData = [...data].sort((a, b) =>
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+
+        // Format data for the chart
+        const formattedData = sortedData.map(entry => {
           const entryDate = new Date(entry.date);
           return {
             date: entryDate.toLocaleDateString('pt-BR', {
@@ -132,6 +136,30 @@ export const useWeightProgress = (userId: string) => {
     }
 
     console.log('✅ Weight entry added successfully:', data);
+
+    // ✅ Enforce limit of 5 records: Delete older ones
+    try {
+      const { data: allWeights } = await supabase
+        .from('progress')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'weight')
+        .order('date', { ascending: false }); // Newest first
+
+      if (allWeights && allWeights.length > 5) {
+        const idsToDelete = allWeights.slice(5).map(w => w.id);
+        if (idsToDelete.length > 0) {
+          console.log('🗑️ Deleting old weight records:', idsToDelete);
+          await supabase
+            .from('progress')
+            .delete()
+            .in('id', idsToDelete);
+        }
+      }
+    } catch (cleanupError) {
+      console.error('⚠️ Error cleaning up old weight records:', cleanupError);
+      // Don't fail the operation if cleanup fails
+    }
 
     // Refresh data after adding
     await fetchWeightProgress();

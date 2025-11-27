@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "4.0.1", // ✅ BUILD 54: Fix botão Iniciar Treino e bottom nav móvel
+  version: "4.0.1", // ✅ BUILD 68: Fix user reported issues and full review
 
   // Em PROD/CI não terá server.url
   ...maybeServer,
@@ -48,7 +48,7 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
     // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
-    CFBundleVersion: '66',
+    CFBundleVersion: '68',
     CFBundleShortVersionString: "4.0.1",
 
     // Tudo aqui vira Info.plist do app (garantido a cada build)
@@ -91,7 +91,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.1",
-      CFBundleVersion: "67", // ✅ BUILD 67: Fix save errors and update build
+      CFBundleVersion: "68", // ✅ BUILD 68: Fix user reported issues and full review
 
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -108,7 +108,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 67, // ✅ BUILD 67: Fix save errors and update build
+    versionCode: 68, // ✅ BUILD 68: Fix user reported issues and full review
     versionName: "4.0.1"
   },
 

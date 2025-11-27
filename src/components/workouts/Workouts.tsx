@@ -4,6 +4,8 @@ import { toast } from "@/hooks/use-toast";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/hooks/useAuth";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { ContentLock } from "@/components/ui/ContentLock";
 import { WorkoutCard } from "./WorkoutCard";
 import { WorkoutDetail } from "./WorkoutDetail";
 import { ExerciseDetail } from "./ExerciseDetail";
@@ -16,6 +18,7 @@ type ViewState = 'list' | 'detail' | 'exercise' | 'session';
 export const Workouts = () => {
   const { user } = useAuth();
   const { workouts, loading } = useWorkouts();
+  const { hasActiveSubscription, loading: subscriptionLoading, status: subscriptionStatus } = useActiveSubscription();
   const { light: hapticLight, success: hapticSuccess } = useHapticFeedback();
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<ViewState>('list');
@@ -137,7 +140,7 @@ export const Workouts = () => {
     setSelectedExercise(null);
   }, []);
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
@@ -147,8 +150,6 @@ export const Workouts = () => {
       </div>
     );
   }
-
-  // Renderização condicional baseada no estado atual
   if (currentView === 'session' && selectedWorkout) {
     return (
       <WorkoutSession
@@ -178,18 +179,6 @@ export const Workouts = () => {
         onStartWorkout={handleStartWorkout}
         onExerciseSelect={handleExerciseSelect}
       />
-    );
-  }
-
-  // ✅ Verificar loading PRIMEIRO (antes de validar autenticação ou mostrar empty state)
-  if (loading) {
-    return (
-      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-accent" />
-          <p className="text-muted-foreground">Carregando seus treinos...</p>
-        </div>
-      </div>
     );
   }
 

@@ -13,18 +13,18 @@ export const AIAssistant = () => {
   const { user, userProfile } = useAuthContext();
   const { awardAIInteractionPoints } = useGamificationActions();
   const userName = (userProfile?.name || 'Usuário').trim().split(/\s+/)[0];
-  
-  const { 
-    messages, 
-    conversations, 
+
+  const {
+    messages,
+    conversations,
     currentConversation,
-    loading, 
-    error, 
-    sendMessage, 
+    loading,
+    error,
+    sendMessage,
     startNewConversation,
-    loadConversation 
+    loadConversation
   } = useAIConversation();
-  
+
   const [inputText, setInputText] = useState('');
   const [showConversations, setShowConversations] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,10 +33,10 @@ export const AIAssistant = () => {
   const isDailyLimitError = (errorMsg: string | null): boolean => {
     if (!errorMsg) return false;
     const msg = errorMsg.toLowerCase();
-    return msg.includes('limite diário') || 
-           msg.includes('limite de') || 
-           msg.includes('perguntas por dia') ||
-           msg.includes('daily_limit');
+    return msg.includes('limite diário') ||
+      msg.includes('limite de') ||
+      msg.includes('perguntas por dia') ||
+      msg.includes('daily_limit');
   };
 
   // Debug: Log error state changes
@@ -65,7 +65,7 @@ export const AIAssistant = () => {
       console.error('[AIAssistant] Error in handleSendMessage:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       console.log('[AIAssistant] Error message:', errorMessage);
-      
+
       if (isDailyLimitError(errorMessage)) {
         console.log('[AIAssistant] Daily limit error detected');
         toast.error('🕐 Limite diário atingido! Você fez 3 perguntas hoje. Volte amanhã para continuar!');
@@ -83,11 +83,20 @@ export const AIAssistant = () => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 100)}px`;
+    }
+  }, [inputText]);
 
   return (
     <div className="flex flex-col h-screen relative bg-gradient-dark">
@@ -97,10 +106,10 @@ export const AIAssistant = () => {
         <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
           <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString('pt-BR', { 
-              day: 'numeric', 
-              month: 'long', 
-              year: 'numeric' 
+            {new Date().toLocaleDateString('pt-BR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
             })}
           </span>
         </div>
@@ -119,7 +128,7 @@ export const AIAssistant = () => {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 pb-safe-4xl space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-32 space-y-4">
         {/* Daily limit error card - sempre visível no topo quando ativo */}
         {isDailyLimitError(error) && (
           <div className="sticky top-0 z-10 mb-4">
@@ -129,7 +138,7 @@ export const AIAssistant = () => {
               </div>
               <h3 className="text-lg font-bold mb-2 text-foreground">Limite Diário Atingido</h3>
               <p className="text-muted-foreground mb-4">
-                Você fez suas <span className="font-bold text-primary">3 perguntas</span> de hoje! 
+                Você fez suas <span className="font-bold text-primary">3 perguntas</span> de hoje!
               </p>
               <p className="text-sm text-muted-foreground">
                 Volte amanhã para continuar conversando com seu Coach IA. 🕐
@@ -137,7 +146,7 @@ export const AIAssistant = () => {
             </Card>
           </div>
         )}
-        
+
         {/* Welcome message - só quando não há mensagens E não há erro de limite */}
         {messages.length === 0 && !loading && !isDailyLimitError(error) && (
           <div className="text-center py-8">
@@ -147,9 +156,9 @@ export const AIAssistant = () => {
             </p>
           </div>
         )}
-        
+
         {/* Mensagens do histórico - sempre visíveis, mesmo com erro de limite */}
-        
+
         {messages.map((message) => (
           <div
             key={message.id}
@@ -164,29 +173,26 @@ export const AIAssistant = () => {
                   <span className="text-sm font-semibold text-primary">Coach Shape Pro</span>
                 </div>
               )}
-              
-              <Card className={`p-3 ${
-                message.role === 'user' 
-                  ? 'bg-primary text-background ml-auto' 
+
+              <Card className={`p-3 ${message.role === 'user'
+                  ? 'bg-primary text-background ml-auto'
                   : 'bg-card/50 border-border/50'
-              }`}>
-                <p className={`text-sm whitespace-pre-wrap ${
-                  message.role === 'user' ? 'text-background' : 'text-foreground'
                 }`}>
+                <p className={`text-sm whitespace-pre-wrap ${message.role === 'user' ? 'text-background' : 'text-foreground'
+                  }`}>
                   {message.content}
                 </p>
-                <p className={`text-xs mt-1 ${
-                  message.role === 'user' 
-                    ? 'text-background/70' 
+                <p className={`text-xs mt-1 ${message.role === 'user'
+                    ? 'text-background/70'
                     : 'text-muted-foreground'
-                }`}>
+                  }`}>
                   {formatTime(message.timestamp)}
                 </p>
               </Card>
             </div>
           </div>
         ))}
-        
+
         {loading && (
           <div className="flex justify-start">
             <div className="max-w-[80%]">
@@ -204,15 +210,16 @@ export const AIAssistant = () => {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed bottom-safe left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-background via-background/95 to-transparent">
+      <div className="fixed bottom-safe left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-background via-background/95 to-transparent z-20">
         <div className="flex items-end gap-1.5 sm:gap-2 bg-card/80 backdrop-blur-md border border-border/50 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 w-full max-w-full sm:max-w-lg mx-auto shadow-lg">
           <div className="flex-1 min-w-0">
             <textarea
+              ref={textareaRef}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -224,10 +231,10 @@ export const AIAssistant = () => {
               disabled={isDailyLimitError(error)}
               className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus:outline-none text-sm leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
               rows={1}
-              style={{ minHeight: '36px', maxHeight: '100px' }}
+              style={{ minHeight: '40px', maxHeight: '100px' }}
             />
           </div>
-          
+
           <Button
             size="sm"
             onClick={handleSendMessage}

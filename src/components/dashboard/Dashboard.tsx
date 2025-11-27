@@ -34,12 +34,12 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const navigate = useNavigate();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const { addWeightEntry, shouldShowWeightModal, error: weightError, clearError } = useWeightProgress(user?.id || '');
-  
+
   // Weekly feedback hook
-  const { 
-    shouldShowModal: shouldShowFeedbackModal, 
-    setShouldShowModal: setShouldShowFeedbackModal, 
-    submitWeeklyFeedback, 
+  const {
+    shouldShowModal: shouldShowFeedbackModal,
+    setShouldShowModal: setShouldShowFeedbackModal,
+    submitWeeklyFeedback,
     loading: feedbackLoading,
     feedbackSettings,
     teacherId: feedbackTeacherId,
@@ -47,12 +47,12 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   } = useWeeklyFeedback();
 
   // ETAPA 3: Feedback system monitoring removed (BUILD 35)
-  
+
   const rawName = userProfile?.name || (user?.user_metadata as any)?.name || '';
-  const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@') 
-    ? rawName.split(' ')[0] 
+  const firstName = typeof rawName === 'string' && rawName.trim() && !rawName.includes('@')
+    ? rawName.split(' ')[0]
     : 'Usuário';
-  
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -62,7 +62,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   // Check if should show weight modal (only on Fridays)
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    
+
     // Show modal only on Fridays if user hasn't weighed this week
     const checkWeightModal = async () => {
       const shouldShow = await shouldShowWeightModal();
@@ -70,23 +70,23 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         setTimeout(() => setShowWeightModal(true), 2000);
       }
     };
-    
+
     checkWeightModal();
   }, [isAuthenticated, user, shouldShowWeightModal]);
 
   // Check if should show feedback modal (after weight modal logic)
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    
+
     // NÃO sobrescrever se já foi enviado hoje
     const today = new Date().toISOString().split('T')[0];
     const feedbackKey = `feedback_sent_${user.id}_${today}`;
     const wasSentToday = localStorage.getItem(feedbackKey);
-    
+
     if (wasSentToday === 'true') {
       return;
     }
-    
+
     // Show feedback modal with delay if needed (after weight modal would show)
     if (shouldShowFeedbackModal) {
       const delay = shouldShowWeightModal ? 4000 : 2000; // Wait longer if weight modal is also showing
@@ -97,18 +97,20 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   const handleSaveWeight = async (weight: number) => {
     // Use the weight progress system which now includes validation and gamification
     const success = await addWeightEntry(weight);
-    
+
     if (success) {
+      // Award points and show gamification toast
+      logWeight(weight);
       setShowWeightModal(false);
     }
-    
+
     return success;
   };
 
   if (!isAuthenticated) {
     return null; // Enquanto redireciona
   }
-  
+
   // Fetch current workout session
   const { currentSession, loading: workoutSessionLoading, hasWorkoutPlan } = useCurrentWorkoutSession();
   // const { progress, loading: progressLoading } = useProgress(user?.id || '');
@@ -124,9 +126,9 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     <div className="p-4 sm:p-6 pt-safe space-y-4">
       {/* Logo Header */}
       <div className="mb-4 text-center pt-2">
-        <img 
-          src="/lovable-uploads/2133926f-121d-45ce-8cff-80c84a1a0856.png" 
-          alt="Shape Pro Logo" 
+        <img
+          src="/lovable-uploads/2133926f-121d-45ce-8cff-80c84a1a0856.png"
+          alt="Shape Pro Logo"
           className="w-20 h-auto mx-auto opacity-60"
         />
       </div>
@@ -137,7 +139,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
           <Calendar size={16} className="text-warning" />
           {currentDate}
         </div>
-        
+
         {user && <NotificationCenter userId={user.id} />}
       </div>
 
@@ -165,13 +167,13 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
 
       {/* Weight Progress Chart */}
-      <WeightChart 
+      <WeightChart
         onWeightNeeded={() => setShowWeightModal(true)}
         aria-label="Gráfico de evolução de peso"
       />
 
       {/* Cards Grid */}
-      <div 
+      <div
         className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6"
         role="list"
         aria-label="Ações rápidas"
@@ -188,17 +190,17 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       <QuickActions />
 
       {/* Banner System - Positioned between agenda/meta and stats */}
-      <BannerContainer 
-        placement="header" 
+      <BannerContainer
+        placement="header"
         maxBanners={2}
-        className="mb-6" 
+        className="mb-6"
       />
 
       {/* Stats Overview */}
-      <DashboardStats 
-        workouts={currentSession ? [{ name: currentSession.sessionName }] : []} 
-        progress={progress} 
-        loading={workoutSessionLoading || progressLoading} 
+      <DashboardStats
+        workouts={currentSession ? [{ name: currentSession.sessionName }] : []}
+        progress={progress}
+        loading={workoutSessionLoading || progressLoading}
       />
 
 
@@ -210,7 +212,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
               {currentSession.sessionLabel}
             </span>
           </div>
-          
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Sessão</span>
@@ -237,14 +239,14 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
               </span>
             </div>
           </div>
-          
-            <button 
-              onClick={onWorkoutClick} 
-              className="btn-primary w-full mt-4 py-3 sm:py-4 touch-feedback"
-              aria-label={`Iniciar treino ${currentSession.sessionLabel}`}
-            >
-              Iniciar {currentSession.sessionLabel}
-            </button>
+
+          <button
+            onClick={onWorkoutClick}
+            className="btn-primary w-full mt-4 py-3 sm:py-4 touch-feedback"
+            aria-label={`Iniciar treino ${currentSession.sessionLabel}`}
+          >
+            Iniciar {currentSession.sessionLabel}
+          </button>
         </div>
       )}
 
@@ -268,10 +270,10 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
         customQuestions={feedbackSettings?.custom_questions || []}
         feedbackFrequency={
           feedbackSettings?.feedback_frequency === 'daily' ? 'diário' :
-          feedbackSettings?.feedback_frequency === 'weekly' ? 'semanal' :
-          feedbackSettings?.feedback_frequency === 'biweekly' ? 'quinzenal' :
-          feedbackSettings?.feedback_frequency === 'monthly' ? 'mensal' :
-          'periódico'
+            feedbackSettings?.feedback_frequency === 'weekly' ? 'semanal' :
+              feedbackSettings?.feedback_frequency === 'biweekly' ? 'quinzenal' :
+                feedbackSettings?.feedback_frequency === 'monthly' ? 'mensal' :
+                  'periódico'
         }
       />
     </div>

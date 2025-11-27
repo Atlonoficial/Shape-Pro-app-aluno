@@ -156,8 +156,8 @@ const Configuracoes = () => {
     },
     {
       icon: Crown,
-      title: "Planos e Assinaturas",
-      description: "Gerencie seu plano atual",
+      title: "Meu Acesso",
+      description: "Visualizar acesso e recursos",
       action: <ChevronRight className="w-4 h-4 text-muted-foreground" />,
       onClick: handlePlanosClick
     },

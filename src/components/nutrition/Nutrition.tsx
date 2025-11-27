@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Flame } from "lucide-react";
+import { Loader2, Flame, ArrowLeft } from "lucide-react";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { NutritionCard } from "./NutritionCard";
 import { MetricCard } from "@/components/ui/MetricCard";
@@ -8,17 +8,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useGamification } from "@/hooks/useGamification";
 import { useGamificationActions } from "@/hooks/useRealtimeGamification";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { ContentLock } from "@/components/ui/ContentLock";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const Nutrition = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { light: hapticLight, warning: hapticWarning } = useHapticFeedback();
   const {
-    loading, 
-    todaysMeals, 
-    dailyStats, 
-    logMeal 
+    loading,
+    todaysMeals,
+    dailyStats,
+    logMeal
   } = useMyNutrition();
+  const { hasActiveSubscription, loading: subscriptionLoading, status: subscriptionStatus } = useActiveSubscription();
   const { userPoints } = useGamification();
   const { awardMealPoints } = useGamificationActions();
   const [previousMealCount, setPreviousMealCount] = useState(0);
@@ -28,21 +34,21 @@ export const Nutrition = () => {
     const currentMealCount = todaysMeals.filter(meal => meal.is_logged).length;
     setPreviousMealCount(currentMealCount);
   }, [todaysMeals]);
-  
+
   const handleMealToggle = async (mealPlanItemId: string, isCompleted: boolean) => {
     if (!user?.id) return;
-    
+
     // Impedir desmarcação - só permite marcar como consumido uma vez por dia
     if (isCompleted) {
       hapticWarning();
       toast.error('Refeição já foi registrada hoje! Não é possível desmarcar até amanhã.');
       return;
     }
-    
+
     try {
       hapticLight();
       const success = await logMeal(mealPlanItemId, true);
-      
+
       if (success) {
         await awardMealPoints();
       } else {
@@ -54,7 +60,7 @@ export const Nutrition = () => {
   };
 
   // ✅ Verificar loading PRIMEIRO (antes de validar autenticação)
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
@@ -65,7 +71,6 @@ export const Nutrition = () => {
     );
   }
 
-  // ✅ Só DEPOIS validar autenticação (evita falso-positivo durante carregamento)
   if (!user?.id) {
     return (
       <div className="p-4 pt-8 pb-safe-4xl">
@@ -86,7 +91,7 @@ export const Nutrition = () => {
           <h1 className="text-2xl font-bold text-foreground mb-2">Nutrição</h1>
           <p className="text-muted-foreground">Acompanhe sua alimentação hoje</p>
         </div>
-        
+
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2">Nenhum plano nutricional encontrado</h2>
           <p className="text-muted-foreground mb-4">Entre em contato com seu professor para receber um plano alimentar personalizado.</p>
@@ -120,9 +125,9 @@ export const Nutrition = () => {
               </div>
             )}
           </div>
-          <ProgressRing 
-            progress={percentage.calories} 
-            size={60} 
+          <ProgressRing
+            progress={percentage.calories}
+            size={60}
             strokeWidth={6}
             className="text-primary"
           />

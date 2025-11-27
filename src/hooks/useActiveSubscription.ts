@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 
-
 export interface ActiveSubscription {
   id: string;
   plan_id: string;
@@ -298,15 +297,15 @@ export const useActiveSubscription = () => {
 
     switch (status) {
       case 'none':
-        return 'Você precisa contratar uma consultoria para agendar horários';
+        return 'Fale com seu treinador para liberar este recurso';
       case 'pending':
-        return 'Aguardando aprovação da consultoria pelo professor';
+        return 'Aguardando aprovação do acesso pelo professor';
       case 'expired':
-        return 'Sua consultoria expirou. Renove para continuar agendando';
+        return 'Acesso expirado. Fale com seu treinador para regularizar.';
       case 'active':
         return null; // Subscription is active, no message needed
       default:
-        return 'Status da consultoria não reconhecido';
+        return 'Status do acesso não reconhecido';
     }
   };
 
