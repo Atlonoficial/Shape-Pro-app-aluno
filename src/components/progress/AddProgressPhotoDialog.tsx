@@ -39,7 +39,7 @@ export const AddProgressPhotoDialog: React.FC<AddProgressPhotoDialogProps> = ({
         });
         return;
       }
-      
+
       setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
@@ -59,6 +59,10 @@ export const AddProgressPhotoDialog: React.FC<AddProgressPhotoDialogProps> = ({
     setUploading(true);
 
     try {
+      if (!navigator.onLine) {
+        throw new Error("Sem conexão com a internet. Verifique sua rede e tente novamente.");
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -102,14 +106,23 @@ export const AddProgressPhotoDialog: React.FC<AddProgressPhotoDialogProps> = ({
       setNotes('');
       setSelectedFile(null);
       setPreviewUrl(null);
-      
+
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading photo:', error);
+
+      let errorMessage = "Erro ao adicionar foto de progresso. Tente novamente.";
+
+      if (error.message === "Sem conexão com a internet. Verifique sua rede e tente novamente.") {
+        errorMessage = error.message;
+      } else if (error.name === 'TypeError' && error.message === 'Load failed') {
+        errorMessage = "Falha na conexão. Verifique sua internet.";
+      }
+
       toast({
         title: "Erro",
-        description: "Erro ao adicionar foto de progresso. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

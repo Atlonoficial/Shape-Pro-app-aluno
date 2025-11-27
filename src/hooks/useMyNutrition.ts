@@ -245,19 +245,45 @@ export const useMyNutrition = () => {
     }
   }, []);
 
-  // ✅ BUILD 54: Buscar refeições com retry automático
+  // ✅ BUILD 54: Buscar refeições com retry automático e MERGE correto
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
 
+      // 1. Buscar estrutura do plano (sempre is_logged: false)
       const todayMealsData = await getTodayMeals(user.id, false, 0);
-      setTodaysMeals(todayMealsData);
 
+      // 2. Buscar logs reais do banco
       const today = new Date().toISOString().split('T')[0];
       const logs = await getMealLogsByUserAndDate(user.id, today);
       setMealLogs(logs);
+
+      // 3. ✅ MERGE CRÍTICO: Atualizar is_logged baseado nos logs
+      const mergedMeals = todayMealsData.map(meal => {
+        const log = logs.find(l => l.meal_plan_item_id === meal.meal_plan_item_id);
+        if (log) {
+          return {
+            ...meal,
+            is_logged: true,
+            log_id: log.id,
+            // Se o log tiver valores nutricionais reais (ex: editado), poderíamos usar aqui
+            // mas por enquanto mantemos o do plano para consistência visual
+          };
+        }
+        return meal;
+      });
+
+      setTodaysMeals(mergedMeals);
+
+      // Atualizar cache com a versão mergeada
+      mealsCacheRef.current = {
+        data: mergedMeals,
+        timestamp: Date.now(),
+        version: CACHE_VERSION
+      };
+
     } finally {
       setLoading(false);
     }

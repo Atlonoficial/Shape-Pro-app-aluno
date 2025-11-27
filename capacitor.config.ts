@@ -91,7 +91,7 @@ const config: CapacitorConfig = {
 
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.1",
-      CFBundleVersion: "66", // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
+      CFBundleVersion: "67", // ✅ BUILD 67: Fix save errors and update build
 
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
@@ -108,7 +108,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 66, // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
+    versionCode: 67, // ✅ BUILD 67: Fix save errors and update build
     versionName: "4.0.1"
   },
 

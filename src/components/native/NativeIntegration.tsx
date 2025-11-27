@@ -47,7 +47,7 @@ export const NativeIntegration = () => {
       await StatusBar.setStyle({ style: Style.Dark });
       await StatusBar.setBackgroundColor({ color: '#000000' });
       await StatusBar.show();
-      
+
       logger.info('NativeIntegration', 'Status bar configured');
     } catch (error) {
       logger.error('NativeIntegration', 'Error configuring status bar:', error);
@@ -72,9 +72,19 @@ export const NativeIntegration = () => {
   };
 
   const initPushNotifications = async () => {
-    // OneSignal manages push notifications completely
-    logger.info('NativeIntegration', 'Push notifications managed by OneSignal');
-    return;
+    try {
+      logger.info('NativeIntegration', 'Initializing OneSignal Push Notifications...');
+      const { initPush } = await import('@/lib/push');
+
+      // Tenta pegar o ID do usuário se estiver logado (opcional, o initPush lida com isso)
+      // Mas idealmente o initPush deve ser chamado após login também.
+      // Aqui é a inicialização global.
+      await initPush();
+
+      logger.info('NativeIntegration', 'OneSignal initialized');
+    } catch (error) {
+      logger.error('NativeIntegration', 'Error initializing OneSignal:', error);
+    }
   };
 
   // This component doesn't render anything - it's just for side effects

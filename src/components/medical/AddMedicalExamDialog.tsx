@@ -41,7 +41,7 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
         });
         return;
       }
-      
+
       setSelectedFile(file);
     }
   };
@@ -59,6 +59,10 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
     setUploading(true);
 
     try {
+      if (!navigator.onLine) {
+        throw new Error("Sem conexão com a internet. Verifique sua rede e tente novamente.");
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -105,14 +109,23 @@ export const AddMedicalExamDialog: React.FC<AddMedicalExamDialogProps> = ({
       setNotes('');
       setCategory('others');
       setSelectedFile(null);
-      
+
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading medical exam:', error);
+
+      let errorMessage = "Erro ao adicionar exame médico. Tente novamente.";
+
+      if (error.message === "Sem conexão com a internet. Verifique sua rede e tente novamente.") {
+        errorMessage = error.message;
+      } else if (error.name === 'TypeError' && error.message === 'Load failed') {
+        errorMessage = "Falha na conexão. Verifique sua internet.";
+      }
+
       toast({
         title: "Erro",
-        description: "Erro ao adicionar exame médico. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

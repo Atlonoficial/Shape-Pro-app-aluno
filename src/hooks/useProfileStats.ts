@@ -58,7 +58,11 @@ export const useProfileStats = (): ProfileStats => {
           supabase
             .from('workout_sessions')
             .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id),
+            .eq('user_id', user.id)
+            .then(res => {
+              console.log('📊 [STATS] Sessions count:', res.count, res.error);
+              return res;
+            }),
 
           // Active days from user_daily_activity (NEW!)
           supabase
@@ -126,7 +130,7 @@ export const useProfileStats = (): ProfileStats => {
             .select('total_points')
             .eq('user_id', user.id)
             .maybeSingle();
-          
+
           if (pointsResult.data) {
             setStats(prev => ({ ...prev, points: pointsResult.data.total_points || 0 }));
           }

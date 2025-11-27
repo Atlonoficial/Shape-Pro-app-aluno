@@ -59,7 +59,7 @@ export const useAnamnese = (userId?: string) => {
   const save = useCallback(
     async (input: SaveInput) => {
       console.log("[useAnamnese] save called with:", { userId, input });
-      
+
       if (!userId) {
         console.error("[useAnamnese] userId is null or undefined");
         throw new Error("Usuário não autenticado - ID do usuário não encontrado");
@@ -68,7 +68,7 @@ export const useAnamnese = (userId?: string) => {
       // Verificar se o usuário atual está autenticado
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       console.log("[useAnamnese] current user from supabase:", currentUser?.id);
-      
+
       if (!currentUser) {
         console.error("[useAnamnese] No authenticated user found");
         throw new Error("Sessão expirada - faça login novamente");
@@ -80,6 +80,10 @@ export const useAnamnese = (userId?: string) => {
       }
 
       try {
+        if (!navigator.onLine) {
+          throw new Error("Sem conexão com a internet. Verifique sua rede e tente novamente.");
+        }
+
         if (record?.id) {
           console.log("[useAnamnese] updating existing record:", record.id);
           const { data, error } = await supabase
@@ -114,6 +118,15 @@ export const useAnamnese = (userId?: string) => {
         }
       } catch (error: any) {
         console.error("[useAnamnese] save operation failed:", error);
+
+        if (error.message === "Sem conexão com a internet. Verifique sua rede e tente novamente.") {
+          throw error;
+        }
+
+        if (error.name === 'TypeError' && error.message === 'Load failed') {
+          throw new Error("Falha na conexão. Verifique sua internet.");
+        }
+
         if (error.code === 'PGRST116') {
           throw new Error("Erro de permissão - verifique se você está logado");
         } else if (error.message?.includes('row-level security')) {

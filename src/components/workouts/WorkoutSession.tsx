@@ -142,6 +142,7 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
         duration: Math.floor(time / 60)
       });
 
+      // Tenta salvar com o ID do treino (assumindo que existe na tabela workouts)
       const { data, error } = await supabase
         .from('workout_sessions')
         .insert([{
@@ -153,9 +154,27 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
         }]);
 
       if (error) {
-        console.error('Error saving workout session:', error);
-        toast.error(`Erro ao salvar treino: ${error.message || 'Erro desconhecido'}`);
-        return;
+        // Se falhar por FK (o ID é de um PLANO e não de um TREINO), tenta salvar sem o ID
+        if (error.code === '23503') { // foreign_key_violation
+          console.warn('FK Violation: Workout ID likely refers to a Plan. Retrying with null workout_id.');
+
+          const { error: retryError } = await supabase
+            .from('workout_sessions')
+            .insert([{
+              user_id: user.id,
+              workout_id: null, // Deixa nulo para não quebrar a FK
+              notes: `Treino realizado a partir do plano: ${workout.name} (ID: ${workout.id})`, // Salva referência no notes
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              total_duration: Math.floor(time / 60)
+            }]);
+
+          if (retryError) {
+            throw retryError;
+          }
+        } else {
+          throw error;
+        }
       }
 
       // Dar pontos manualmente

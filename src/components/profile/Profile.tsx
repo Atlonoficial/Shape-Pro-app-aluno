@@ -25,7 +25,7 @@ export const Profile = () => {
   const { light: hapticLight, success: hapticSuccess } = useHapticFeedback();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  
+
   // Optimized hooks
   const { markAsViewed } = useViewedItems(user?.id);
   const profileCompletion = useProfileCompletion();
@@ -47,9 +47,9 @@ export const Profile = () => {
       // Upload para bucket público "avatars"
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { 
-          contentType: file.type, 
-          upsert: true 
+        .upload(path, file, {
+          contentType: file.type,
+          upsert: true
         });
       if (uploadError) throw uploadError;
 
@@ -62,12 +62,12 @@ export const Profile = () => {
       // Atualiza perfil na database
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           avatar_url: publicUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
-        
+
       if (updateError) throw updateError;
 
       // Force refresh user profile to trigger real-time sync
@@ -114,7 +114,7 @@ export const Profile = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 pt-6 sm:pt-8 pb-safe-4xl max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 pt-6 sm:pt-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex flex-col items-center text-center mb-6 space-y-3">
         <div className="relative mb-3 animate-fade-up">
@@ -165,7 +165,7 @@ export const Profile = () => {
       </div>
 
       {/* Stats */}
-      <ProfileStats 
+      <ProfileStats
         points={points}
         sessionsCount={sessionsCount}
         activeDays={activeDays}
@@ -201,9 +201,9 @@ export const Profile = () => {
       {/* Meus Dados */}
       <h2 className="text-base sm:text-lg font-semibold mb-3 mt-6 text-foreground tracking-tight">Meus Dados</h2>
       <div className="space-y-3">
-        <Card 
-          role="button" 
-          onClick={() => handleCardClick("/cadastro-completo", 'profile')} 
+        <Card
+          role="button"
+          onClick={() => handleCardClick("/cadastro-completo", 'profile')}
           className="hover:bg-muted/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative touch-feedback-light animate-fade-up border border-border/50"
           tabIndex={0}
           aria-label={`Acessar cadastro completo. Progresso: ${profileCompletion.percentage}%`}
@@ -221,7 +221,7 @@ export const Profile = () => {
               <p className="font-medium text-sm sm:text-base leading-tight text-foreground mb-1">Cadastro Completo</p>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">Complete suas informações pessoais</p>
             </div>
-            <DynamicBadge 
+            <DynamicBadge
               percentage={profileCompletion.percentage}
               show={!profileCompletion.isComplete}
             />
@@ -232,9 +232,9 @@ export const Profile = () => {
       {/* Dados e Configurações */}
       <h2 className="text-base sm:text-lg font-semibold mb-3 mt-6 text-foreground tracking-tight">Dados e Configurações</h2>
       <div className="space-y-3 mb-16">
-        <Card 
-          role="button" 
-          onClick={() => handleCardClick("/anamnese", 'anamnese')} 
+        <Card
+          role="button"
+          onClick={() => handleCardClick("/anamnese", 'anamnese')}
           className="hover:bg-muted/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative touch-feedback-light animate-fade-up border border-border/50 stagger-delay-1"
           tabIndex={0}
           aria-label="Acessar anamnese e questionário de saúde"
@@ -252,7 +252,7 @@ export const Profile = () => {
               <p className="font-medium text-sm sm:text-base leading-tight text-foreground mb-1">Anamnese</p>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">Histórico médico e questionário de saúde</p>
             </div>
-            <DynamicBadge 
+            <DynamicBadge
               percentage={anamneseCompletion.hasAnamnese ? anamneseCompletion.percentage : undefined}
               status={!anamneseCompletion.hasAnamnese ? 'new' : undefined}
               show={!anamneseCompletion.isComplete}
@@ -281,7 +281,7 @@ export const Profile = () => {
               <p className="font-medium">Exames Médicos</p>
               <p className="text-sm text-muted-foreground">Últimos resultados</p>
             </div>
-            <DynamicBadge 
+            <DynamicBadge
               count={examCount}
               show={examCount > 0}
             />
@@ -297,7 +297,7 @@ export const Profile = () => {
               <p className="font-medium">Fotos de Progresso</p>
               <p className="text-sm text-muted-foreground">Evolução visual</p>
             </div>
-            <DynamicBadge 
+            <DynamicBadge
               count={photoCount}
               show={photoCount > 0}
             />
@@ -313,7 +313,7 @@ export const Profile = () => {
               <p className="font-medium">Avaliações Físicas</p>
               <p className="text-sm text-muted-foreground">Medidas e composição</p>
             </div>
-            <DynamicBadge 
+            <DynamicBadge
               count={assessmentCount}
               show={assessmentCount > 0}
             />
