@@ -21,36 +21,16 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "4.0.1", // ✅ BUILD 68: Fix user reported issues and full review
-
-  // Em PROD/CI não terá server.url
-  ...maybeServer,
-
-  server: {
-    ...(maybeServer as any).server,
-    cleartext: true,
-    allowNavigation: [
-      'https://bqbopkqzkavhmenjlhab.supabase.co',
-      'https://www.strava.com',
-      '*.lovableproject.com',
-      'https://*.lovable.app'
-    ]
-  },
-
-  deepLinkingConfig: {
-    customURLScheme: 'shapepro'
-  },
-
+  version: "4.0.2", // ✅ BUILD 69: Fix build version conflict
   ios: {
     scheme: "shapepro",
     contentInset: "automatic",
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 66: Fix botão Iniciar Treino e bottom nav móvel
-    CFBundleVersion: '68',
-    CFBundleShortVersionString: "4.0.1",
-
+    // ✅ BUILD 69: Fix build version conflict
+    CFBundleVersion: '69',
+    CFBundleShortVersionString: "4.0.2",
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
@@ -62,19 +42,15 @@ const config: CapacitorConfig = {
         "Precisamos da câmera para tirar fotos dentro do app.",
       NSUserTrackingUsageDescription:
         "Este app usa dados de atividade para personalizar sua experiência de treino e fornecer conteúdo relevante.",
-
       // ---- Localização (ITMS-90683) ----
       NSLocationWhenInUseUsageDescription:
         "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.",
       NSLocationAlwaysAndWhenInUseUsageDescription:
         "Usamos sua localização apenas para enviar notificações relevantes sobre treinos próximos a você.",
-
       // Push em background (OneSignal)
       UIBackgroundModes: ["remote-notification"],
-
       // Criptografia
       ITSAppUsesNonExemptEncryption: false,
-
       // FASE 4: Block landscape on iPhone, allow on iPad for multitasking
       UISupportedInterfaceOrientations: [
         "UIInterfaceOrientationPortrait",
@@ -85,19 +61,15 @@ const config: CapacitorConfig = {
         "UIInterfaceOrientationLandscapeLeft",
         "UIInterfaceOrientationLandscapeRight",
       ],
-
       // Launch screen baseado em storyboard (exigido pelo iPad multitasking)
       UILaunchStoryboardName: "LaunchScreen",
-
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "4.0.1",
-      CFBundleVersion: "68", // ✅ BUILD 68: Fix user reported issues and full review
-
+      CFBundleShortVersionString: "4.0.2",
+      CFBundleVersion: "69", // ✅ BUILD 69: Fix build version conflict
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
     },
   },
-
   android: {
     backgroundColor: "#000000",
     allowMixedContent: true,
@@ -108,8 +80,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 68, // ✅ BUILD 68: Fix user reported issues and full review
-    versionName: "4.0.1"
+    versionCode: 69, // ✅ BUILD 69: Fix build version conflict
+    versionName: "4.0.2"
   },
 
   plugins: {
