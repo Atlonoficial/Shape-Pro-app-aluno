@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Shape Pro</string>
+    <string name="title_activity_main">Shape Pro</string>
+    <string name="package_name">com.atlontech.shapepro.aluno</string>
+    <string name="custom_url_scheme">com.atlontech.shapepro.aluno</string>
+</resources>

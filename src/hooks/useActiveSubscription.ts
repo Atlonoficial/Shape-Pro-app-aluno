@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 
@@ -39,7 +39,7 @@ export const useActiveSubscription = () => {
     return 'active';
   };
 
-  const fetchActiveSubscription = async () => {
+  const fetchActiveSubscription = useCallback(async () => {
     if (!user?.id) {
       setSubscription(null);
       setLoading(false);
@@ -228,7 +228,7 @@ export const useActiveSubscription = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -238,7 +238,7 @@ export const useActiveSubscription = () => {
     }
 
     fetchActiveSubscription();
-  }, [user?.id]);
+  }, [user?.id, fetchActiveSubscription]);
 
   // Use centralized realtime manager
   // ✅ BUILD 54: Escutar eventos de realtime global
@@ -255,9 +255,31 @@ export const useActiveSubscription = () => {
     return () => {
       window.removeEventListener('subscription-updated', handleSubscriptionUpdate);
     };
-  }, [user?.id]);
+  }, [user?.id, fetchActiveSubscription]);
 
-  // Helper functions - CORRIGIDO para considerar membership_status
+  // Helper functions
+  const isSubscriptionExpired = () => {
+    if (!subscription) return true;
+    if (subscription.status !== 'active') return true;
+    if (!subscription.end_at) return false; // No end date means forever active
+
+    // Check if expiration date has passed (end of day)
+    const now = new Date();
+    const endDate = new Date(subscription.end_at);
+    endDate.setHours(23, 59, 59, 999); // Set to end of day
+
+    return now > endDate;
+  };
+
+  const getSubscriptionStatus = () => {
+    if (!subscription) return 'none';
+    if (subscription.status === 'expired') return 'expired';
+    if (isSubscriptionExpired()) return 'expired';
+    if (subscription.status === 'pending') return 'pending';
+    if (subscription.status === 'active') return 'active';
+    return 'none';
+  };
+
   const hasActiveSubscription = () => {
     if (!subscription) return false;
 
@@ -266,30 +288,7 @@ export const useActiveSubscription = () => {
     const isNotFree = subscription.plan_name !== 'free';
     const isNotExpired = !isSubscriptionExpired();
 
-    console.log('[useActiveSubscription] hasActiveSubscription check:', {
-      subscription: !!subscription,
-      status: subscription.status,
-      planName: subscription.plan_name,
-      isActiveStatus,
-      isNotFree,
-      isNotExpired,
-      result: isActiveStatus && isNotFree && isNotExpired
-    });
-
     return isActiveStatus && isNotFree && isNotExpired;
-  };
-
-  const isSubscriptionExpired = () => {
-    if (!subscription || !subscription.end_at) return false;
-    return new Date(subscription.end_at) <= new Date();
-  };
-
-  const getSubscriptionStatus = () => {
-    if (!subscription) return 'none';
-    if (subscription.status === 'pending') return 'pending';
-    if (isSubscriptionExpired()) return 'expired';
-    if (subscription.status === 'active' && subscription.plan_name !== 'free') return 'active';
-    return 'none';
   };
 
   const getStatusMessage = () => {

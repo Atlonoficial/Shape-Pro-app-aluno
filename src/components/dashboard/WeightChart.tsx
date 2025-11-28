@@ -6,49 +6,49 @@ interface WeightChartProps {
   onWeightNeeded?: () => void;
 }
 
+// Custom label renderer for weight values on top of bars
+const renderCustomLabel = (props: any) => {
+  const { x, y, width, value } = props;
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 3}
+      fill="hsl(var(--primary))"
+      textAnchor="middle"
+      fontSize="10"
+      fontWeight="600"
+    >
+      {value}kg
+    </text>
+  );
+};
+
 export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
   const { user } = useAuthContext();
   const { weightData, loading, error } = useWeightProgress(user?.id || '');
-  
-  console.log('📊 WeightChart render - data:', weightData, 'loading:', loading, 'error:', error);
-  
+
   // Format data with improved date display
-  const chartData = weightData.map(entry => {
-    const entryDate = new Date(entry.rawDate);
-    const dayOfWeek = entryDate.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const dayMonth = entryDate.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit' 
+  const chartData = weightData
+    .slice(-5) // Show only the last 5 records
+    .map(entry => {
+      const entryDate = new Date(entry.rawDate);
+      const dayOfWeek = entryDate.toLocaleDateString('pt-BR', { weekday: 'short' });
+      const dayMonth = entryDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit'
+      });
+
+      return {
+        ...entry,
+        date: `${dayOfWeek} ${dayMonth}`, // Ex: "Sex 27/10"
+        isFriday: entryDate.getDay() === 5
+      };
     });
-    
-    return {
-      ...entry,
-      date: `${dayOfWeek} ${dayMonth}`, // Ex: "Sex 27/10"
-      isFriday: entryDate.getDay() === 5
-    };
-  });
-  
+
   const currentWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
   const previousWeight = chartData.length > 1 ? chartData[chartData.length - 2].weight : 0;
   const weightDiff = currentWeight - previousWeight;
-  
-  // Custom label renderer for weight values on top of bars
-  const renderCustomLabel = (props: any) => {
-    const { x, y, width, value } = props;
-    return (
-      <text 
-        x={x + width / 2} 
-        y={y - 3} 
-        fill="hsl(var(--primary))" 
-        textAnchor="middle" 
-        fontSize="10" 
-        fontWeight="600"
-      >
-        {value}kg
-      </text>
-    );
-  };
-  
+
   if (loading) {
     return (
       <div className="card-gradient p-6 mb-6 animate-pulse">
@@ -74,7 +74,7 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
         <p className="text-xs sm:text-sm text-muted-foreground mb-4">
           Registre seu peso todas as sextas-feiras para ver sua evolução!
         </p>
-        <button 
+        <button
           onClick={onWeightNeeded}
           className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2"
         >
@@ -99,25 +99,25 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
           )}
         </div>
       </div>
-      
+
       <div className="h-32 sm:h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart 
-            data={chartData} 
+          <BarChart
+            data={chartData}
             margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
             maxBarSize={window.innerWidth < 640 ? 32 : 40}
             barCategoryGap="20%"
           >
-            <XAxis 
-              dataKey="date" 
+            <XAxis
+              dataKey="date"
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
               interval={0}
             />
             <YAxis hide />
-            <Bar 
-              dataKey="weight" 
+            <Bar
+              dataKey="weight"
               radius={[6, 6, 0, 0]}
               minPointSize={2}
             >
@@ -125,14 +125,14 @@ export const WeightChart = ({ onWeightNeeded }: WeightChartProps) => {
               {chartData.map((entry, index) => {
                 const isLatest = index === chartData.length - 1;
                 const isFriday = entry.isFriday;
-                
+
                 return (
-                  <Cell 
-                    key={`cell-${index}`} 
+                  <Cell
+                    key={`cell-${index}`}
                     fill={
-                      isLatest 
+                      isLatest
                         ? 'hsl(var(--primary))' // Último registro - cor primária
-                        : isFriday 
+                        : isFriday
                           ? 'hsl(var(--primary) / 0.6)' // Sexta - verde mais claro
                           : 'hsl(var(--warning) / 0.7)' // Recovery (Sáb/Dom) - amarelo
                     }

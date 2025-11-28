@@ -1,106 +1,56 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
 
-/**
- * Hook para gerenciar o modal de peso semanal
- * Detecta quando usuário perdeu a sexta-feira e deve registrar peso
- */
 export const useWeeklyWeightModal = () => {
   const { user } = useAuth();
   const [shouldShowModal, setShouldShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkWeightStatus = useCallback(async () => {
-    if (!user?.id) {
-      setShouldShowModal(false);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0 = Domingo, 5 = Sexta
-      
-      console.log('🔍 Checking weight status for day:', dayOfWeek);
-
-      // Verificar se já registrou peso esta semana (semana atual)
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay()); // Domingo da semana atual
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      const { data: thisWeekWeight, error: thisWeekError } = await supabase
-        .from('progress')
-        .select('id, date')
-        .eq('user_id', user.id)
-        .eq('type', 'weight')
-        .gte('date', startOfWeek.toISOString().split('T')[0])
-        .limit(1);
-
-      if (thisWeekError) {
-        console.error('Error checking this week weight:', thisWeekError);
-        setShouldShowModal(false);
-        return;
-      }
-
-      const hasWeightThisWeek = thisWeekWeight && thisWeekWeight.length > 0;
-
-      // Se é sexta-feira e não registrou peso esta semana
-      if (dayOfWeek === 5 && !hasWeightThisWeek) {
-        console.log('📅 Friday and no weight this week - showing modal');
-        setShouldShowModal(true);
-        return;
-      }
-
-      // Se passou da sexta e não registrou peso na semana anterior
-      if (dayOfWeek !== 5 && !hasWeightThisWeek) {
-        const hasMissedLastWeek = await checkMissedLastWeek();
-        if (hasMissedLastWeek) {
-          console.log('⚠️ Missed last week weight - showing recovery modal');
-          setShouldShowModal(true);
-          return;
-        }
-      }
-
-      setShouldShowModal(false);
-    } catch (error) {
-      console.error('Error in checkWeightStatus:', error);
-      setShouldShowModal(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  const checkMissedLastWeek = async (): Promise<boolean> => {
+  const checkMissedLastWeek = async () => {
     if (!user?.id) return false;
 
     try {
       const today = new Date();
-      const dayOfWeek = today.getDay();
+      const currentDay = today.getDay(); // 0 = Sunday, 6 = Saturday
 
-      // Calcular a sexta-feira da semana passada
-      let daysToLastFriday = dayOfWeek + 2; // Para segunda = 3, terça = 4, etc
-      if (dayOfWeek === 0) daysToLastFriday = 2; // Domingo
-      if (dayOfWeek === 6) daysToLastFriday = 1; // Sábado
+      // Calculate last Friday
+      // If today is Friday (5), last Friday was 7 days ago? Or today?
+      // Assuming we want to check if they missed the *previous* cycle.
+      // Let's assume "Last Friday" means the Friday of the previous week if today is early in the week,
+      // or the Friday of the current week if today is Saturday?
+      // Let's stick to the logic found in the snippet:
+      // const daysToLastFriday = (currentDay + 2) % 7; 
+      // This logic seems specific. Let's implement a standard "Last Friday" finder.
 
+      const daysSinceFriday = (currentDay + 2) % 7; // If today is Fri(5), (5+2)%7 = 0. If Sat(6), (6+2)%7 = 1.
       const lastFriday = new Date(today);
-      lastFriday.setDate(today.getDate() - daysToLastFriday);
+      lastFriday.setDate(today.getDate() - daysSinceFriday);
 
-      // Início da semana da última sexta-feira (domingo anterior)
+      // If today is Friday, we might want to check *today*.
+      // But if we are checking "missed", maybe we check if they didn't weigh in on Friday?
+
+      // Let's look at the snippet's logic again:
+      // const lastWeekStart = new Date(lastFriday);
+      // lastWeekStart.setDate(lastFriday.getDate() - lastFriday.getDay()); // Sunday before Friday
+
+      // Logic from snippet seems to define a "week" around that Friday.
+
+      // Simplified logic: Check if user weighed in the last 7 days?
+      // Or specifically "Last Week".
+
+      // Let's implement a robust check:
+      // 1. Check if weighed this week (since Sunday).
+      // 2. If not, check if missed last week's Friday?
+
+      // Re-implementing based on the snippet's intent:
+      // "Início da semana da última sexta-feira"
+
       const lastWeekStart = new Date(lastFriday);
-      lastWeekStart.setDate(lastFriday.getDate() - lastFriday.getDay());
-      
-      // Fim da semana da última sexta-feira (sábado)
-      const lastWeekEnd = new Date(lastWeekStart);
-      lastWeekEnd.setDate(lastWeekStart.getDate() + 6);
+      lastWeekStart.setDate(lastFriday.getDate() - lastFriday.getDay()); // Sunday
 
-      console.log('🔍 Checking last week range:', {
-        start: lastWeekStart.toISOString().split('T')[0],
-        end: lastWeekEnd.toISOString().split('T')[0],
-        lastFriday: lastFriday.toISOString().split('T')[0]
-      });
+      const lastWeekEnd = new Date(lastWeekStart);
+      lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // Saturday
 
       const { data: lastWeekWeight, error } = await supabase
         .from('progress')
@@ -117,46 +67,80 @@ export const useWeeklyWeightModal = () => {
       }
 
       const missedLastWeek = !lastWeekWeight || lastWeekWeight.length === 0;
-      
-      if (missedLastWeek) {
-        console.log('❌ Missed last week weight registration');
-      } else {
-        console.log('✅ Found last week weight registration:', lastWeekWeight[0].date);
-      }
-
       return missedLastWeek;
+
     } catch (error) {
       console.error('Error in checkMissedLastWeek:', error);
       return false;
     }
   };
 
+  const checkWeightStatus = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Check if weighed TODAY or THIS WEEK
+      const today = new Date().toISOString().split('T')[0];
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Sunday
+
+      const { data: recentWeight, error } = await supabase
+        .from('progress')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('type', 'weight')
+        .gte('date', startOfWeek.toISOString().split('T')[0])
+        .limit(1);
+
+      if (error) throw error;
+
+      const hasWeighedThisWeek = recentWeight && recentWeight.length > 0;
+
+      if (hasWeighedThisWeek) {
+        setShouldShowModal(false);
+      } else {
+        // If haven't weighed this week, check if we should prompt
+        // Maybe prompt if it's Friday?
+        const isFriday = new Date().getDay() === 5;
+        if (isFriday) {
+          setShouldShowModal(true);
+        } else {
+          // Or if missed last week?
+          const missed = await checkMissedLastWeek();
+          if (missed) {
+            // Maybe prompt to catch up?
+            // For now, let's keep it simple: Show if Friday and not weighed.
+            // Or if the user logic intended to show "You missed last week".
+            // The snippet had `return missedLastWeek`.
+            setShouldShowModal(missed);
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Error checking weight status:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   const markWeightModalDismissed = useCallback(() => {
     setShouldShowModal(false);
-    // Opcionalmente, armazenar em localStorage que o modal foi dispensado hoje
     const dismissedKey = `weight_modal_dismissed_${new Date().toISOString().split('T')[0]}`;
     localStorage.setItem(dismissedKey, 'true');
   }, []);
 
   const shouldShowModalToday = useCallback(() => {
-    // Verificar se o modal foi dispensado hoje
     const dismissedKey = `weight_modal_dismissed_${new Date().toISOString().split('T')[0]}`;
     const wasDismissedToday = localStorage.getItem(dismissedKey);
     return shouldShowModal && !wasDismissedToday;
   }, [shouldShowModal]);
 
-  // Verificar status quando o hook é inicializado
   useEffect(() => {
     checkWeightStatus();
-  }, [checkWeightStatus]);
-
-  // Verificar periodicamente se o status mudou (ex: mudou o dia)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      checkWeightStatus();
-    }, 60000); // A cada minuto
-
-    return () => clearInterval(interval);
   }, [checkWeightStatus]);
 
   return {

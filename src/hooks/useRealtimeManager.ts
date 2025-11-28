@@ -11,6 +11,8 @@ interface RealtimeSubscription {
 interface RealtimeManagerOptions {
   subscriptions: RealtimeSubscription[];
   enabled?: boolean;
+  channelName?: string;
+  debounceMs?: number;
 }
 
 export const useRealtimeManager = ({

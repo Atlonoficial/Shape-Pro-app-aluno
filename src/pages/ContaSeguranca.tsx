@@ -66,7 +66,7 @@ const ContaSeguranca = () => {
         .from('support_tickets')
         .insert({
           email: user?.email || '',
-          name: student?.name || 'Usuário',
+          name: student?.profiles?.name || 'Usuário',
           subject: 'Solicitação de Exclusão de Conta (App)',
           message: `Solicitação de exclusão de conta enviada pelo app. User ID: ${user?.id}`,
           status: 'open'

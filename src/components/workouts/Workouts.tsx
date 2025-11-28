@@ -12,6 +12,7 @@ import { ExerciseDetail } from "./ExerciseDetail";
 import { WorkoutSession } from "./WorkoutSession";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
 
 type ViewState = 'list' | 'detail' | 'exercise' | 'session';
 
@@ -205,59 +206,62 @@ export const Workouts = () => {
           Voltar para a Home
         </Button>
       </div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Treinos</h1>
-        <p className="text-muted-foreground">Escolha seu treino e vamos começar!</p>
-      </div>
 
-      {/* Search and Filter */}
-      <div className="mb-6 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <input
-            placeholder="Buscar treinos..."
-            className="w-full pl-10 pr-4 py-3 bg-card/50 border border-border/50 rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-          />
+      <SubscriptionGuard>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Treinos</h1>
+          <p className="text-muted-foreground">Escolha seu treino e vamos começar!</p>
         </div>
 
-        {/* Filter chips */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {muscleGroups.map((group) => (
-            <button
-              key={group}
-              className={`px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors ${group === "Todos"
-                ? "bg-accent text-background"
-                : "bg-card/50 text-muted-foreground hover:bg-card/70"
-                }`}
-            >
-              {group}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Workout Grid */}
-      {workouts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Nenhum treino disponível ainda.</p>
-          <p className="text-sm text-muted-foreground mt-2">Aguarde seu professor atribuir treinos para você!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {workouts.map((workout) => (
-            <WorkoutCard
-              key={workout.id}
-              name={workout.name}
-              duration={estimateWorkoutDuration(workout)}
-              difficulty={difficultyPt(workout.difficulty)}
-              calories={estimateCalories(workout)}
-              muscleGroup={getWorkoutMuscleGroups(workout).join(', ') || 'Geral'}
-              isCompleted={workout.sessions && workout.sessions.length > 0}
-              onClick={() => handleWorkoutSelect(workout)}
+        {/* Search and Filter */}
+        <div className="mb-6 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input
+              placeholder="Buscar treinos..."
+              className="w-full pl-10 pr-4 py-3 bg-card/50 border border-border/50 rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
             />
-          ))}
+          </div>
+
+          {/* Filter chips */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {muscleGroups.map((group) => (
+              <button
+                key={group}
+                className={`px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors ${group === "Todos"
+                  ? "bg-accent text-background"
+                  : "bg-card/50 text-muted-foreground hover:bg-card/70"
+                  }`}
+              >
+                {group}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
+
+        {/* Workout Grid */}
+        {workouts.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Nenhum treino disponível ainda.</p>
+            <p className="text-sm text-muted-foreground mt-2">Aguarde seu professor atribuir treinos para você!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {workouts.map((workout) => (
+              <WorkoutCard
+                key={workout.id}
+                name={workout.name}
+                duration={estimateWorkoutDuration(workout)}
+                difficulty={difficultyPt(workout.difficulty)}
+                calories={estimateCalories(workout)}
+                muscleGroup={getWorkoutMuscleGroups(workout).join(', ') || 'Geral'}
+                isCompleted={workout.sessions && workout.sessions.length > 0}
+                onClick={() => handleWorkoutSelect(workout)}
+              />
+            ))}
+          </div>
+        )}
+      </SubscriptionGuard>
     </div>
   );
 };

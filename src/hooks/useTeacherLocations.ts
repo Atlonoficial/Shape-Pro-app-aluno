@@ -41,7 +41,7 @@ export const useTeacherLocations = (teacherId?: string | null) => {
 
       if (error) throw error;
 
-      setLocations(data || []);
+      setLocations((data || []) as any as TeacherLocation[]);
     } catch (error: any) {
       console.error('Error fetching teacher locations:', error);
       toast({
