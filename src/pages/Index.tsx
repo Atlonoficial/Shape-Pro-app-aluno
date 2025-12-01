@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MobileContainer } from "@/components/layout/MobileContainer";
+import { StudentLayout } from "@/components/layout/StudentLayout";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Workouts } from "@/components/workouts/Workouts";
@@ -75,14 +74,16 @@ const Index = () => {
   return (
     <>
       <NotificationPermissionPrompt />
-      <MobileContainer key={`container-${activeTab}`}>
+      <StudentLayout
+        bottomNav={
+          <BottomNavigation
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        }
+      >
         {renderContent()}
-      </MobileContainer>
-      <BottomNavigation
-        key={`bottom-nav-${activeTab}`}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      </StudentLayout>
     </>
   );
 };

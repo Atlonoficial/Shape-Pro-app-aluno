@@ -36,15 +36,6 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
   return (
     <nav
       {...(isMobileApp ? gestures : {})}
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50, // Reduzido de 999999 para um valor sensato, mas acima de conteúdo normal
-        touchAction: 'none',
-        paddingBottom: 'env(safe-area-inset-bottom)', // Garante padding nativo
-      }}
       className="
         bottom-nav-container
         bg-card/95 backdrop-blur-lg
