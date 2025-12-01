@@ -35,8 +35,6 @@ import { LazyTeacherStudentChat } from "./pages/lazy/LazyTeacherStudentChat";
 import { LazyAgenda } from "./pages/lazy/LazyAgenda";
 import { LazyMetas } from "./pages/lazy/LazyMetas";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
-
-
 import { RegistrarRefeicao } from "./pages/RegistrarRefeicao";
 
 import { LazyCursos } from "./pages/lazy/LazyCursos";

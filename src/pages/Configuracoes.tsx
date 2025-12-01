@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ArrowLeft, ChevronRight, Bell, User, Shield, LogOut, Crown, Lock } from "lucide-react";
+import { ArrowLeft, ChevronRight, Bell, User, Shield, LogOut, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -155,9 +155,9 @@ const Configuracoes = () => {
         : undefined
     },
     {
-      icon: Crown,
+      icon: Shield,
       title: "Meu Acesso",
-      description: "Visualizar acesso e recursos",
+      description: "Visualizar status do acesso",
       action: <ChevronRight className="w-4 h-4 text-muted-foreground" />,
       onClick: handlePlanosClick
     },

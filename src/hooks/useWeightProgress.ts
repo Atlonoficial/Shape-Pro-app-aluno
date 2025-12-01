@@ -264,10 +264,37 @@ export const useWeightProgress = (userId: string) => {
   };
 
   const shouldShowWeightModal = async () => {
-    // Simplesmente verificar se já registrou peso esta semana
-    // Se não registrou, mostrar modal em qualquer dia
+    // 1. Verificar se já registrou peso esta semana (via banco/cache)
     const alreadyWeighed = await hasWeighedThisWeek();
-    return !alreadyWeighed; // Mostrar modal se NÃO pesou essa semana
+    if (alreadyWeighed) return false;
+
+    // 2. Verificar se o usuário dispensou o modal nesta semana (via localStorage)
+    const today = new Date();
+    // Calcular ID da semana atual (ex: "2024-W48")
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const pastDays = Math.floor((today.getTime() - startOfYear.getTime()) / 86400000);
+    const weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+    const currentWeekId = `${today.getFullYear()}-W${weekNumber}`;
+
+    const dismissedWeek = localStorage.getItem('weight_modal_dismissed_week');
+
+    if (dismissedWeek === currentWeekId) {
+      console.log('🚫 Modal de peso dispensado nesta semana:', currentWeekId);
+      return false;
+    }
+
+    return true; // Mostrar modal se NÃO pesou E NÃO dispensou
+  };
+
+  const dismissWeightModal = () => {
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const pastDays = Math.floor((today.getTime() - startOfYear.getTime()) / 86400000);
+    const weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+    const currentWeekId = `${today.getFullYear()}-W${weekNumber}`;
+
+    localStorage.setItem('weight_modal_dismissed_week', currentWeekId);
+    console.log('🙈 Modal de peso dispensado para a semana:', currentWeekId);
   };
 
   const addWeightFromAssessment = async (weight: number, assessmentDate: string) => {
@@ -325,6 +352,7 @@ export const useWeightProgress = (userId: string) => {
     hasWeighedThisWeek,
     isFridayToday,
     shouldShowWeightModal,
+    dismissWeightModal,
     addWeightFromAssessment,
     clearError,
     refetch: fetchWeightProgress

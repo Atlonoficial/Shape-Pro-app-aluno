@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Camera, Calendar, Activity, Target, CalendarDays, CreditCard, ClipboardList, Stethoscope, Images, Ruler, Shield, Cog, Bell } from "lucide-react";
+import { Trophy, Camera, Calendar, Activity, Target, CalendarDays, ClipboardList, Stethoscope, Images, Ruler, Shield, Cog, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
@@ -263,11 +263,11 @@ export const Profile = () => {
         <Card role="button" onClick={() => navigate("/assinaturas-planos")} className="hover:bg-muted/40 transition-colors">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-primary" />
+              <Shield className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
               <p className="font-medium">Meu Acesso</p>
-              <p className="text-sm text-muted-foreground">Gerencie seu acesso</p>
+              <p className="text-sm text-muted-foreground">Visualizar status do acesso</p>
             </div>
           </CardContent>
         </Card>

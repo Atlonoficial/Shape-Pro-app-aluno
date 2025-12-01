@@ -1,4 +1,4 @@
-import { ArrowLeft, Shield, Eye, Lock, Database, Users, DollarSign } from "lucide-react";
+import { ArrowLeft, Shield, Eye, Lock, Database, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -56,8 +56,8 @@ const PoliticaPrivacidade = () => {
       {/* Header */}
       <div className="p-4 pt-8 border-b border-border/30">
         <div className="flex items-center gap-3 mb-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate("/configuracoes")}
             className="text-foreground"
@@ -78,7 +78,7 @@ const PoliticaPrivacidade = () => {
             <h2 className="text-lg font-semibold text-primary">Sua Privacidade é Nossa Prioridade</h2>
           </div>
           <p className="text-primary/80 text-sm leading-relaxed">
-            No Shape Pro, levamos sua privacidade a sério. Esta política explica como coletamos, 
+            No Shape Pro, levamos sua privacidade a sério. Esta política explica como coletamos,
             usamos e protegemos suas informações pessoais quando você usa nosso aplicativo.
           </p>
           <p className="text-primary/80 text-sm mt-3">
@@ -95,7 +95,7 @@ const PoliticaPrivacidade = () => {
               </div>
               <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>
             </div>
-            
+
             <div className="space-y-3">
               {section.content.map((item, itemIndex) => (
                 <div key={itemIndex} className="flex items-start gap-3">
@@ -129,31 +129,19 @@ const PoliticaPrivacidade = () => {
                 Você pode solicitar a exclusão de seus dados pessoais.
               </p>
             </div>
+            <p className="text-sm text-muted-foreground mt-4">
+              você e seu instrutor, fora do aplicativo. Não coletamos informações de cartão de crédito,
+              dados bancários ou qualquer informação financeira. O acesso aos conteúdos premium é controlado
+              manualmente pelo seu instrutor após a negociação externa.
+            </p>
           </div>
-        </Card>
-
-        {/* Transações Financeiras */}
-        <Card className="p-6 border-amber-200 bg-amber-50/50">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-amber-700" />
-            </div>
-            <h2 className="text-lg font-semibold text-foreground">Transações Financeiras</h2>
-          </div>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            O Shape Pro <strong>não processa, armazena ou gerencia transações financeiras</strong> dentro do aplicativo.
-            Todas as negociações de valores, pagamentos e assinaturas são realizadas diretamente entre 
-            você e seu instrutor, fora do aplicativo. Não coletamos informações de cartão de crédito, 
-            dados bancários ou qualquer informação financeira. O acesso aos conteúdos premium é controlado 
-            manualmente pelo seu instrutor após a negociação externa.
-          </p>
         </Card>
 
         {/* Contato */}
         <Card className="p-4 bg-primary/10 border-primary/20">
           <h3 className="font-medium text-primary mb-2">Dúvidas sobre Privacidade?</h3>
           <p className="text-sm text-primary/80 mb-3">
-            Se você tiver alguma dúvida sobre nossa política de privacidade ou sobre como 
+            Se você tiver alguma dúvida sobre nossa política de privacidade ou sobre como
             tratamos seus dados, entre em contato conosco.
           </p>
           <Button variant="outline" size="sm" className="text-primary border-primary/30">

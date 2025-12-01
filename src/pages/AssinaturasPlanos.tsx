@@ -32,7 +32,8 @@ const AssinaturasPlanos = () => {
 
   const handleContactTeacher = () => {
     if (teacherPhone) {
-      const message = encodeURIComponent("Olá, gostaria de falar sobre meu acesso no app.");
+      // Neutral message for support only
+      const message = encodeURIComponent("Olá, preciso de suporte com minha conta no app.");
       window.open(`https://wa.me/${teacherPhone}?text=${message}`, '_blank');
     } else {
       // Fallback to internal chat if no phone available
@@ -113,7 +114,6 @@ const AssinaturasPlanos = () => {
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Alguns recursos podem estar bloqueados dependendo da configuração feita pelo seu treinador.
-                Recursos adicionais podem ser habilitados diretamente por ele.
               </p>
             </div>
           </div>
@@ -123,14 +123,14 @@ const AssinaturasPlanos = () => {
         <Card className="p-6 border-border/30">
           <h3 className="font-medium text-foreground mb-2">Precisa de ajuda?</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Para suporte, dúvidas ou alterações no seu acesso, fale diretamente com seu treinador.
+            Para suporte técnico ou dúvidas sobre sua conta, fale com seu treinador.
           </p>
           <Button
             variant="outline"
             className="w-full"
             onClick={handleContactTeacher}
           >
-            Falar com o Treinador
+            Suporte Técnico
           </Button>
         </Card>
       </div>

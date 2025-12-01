@@ -5,7 +5,7 @@ export const signUpSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
   password: z.string()
     .min(8, 'Senha deve ter pelo menos 8 caracteres')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
       'Senha deve conter pelo menos: 1 letra minúscula, 1 maiúscula, 1 número e 1 caractere especial'),
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo'),
   userType: z.enum(['student', 'teacher']).default('student')
@@ -59,20 +59,6 @@ export const feedbackSchema = z.object({
   metadata: z.object({
     category: z.string().optional(),
     tags: z.array(z.string()).max(10, 'Máximo 10 tags').optional()
-  }).optional()
-});
-
-// Payment schemas
-export const paymentDataSchema = z.object({
-  amount: z.number()
-    .min(0.01, 'Valor mínimo é R$ 0,01')
-    .max(10000, 'Valor máximo é R$ 10.000,00'),
-  currency: z.string().length(3, 'Moeda deve ter 3 caracteres').default('BRL'),
-  description: z.string().max(500, 'Descrição muito longa').optional(),
-  metadata: z.object({
-    student_id: z.string().uuid('ID do aluno inválido'),
-    teacher_id: z.string().uuid('ID do professor inválido'),
-    plan_id: z.string().uuid('ID do plano inválido').optional(),
     course_id: z.string().uuid('ID do curso inválido').optional()
   })
 });
@@ -186,8 +172,8 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, data: unknown): { succe
     return { success: true, data: validated };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
       };
     }

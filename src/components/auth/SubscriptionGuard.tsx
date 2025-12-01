@@ -30,8 +30,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
 
     const handleContactTeacher = () => {
         if (teacherPhone) {
+            // Neutral message for support only - Unified for all platforms
             const message = status === 'expired'
-                ? 'Olá, meu plano expirou. Gostaria de renovar!'
+                ? 'Olá, preciso de ajuda com meu acesso.'
                 : 'Olá, gostaria de solicitar meu plano de treino.';
 
             const whatsappUrl = `https://wa.me/${teacherPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
@@ -80,15 +81,21 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
                 <div className="space-y-2">
                     <h2 className="text-xl font-bold text-foreground">Acesso Bloqueado</h2>
                     <p className="text-muted-foreground">
-                        Seu plano expirou. Renove para continuar treinando e acessando seus conteúdos exclusivos!
+                        Seu acesso a este conteúdo não está ativo. Entre em contato com seu treinador para mais informações.
                     </p>
                 </div>
 
                 <div className="space-y-3">
-                    {/* Removed "Ver Detalhes do Plano" to comply with Reader App policy if it implies payment */}
-                    {/* Kept only if it's strictly informational, but for safety, focusing on contact */}
+                    {/* Unified behavior: Always show neutral contact info, never "Renew" buttons */}
+
+                    <div className="p-3 bg-background/50 rounded-lg border border-border/50">
+                        <p className="text-sm text-muted-foreground">
+                            Para regularizar seu acesso, entre em contato diretamente com seu treinador.
+                        </p>
+                    </div>
 
                     <Button
+                        variant="outline"
                         className="w-full gap-2"
                         onClick={handleContactTeacher}
                     >

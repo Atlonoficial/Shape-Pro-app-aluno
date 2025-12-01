@@ -291,38 +291,6 @@
     position: relative;
     overscroll-behavior: none;
     -webkit-overscroll-behavior: none;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-    isolation: isolate;
-    z-index: var(--z-bottom-nav);
-  }
-
-  /* ✅ BUILD 54: Garantir que body seja o único scroll container */
-  html {
-    overscroll-behavior-y: none;
-    -webkit-overscroll-behavior-y: none;
-  }
-
-  /* ✅ BUILD 29: Force only ONE bottom nav visible */
-  .bottom-nav-container ~ .bottom-nav-container {
-    display: none !important;
-  }
-
-  /* ✅ BUILD 54: Body - único scroll container com comportamento otimizado */
-body {
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  /* ✅ ADICIONAR: Prevenir bounce no final do scroll */
-  overscroll-behavior-y: none;
-  -webkit-overscroll-behavior-y: none;
-  /* ✅ ADICIONAR: Scroll momentum suave */
-  scroll-behavior: smooth;
-}
-
-#root {
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow-y: visible;
   position: relative;
 }
 
