@@ -58,7 +58,7 @@ export const feedbackSchema = z.object({
     }, 'Conteúdo do feedback não permitido'),
   metadata: z.object({
     category: z.string().optional(),
-    tags: z.array(z.string()).max(10, 'Máximo 10 tags').optional()
+    tags: z.array(z.string()).max(10, 'Máximo 10 tags').optional(),
     course_id: z.string().uuid('ID do curso inválido').optional()
   })
 });
