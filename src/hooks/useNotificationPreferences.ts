@@ -35,7 +35,7 @@ export function useNotificationPreferences(userId: string | undefined): UseNotif
 
     try {
       logger.debug('NotificationPreferences', 'Loading preferences', { userId });
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .select('notification_preferences')
@@ -45,11 +45,11 @@ export function useNotificationPreferences(userId: string | undefined): UseNotif
       if (error) throw error;
 
       const rawPrefs = data?.notification_preferences;
-      const prefs: NotificationPreferences = rawPrefs 
+      const prefs: NotificationPreferences = rawPrefs
         ? (rawPrefs as unknown as NotificationPreferences)
         : { push_enabled: true };
       setPreferences(prefs);
-      
+
       logger.info('NotificationPreferences', 'Preferences loaded', prefs);
     } catch (error) {
       logger.error('NotificationPreferences', 'Error loading preferences', error);
@@ -112,16 +112,21 @@ export function useNotificationPreferences(userId: string | undefined): UseNotif
     try {
       // Verificar permissão do SO antes de ativar
       if (newValue) {
-        const status = await checkNotificationPermission();
-        
-        if (status === 'denied') {
-          toast({
-            title: "Permissão Negada",
-            description: "Você precisa habilitar notificações nas configurações do dispositivo.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
+        let status = await checkNotificationPermission();
+
+        // Se ainda não pediu ou foi negado, tentar pedir novamente (alguns OS permitem)
+        if (status !== 'granted') {
+          const { requestPermission } = await import('@/lib/push');
+          const accepted = await requestPermission();
+          if (!accepted) {
+            toast({
+              title: "Permissão Negada",
+              description: "Você precisa habilitar notificações nas configurações do dispositivo.",
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -147,13 +152,13 @@ export function useNotificationPreferences(userId: string | undefined): UseNotif
 
     } catch (error) {
       logger.error('NotificationPreferences', 'Error toggling push', error);
-      
+
       toast({
         title: "Erro",
         description: "Não foi possível alterar as notificações. Tente novamente.",
         variant: "destructive"
       });
-      
+
       // Reverter estado local em caso de erro
       await loadPreferences();
     } finally {

@@ -29,7 +29,7 @@ const isMobileApp = () => {
 export async function initPush(externalUserId?: string) {
   // Hardcoded temporariamente para garantir disponibilidade em produção
   const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82";
-  
+
   if (!APP_ID) {
     logger.error('OneSignal', 'APP_ID not configured - check .env file');
     logger.warn('OneSignal', 'See docs/ONESIGNAL_CONFIG.md for setup');
@@ -53,7 +53,7 @@ export async function initPush(externalUserId?: string) {
 // Inicialização Mobile (Cordova/Capacitor)
 function initMobilePush(APP_ID: string, externalUserId?: string) {
   logger.debug('OneSignal Mobile', 'Starting initialization');
-  
+
   setTimeout(async () => {
     try {
       if (!window.plugins?.OneSignal) {
@@ -63,7 +63,7 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
 
       const OneSignal = window.plugins.OneSignal;
       logger.debug('OneSignal Mobile', 'Plugin found, initializing');
-      
+
       OneSignal.setAppId(APP_ID);
 
       // ✅ BUILD 53: Definir external user ID (permissão será pedida pelo modal)
@@ -102,8 +102,8 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
       });
 
       // ✅ BUILD 53: Disparar evento customizado para notificar componentes
-      window.dispatchEvent(new CustomEvent('onesignal-ready', { 
-        detail: { platform: 'mobile', externalUserId } 
+      window.dispatchEvent(new CustomEvent('onesignal-ready', {
+        detail: { platform: 'mobile', externalUserId }
       }));
 
     } catch (error) {
@@ -119,15 +119,15 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
     logger.warn('OneSignal Web', 'Already initialized, skipping');
     return;
   }
-  
+
   try {
     webInitialized = true;
     logger.debug('OneSignal Web', 'Initializing', { appId: APP_ID.substring(0, 8) + '...' });
 
     // Carregar SDK Web do OneSignal
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    
-    window.OneSignalDeferred.push(async function(OneSignal: any) {
+
+    window.OneSignalDeferred.push(async function (OneSignal: any) {
       await OneSignal.init({
         appId: APP_ID,
         allowLocalhostAsSecureOrigin: import.meta.env.DEV,
@@ -195,30 +195,59 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
 
   } catch (error) {
     webInitialized = false; // ✅ Reset se falhar para permitir retry
-    logger.error('OneSignal Web', 'Initialization error', error);
+    logger.error('OneSignal', 'Error initializing', error);
   }
 }
 
-// Utilitárias para controle de push
-export function enablePush(): void {
-  if (!isInitialized || !window.plugins?.OneSignal) return;
-  
+// ✅ BUILD 72: Função requestPermission corrigida e exportada
+export async function requestPermission(): Promise<boolean> {
   try {
-    const OneSignal = window.plugins.OneSignal;
-    OneSignal.setPushSubscription?.(true);
-    logger.debug('OneSignal Native', 'Push enabled');
+    if (isMobileApp() && window.plugins?.OneSignal) {
+      const OneSignal = window.plugins.OneSignal;
+      return new Promise((resolve) => {
+        OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+          logger.info('OneSignal', 'Permission requested', { accepted });
+          resolve(accepted);
+        });
+      });
+    } else if (window.OneSignal) {
+      // Web
+      await window.OneSignal.Notifications.requestPermission();
+      return window.OneSignal.Notifications.permission === 'granted';
+    }
+    return false;
   } catch (error) {
-    logger.error('OneSignal Native', 'Error enabling push', error);
+    logger.error('OneSignal', 'Error requesting permission', error);
+    return false;
   }
 }
 
-export function disablePush(): void {
-  if (!isInitialized || !window.plugins?.OneSignal) return;
-  
+// ✅ BUILD 72: Função enablePush corrigida e exportada
+export async function enablePush(): Promise<void> {
   try {
-    const OneSignal = window.plugins.OneSignal;
-    OneSignal.setPushSubscription?.(false);
-    logger.debug('OneSignal Native', 'Push disabled');
+    const permission = await checkNotificationPermission();
+    if (permission !== 'granted') {
+      await requestPermission();
+    }
+
+    if (isMobileApp() && window.plugins?.OneSignal) {
+      window.plugins.OneSignal.disablePush(false); // Enable
+    } else if (window.OneSignal) {
+      // Web logic if needed (usually automatic if permission granted)
+    }
+    logger.info('OneSignal', 'Push enabled');
+  } catch (error) {
+    logger.error('OneSignal', 'Error enabling push', error);
+  }
+}
+
+export async function disablePush(): Promise<void> {
+  try {
+    if (isMobileApp() && window.plugins?.OneSignal) {
+      const OneSignal = window.plugins.OneSignal;
+      OneSignal.disablePush(true); // Disable
+      logger.debug('OneSignal Native', 'Push disabled');
+    }
   } catch (error) {
     logger.error('OneSignal Native', 'Error disabling push', error);
   }
@@ -226,7 +255,7 @@ export function disablePush(): void {
 
 export function clearExternalUserId(): void {
   if (!isInitialized) return;
-  
+
   try {
     if (isMobileApp() && window.plugins?.OneSignal) {
       const OneSignal = window.plugins.OneSignal;
@@ -245,10 +274,11 @@ export function clearExternalUserId(): void {
 export function getDeviceState(): Promise<any> {
   return new Promise((resolve, reject) => {
     if (!isInitialized || !(window as any).plugins?.OneSignal) {
-      reject(new Error('OneSignal not initialized'));
+      // Se não estiver inicializado, tenta retornar null ou um estado padrão em vez de erro
+      resolve(null);
       return;
     }
-    
+
     try {
       const OneSignal = (window as any).plugins.OneSignal;
       OneSignal.getDeviceState((state: any) => {
@@ -257,7 +287,7 @@ export function getDeviceState(): Promise<any> {
       });
     } catch (error) {
       logger.error('OneSignal Native', 'Error getting device state', error);
-      reject(error);
+      resolve(null);
     }
   });
 }
@@ -266,23 +296,24 @@ export function getDeviceState(): Promise<any> {
 export async function checkNotificationPermission(): Promise<'granted' | 'denied' | 'default'> {
   try {
     // Web
-    if ('Notification' in window) {
+    if ('Notification' in window && !isMobileApp()) {
       logger.debug('OneSignal Web', 'Notification permission', { permission: Notification.permission });
       return Notification.permission;
     }
-    
+
     // Mobile - verificar via OneSignal
-    if ((window as any).plugins?.OneSignal && isInitialized) {
+    if (isMobileApp() && (window as any).plugins?.OneSignal) {
       const state = await getDeviceState();
-      const hasPermission = state?.hasNotificationPermission || state?.notificationPermissionStatus === 1;
-      logger.debug('OneSignal Native', 'Notification permission', { 
+      if (!state) return 'default';
+
+      const hasPermission = state.hasNotificationPermission || state.notificationPermissionStatus === 1 || state.notificationPermissionStatus === 2;
+      logger.debug('OneSignal Native', 'Notification permission', {
         hasPermission,
-        state 
+        state
       });
       return hasPermission ? 'granted' : 'denied';
     }
-    
-    logger.warn('OneSignal', 'Cannot check permission - OneSignal not available');
+
     return 'default';
   } catch (error) {
     logger.error('OneSignal', 'Error checking notification permission', error);
@@ -311,49 +342,49 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       logger.debug('OneSignal', `Attempt ${attempt}/${maxRetries}: Updating Supabase`);
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .update({ onesignal_player_id: playerId })
         .eq('id', userId)
         .select();
-      
+
       if (error) {
         logger.error('OneSignal', `Error on attempt ${attempt}`, error);
-        
+
         // ✅ NOVO: Detectar erros de RLS (não vale retry)
         if (error.code === 'PGRST116' || error.code === '42501') {
           logger.critical('OneSignal', 'RLS POLICY ERROR - Check profiles table policies');
           return; // Não adianta tentar novamente
         }
-        
+
         if (attempt === maxRetries) {
           logger.error('OneSignal', 'All retry attempts failed');
           throw error;
         }
-        
+
         const waitTime = 1000 * attempt;
         logger.debug('OneSignal', `Waiting ${waitTime}ms before retry`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
         continue;
       }
-      
+
       logger.info('OneSignal', 'Player ID saved successfully', {
         playerId,
         rowsAffected: data?.length || 0
       });
-      
+
       // ✅ BUILD 32: Toast de confirmação para o usuário
       toast.success('🔔 Notificações ativadas!', {
         description: 'Você receberá lembretes de treinos e avisos importantes.',
         duration: 4000
       });
-      
+
       return;
-      
+
     } catch (error: any) {
       logger.error('OneSignal', `Exception on attempt ${attempt}`, error);
-      
+
       if (attempt < maxRetries) {
         const waitTime = 1000 * attempt;
         await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -367,7 +398,7 @@ function handleNotificationAction(additionalData: any) {
   if (!additionalData) return;
 
   const { route, deep_link, type } = additionalData;
-  
+
   // Navegar baseado no tipo de notificação
   if (route) {
     window.location.href = route;

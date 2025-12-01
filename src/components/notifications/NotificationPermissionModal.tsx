@@ -16,34 +16,34 @@ export const NotificationPermissionModal = () => {
       logger.debug('NotificationPermissionModal', 'Web platform detected, skipping modal');
       return;
     }
-    
+
     // ✅ Verificar se já pediu permissão
     const hasRequested = localStorage.getItem('notification_permission_requested');
     if (hasRequested) {
       logger.debug('NotificationPermissionModal', 'Permission already requested, skipping');
       return;
     }
-    
+
     // ✅ BUILD 53: Escutar evento onesignal-ready
     const handleOneSignalReady = (event: Event) => {
       logger.info('NotificationPermissionModal', 'OneSignal ready event received', (event as CustomEvent).detail);
       setOneSignalReady(true);
-      
+
       // Mostrar modal após 1 segundo extra (garantir estabilidade)
       setTimeout(() => {
         logger.info('NotificationPermissionModal', 'Displaying permission modal');
         setOpen(true);
       }, 1000);
     };
-    
+
     window.addEventListener('onesignal-ready', handleOneSignalReady);
-    
+
     // ✅ Fallback: Verificar manualmente se OneSignal já está pronto
     const checkOneSignalReady = () => {
       if (window.plugins?.OneSignal) {
         logger.info('NotificationPermissionModal', 'OneSignal detected via polling');
         setOneSignalReady(true);
-        
+
         setTimeout(() => {
           logger.info('NotificationPermissionModal', 'Displaying permission modal');
           setOpen(true);
@@ -53,44 +53,38 @@ export const NotificationPermissionModal = () => {
         setTimeout(checkOneSignalReady, 1000);
       }
     };
-    
+
     // Iniciar verificação após 3 segundos (deixar app carregar)
     const timer = setTimeout(checkOneSignalReady, 3000);
-    
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('onesignal-ready', handleOneSignalReady);
     };
   }, []);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     try {
       logger.info('NotificationPermissionModal', 'User accepted, requesting native permission');
-      
-      if (window.plugins?.OneSignal) {
-        // ✅ BUILD 53: Usar callback (não Promise!)
-        window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-          if (accepted) {
-            logger.info('NotificationPermissionModal', 'User accepted native permission');
-            localStorage.setItem('notification_permission_requested', 'true');
-            setOpen(false);
-            
-            // Toast de confirmação
-            toast.success('🔔 Notificações ativadas!', {
-              description: 'Você receberá lembretes de treinos e avisos importantes.',
-              duration: 4000
-            });
-          } else {
-            logger.info('NotificationPermissionModal', 'User denied native permission');
-            localStorage.setItem('notification_permission_requested', 'declined');
-            setOpen(false);
-          }
+
+      // ✅ BUILD 55: Usar função centralizada do push.ts
+      const { requestPermission } = await import('@/lib/push');
+      const accepted = await requestPermission();
+
+      if (accepted) {
+        logger.info('NotificationPermissionModal', 'User accepted native permission');
+        localStorage.setItem('notification_permission_requested', 'true');
+        setOpen(false);
+
+        // Toast de confirmação
+        toast.success('🔔 Notificações ativadas!', {
+          description: 'Você receberá lembretes de treinos e avisos importantes.',
+          duration: 4000
         });
       } else {
-        logger.warn('NotificationPermissionModal', 'OneSignal plugin not available yet');
-        toast.error('OneSignal ainda não está pronto', {
-          description: 'Aguarde alguns segundos e tente novamente.'
-        });
+        logger.info('NotificationPermissionModal', 'User denied native permission');
+        localStorage.setItem('notification_permission_requested', 'declined');
+        setOpen(false);
       }
     } catch (error) {
       logger.error('NotificationPermissionModal', 'Error requesting permission', error);
