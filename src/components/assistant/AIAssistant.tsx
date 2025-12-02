@@ -99,7 +99,7 @@ export const AIAssistant = () => {
   }, [inputText]);
 
   return (
-    <div className="flex flex-col h-screen relative bg-gradient-dark">
+    <div className="flex flex-col h-[100dvh] relative bg-gradient-dark overflow-hidden">
       {/* Header com Logo Shape Pro */}
       <div className="p-3 sm:p-4 pt-6 sm:pt-8 text-center bg-gradient-to-b from-card/90 to-transparent border-b border-border/20">
         {/* Data */}
@@ -175,16 +175,16 @@ export const AIAssistant = () => {
               )}
 
               <Card className={`p-3 ${message.role === 'user'
-                  ? 'bg-primary text-background ml-auto'
-                  : 'bg-card/50 border-border/50'
+                ? 'bg-primary text-background ml-auto'
+                : 'bg-card/50 border-border/50'
                 }`}>
                 <p className={`text-sm whitespace-pre-wrap ${message.role === 'user' ? 'text-background' : 'text-foreground'
                   }`}>
                   {message.content}
                 </p>
                 <p className={`text-xs mt-1 ${message.role === 'user'
-                    ? 'text-background/70'
-                    : 'text-muted-foreground'
+                  ? 'text-background/70'
+                  : 'text-muted-foreground'
                   }`}>
                   {formatTime(message.timestamp)}
                 </p>
@@ -215,8 +215,8 @@ export const AIAssistant = () => {
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed bottom-safe left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-background via-background/95 to-transparent z-20">
-        <div className="flex items-end gap-1.5 sm:gap-2 bg-card/80 backdrop-blur-md border border-border/50 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 w-full max-w-full sm:max-w-lg mx-auto shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-background via-background/95 to-transparent z-20 pb-safe">
+        <div className="flex items-end gap-2 bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-2 w-full max-w-lg mx-auto shadow-2xl ring-1 ring-white/5">
           <div className="flex-1 min-w-0">
             <textarea
               ref={textareaRef}

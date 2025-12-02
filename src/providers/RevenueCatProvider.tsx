@@ -45,8 +45,18 @@ export const RevenueCatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                     checkEntitlements(customerInfo);
 
                     const offerings = await Purchases.getOfferings();
+                    console.log("📦 [RevenueCat] Offerings fetched:", JSON.stringify(offerings, null, 2));
+
                     if (offerings.current) {
+                        console.log("✅ [RevenueCat] Current offering found:", offerings.current.identifier);
                         setCurrentOffering(offerings.current);
+                    } else if (Object.keys(offerings.all).length > 0) {
+                        // Fallback: Use the first available offering if 'current' is not set
+                        const firstOfferingId = Object.keys(offerings.all)[0];
+                        console.log(`⚠️ [RevenueCat] No 'current' offering. Fallback to first available: ${firstOfferingId}`);
+                        setCurrentOffering(offerings.all[firstOfferingId]);
+                    } else {
+                        console.warn("⚠️ [RevenueCat] No offerings found at all. Check RevenueCat Dashboard.");
                     }
                 } else {
                     console.log("RevenueCat not initialized: Web platform detected");
