@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MoreVertical, Flag } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Flag, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
@@ -105,6 +105,35 @@ export const ChatHeader = ({
     });
   };
 
+  const handleBlock = async () => {
+    if (!chatPartnerId || !userProfile?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('blocked_users')
+        .insert({
+          blocker_id: userProfile.id,
+          blocked_id: chatPartnerId
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário Bloqueado",
+        description: "Você não receberá mais mensagens deste usuário.",
+        variant: "destructive",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Erro ao bloquear usuário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível bloquear o usuário. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex items-center justify-between p-4 border-b border-border bg-card">
       <div className="flex items-center gap-3">
@@ -156,8 +185,8 @@ export const ChatHeader = ({
 
         {connectionStatus === 'connected' && (
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${isOnline
-              ? 'border-success/30 bg-success/10 shadow-sm shadow-success/20'
-              : 'border-border bg-muted/50'
+            ? 'border-success/30 bg-success/10 shadow-sm shadow-success/20'
+            : 'border-border bg-muted/50'
             }`}>
             <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-success animate-pulse shadow-lg shadow-success/50' : 'bg-muted-foreground'
               }`} />
@@ -182,6 +211,10 @@ export const ChatHeader = ({
             <DropdownMenuItem onClick={handleReport} className="text-destructive focus:text-destructive">
               <Flag className="mr-2 h-4 w-4" />
               <span>Denunciar Conteúdo</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleBlock} className="text-destructive focus:text-destructive">
+              <Shield className="mr-2 h-4 w-4" />
+              <span>Bloquear Usuário</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

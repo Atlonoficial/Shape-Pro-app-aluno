@@ -13,6 +13,7 @@ export interface CourseLesson {
     order_index: number;
     is_free: boolean;
     is_published: boolean;
+    enable_support_button?: boolean;
 }
 
 export interface CourseModule {
@@ -45,20 +46,12 @@ export const useCourseModules = (courseId: string | null) => {
         }
 
         const fetchModules = async () => {
-            const cacheKey = `modules_${courseId}`;
-            // const cachedData = getCache(cacheKey);
-
-            // if (cachedData) {
-            //     console.log('useCourseModules: ⚡ Usando cache');
-            //     setModules(cachedData);
-            //     return;
-            // }
-
             setLoading(true);
             setError(null);
 
             try {
                 console.log('useCourseModules: 🔍 Buscando módulos e aulas para curso:', courseId);
+                console.log('useCourseModules: ===== DIAGNÓSTICO DETALHADO (STUDENT APP) =====');
 
                 const { data, error } = await supabase
                     .from('course_modules')
@@ -74,17 +67,28 @@ export const useCourseModules = (courseId: string | null) => {
 
                 if (error) throw error;
 
-                // Sort lessons by order_index
-                const modulesWithLessons = (data || []).map((module: any) => ({
-                    ...module,
-                    lessons: (module.course_lessons || [])
-                        // .filter((l: any) => l.is_published === true) // Disable client filter to debug RLS
-                        .sort((a: any, b: any) => a.order_index - b.order_index)
-                }));
+                console.log('useCourseModules: Dados brutos retornados:', data);
 
-                console.log('useCourseModules: ✅ Módulos carregados:', modulesWithLessons.length);
+                // Sort lessons by order_index
+                const modulesWithLessons = (data || []).map((module: any) => {
+                    const rawLessons = module.course_lessons || [];
+                    console.log(`  🔍 Módulo "${module.title}" - Raw Lessons:`, rawLessons.length, rawLessons);
+
+                    return {
+                        ...module,
+                        lessons: rawLessons
+                            // .filter((l: any) => l.is_published === true) // 🔴 DEBUG: Removendo filtro temporariamente
+                            .sort((a: any, b: any) => a.order_index - b.order_index)
+                    };
+                });
+
+                console.log('useCourseModules: ✅ Módulos processados:', modulesWithLessons.length);
+                modulesWithLessons.forEach((m: any, i: number) => {
+                    console.log(`  Módulo ${i + 1}: "${m.title}" - ${m.lessons?.length || 0} aulas`);
+                    m.lessons?.forEach((l: any) => console.log(`    - Aula: "${l.title}"`));
+                });
+
                 setModules(modulesWithLessons as CourseModule[]);
-                // setCache(cacheKey, modulesWithLessons);
             } catch (err) {
                 console.error('Erro ao carregar módulos:', err);
                 setError('Erro ao carregar módulos');
@@ -99,6 +103,31 @@ export const useCourseModules = (courseId: string | null) => {
         };
 
         fetchModules();
+
+        // Realtime Subscription for immediate updates
+        const channel = supabase
+            .channel('course-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'course_lessons'
+                },
+                (payload) => {
+                    console.log('🔔 Realtime update detected in course_lessons:', payload);
+                    // Add a small delay to ensure DB propagation
+                    setTimeout(() => {
+                        console.log('🔄 Refreshing modules after Realtime update...');
+                        fetchModules();
+                    }, 500);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [courseId]);
 
     return {

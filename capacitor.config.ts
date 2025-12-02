@@ -65,7 +65,7 @@ const config: CapacitorConfig = {
       UILaunchStoryboardName: "LaunchScreen",
       // *** Versões (garantem sincronização em todos os builds)
       CFBundleShortVersionString: "4.0.2",
-      CFBundleVersion: "69", // ✅ BUILD 69: Fix build version conflict
+      CFBundleVersion: "72", // ✅ BUILD 72: Sync with Info.plist
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
     },
@@ -80,7 +80,7 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 69, // ✅ BUILD 69: Fix build version conflict
+    versionCode: 72, // ✅ BUILD 72: Sync with build.gradle
     versionName: "4.0.2"
   },
 

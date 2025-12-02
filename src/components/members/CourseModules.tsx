@@ -3,17 +3,8 @@ import { ArrowLeft, Play, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { ModuleDetail } from "./ModuleDetail";
-
-interface CourseModule {
-  id: string;
-  name?: string;
-  title?: string;
-  description?: string;
-  cover?: string;
-  cover_image_url?: string;
-  lessons: any[];
-}
+import { LessonList } from "./ModuleDetail";
+import { useCourseModules, CourseModule } from "@/hooks/useCourseModules";
 
 interface Course {
   id: string;
@@ -32,6 +23,9 @@ export const CourseModules = ({ courseId, onBack }: CourseModulesProps) => {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedModule, setSelectedModule] = useState<any>(null);
+
+  // Hook para buscar módulos do banco de dados (relacional)
+  const { modules, loading: modulesLoading } = useCourseModules(courseId);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -61,15 +55,14 @@ export const CourseModules = ({ courseId, onBack }: CourseModulesProps) => {
 
   if (selectedModule) {
     return (
-      <ModuleDetail
+      <LessonList
         module={selectedModule}
-        courseTitle={course?.title}
         onBack={() => setSelectedModule(null)}
       />
     );
   }
 
-  if (loading) {
+  if (loading || modulesLoading) {
     return (
       <div className="p-4 pt-8 pb-safe flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
@@ -80,27 +73,10 @@ export const CourseModules = ({ courseId, onBack }: CourseModulesProps) => {
     );
   }
 
-  // Parse modules from course data
-  let modules: CourseModule[] = [];
-  
-  if (course?.modules) {
-    if (Array.isArray(course.modules)) {
-      modules = course.modules;
-    } else if (typeof course.modules === 'string') {
-      try {
-        const parsed = JSON.parse(course.modules);
-        modules = Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        console.error('Error parsing modules:', e);
-        modules = [];
-      }
-    }
-  }
-
-  console.log('Modules:', modules);
+  console.log('Modules loaded:', modules);
 
   return (
-    <div className="p-4 pt-8 pb-safe">
+    <div className="p-4 pt-8 pb-safe border-2 border-red-500">
       {/* Header Simplificado */}
       <div className="flex items-center justify-between mb-8">
         <Button
@@ -110,11 +86,11 @@ export const CourseModules = ({ courseId, onBack }: CourseModulesProps) => {
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        
+
         <h1 className="text-2xl font-bold text-foreground text-center flex-1">
           {course?.title || 'Aulas'}
         </h1>
-        
+
         <div className="w-9" /> {/* Spacer para centralizar o título */}
       </div>
 
@@ -141,25 +117,25 @@ export const CourseModules = ({ courseId, onBack }: CourseModulesProps) => {
                 <div
                   className="aspect-[3/2] bg-cover bg-center relative"
                   style={{
-                    backgroundImage: (module.cover_image_url || module.cover)
-                      ? `url(${module.cover_image_url || module.cover})` 
+                    backgroundImage: (module.cover_image_url)
+                      ? `url(${module.cover_image_url})`
                       : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 50%, hsl(var(--secondary)) 100%)'
                   }}
                 >
                   {/* Gradiente overlay para melhor legibilidade */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-                  
+
                   {/* Play button centralizado */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary/80 transition-colors">
                       <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
                     </div>
                   </div>
-                  
+
                   {/* Informações do módulo */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2 drop-shadow-sm">
-                      {module.title || module.name || `Módulo ${index + 1}`}
+                      {module.title || `Módulo ${index + 1}`}
                     </h4>
                     <div className="flex items-center justify-between text-xs text-white/90">
                       <span className="bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-sm">

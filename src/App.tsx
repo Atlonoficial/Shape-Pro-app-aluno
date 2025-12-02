@@ -48,7 +48,11 @@ import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
 import StravaCallback from "./pages/StravaCallback";
 
-
+import { RevenueCatProvider } from "@/providers/RevenueCatProvider";
+import { PremiumGuard } from "@/components/paywall/PremiumGuard";
+import { Capacitor } from '@capacitor/core';
+import { syncManager } from '@/services/offline/syncManager';
+import { AppTrackingTransparency } from 'capacitor-plugin-app-tracking-transparency';
 
 
 const queryClient = new QueryClient({
@@ -92,61 +96,65 @@ const AuthenticatedApp = () => {
   return (
     <GamificationProvider>
       <GamificationIntegrator>
-        <Routes>
-          {/* Public routes (no AuthGuard, no TermsGuard) */}
-          <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-          <Route path="/accept-terms" element={<AcceptTerms />} />
+        <RevenueCatProvider>
+          <Routes>
+            {/* Public routes (no AuthGuard, no TermsGuard) */}
+            <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/accept-terms" element={<AcceptTerms />} />
 
-          {/* Authentication Routes */}
-          <Route path="/auth/confirm" element={<AuthConfirm />} />
+            {/* Authentication Routes */}
+            <Route path="/auth/confirm" element={<AuthConfirm />} />
 
-          {/* ✅ Aliases de compatibilidade (redireciona para /auth/confirm) */}
-          <Route path="/email/confirm" element={<RedirectToAuthConfirm />} />
-          <Route path="/auth/app/confirm.html" element={<RedirectToAuthConfirm />} />
+            {/* ✅ Aliases de compatibilidade (redireciona para /auth/confirm) */}
+            <Route path="/email/confirm" element={<RedirectToAuthConfirm />} />
+            <Route path="/auth/app/confirm.html" element={<RedirectToAuthConfirm />} />
 
-          <Route path="/auth/recovery" element={<AuthRecovery />} />
-          <Route path="/auth/invite" element={<AuthInvite />} />
-          <Route path="/auth/magic-link" element={<AuthMagicLink />} />
-          <Route path="/auth/change-email" element={<AuthChangeEmail />} />
-          <Route path="/auth/error" element={<AuthError />} />
-          <Route path="/auth/verify" element={<AuthVerify />} />
-          <Route path="/auth/verified" element={<AuthVerified />} />
+            <Route path="/auth/recovery" element={<AuthRecovery />} />
+            <Route path="/auth/invite" element={<AuthInvite />} />
+            <Route path="/auth/magic-link" element={<AuthMagicLink />} />
+            <Route path="/auth/change-email" element={<AuthChangeEmail />} />
+            <Route path="/auth/error" element={<AuthError />} />
+            <Route path="/auth/verify" element={<AuthVerify />} />
+            <Route path="/auth/verified" element={<AuthVerified />} />
 
-          {/* ✅ BUILD 37: Fallback para variações de URL de confirmação */}
-          <Route path="/auth/callback" element={<AuthConfirm />} />
+            {/* ✅ BUILD 37: Fallback para variações de URL de confirmação */}
+            <Route path="/auth/callback" element={<AuthConfirm />} />
 
-          {/* Protected routes (with TermsGuard) */}
-          <Route path="/" element={<TermsGuard><Index /></TermsGuard>} />
-          <Route path="/cadastro-completo" element={<AuthGuard><TermsGuard><CadastroCompleto /></TermsGuard></AuthGuard>} />
-          <Route path="/anamnese" element={<AuthGuard><TermsGuard><Anamnese /></TermsGuard></AuthGuard>} />
-          <Route path="/exames-medicos" element={<AuthGuard><TermsGuard><LazyExames /></TermsGuard></AuthGuard>} />
-          <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><LazyFotos /></TermsGuard></AuthGuard>} />
-          <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><LazyAvaliacoes /></TermsGuard></AuthGuard>} />
-          <Route path="/configuracoes" element={<AuthGuard><TermsGuard><LazySettings /></TermsGuard></AuthGuard>} />
+            {/* Protected routes (with TermsGuard) */}
+            <Route path="/" element={<TermsGuard><Index /></TermsGuard>} />
+            <Route path="/cadastro-completo" element={<AuthGuard><TermsGuard><CadastroCompleto /></TermsGuard></AuthGuard>} />
+            <Route path="/anamnese" element={<AuthGuard><TermsGuard><Anamnese /></TermsGuard></AuthGuard>} />
+            <Route path="/exames-medicos" element={<AuthGuard><TermsGuard><LazyExames /></TermsGuard></AuthGuard>} />
+            <Route path="/fotos-progresso" element={<AuthGuard><TermsGuard><LazyFotos /></TermsGuard></AuthGuard>} />
+            <Route path="/avaliacoes-fisicas" element={<AuthGuard><TermsGuard><LazyAvaliacoes /></TermsGuard></AuthGuard>} />
+            <Route path="/configuracoes" element={<AuthGuard><TermsGuard><LazySettings /></TermsGuard></AuthGuard>} />
 
-          <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
-          <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
-          <Route path="/cursos" element={<AuthGuard><TermsGuard><LazyCursos /></TermsGuard></AuthGuard>} />
+            <Route path="/conta-seguranca" element={<AuthGuard><TermsGuard><ContaSeguranca /></TermsGuard></AuthGuard>} />
+            <Route path="/assinaturas-planos" element={<AuthGuard><TermsGuard><AssinaturasPlanos /></TermsGuard></AuthGuard>} />
+            <Route path="/cursos" element={<AuthGuard><TermsGuard><LazyCursos /></TermsGuard></AuthGuard>} />
 
-          <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
-          <Route path="/agenda" element={<AuthGuard><TermsGuard><LazyAgenda /></TermsGuard></AuthGuard>} />
-          <Route path="/metas" element={<AuthGuard><TermsGuard><LazyMetas /></TermsGuard></AuthGuard>} />
-          <Route path="/recompensas" element={<AuthGuard><TermsGuard><Recompensas /></TermsGuard></AuthGuard>} />
-          <Route path="/chat" element={<AuthGuard><TermsGuard><LazyAIChat /></TermsGuard></AuthGuard>} />
-          <Route path="/teacher-chat" element={<AuthGuard><TermsGuard><LazyTeacherStudentChat /></TermsGuard></AuthGuard>} />
-          <Route path="/strava-callback" element={<StravaCallback />} />
+            <Route path="/registrar-refeicao" element={<AuthGuard><TermsGuard><RegistrarRefeicao /></TermsGuard></AuthGuard>} />
+            <Route path="/agenda" element={<AuthGuard><TermsGuard><LazyAgenda /></TermsGuard></AuthGuard>} />
+            <Route path="/metas" element={<AuthGuard><TermsGuard><LazyMetas /></TermsGuard></AuthGuard>} />
+            <Route path="/recompensas" element={<AuthGuard><TermsGuard><Recompensas /></TermsGuard></AuthGuard>} />
+            <Route path="/chat" element={
+              <AuthGuard>
+                <TermsGuard>
+                  <LazyAIChat />
+                </TermsGuard>
+              </AuthGuard>
+            } />
+            <Route path="/teacher-chat" element={<AuthGuard><TermsGuard><LazyTeacherStudentChat /></TermsGuard></AuthGuard>} />
+            <Route path="/strava-callback" element={<StravaCallback />} />
 
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </RevenueCatProvider>
       </GamificationIntegrator>
     </GamificationProvider>
   );
 };
-
-import { Capacitor } from '@capacitor/core';
-import { syncManager } from '@/services/offline/syncManager';
-import { AppTrackingTransparency } from 'capacitor-plugin-app-tracking-transparency';
 
 const App = () => {
   // ✅ Initialize SyncManager

@@ -41,6 +41,32 @@ export default function Chat() {
     sendTypingIndicator
   } = useEnhancedPresence(conversation?.id || '');
 
+  const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
+
+  // Fetch blocked users
+  useEffect(() => {
+    const fetchBlockedUsers = async () => {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from('blocked_users')
+          .select('blocked_id')
+          .eq('blocker_id', user.id);
+
+        if (data && !error) {
+          setBlockedUsers(new Set(data.map(b => b.blocked_id)));
+        }
+      } catch (error) {
+        console.error('Error fetching blocked users:', error);
+      }
+    };
+
+    fetchBlockedUsers();
+  }, [user?.id]);
+
+  // Filter messages from blocked users
+  const filteredMessages = messages.filter(msg => !msg.sender_id || !blockedUsers.has(msg.sender_id));
+
   useEffect(() => {
     if (conversation && messages.length > 0) {
       markAsRead();
@@ -175,7 +201,7 @@ export default function Chat() {
         <div className="flex-1 overflow-hidden relative w-full">
           <div className="absolute inset-0 overflow-y-auto pb-safe" id="chat-messages-container" ref={chatMessagesContainerRef}>
             <ChatInterface
-              messages={messages}
+              messages={filteredMessages}
               currentUserId={user?.id}
               connectionStatus={connectionStatus}
               isReconnecting={reconnecting}

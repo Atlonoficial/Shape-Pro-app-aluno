@@ -29,7 +29,11 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
     }, [teacherId]);
 
     const handleContactTeacher = () => {
-        if (teacherPhone) {
+        // iOS Compliance: Never link to external messaging for "access" issues
+        // as it implies external payment steering (Guideline 3.1.1)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (window as any).Ionic?.platforms?.includes('ios');
+
+        if (teacherPhone && !isIOS) {
             // Neutral message for support only - Unified for all platforms
             const message = status === 'expired'
                 ? 'Olá, preciso de ajuda com meu acesso.'
@@ -38,6 +42,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
             const whatsappUrl = `https://wa.me/${teacherPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         } else {
+            // On iOS or if no phone, go to internal chat
             navigate('/chat');
         }
     };
@@ -90,7 +95,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
 
                     <div className="p-3 bg-background/50 rounded-lg border border-border/50">
                         <p className="text-sm text-muted-foreground">
-                            Para regularizar seu acesso, entre em contato diretamente com seu treinador.
+                            {/iPad|iPhone|iPod/.test(navigator.userAgent)
+                                ? "Entre em contato com seu treinador pelo chat para mais informações."
+                                : "Para regularizar seu acesso, entre em contato diretamente com seu treinador."}
                         </p>
                     </div>
 

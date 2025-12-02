@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, SUPABASE_KEY } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useRevenueCat } from '@/hooks/useRevenueCat';
 
 export interface AIMessage {
   id: string;
@@ -19,11 +20,13 @@ export interface AIConversation {
 
 export const useAIConversation = () => {
   const { user } = useAuthContext();
+  const { isPremium } = useRevenueCat();
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [currentConversation, setCurrentConversation] = useState<AIConversation | null>(null);
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dailyCount, setDailyCount] = useState(0);
 
   // Debug: Log error state changes
   useEffect(() => {
@@ -42,9 +45,9 @@ export const useAIConversation = () => {
 
     try {
       console.log('[useAIConversation] 🔍 Checking daily limit status for user:', user.id);
-      
+
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       const { data, error: queryError } = await supabase
         .from('ai_usage_stats')
         .select('daily_count')
@@ -57,15 +60,19 @@ export const useAIConversation = () => {
         return false;
       }
 
-      const dailyCount = data?.daily_count || 0;
-      const DAILY_LIMIT = 3;
-      const limitReached = dailyCount >= DAILY_LIMIT;
+      const currentDailyCount = data?.daily_count || 0;
+      setDailyCount(currentDailyCount);
+
+      // ✅ HYBRID FREEMIUM LOGIC
+      const DAILY_LIMIT = isPremium ? 20 : 3;
+      const limitReached = currentDailyCount >= DAILY_LIMIT;
 
       console.log('[useAIConversation] 📊 Daily limit status:', {
         userId: user.id,
         date: today,
-        dailyCount,
+        dailyCount: currentDailyCount,
         limit: DAILY_LIMIT,
+        isPremium,
         limitReached
       });
 
@@ -129,8 +136,8 @@ export const useAIConversation = () => {
     if (!user) throw new Error('User not authenticated');
 
     // Check if there's already a daily limit error - prevent sending
-    if (error && error.toLowerCase().includes('limite') && 
-        (error.toLowerCase().includes('diário') || error.toLowerCase().includes('dia'))) {
+    if (error && error.toLowerCase().includes('limite') &&
+      (error.toLowerCase().includes('diário') || error.toLowerCase().includes('dia'))) {
       console.log('[useAIConversation] 🚫 Daily limit already reached, blocking send');
       throw new Error(error); // Re-throw the existing error
     }
@@ -145,10 +152,19 @@ export const useAIConversation = () => {
       content: message,
       timestamp: new Date()
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
 
     try {
+      // ✅ Check daily limit BEFORE network call
+      const limitReached = await checkDailyLimitStatus();
+      if (limitReached) {
+        const limitError = new Error(isPremium ? 'Limite diário atingido' : 'Limite gratuito atingido');
+        // Add custom property to identify this error
+        (limitError as any).type = 'daily_limit_exceeded';
+        throw limitError;
+      }
+
       // Verify authentication before calling edge function
       console.log('[useAIConversation] Sending message to AI assistant:', {
         message,
@@ -180,13 +196,13 @@ export const useAIConversation = () => {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           console.log(`[useAIConversation] 🔄 Attempt ${attempt}/${maxRetries}`);
-          
+
           const controller = new AbortController();
           const timeoutId = setTimeout(() => {
             console.log(`[useAIConversation] ⏱️ Timeout after 45s`);
             controller.abort();
           }, 45000); // 45s timeout
-          
+
           // Use fetch directly to avoid SDK bugs
           const httpResponse = await fetch(
             'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/ai-assistant',
@@ -204,15 +220,15 @@ export const useAIConversation = () => {
               signal: controller.signal
             }
           );
-          
+
           clearTimeout(timeoutId);
-          
+
           console.log(`[useAIConversation] 📥 Response status:`, httpResponse.status);
-          
+
           if (!httpResponse.ok) {
             const errorText = await httpResponse.text();
             console.error(`[useAIConversation] ❌ Response error:`, errorText);
-            
+
             // Parse error response to check for specific error types
             let errorData: any = null;
             try {
@@ -220,33 +236,33 @@ export const useAIConversation = () => {
             } catch {
               // Not JSON, treat as plain text error
             }
-            
+
             // Check if it's a daily limit error - don't retry these
             if (httpResponse.status === 429 && errorData?.type === 'daily_limit_exceeded') {
               const limitError = new Error(errorData.error || 'Limite diário atingido');
               console.warn(`[useAIConversation] 🚫 Daily limit reached, not retrying`);
               throw limitError;
             }
-            
+
             throw new Error(`Edge Function returned ${httpResponse.status}: ${errorText}`);
           }
-          
+
           responseData = await httpResponse.json();
           console.log(`[useAIConversation] ✅ Attempt ${attempt} succeeded`);
           break; // Success, exit retry loop
-          
+
         } catch (err: any) {
           lastError = err;
           console.error(`[useAIConversation] ❌ Attempt ${attempt} threw exception:`, {
             message: err.message,
             name: err.name
           });
-          
+
           // Don't retry if it's a daily limit error
           if (err.message.includes('Limite diário') || err.message.includes('limite de')) {
             throw err;
           }
-          
+
           // Retry for other errors
           if (attempt < maxRetries) {
             const backoffTime = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
@@ -301,20 +317,23 @@ export const useAIConversation = () => {
 
       // Clear error on success
       setError(null);
-      
+
       // Reload conversations to update the list
       loadConversations();
+
+      // Re-check daily limit status to update the count
+      await checkDailyLimitStatus();
 
       return response;
 
     } catch (err) {
       console.error('Error sending message:', err);
-      
+
       let errorMessage = 'Falha ao enviar mensagem';
-      
+
       if (err instanceof Error) {
         const msg = err.message.toLowerCase();
-        
+
         // Check for daily limit error first (most specific)
         if (msg.includes('limite diário') || msg.includes('limite de') || msg.includes('perguntas por dia')) {
           errorMessage = err.message; // Use the exact message from backend
@@ -332,21 +351,21 @@ export const useAIConversation = () => {
           errorMessage = err.message;
         }
       }
-      
-        console.log('[useAIConversation] 🔴 Setting error state:', errorMessage);
-        setError(errorMessage);
-        
-        // Save timestamp for daily limit errors (user-specific)
-        if (user && errorMessage.toLowerCase().includes('limite') && 
-            (errorMessage.toLowerCase().includes('diário') || errorMessage.toLowerCase().includes('dia'))) {
-          const storageKey = `ai_error_timestamp_${user.id}`;
-          localStorage.setItem(storageKey, new Date().toISOString());
-          console.log('[useAIConversation] 💾 Saved error timestamp for user:', user.id);
-        }
-      
+
+      console.log('[useAIConversation] 🔴 Setting error state:', errorMessage);
+      setError(errorMessage);
+
+      // Save timestamp for daily limit errors (user-specific)
+      if (user && errorMessage.toLowerCase().includes('limite') &&
+        (errorMessage.toLowerCase().includes('diário') || errorMessage.toLowerCase().includes('dia'))) {
+        const storageKey = `ai_error_timestamp_${user.id}`;
+        localStorage.setItem(storageKey, new Date().toISOString());
+        console.log('[useAIConversation] 💾 Saved error timestamp for user:', user.id);
+      }
+
       // Remove temp user message on error
       setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
-      
+
       console.log('[useAIConversation] 🔴 Error state should be set now');
       throw new Error(errorMessage);
     } finally {
@@ -376,21 +395,22 @@ export const useAIConversation = () => {
       if (!user) return;
 
       console.log('[useAIConversation] 🔍 Verifying daily limit for user:', user.id);
-      
+
       const limitReached = await checkDailyLimitStatus();
-      
+
       if (limitReached) {
-        const errorMsg = 'Você atingiu o limite diário de 3 perguntas. Tente novamente amanhã às 00:00.';
+        const DAILY_LIMIT = isPremium ? 20 : 3;
+        const errorMsg = `Você atingiu o limite diário de ${DAILY_LIMIT} perguntas. Tente novamente amanhã às 00:00.`;
         console.log('[useAIConversation] 🚫 Daily limit reached on mount, setting error');
         setError(errorMsg);
-        
+
         // Save timestamp
         const storageKey = `ai_error_timestamp_${user.id}`;
         localStorage.setItem(storageKey, new Date().toISOString());
       } else {
         console.log('[useAIConversation] ✅ Daily limit OK, clearing error');
         setError(null);
-        
+
         // Clear timestamp
         const storageKey = `ai_error_timestamp_${user.id}`;
         localStorage.removeItem(storageKey);
@@ -406,9 +426,10 @@ export const useAIConversation = () => {
       setMessages([]);
       setCurrentConversation(null);
       setError(null);
+      setDailyCount(0); // Clear daily count on logout
       console.log('[useAIConversation] 🚪 User logged out - cleared state');
     }
-  }, [user]);
+  }, [user, isPremium]); // Added isPremium to dependency array
 
   // Reset daily limit at midnight by re-checking database
   useEffect(() => {
@@ -418,14 +439,14 @@ export const useAIConversation = () => {
       const now = new Date();
       const nextMidnight = new Date(now);
       nextMidnight.setHours(24, 0, 0, 0);
-      
+
       const timeUntilMidnight = nextMidnight.getTime() - now.getTime();
-      
+
       console.log('[useAIConversation] ⏰ Scheduled midnight reset in', Math.round(timeUntilMidnight / 1000 / 60), 'minutes');
-      
+
       const timeoutId = setTimeout(async () => {
         console.log('[useAIConversation] 🕐 Midnight reached - re-checking daily limit from database');
-        
+
         // Log cleanup details
         console.log('[useAIConversation] 🕐 Midnight reset executed:', {
           userId: user.id,
@@ -433,39 +454,39 @@ export const useAIConversation = () => {
           conversationCleared: !!currentConversation,
           timestamp: new Date().toISOString()
         });
-        
+
         // Clear messages and conversation for new day
         console.log('[useAIConversation] 🧹 Clearing messages for new day');
         setMessages([]);
         setCurrentConversation(null);
         console.log('[useAIConversation] ✨ New day started - UI reset');
-        
+
         const limitReached = await checkDailyLimitStatus();
-        
+
         if (!limitReached) {
           console.log('[useAIConversation] ✅ Daily limit reset - clearing error');
           setError(null);
-          
+
           // Clear user-specific timestamp
           const storageKey = `ai_error_timestamp_${user.id}`;
           localStorage.removeItem(storageKey);
         } else {
           console.log('[useAIConversation] ⚠️ Daily limit still reached after midnight check');
         }
-        
+
         // Schedule next check
         checkDailyReset();
       }, timeUntilMidnight);
-      
+
       return timeoutId;
     };
-    
+
     const timeoutId = checkDailyReset();
-    
+
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [user]);
+  }, [user, messages, currentConversation]); // Added messages and currentConversation to dependency array
 
   return {
     messages,
@@ -473,6 +494,7 @@ export const useAIConversation = () => {
     currentConversation,
     loading,
     error,
+    dailyCount,
     sendMessage,
     startNewConversation,
     loadConversation,

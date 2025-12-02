@@ -4,32 +4,36 @@ import { useAIConversation } from '@/hooks/useAIConversation';
 import { useKeyboardState } from '@/hooks/useKeyboardState';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { MobileContainer } from '@/components/layout/MobileContainer';
-import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Loader2, Sparkles, Calendar, ArrowLeft } from 'lucide-react';
+import { Send, Loader2, Sparkles, Calendar, ArrowLeft, Lock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ShapeProLogo } from '@/components/ui/ShapeProLogo';
+import { useRevenueCat } from '@/hooks/useRevenueCat';
+import { PaywallModal } from '@/components/paywall/PaywallModal';
 
 export default function AIChat() {
   const navigate = useNavigate();
   const { userProfile } = useAuthContext();
   const { toast } = useToast();
+  const { isPremium } = useRevenueCat();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const { isVisible: keyboardVisible, height: keyboardHeight } = useKeyboardState();
+  const [showPaywall, setShowPaywall] = useState(false);
+  const { isVisible: keyboardVisible } = useKeyboardState();
 
   const {
     messages,
     loading,
     error,
+    dailyCount,
     sendMessage,
   } = useAIConversation();
 
   const firstName = userProfile?.name?.split(' ')[0] || 'Usuário';
 
-  // Helper para detectar erro de limite diário - usar diretamente sem estado derivado
+  // Helper para detectar erro de limite diário
   const isDailyLimitError = (errorMsg: string | null) => {
     if (!errorMsg) return false;
     const lowerError = errorMsg.toLowerCase();
@@ -37,19 +41,28 @@ export default function AIChat() {
       (lowerError.includes('diário') || lowerError.includes('dia') || lowerError.includes('perguntas'));
   };
 
-  // Computed value - evita race condition do useEffect
   const dailyLimitReached = isDailyLimitError(error);
+
+  // ✅ Auto-open Paywall for Free users when limit is reached
+  useEffect(() => {
+    if (dailyLimitReached && !isPremium) {
+      setShowPaywall(true);
+    }
+  }, [dailyLimitReached, isPremium]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || loading) return;
 
-    // Prevent sending if daily limit is reached
     if (dailyLimitReached) {
-      toast({
-        title: "Limite Atingido",
-        description: "Você atingiu o limite diário de perguntas. Tente novamente amanhã!",
-        variant: "destructive",
-      });
+      if (!isPremium) {
+        setShowPaywall(true);
+      } else {
+        toast({
+          title: "Limite Atingido",
+          description: "Você atingiu o limite diário de perguntas. Tente novamente amanhã!",
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -61,14 +74,17 @@ export default function AIChat() {
       await sendMessage(messageText);
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
-
-      // Toast específico para erro de limite diário
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMsg = String(error.message);
         if (isDailyLimitError(errorMsg)) {
+          if (!isPremium) {
+            setShowPaywall(true);
+          }
           toast({
             title: "🕐 Limite Diário Atingido",
-            description: "Você fez 3 perguntas hoje. Volte amanhã para continuar!",
+            description: isPremium
+              ? "Você atingiu seu limite de 20 perguntas."
+              : "Você atingiu seu limite gratuito de 3 perguntas.",
             variant: "destructive",
           });
         }
@@ -83,24 +99,12 @@ export default function AIChat() {
     }
   };
 
-  const handleTabChange = (tab: string) => {
-    navigate(`/?tab=${tab}`);
-  };
-
   const formatTime = (date: Date) => {
     return new Intl.DateTimeFormat('pt-BR', {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
   };
-
-
-  const suggestions = [
-    "Criar treino de hipertrofia",
-    "Dicas para perder gordura",
-    "Explicar exercício Agachamento",
-    "Sugestão de café da manhã"
-  ];
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +114,6 @@ export default function AIChat() {
     }
   };
 
-  // Auto-scroll when messages change or keyboard opens
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
@@ -141,33 +144,51 @@ export default function AIChat() {
 
               <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
                 <ShapeProLogo className="h-8 w-8" />
-                <span className="font-semibold text-lg">Shape AI</span>
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold text-lg">Shape AI</span>
+                    {isPremium && <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-bold">PRO</span>}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    {isPremium ? 20 - dailyCount : 3 - dailyCount} mensagens restantes
+                  </span>
+                </div>
               </div>
 
-              <div className="w-10" /> {/* Spacer for alignment */}
+              <div className="w-10" />
             </div>
           </div>
 
-          {/* Messages Area - Flex 1 to take available space */}
+          {/* Messages Area */}
           <div className="flex-1 overflow-hidden relative w-full">
             <div className="absolute inset-0 overflow-y-auto px-4 py-4 space-y-6 pb-safe" ref={messagesContainerRef}>
-              {/* Daily limit error card */}
+
+              {/* Limit Reached Card */}
               {dailyLimitReached && (
                 <div className="sticky top-0 z-10 mb-4 animate-fade-in">
                   <Card className="p-6 bg-card/95 backdrop-blur-md border-destructive/30 shadow-xl">
-                    <CardContent className="p-0">
-                      <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="w-8 h-8 text-destructive" />
+                    <CardContent className="p-0 flex flex-col items-center">
+                      <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+                        {isPremium ? (
+                          <Calendar className="w-8 h-8 text-destructive" />
+                        ) : (
+                          <Lock className="w-8 h-8 text-destructive" />
+                        )}
                       </div>
                       <h3 className="text-lg font-semibold text-center mb-2 text-destructive">
-                        Limite Diário Atingido
+                        {isPremium ? "Limite Diário Atingido" : "Limite Gratuito Atingido"}
                       </h3>
-                      <p className="text-sm text-muted-foreground text-center mb-1">
-                        Você atingiu o limite de perguntas por hoje.
+                      <p className="text-sm text-muted-foreground text-center mb-4">
+                        {isPremium
+                          ? "Você atingiu o limite de 20 perguntas por hoje. Volte amanhã! 🌅"
+                          : "Você usou suas 3 perguntas gratuitas de hoje."}
                       </p>
-                      <p className="text-sm text-muted-foreground text-center">
-                        Volte amanhã para continuar! 🌅
-                      </p>
+
+                      {!isPremium && (
+                        <Button onClick={() => setShowPaywall(true)} className="w-full animate-pulse">
+                          Desbloquear Ilimitado (20/dia)
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -183,7 +204,8 @@ export default function AIChat() {
                     Olá, {firstName}!
                   </h2>
                   <p className="text-muted-foreground text-center mb-8 max-w-xs">
-                    Sou seu assistente pessoal de treino e nutrição. Como posso ajudar hoje?
+                    Sou seu assistente pessoal.
+                    {!isPremium && <span className="block mt-2 text-xs bg-muted py-1 px-2 rounded-full">Você tem 3 perguntas gratuitas hoje.</span>}
                   </p>
                 </div>
               ) : (
@@ -230,7 +252,7 @@ export default function AIChat() {
             </div>
           </div>
 
-          {/* Input Area - Natural flow */}
+          {/* Input Area */}
           <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-3' : 'pb-safe'}`}>
             <div className="p-3">
               <div className="flex items-end gap-2 max-w-4xl mx-auto">
@@ -241,7 +263,7 @@ export default function AIChat() {
                     onKeyDown={handleKeyPress}
                     placeholder={
                       dailyLimitReached
-                        ? "Volte amanhã para mais perguntas..."
+                        ? (isPremium ? "Limite diário atingido." : "Limite gratuito atingido.")
                         : "Digite sua dúvida..."
                     }
                     disabled={loading || dailyLimitReached}
@@ -269,6 +291,8 @@ export default function AIChat() {
           </div>
         </div>
       </MobileContainer>
+
+      <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
     </>
   );
 }
