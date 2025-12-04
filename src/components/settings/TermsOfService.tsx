@@ -1,4 +1,4 @@
-import { ArrowLeft, Scale, Eye, Shield } from "lucide-react";
+import { ArrowLeft, Scale, Eye, Shield, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -6,6 +6,12 @@ interface TermsOfServiceProps {
   onBack: () => void;
 }
 
+/**
+ * ✅ Apple 5.1.2 & 5.1.3 Compliance
+ * - Includes health disclaimers
+ * - Clear data usage disclosure
+ * - Real contact information
+ */
 export const TermsOfService = ({ onBack }: TermsOfServiceProps) => {
   return (
     <div className="p-4 pt-8 pb-24">
@@ -37,8 +43,28 @@ export const TermsOfService = ({ onBack }: TermsOfServiceProps) => {
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>O uso do aplicativo é destinado para fins de fitness e bem-estar</li>
                 <li>Você é responsável pela veracidade das informações fornecidas</li>
-                <li>O app não substitui orientação médica profissional</li>
-                <li>Recomendamos consultar um médico antes de iniciar qualquer programa de exercícios</li>
+                <li>O acesso é gerenciado pelo seu personal trainer</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ✅ Apple 5.1.3 - Health Disclaimer */}
+        <Card className="card-gradient border-warning/30">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-warning" />
+              <h2 className="text-lg font-semibold text-foreground">Aviso de Saúde</h2>
+            </div>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p className="font-medium text-warning">
+                ⚠️ IMPORTANTE: O Shape Pro não substitui orientação médica profissional.
+              </p>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>Consulte um médico antes de iniciar qualquer programa de exercícios</li>
+                <li>Não ignore sintomas como dor, tontura ou falta de ar</li>
+                <li>O Coach IA oferece sugestões gerais, não prescrições médicas</li>
+                <li>Para condições de saúde específicas, procure acompanhamento profissional</li>
               </ul>
             </div>
           </CardContent>
@@ -87,22 +113,22 @@ export const TermsOfService = ({ onBack }: TermsOfServiceProps) => {
           </CardContent>
         </Card>
 
-        {/* Contact */}
+        {/* Contact - Real Info */}
         <Card className="card-gradient">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-3">Entre em Contato</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>Dúvidas sobre nossos termos? Fale conosco:</p>
-              <p>📧 contato@shapepro.app</p>
-              <p>📱 (11) 99999-9999</p>
-              <p>🌐 www.shapepro.app</p>
+              <p>📧 contato@atlontech.com</p>
+              <p>📱 +55 49 92000-6034</p>
+              <p>🌐 www.shapepro.site</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Last Updated */}
         <div className="text-center text-xs text-muted-foreground">
-          Última atualização: Janeiro 2024
+          Última atualização: Dezembro 2024
         </div>
       </div>
     </div>

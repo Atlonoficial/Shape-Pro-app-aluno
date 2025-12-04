@@ -18,11 +18,11 @@ export default function Cursos() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto p-4 space-y-6">
+      <div className="container max-w-6xl mx-auto p-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[120px] space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
           >
@@ -49,9 +49,9 @@ export default function Cursos() {
               <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Thumbnail */}
                 {course.thumbnail ? (
-                  <img 
-                    src={course.thumbnail} 
-                    alt={course.title} 
+                  <img
+                    src={course.thumbnail}
+                    alt={course.title}
                     className="w-full h-48 object-cover"
                   />
                 ) : (
@@ -73,7 +73,7 @@ export default function Cursos() {
 
                   {/* CTA */}
                   <div className="pt-4 border-t">
-                    <Button 
+                    <Button
                       onClick={() => navigate('/members')}
                       size="lg"
                       className="w-full"

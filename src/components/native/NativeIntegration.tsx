@@ -4,10 +4,12 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Shape Pro - Native Integration Component
  * Gerencia todas as integrações nativas do Capacitor
+ * ✅ BUILD 74: Corrigido initPush para passar userId corretamente
  */
 export const NativeIntegration = () => {
   useEffect(() => {
@@ -30,7 +32,6 @@ export const NativeIntegration = () => {
       await configureKeyboard();
 
       // 3. Splash screen gerenciado exclusivamente por main.tsx após React montar
-      // hideSplashScreen() REMOVIDO para evitar race condition
 
       // 4. Initialize Push Notifications
       await initPushNotifications();
@@ -76,10 +77,16 @@ export const NativeIntegration = () => {
       logger.info('NativeIntegration', 'Initializing OneSignal Push Notifications...');
       const { initPush } = await import('@/lib/push');
 
-      // Tenta pegar o ID do usuário se estiver logado (opcional, o initPush lida com isso)
-      // Mas idealmente o initPush deve ser chamado após login também.
-      // Aqui é a inicialização global.
-      await initPush();
+      // ✅ BUILD 74: Buscar userId do usuário logado antes de inicializar push
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user?.id) {
+        logger.info('NativeIntegration', 'User found, initializing push with userId:', user.id.substring(0, 8) + '...');
+        await initPush(user.id);
+      } else {
+        logger.warn('NativeIntegration', 'No user logged in, initializing push without userId');
+        await initPush();
+      }
 
       logger.info('NativeIntegration', 'OneSignal initialized');
     } catch (error) {

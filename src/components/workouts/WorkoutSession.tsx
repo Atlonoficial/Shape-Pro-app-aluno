@@ -188,8 +188,8 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
       queryClient.invalidateQueries({ queryKey: ['user-points'] });
       queryClient.invalidateQueries({ queryKey: ['workout-history'] });
 
-      const points = calculateWorkoutPoints();
-      toast.success(`Treino concluído! +${points} pontos 🎉`);
+      // Real gamification points are shown by showPointsToast in useRealtimeGamification
+      toast.success('Treino salvo com sucesso! 💪');
     } catch (error: any) {
       console.error('Error saving workout session:', error);
       toast.error(`Erro ao salvar treino: ${error.message || 'Erro de conexão'}`);
@@ -301,9 +301,9 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
       </div>
 
       {/* Conteúdo scrollável */}
-      <div className="flex-1 overflow-y-auto pb-48 safe-area-bottom">
+      <div className="flex-1 overflow-y-auto pb-44">
         {/* Exercício atual em destaque */}
-        <div className="p-6">
+        <div className="p-4">
           {/* Exercício atual com contraste melhorado */}
           <div className="bg-gradient-to-br from-accent/20 via-accent/10 to-accent/5 border-accent/30 rounded-3xl p-6 mb-6 shadow-lg border">
             <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Exercício Atual</h2>
@@ -445,7 +445,7 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
           </div>
 
           {/* Lista de exercícios */}
-          <div className="mb-6">
+          <div className="mb-6 px-4">
             <h2 className="text-xl font-bold text-foreground mb-4">Próximos Exercícios</h2>
 
             <div className="space-y-3">
@@ -506,9 +506,9 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
       </div>
 
       {/* Controles fixos com melhor visual e safe area */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="fixed bottom-0 left-0 right-0 z-40">
         {/* Gradiente de proteção para legibilidade */}
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none" />
 
         <div className="relative px-6 pb-safe pt-4">
           {/* Barra de progresso compacta */}
@@ -552,7 +552,7 @@ export const WorkoutSession = ({ workout, onFinish, onExit }: WorkoutSessionProp
                 disabled={isResting}
                 className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-xl shadow-primary/20 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:shadow-none"
               >
-                <Timer className="w-9 h-9" />
+                <Timer className="w-7 h-7" />
               </button>
               <span className="text-xs font-bold text-primary uppercase tracking-wider">
                 Descansar

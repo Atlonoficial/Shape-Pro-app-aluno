@@ -103,27 +103,13 @@ export const Workouts = () => {
 
   const handleFinishWorkout = useCallback(() => {
     hapticSuccess();
-    const points = Math.floor(Math.random() * 50) + 50;
-    const achievements = [
-      "🔥 Queimador de Calorias!",
-      "💪 Força Total!",
-      "⚡ Super Atleta!",
-      "🏆 Campeão do Dia!",
-      "🎯 Meta Atingida!"
-    ];
-    const randomAchievement = achievements[Math.floor(Math.random() * achievements.length)];
 
+    // Note: Real gamification points are awarded in WorkoutSession.tsx via awardWorkoutPoints()
+    // This toast is just for UX feedback - actual points come from the database
     toast({
-      title: `${randomAchievement}`,
-      description: `Parabéns! Você ganhou ${points} pontos e completou mais um treino! 🎉`,
+      title: "✅ Treino Finalizado!",
+      description: "Seus pontos estão sendo calculados...",
     });
-
-    setTimeout(() => {
-      toast({
-        title: "🚀 Continue assim!",
-        description: "Você está cada vez mais forte! Próximo treino em 24h.",
-      });
-    }, 3000);
 
     setCurrentView('list');
     setSelectedWorkout(null);
@@ -143,7 +129,7 @@ export const Workouts = () => {
 
   if (loading || subscriptionLoading) {
     return (
-      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
+      <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-safe-4xl flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
           <p className="text-muted-foreground">Carregando seus treinos...</p>
@@ -186,7 +172,7 @@ export const Workouts = () => {
   // ✅ Validar autenticação DEPOIS do loading
   if (!user?.id) {
     return (
-      <div className="p-4 pt-8 pb-safe-4xl">
+      <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-safe-4xl">
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2 text-destructive">Erro de Autenticação</h2>
           <p className="text-muted-foreground">
@@ -198,7 +184,7 @@ export const Workouts = () => {
   }
 
   return (
-    <div className="p-4 pt-8">
+    <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)]">
       {/* Header */}
       <div className="mb-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/?tab=home")} aria-label="Voltar para a Home">

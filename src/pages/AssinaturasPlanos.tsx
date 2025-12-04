@@ -1,15 +1,18 @@
 import { useMemo, useEffect, useState } from "react";
-import { ArrowLeft, Crown, Check, Shield, User } from "lucide-react";
+import { ArrowLeft, Check, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { useAuth } from "@/hooks/useAuth";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { ConnectionStatus } from "@/components/ui/ConnectionStatus";
 import { getUserProfile } from "@/lib/supabase";
 
+/**
+ * ✅ Apple 3.1.1 Compliance
+ * Esta página NÃO pode abrir links externos no iOS
+ * Usuários iOS são redirecionados para o chat interno
+ */
 const AssinaturasPlanos = () => {
   const navigate = useNavigate();
   const { student } = useStudentProfile();
@@ -21,7 +24,6 @@ const AssinaturasPlanos = () => {
       if (student?.teacher_id) {
         const profile = await getUserProfile(student.teacher_id);
         if (profile?.phone) {
-          // Remove non-numeric characters for the link
           const cleanPhone = profile.phone.replace(/\D/g, '');
           setTeacherPhone(cleanPhone);
         }
@@ -30,25 +32,32 @@ const AssinaturasPlanos = () => {
     fetchTeacher();
   }, [student?.teacher_id]);
 
+  // ✅ Apple 3.1.1 Compliance: iOS users MUST use internal chat
   const handleContactTeacher = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator as any).standalone !== undefined;
+
+    if (isIOS) {
+      // iOS: Always redirect to internal chat to avoid payment steering
+      navigate('/chat');
+      return;
+    }
+
+    // Android/Web: Can use WhatsApp
     if (teacherPhone) {
-      // Neutral message for support only
-      const message = encodeURIComponent("Olá, preciso de suporte com minha conta no app.");
+      const message = encodeURIComponent("Olá, preciso de suporte técnico com o app.");
       window.open(`https://wa.me/${teacherPhone}?text=${message}`, '_blank');
     } else {
-      // Fallback to internal chat if no phone available
       navigate('/chat');
     }
   };
 
   // Estrutura de benefícios para exibição neutra
   const recursosLiberados = useMemo(() => {
-    // Se tiver assinatura ativa com features
     if (subscription?.plan_features && subscription.plan_features.length > 0) {
       return subscription.plan_features;
     }
 
-    // Se for plano gratuito ou sem features definidas, mostrar recursos básicos
     return [
       "Acesso ao aplicativo",
       "Comunicação com o treinador",

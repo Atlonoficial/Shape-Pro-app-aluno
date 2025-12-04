@@ -8,7 +8,7 @@ const quickActions = [
     subtitle: 'Treino do dia',
     icon: Play,
     color: 'primary',
-    route: '/iniciar-treino'
+    route: '/?tab=workouts'
   },
   {
     id: 'log-meal',

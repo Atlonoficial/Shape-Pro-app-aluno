@@ -123,7 +123,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
   });
 
   return (
-    <div className="p-4 sm:p-6 pt-safe space-y-4">
+    <div className="p-4 sm:p-6 space-y-4 pb-4">
       {/* Logo Header */}
       <div className="mb-4 text-center pt-2">
         <img

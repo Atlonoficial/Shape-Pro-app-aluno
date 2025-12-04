@@ -131,7 +131,7 @@ export default function AIChat() {
       <MobileContainer className="!pb-0 !h-[100dvh] overflow-hidden" withBottomPadding={false}>
         <div className="flex flex-col h-full w-full relative bg-background">
           {/* Header */}
-          <div className="flex-none bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 z-10">
+          <div className="flex-none bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] z-10">
             <div className="flex items-center justify-between relative">
               <Button
                 variant="ghost"
@@ -253,7 +253,7 @@ export default function AIChat() {
           </div>
 
           {/* Input Area */}
-          <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-3' : 'pb-safe'}`}>
+          <div className={`w-full z-[100] bg-background/95 backdrop-blur-xl border-t border-border transition-all duration-300 ease-out ${keyboardVisible ? 'pb-3' : 'pb-[calc(env(safe-area-inset-bottom)+12px)]'}`}>
             <div className="p-3">
               <div className="flex items-end gap-2 max-w-4xl mx-auto">
                 <div className="flex-1 relative bg-muted/30 rounded-3xl border border-border/50 focus-within:border-primary/50 focus-within:bg-muted/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">

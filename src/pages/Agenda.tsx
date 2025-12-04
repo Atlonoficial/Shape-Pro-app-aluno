@@ -309,7 +309,7 @@ export default function Agenda() {
   };
 
   return (
-    <div className="px-3 sm:px-4 pt-6 sm:pt-8 pb-safe-4xl max-w-7xl mx-auto">
+    <div className="px-3 sm:px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] sm:pt-[calc(env(safe-area-inset-top)+2rem)] pb-safe-4xl max-w-7xl mx-auto">
       {/* Header com botão de volta */}
       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <Button

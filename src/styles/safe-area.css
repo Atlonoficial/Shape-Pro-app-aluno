@@ -34,6 +34,16 @@
 
 /* Safe Area Insets for devices with notch */
 
+/* ✅ Safe area top para headers fixos */
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ✅ Classe para containers de chat com height dinâmico */
+.h-dvh-safe {
+  height: 100dvh;
+}
+
 /* Padding bottom considering navigation bar + safe area */
 .pb-safe {
   padding-bottom: calc(100px + env(safe-area-inset-bottom));

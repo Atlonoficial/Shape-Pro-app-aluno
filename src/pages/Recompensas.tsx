@@ -20,7 +20,7 @@ const Recompensas = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Loja de Recompensas</h1>
+          <h1 className="text-lg font-semibold">Minhas Conquistas</h1>
         </header>
 
         {/* Content */}

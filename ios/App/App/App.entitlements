@@ -4,7 +4,6 @@
 <dict>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:d46ecb0f-56a1-441d-a5d5-bac293c0288a.lovableproject.com</string>
 		<string>applinks:shapepro.site</string>
 	</array>
 	<key>aps-environment</key>

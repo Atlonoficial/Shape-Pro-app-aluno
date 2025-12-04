@@ -135,7 +135,7 @@ export const ChatHeader = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+    <div className="flex items-center justify-between p-4 pt-[calc(env(safe-area-inset-top)+1rem)] border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-20">
       <div className="flex items-center gap-3">
         {/* Botão voltar */}
         <Button

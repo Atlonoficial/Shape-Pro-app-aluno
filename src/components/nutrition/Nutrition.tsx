@@ -63,7 +63,7 @@ export const Nutrition = () => {
   // ✅ Verificar loading PRIMEIRO (antes de validar autenticação)
   if (loading || subscriptionLoading) {
     return (
-      <div className="p-4 pt-8 pb-safe-4xl flex items-center justify-center min-h-96">
+      <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-4 flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
           <p className="text-muted-foreground">Carregando seu plano nutricional...</p>
@@ -74,7 +74,7 @@ export const Nutrition = () => {
 
   if (!user?.id) {
     return (
-      <div className="p-4 pt-8 pb-safe-4xl">
+      <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-4">
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2 text-destructive">Erro de Autenticação</h2>
           <p className="text-muted-foreground">
@@ -87,7 +87,7 @@ export const Nutrition = () => {
 
   if (!todaysMeals.length) {
     return (
-      <div className="p-4 pt-8 pb-safe-4xl">
+      <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">Nutrição</h1>
           <p className="text-muted-foreground">Acompanhe sua alimentação hoje</p>
@@ -104,7 +104,7 @@ export const Nutrition = () => {
   const { consumed, target, percentage } = dailyStats;
 
   return (
-    <div className="p-4 pt-8 pb-safe-4xl">
+    <div className="p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-4">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">Nutrição</h1>
