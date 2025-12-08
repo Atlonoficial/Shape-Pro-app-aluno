@@ -61,7 +61,9 @@ export const useHealthData = () => {
         setError(null);
 
         try {
+            console.log('[useHealthData] Chamando healthDataService.requestPermissions...');
             const perms = await healthDataService.requestPermissions();
+            console.log('[useHealthData] Permissões recebidas:', perms);
             setPermissions(perms);
 
             // Se permissões foram concedidas, atualiza isAvailable
@@ -70,10 +72,12 @@ export const useHealthData = () => {
             }
 
             return perms.allGranted;
-        } catch (err) {
-            console.error('[useHealthData] Erro ao solicitar permissões:', err);
-            setError('Erro ao solicitar permissões');
-            return false;
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+            console.error('[useHealthData] Erro ao solicitar permissões:', errorMessage);
+            setError(errorMessage);
+            // Re-throw para o componente tratar
+            throw err;
         } finally {
             setLoading(false);
         }
