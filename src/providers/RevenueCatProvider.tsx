@@ -75,8 +75,8 @@ export const RevenueCatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const checkEntitlements = (info: CustomerInfo) => {
         console.log("👑 [RevenueCat] Checking Entitlements:", JSON.stringify(info.entitlements.active, null, 2));
 
-        // Check for 'premium_ai' (Correct ID) or fallback to 'premium_access' (Legacy)
-        if (info.entitlements.active['premium_ai'] || info.entitlements.active['premium_access']) {
+        // Check for 'Atlon Tech Pro' (RevenueCat Entitlement ID)
+        if (info.entitlements.active['Atlon Tech Pro'] || info.entitlements.active['premium_ai'] || info.entitlements.active['premium_access']) {
             console.log("✅ [RevenueCat] Premium Access GRANTED");
             setIsPremium(true);
         } else {

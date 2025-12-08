@@ -22,6 +22,9 @@ export const useHealthData = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Verifica se é plataforma nativa (usado antes do useCallback)
+    const isNativePlatform = Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android';
+
     // Verificar suporte e disponibilidade ao montar
     useEffect(() => {
         const init = async () => {
@@ -47,7 +50,10 @@ export const useHealthData = () => {
             return false;
         }
 
-        if (!isSupported || !isAvailable) {
+        // Na plataforma nativa, tenta solicitar permissões diretamente
+        // O HealthKit/Health Connect pode não retornar "available" até permissões serem concedidas
+        if (!isNativePlatform) {
+            console.log('[useHealthData] Não é plataforma nativa');
             return false;
         }
 
@@ -57,14 +63,21 @@ export const useHealthData = () => {
         try {
             const perms = await healthDataService.requestPermissions();
             setPermissions(perms);
+
+            // Se permissões foram concedidas, atualiza isAvailable
+            if (perms.allGranted) {
+                setIsAvailable(true);
+            }
+
             return perms.allGranted;
         } catch (err) {
+            console.error('[useHealthData] Erro ao solicitar permissões:', err);
             setError('Erro ao solicitar permissões');
             return false;
         } finally {
             setLoading(false);
         }
-    }, [isFeatureEnabled, isSupported, isAvailable]);
+    }, [isFeatureEnabled, isNativePlatform]);
 
     // Buscar dados
     const fetchData = useCallback(async () => {
@@ -104,9 +117,6 @@ export const useHealthData = () => {
         : Capacitor.getPlatform() === 'android'
             ? 'Health Connect'
             : 'Não disponível';
-
-    // Verifica se é plataforma nativa (mesmo que feature desabilitada)
-    const isNativePlatform = Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android';
 
     return {
         // Estado
