@@ -10,7 +10,6 @@ import { Members } from "@/components/members/Members";
 import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
 import { NotificationPermissionPrompt } from "@/components/notifications/NotificationPermissionPrompt";
 import { useGamificationIntegration } from "@/hooks/useGamificationIntegration";
-import { useGamificationStravaIntegration } from "@/hooks/useGamificationStravaIntegration";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -19,7 +18,6 @@ const Index = () => {
 
   // Integração automática de gamificação
   useGamificationIntegration();
-  useGamificationStravaIntegration();
 
   useEffect(() => {
     const tab = searchParams.get('tab');

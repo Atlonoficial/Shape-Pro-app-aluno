@@ -84,9 +84,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
                 </div>
 
                 <div className="space-y-2">
-                    <h2 className="text-xl font-bold text-foreground">Acesso Bloqueado</h2>
+                    <h2 className="text-xl font-bold text-foreground">Período de Acompanhamento</h2>
                     <p className="text-muted-foreground">
-                        Seu acesso a este conteúdo não está ativo. Entre em contato com seu treinador para mais informações.
+                        Seu período de acompanhamento foi concluído. Converse com seu treinador para mais informações.
                     </p>
                 </div>
 
@@ -95,9 +95,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children, 
 
                     <div className="p-3 bg-background/50 rounded-lg border border-border/50">
                         <p className="text-sm text-muted-foreground">
-                            {/iPad|iPhone|iPod/.test(navigator.userAgent)
-                                ? "Entre em contato com seu treinador pelo chat para mais informações."
-                                : "Para regularizar seu acesso, entre em contato diretamente com seu treinador."}
+                            Converse com seu treinador pelo chat para mais informações sobre o acompanhamento.
                         </p>
                     </div>
 

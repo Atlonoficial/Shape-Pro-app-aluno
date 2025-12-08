@@ -1,5 +1,5 @@
 import { Bell, Settings, Calendar, Trophy, MessageSquare } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { WeightChart } from "./WeightChart";
 import { WeightInputModal } from "./WeightInputModal";
@@ -7,7 +7,7 @@ import { CoachAICard } from "./CoachAICard";
 import { BannerContainer } from "@/components/banners/BannerContainer";
 import { QuickActions } from "./QuickActions";
 import { DashboardStats } from "./DashboardStats";
-import { StravaIntegrationCard } from "./StravaIntegrationCard";
+import { HealthIntegrationCard } from "./HealthIntegrationCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -59,12 +59,32 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     }
   }, [isAuthenticated, navigate]);
 
+  // ✅ Flag para impedir múltiplas verificações do modal de peso
+  const weightModalCheckedRef = useRef(false);
+
   // Check if should show weight modal (only on Fridays)
   useEffect(() => {
     if (!isAuthenticated || !user) return;
 
+    // ✅ Evitar múltiplas verificações
+    if (weightModalCheckedRef.current) return;
+    weightModalCheckedRef.current = true;
+
     // Show modal only on Fridays if user hasn't weighed this week
     const checkWeightModal = async () => {
+      // ✅ Verificar localStorage primeiro (mais rápido que consulta ao banco)
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const pastDays = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
+      const weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+      const currentWeekId = `${now.getFullYear()}-W${weekNumber}`;
+
+      const registeredWeek = localStorage.getItem('weight_registered_week');
+      if (registeredWeek === currentWeekId) {
+        console.log('✅ Peso já registrado esta semana (localStorage)');
+        return;
+      }
+
       const shouldShow = await shouldShowWeightModal();
       if (shouldShow) {
         setTimeout(() => setShowWeightModal(true), 2000);
@@ -72,7 +92,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
     };
 
     checkWeightModal();
-  }, [isAuthenticated, user, shouldShowWeightModal]);
+  }, [isAuthenticated, user]); // ✅ Removido shouldShowWeightModal das dependências
 
   // Check if should show feedback modal (after weight modal logic)
   useEffect(() => {
@@ -89,16 +109,24 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
 
     // Show feedback modal with delay if needed (after weight modal would show)
     if (shouldShowFeedbackModal) {
-      const delay = shouldShowWeightModal ? 4000 : 2000; // Wait longer if weight modal is also showing
+      const delay = showWeightModal ? 4000 : 2000; // ✅ Usar estado atual do modal
       setTimeout(() => setShouldShowFeedbackModal(true), delay);
     }
-  }, [isAuthenticated, user, shouldShowFeedbackModal, shouldShowWeightModal]);
+  }, [isAuthenticated, user, shouldShowFeedbackModal, showWeightModal]);
 
   const handleSaveWeight = async (weight: number) => {
     // Use the weight progress system which now includes validation and gamification
     const success = await addWeightEntry(weight);
 
     if (success) {
+      // ✅ Marcar que peso foi registrado esta semana para evitar modal reabrir
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+      const pastDays = Math.floor((today.getTime() - startOfYear.getTime()) / 86400000);
+      const weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+      const currentWeekId = `${today.getFullYear()}-W${weekNumber}`;
+      localStorage.setItem('weight_registered_week', currentWeekId);
+
       // Award points and show gamification toast
       logWeight(weight);
       setShowWeightModal(false);
@@ -182,7 +210,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
           <CoachAICard onCoachClick={onCoachClick} />
         </div>
         <div role="listitem" className="animate-fade-up stagger-delay-2">
-          <StravaIntegrationCard />
+          <HealthIntegrationCard />
         </div>
       </div>
 

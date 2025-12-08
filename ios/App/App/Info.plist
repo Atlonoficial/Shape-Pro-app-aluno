@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>4.0.2</string>
+	<string>4.0.3</string>
 	<key>CFBundleVersion</key>
-	<string>75</string>
+	<string>76</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -85,5 +85,10 @@
 	<array>
 		<string>applinks:shapepro.site</string>
 	</array>
+	<!-- HealthKit Permissions -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>O Shape Pro precisa acessar seus dados de saúde para monitorar seus passos diários e frequência cardíaca. Esses dados são usados para acompanhar seu progresso de atividade física e fornecer insights personalizados. Seus dados são armazenados de forma segura e nunca são compartilhados com terceiros.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>O Shape Pro pode registrar seus treinos no Apple Health para manter um histórico completo das suas atividades físicas.</string>
 </dict>
 </plist>

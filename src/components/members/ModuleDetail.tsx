@@ -224,8 +224,22 @@ export const LessonList = ({ module, onBack }: { module: CourseModule, onBack: (
     }
   }, [selectedLesson, teacherPhone]);
 
+  // ✅ Apple 3.1.1 Compliance: iOS users MUST use internal chat
+  // WhatsApp could be interpreted as payment steering
   const handleSupportClick = () => {
-    if (!teacherPhone) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (window as any).Ionic?.platforms?.includes('ios');
+
+    if (isIOS) {
+      navigate('/teacher-chat');
+      return;
+    }
+
+    // Android/Web: Can use WhatsApp
+    if (!teacherPhone) {
+      navigate('/teacher-chat');
+      return;
+    }
     const message = encodeURIComponent(`Olá! Estou com dúvida na aula "${selectedLesson?.title}" do módulo "${module.title}".`);
     window.open(`https://wa.me/${teacherPhone}?text=${message}`, '_blank');
   };
@@ -294,7 +308,7 @@ export const LessonList = ({ module, onBack }: { module: CourseModule, onBack: (
                         🎓 Aula Gratuita
                       </h4>
                       <p className="text-sm text-muted-foreground">
-                        Fale com seu professor para liberar o curso completo.
+                        Fale com seu professor para mais informações sobre o curso.
                       </p>
                     </div>
                     <Button onClick={() => navigate('/teacher-chat')} size="sm">

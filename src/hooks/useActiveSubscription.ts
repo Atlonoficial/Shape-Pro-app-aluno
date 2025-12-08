@@ -296,15 +296,15 @@ export const useActiveSubscription = () => {
 
     switch (status) {
       case 'none':
-        return 'Fale com seu treinador para liberar este recurso';
+        return 'Converse com seu treinador para mais detalhes';
       case 'pending':
-        return 'Aguardando aprovação do acesso pelo professor';
+        return 'Aguardando confirmação do professor';
       case 'expired':
-        return 'Acesso expirado. Fale com seu treinador para regularizar.';
+        return 'Seu período de acompanhamento foi concluído.';
       case 'active':
         return null; // Subscription is active, no message needed
       default:
-        return 'Status do acesso não reconhecido';
+        return 'Status do acompanhamento não reconhecido';
     }
   };
 

@@ -1,9 +1,25 @@
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuthContext } from '@/components/auth/AuthProvider';
-import { useStudentTeacher } from '@/hooks/useStudentTeacher';
-import { toast } from 'sonner';
+/**
+ * 🛒 useCheckout Hook - DISABLED FOR iOS COMPLIANCE
+ * 
+ * ⚠️ Apple App Store Guideline 3.1.1 Compliance
+ * 
+ * Este hook foi DESABILITADO para o app do aluno iOS.
+ * O sistema de checkout externo (MercadoPago, Stripe, etc.) NÃO é permitido
+ * pela Apple para bens/serviços digitais consumidos no app.
+ * 
+ * O modelo de negócio Shape Pro funciona assim:
+ * - Personal Trainers configuram pagamentos no Dashboard
+ * - Pagamentos pelo serviço de coaching acontecem FORA do app (PIX, transferência, etc.)
+ * - O aluno usa o app GRATUITAMENTE após ser vinculado pelo professor
+ * 
+ * Para compras in-app (Coach AI Premium), usamos RevenueCat/Apple IAP.
+ * 
+ * @see Guideline 3.1.3(e) - Person-to-person services exception
+ */
 
+import { useState } from 'react';
+
+// Keep interfaces for type compatibility with any remaining imports
 interface CheckoutItem {
   type: 'course' | 'product' | 'plan';
   id: string;
@@ -21,132 +37,37 @@ interface CustomerData {
   phone?: string;
 }
 
+/**
+ * Hook desabilitado para compliance com Apple App Store.
+ * Todas as chamadas retornam erro indicando que checkout externo não está disponível.
+ */
 export const useCheckout = () => {
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuthContext();
-  const { teacherId } = useStudentTeacher();
+  const [loading] = useState(false);
 
   const createCheckout = async (
-    items: CheckoutItem[],
-    customerData?: CustomerData
+    _items: CheckoutItem[],
+    _customerData?: CustomerData
   ) => {
-    if (!user || !teacherId) {
-      toast.error('Usuário não autenticado ou professor não encontrado');
-      return null;
-    }
+    // 🚫 DISABLED: External checkout not allowed on iOS
+    console.warn(
+      '[useCheckout] ⚠️ External checkout is DISABLED for iOS compliance.',
+      'Use RevenueCat for in-app purchases.'
+    );
 
-    setLoading(true);
-
-    try {
-      // ✅ CRÍTICO: Garantir que temos um token válido
-      console.log('🔐 Checking auth session...');
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        console.error('❌ No valid session:', sessionError);
-        throw new Error('Sessão expirada. Faça login novamente.');
-      }
-      
-      console.log('✅ Valid session found, token expires at:', 
-        new Date(sessionData.session.expires_at! * 1000).toISOString()
-      );
-
-      // Calcular total
-      const totalAmount = items.reduce(
-        (total, item) => total + item.price * (item.quantity || 1), 
-        0
-      );
-
-      console.log('🛒 Creating checkout:', { items, totalAmount });
-
-      // Chamar edge function de checkout dinâmico
-      const { data, error } = await supabase.functions.invoke('dynamic-checkout', {
-        body: {
-          teacherId,
-          studentId: user.id,
-          items,
-          totalAmount,
-          customerData: {
-            name: customerData?.name || user.user_metadata?.name || '',
-            email: customerData?.email || user.email || '',
-            phone: customerData?.phone || ''
-          }
-        }
-      });
-
-      // Log completo do erro para debug
-      if (error) {
-        console.error('❌ Checkout error (FULL):', {
-          message: error.message,
-          context: error.context,
-          name: error.name,
-          stack: error.stack
-        });
-        throw new Error(error.message || 'Erro ao criar checkout');
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Erro desconhecido no checkout');
-      }
-
-      console.log('✅ Checkout created:', data);
-
-      // Log analytics da tentativa de compra
-      await supabase.rpc('award_points_enhanced_v3', {
-        p_user_id: user.id,
-        p_activity_type: 'checkout_initiated',
-        p_description: `Checkout iniciado - ${totalAmount} BRL`,
-        p_metadata: { 
-          items: items.length, 
-          amount: totalAmount,
-          gateway: data.gateway_type 
-        }
-      });
-
-      toast.success(
-        `Checkout criado! Redirecionando para ${data.gateway_type}...`
-      );
-
-      return {
-        success: true,
-        checkout_url: data.checkout_url,
-        transaction_id: data.transaction_id,
-        gateway_type: data.gateway_type,
-        expires_at: data.expires_at
-      };
-
-    } catch (error: any) {
-      // Adicionar mais logging detalhado
-      console.error('❌ Checkout failed (FULL ERROR):', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack,
-        ...error
-      });
-      toast.error(error.message || 'Erro ao criar checkout');
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
-    }
+    return {
+      success: false,
+      error: 'Checkout externo não disponível. Use o Apple App Store para assinaturas.',
+      checkout_url: null,
+      transaction_id: null,
+      gateway_type: null,
+      expires_at: null
+    };
   };
 
-  const checkPaymentStatus = async (transactionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('payment_transactions')
-        .select('status, paid_at, gateway_type')
-        .eq('id', transactionId)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('❌ Error checking payment status:', error);
-      return null;
-    }
+  const checkPaymentStatus = async (_transactionId: string) => {
+    // 🚫 DISABLED: External payment status check not available
+    console.warn('[useCheckout] ⚠️ Payment status check is DISABLED for iOS compliance.');
+    return null;
   };
 
   return {

@@ -130,9 +130,8 @@ const PoliticaPrivacidade = () => {
               </p>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              você e seu instrutor, fora do aplicativo. Não coletamos informações de cartão de crédito,
-              dados bancários ou qualquer informação financeira. O acesso aos conteúdos premium é controlado
-              manualmente pelo seu instrutor após a negociação externa.
+              Para exercer qualquer um desses direitos, entre em contato pelo suporte do aplicativo
+              ou envie um email para suporte@shapepro.site.
             </p>
           </div>
         </Card>

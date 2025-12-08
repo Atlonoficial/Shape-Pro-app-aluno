@@ -1,3 +1,20 @@
+/**
+ * 🔄 useCoursePaymentSync Hook - SIMPLIFIED FOR iOS COMPLIANCE
+ * 
+ * ⚠️ Apple App Store Guideline 3.1.1 Compliance
+ * 
+ * Este hook foi SIMPLIFICADO para remover lógica de pagamento externo.
+ * O campo `canPurchase` sempre retorna `false` para evitar qualquer
+ * fluxo de compra externa no iOS.
+ * 
+ * O acesso a cursos é controlado pelo PROFESSOR no Dashboard:
+ * - Professor cria curso e define visibilidade
+ * - Aluno vinculado ao professor pode ver cursos publicados
+ * - Pagamento pelo serviço acontece FORA do app
+ * 
+ * @see Guideline 3.1.3(e) - Person-to-person services exception
+ */
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -28,7 +45,7 @@ export const useCoursePaymentSync = (courseId: string) => {
     try {
       setLoading(true);
       console.log('[useCoursePaymentSync] Fetching course data for ID:', courseId);
-      
+
       // Buscar dados do curso
       const { data: course, error: courseError } = await supabase
         .from('courses')
@@ -42,58 +59,27 @@ export const useCoursePaymentSync = (courseId: string) => {
       }
 
       console.log('[useCoursePaymentSync] Course data:', course);
-      console.log('[useCoursePaymentSync] Course instructor:', course.instructor);
-      console.log('[useCoursePaymentSync] Course price:', course.price);
 
-      // Buscar configurações de pagamento do professor
-      const { data: paymentSettings, error: paymentError } = await supabase
-        .from('teacher_payment_settings')
-        .select('*')
-        .eq('teacher_id', course.instructor)
-        .maybeSingle();
+      // 🚫 iOS COMPLIANCE: canPurchase always false
+      // External purchases are not allowed on iOS
+      // Access is controlled by the teacher in the Dashboard
+      const coursePaymentData: CoursePaymentData = {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        price: undefined, // Don't expose price on iOS
+        thumbnail: course.thumbnail,
+        instructor: course.instructor,
+        total_lessons: course.total_lessons,
+        hasActiveGateway: false, // Always false for iOS compliance
+        canPurchase: false // 🚫 DISABLED: No external purchases on iOS
+      };
 
-      console.log('[useCoursePaymentSync] Payment settings query result:', { data: paymentSettings, error: paymentError });
+      console.log('[useCoursePaymentSync] Final course data (iOS compliant):', coursePaymentData);
+      setCourseData(coursePaymentData);
 
-      if (paymentSettings) {
-        const hasActiveGateway = paymentSettings.is_active && 
-                                paymentSettings.gateway_type && 
-                                Object.keys(paymentSettings.credentials || {}).length > 0;
-
-        const canPurchase = hasActiveGateway && course.price && course.price > 0;
-
-        console.log('[useCoursePaymentSync] Gateway analysis:', {
-          hasPaymentSettings: true,
-          isActive: paymentSettings.is_active,
-          gatewayType: paymentSettings.gateway_type,
-          hasCredentials: Object.keys(paymentSettings.credentials || {}).length > 0,
-          hasActiveGateway,
-          coursePrice: course.price,
-          canPurchase
-        });
-
-        const courseData = {
-          ...course,
-          hasActiveGateway,
-          canPurchase
-        };
-
-        console.log('[useCoursePaymentSync] Final course data:', courseData);
-        setCourseData(courseData);
-      } else {
-        console.log('[useCoursePaymentSync] No payment settings found for teacher');
-        
-        // Se não há configurações de pagamento, definir como não pode comprar
-        const courseData = {
-          ...course,
-          hasActiveGateway: false,
-          canPurchase: false
-        };
-        
-        console.log('[useCoursePaymentSync] Final course data (no payment settings):', courseData);
-        setCourseData(courseData);
-      }
     } catch (error) {
-      console.error('[useCoursePaymentSync] Error fetching course payment data:', error);
+      console.error('[useCoursePaymentSync] Error fetching course data:', error);
     } finally {
       setLoading(false);
     }

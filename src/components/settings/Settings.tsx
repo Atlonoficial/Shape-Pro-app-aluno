@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { HelpCenter } from "./HelpCenter";
 import { AboutApp } from "./AboutApp";
 import { TermsOfService } from "./TermsOfService";
-import { StravaIntegrationSettings } from "./StravaIntegrationSettings";
+import { HealthIntegrationSettings } from "./HealthIntegrationSettings";
 
 const settingsCategories = [
   {
@@ -85,13 +85,13 @@ export const Settings = () => {
 
       {/* Settings Categories */}
       <div className="space-y-6">
-        {/* Strava Integration */}
-        <StravaIntegrationSettings />
-        
+        {/* Health Integration */}
+        <HealthIntegrationSettings />
+
         {settingsCategories.map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h3 className="text-lg font-semibold text-foreground mb-3">{category.title}</h3>
-            
+
             <div className="space-y-2">
               {category.items.map((item) => (
                 <Card key={item.id} className="card-gradient">
@@ -108,7 +108,7 @@ export const Settings = () => {
                           <p className="text-sm text-muted-foreground">{item.description}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         {item.type === 'toggle' && (
                           <Switch
@@ -117,7 +117,7 @@ export const Settings = () => {
                             className="data-[state=checked]:bg-primary"
                           />
                         )}
-                        
+
                         {item.type === 'navigation' && (
                           <button
                             onClick={() => {
@@ -142,8 +142,8 @@ export const Settings = () => {
       {/* App Version */}
       <Card className="mt-6 card-gradient">
         <CardContent className="p-4 text-center">
-          <p className="text-sm text-muted-foreground">Shape Pro v2.1.0</p>
-          <p className="text-xs text-muted-foreground mt-1">Última atualização: Janeiro 2024</p>
+          <p className="text-sm text-muted-foreground">Shape Pro v4.0.3</p>
+          <p className="text-xs text-muted-foreground mt-1">Última atualização: Dezembro 2025</p>
         </CardContent>
       </Card>
     </div>

@@ -8,8 +8,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// TODO: Set this to your Teacher/Admin Dashboard public URL (no trailing slash)
-export const ADMIN_DASHBOARD_URL = "https://SUA-DASHBOARD.lovable.app";
+// URL do Dashboard do Professor (configurável via env ou hardcoded)
+export const ADMIN_DASHBOARD_URL = "https://dashboard.shapepro.site";
 
 // Narrow session shape we need
 type SessionTokens = {

@@ -46,7 +46,6 @@ import { AuthVerify } from "./pages/AuthVerify";
 import { AuthVerified } from "./pages/AuthVerified";
 import CadastroCompleto from "./pages/CadastroCompleto";
 import Recompensas from "./pages/Recompensas";
-import StravaCallback from "./pages/StravaCallback";
 
 import { RevenueCatProvider } from "@/providers/RevenueCatProvider";
 import { PremiumGuard } from "@/components/paywall/PremiumGuard";
@@ -145,7 +144,6 @@ const AuthenticatedApp = () => {
               </AuthGuard>
             } />
             <Route path="/teacher-chat" element={<AuthGuard><TermsGuard><LazyTeacherStudentChat /></TermsGuard></AuthGuard>} />
-            <Route path="/strava-callback" element={<StravaCallback />} />
 
 
             <Route path="*" element={<NotFound />} />
