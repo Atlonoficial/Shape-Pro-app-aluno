@@ -21,16 +21,16 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "4.0.8", // ✅ BUILD 81: Sync version - HealthKit entitlements fix
+  version: "4.0.9", // ✅ BUILD 82: Dados de saúde expandidos
   ios: {
     scheme: "shapepro",
     contentInset: "automatic",
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 81: Fix build version conflict
-    CFBundleVersion: '81',
-    CFBundleShortVersionString: "4.0.8",
+    // ✅ BUILD 82: Dados de saúde expandidos
+    CFBundleVersion: '82',
+    CFBundleShortVersionString: "4.0.9",
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
@@ -64,8 +64,8 @@ const config: CapacitorConfig = {
       // Launch screen baseado em storyboard (exigido pelo iPad multitasking)
       UILaunchStoryboardName: "LaunchScreen",
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "4.0.8",
-      CFBundleVersion: "81", // ✅ BUILD 81: Sync with Info.plist
+      CFBundleShortVersionString: "4.0.9",
+      CFBundleVersion: "82", // ✅ BUILD 82
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
     },
@@ -80,8 +80,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 81, // ✅ BUILD 81: Sync with build.gradle
-    versionName: "4.0.8"
+    versionCode: 82, // ✅ BUILD 82
+    versionName: "4.0.9"
   },
 
   plugins: {
