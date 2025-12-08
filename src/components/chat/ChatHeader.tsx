@@ -97,7 +97,7 @@ export const ChatHeader = ({
     // Logic to report user
     const subject = `Denúncia de Usuário: ${chatPartner} (${chatPartnerId})`;
     const body = "Por favor, descreva o motivo da denúncia:\n\n";
-    window.open(`mailto:suporte@shapepro.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    window.open(`mailto:suporte@shapepro.site?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
 
     toast({
       title: "Denúncia Iniciada",
