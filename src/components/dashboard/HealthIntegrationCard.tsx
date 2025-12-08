@@ -6,20 +6,19 @@
  * Mostra dados de passos e frequência cardíaca do Apple Health / Health Connect
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Heart, Footprints, Smartphone, Activity, RefreshCcw, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useHealthData } from '@/hooks/useHealthData';
+import { toast } from 'sonner';
 
 export const HealthIntegrationCard = () => {
     const {
         isFeatureEnabled,
         isNativePlatform,
-        isAvailable,
         isConnected,
-        permissions,
         dailyStats,
         loading,
         error,
@@ -65,8 +64,8 @@ export const HealthIntegrationCard = () => {
         );
     }
 
-    // Plataforma nativa - Health Connect/HealthKit não disponível
-    if (!isAvailable && !loading) {
+    // Feature desabilitada
+    if (!isFeatureEnabled) {
         return (
             <Card className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 border-rose-200 dark:border-rose-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -78,15 +77,13 @@ export const HealthIntegrationCard = () => {
                     </CardTitle>
                     <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                         <AlertCircle className="h-3 w-3 mr-1" />
-                        Indisponível
+                        Em breve
                     </Badge>
                 </CardHeader>
                 <CardContent>
                     <div className="text-center py-3">
                         <p className="text-xs text-muted-foreground">
-                            {platformName === 'Health Connect'
-                                ? 'Instale o Health Connect da Play Store para sincronizar dados de saúde'
-                                : 'Ative o Apple Health nas configurações do dispositivo'}
+                            Integração em desenvolvimento
                         </p>
                     </div>
                 </CardContent>
@@ -94,12 +91,27 @@ export const HealthIntegrationCard = () => {
         );
     }
 
-    // Permissões não concedidas - mostrar botão para conectar
+    // Plataforma nativa - mostrar botão para conectar ou dados se conectado
     if (!isConnected) {
         const handleConnect = async () => {
+            console.log('[HealthIntegrationCard] Botão Conectar clicado');
             setIsRequesting(true);
-            await requestPermissions();
-            setIsRequesting(false);
+
+            try {
+                const success = await requestPermissions();
+                console.log('[HealthIntegrationCard] Resultado:', success);
+
+                if (success) {
+                    toast.success('Conectado ao ' + platformName);
+                } else {
+                    toast.error('Não foi possível conectar. Verifique as permissões.');
+                }
+            } catch (err) {
+                console.error('[HealthIntegrationCard] Erro:', err);
+                toast.error('Erro ao conectar: ' + (err as Error).message);
+            } finally {
+                setIsRequesting(false);
+            }
         };
 
         return (
@@ -120,8 +132,8 @@ export const HealthIntegrationCard = () => {
                         <Button
                             size="sm"
                             onClick={handleConnect}
-                            disabled={isRequesting}
-                            className="bg-rose-500 hover:bg-rose-600"
+                            disabled={isRequesting || loading}
+                            className="bg-rose-500 hover:bg-rose-600 active:bg-rose-700"
                         >
                             {isRequesting ? 'Conectando...' : 'Conectar'}
                         </Button>
@@ -141,15 +153,9 @@ export const HealthIntegrationCard = () => {
                     </div>
                     {platformName}
                 </CardTitle>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={refreshData}
-                    disabled={loading}
-                >
-                    <RefreshCcw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-                </Button>
+                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    Conectado
+                </Badge>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -176,6 +182,17 @@ export const HealthIntegrationCard = () => {
                         <p className="text-xs text-muted-foreground">média</p>
                     </div>
                 </div>
+
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-3"
+                    onClick={refreshData}
+                    disabled={loading}
+                >
+                    <RefreshCcw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    {loading ? 'Atualizando...' : 'Atualizar'}
+                </Button>
 
                 {error && (
                     <p className="text-xs text-destructive text-center mt-2">{error}</p>
