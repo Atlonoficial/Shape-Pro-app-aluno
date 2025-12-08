@@ -88,9 +88,22 @@ export const NotificationPermissionModal = () => {
       }
     } catch (error) {
       logger.error('NotificationPermissionModal', 'Error requesting permission', error);
-      toast.error('Erro ao solicitar permissões', {
-        description: 'Por favor, tente novamente.'
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+
+      // Verificar se é problema do plugin
+      if (!window.plugins?.OneSignal) {
+        toast.error('Plugin de notificações não disponível', {
+          description: 'Tente reinstalar o app ou atualizar para a versão mais recente.'
+        });
+      } else {
+        toast.error('Erro ao solicitar permissões', {
+          description: errorMessage || 'Por favor, tente novamente.'
+        });
+      }
+
+      // Fechar modal mesmo com erro para não travar a UI
+      localStorage.setItem('notification_permission_requested', 'error');
+      setOpen(false);
     }
   };
 
