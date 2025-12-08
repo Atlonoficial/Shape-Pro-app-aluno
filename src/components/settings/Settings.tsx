@@ -142,7 +142,7 @@ export const Settings = () => {
       {/* App Version */}
       <Card className="mt-6 card-gradient">
         <CardContent className="p-4 text-center">
-          <p className="text-sm text-muted-foreground">Shape Pro v4.0.6</p>
+          <p className="text-sm text-muted-foreground">Shape Pro v4.0.7</p>
           <p className="text-xs text-muted-foreground mt-1">Última atualização: Dezembro 2025</p>
         </CardContent>
       </Card>
