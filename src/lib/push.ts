@@ -19,7 +19,7 @@ declare global {
 
 let isInitialized = false;
 let currentExternalUserId: string | null = null;
-let webInitialized = false; // ✅ BUILD 54: Guard para prevenir re-inicialização do SDK Web
+let webInitialized = false;
 
 // Detectar se é mobile (Capacitor/Cordova) ou web
 const isMobileApp = () => {
@@ -27,12 +27,10 @@ const isMobileApp = () => {
 };
 
 export async function initPush(externalUserId?: string) {
-  // Hardcoded temporariamente para garantir disponibilidade em produção
   const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82";
 
   if (!APP_ID) {
-    logger.error('OneSignal', 'APP_ID not configured - check .env file');
-    logger.warn('OneSignal', 'See docs/ONESIGNAL_CONFIG.md for setup');
+    logger.error('OneSignal', 'APP_ID not configured');
     return;
   }
 
@@ -42,7 +40,6 @@ export async function initPush(externalUserId?: string) {
     externalUserId: externalUserId ? externalUserId.substring(0, 8) + '...' : 'not provided'
   });
 
-  // Inicializar Web ou Mobile baseado no ambiente
   if (isMobileApp()) {
     initMobilePush(APP_ID, externalUserId);
   } else {
@@ -66,7 +63,6 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
 
       OneSignal.setAppId(APP_ID);
 
-      // ✅ BUILD 53: Definir external user ID (permissão será pedida pelo modal)
       if (externalUserId) {
         currentExternalUserId = externalUserId;
         OneSignal.setExternalUserId(String(externalUserId));
@@ -101,7 +97,6 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
         timestamp: new Date().toISOString()
       });
 
-      // ✅ BUILD 53: Disparar evento customizado para notificar componentes
       window.dispatchEvent(new CustomEvent('onesignal-ready', {
         detail: { platform: 'mobile', externalUserId }
       }));
@@ -109,12 +104,11 @@ function initMobilePush(APP_ID: string, externalUserId?: string) {
     } catch (error) {
       logger.error('OneSignal Mobile', 'Init failed (non-fatal)', error);
     }
-  }, 500); // ✅ BUILD 24: 500ms delay
+  }, 500);
 }
 
 // Inicialização Web Push
 async function initWebPush(APP_ID: string, externalUserId?: string) {
-  // ✅ BUILD 54: Prevenir re-inicialização do SDK Web
   if (webInitialized) {
     logger.warn('OneSignal Web', 'Already initialized, skipping');
     return;
@@ -124,30 +118,23 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
     webInitialized = true;
     logger.debug('OneSignal Web', 'Initializing', { appId: APP_ID.substring(0, 8) + '...' });
 
-    // Carregar SDK Web do OneSignal
     window.OneSignalDeferred = window.OneSignalDeferred || [];
 
     window.OneSignalDeferred.push(async function (OneSignal: any) {
       await OneSignal.init({
         appId: APP_ID,
         allowLocalhostAsSecureOrigin: import.meta.env.DEV,
-        notifyButton: {
-          enable: false, // Não mostrar botão padrão
-        },
-        serviceWorkerParam: {
-          scope: '/'
-        },
+        notifyButton: { enable: false },
+        serviceWorkerParam: { scope: '/' },
         serviceWorkerPath: '/OneSignalSDKWorker.js'
       });
 
-      // Configurar external user ID
       if (externalUserId) {
         currentExternalUserId = externalUserId;
         logger.debug('OneSignal Web', 'Setting external user ID', { externalUserId });
         await OneSignal.login(externalUserId);
       }
 
-      // Obter player ID com retry (pode não estar disponível imediatamente)
       let playerId = await OneSignal.User.PushSubscription.id;
 
       if (!playerId && externalUserId) {
@@ -159,24 +146,15 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
       if (playerId && externalUserId) {
         logger.info('OneSignal Web', 'Player ID obtained', { playerId });
         updatePlayerIdInSupabase(playerId, externalUserId);
-      } else {
-        logger.warn('OneSignal Web', 'No Player ID after retry', {
-          hasPlayerId: !!playerId,
-          hasExternalUserId: !!externalUserId
-        });
       }
 
-      // Listener para mudanças de subscription
       OneSignal.User.PushSubscription.addEventListener('change', (event: any) => {
         if (event.current.id && externalUserId) {
-          logger.debug('OneSignal Web', 'Subscription changed, updating Player ID');
           updatePlayerIdInSupabase(event.current.id, externalUserId);
         }
       });
 
-      // Listener para notificações clicadas
       OneSignal.Notifications.addEventListener('click', (event: any) => {
-        logger.debug('OneSignal Web', 'Notification clicked', event);
         handleNotificationAction(event.notification.additionalData);
       });
 
@@ -184,7 +162,6 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
       logger.info('OneSignal Web', 'Initialized successfully');
     });
 
-    // Carregar script do OneSignal se ainda não estiver carregado
     if (!document.getElementById('onesignal-sdk')) {
       const script = document.createElement('script');
       script.id = 'onesignal-sdk';
@@ -194,35 +171,65 @@ async function initWebPush(APP_ID: string, externalUserId?: string) {
     }
 
   } catch (error) {
-    webInitialized = false; // ✅ Reset se falhar para permitir retry
+    webInitialized = false;
     logger.error('OneSignal', 'Error initializing', error);
   }
 }
 
-// ✅ BUILD 72: Função requestPermission corrigida e exportada
+// ✅ BUILD 79: Função requestPermission corrigida para OneSignal v5
 export async function requestPermission(): Promise<boolean> {
   try {
+    logger.info('OneSignal', 'Requesting push notification permission...');
+    
     if (isMobileApp() && window.plugins?.OneSignal) {
       const OneSignal = window.plugins.OneSignal;
-      return new Promise((resolve) => {
-        OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-          logger.info('OneSignal', 'Permission requested', { accepted });
-          resolve(accepted);
-        });
-      });
+      logger.debug('OneSignal', 'Using Cordova plugin v5');
+      
+      // ✅ OneSignal v5 API: Notifications.requestPermission()
+      try {
+        // Tentar nova API do OneSignal v5
+        if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === 'function') {
+          const accepted = await OneSignal.Notifications.requestPermission(true);
+          logger.info('OneSignal', 'Permission response (v5 API)', { accepted });
+          return accepted === true;
+        }
+        
+        // Fallback para API legada (caso plugin antigo)
+        if (typeof OneSignal.promptForPushNotificationsWithUserResponse === 'function') {
+          return new Promise((resolve) => {
+            OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+              logger.info('OneSignal', 'Permission response (legacy API)', { accepted });
+              resolve(accepted);
+            });
+          });
+        }
+
+        // Se nenhuma API funcionar, verificar estado atual
+        logger.warn('OneSignal', 'No permission API available, checking current state');
+        const state = await getDeviceState();
+        return state?.hasNotificationPermission === true;
+        
+      } catch (e) {
+        logger.warn('OneSignal', 'Permission API error, trying fallback...', e);
+        const state = await getDeviceState();
+        return state?.hasNotificationPermission === true;
+      }
     } else if (window.OneSignal) {
-      // Web
+      // Web SDK
+      logger.debug('OneSignal', 'Using Web SDK');
       await window.OneSignal.Notifications.requestPermission();
       return window.OneSignal.Notifications.permission === 'granted';
     }
+    
+    logger.warn('OneSignal', 'No OneSignal SDK available');
     return false;
   } catch (error) {
     logger.error('OneSignal', 'Error requesting permission', error);
-    return false;
+    throw error;
   }
 }
 
-// ✅ BUILD 72: Função enablePush corrigida e exportada
+// ✅ Função enablePush
 export async function enablePush(): Promise<void> {
   try {
     const permission = await checkNotificationPermission();
@@ -231,9 +238,7 @@ export async function enablePush(): Promise<void> {
     }
 
     if (isMobileApp() && window.plugins?.OneSignal) {
-      window.plugins.OneSignal.disablePush(false); // Enable
-    } else if (window.OneSignal) {
-      // Web logic if needed (usually automatic if permission granted)
+      window.plugins.OneSignal.disablePush(false);
     }
     logger.info('OneSignal', 'Push enabled');
   } catch (error) {
@@ -244,8 +249,7 @@ export async function enablePush(): Promise<void> {
 export async function disablePush(): Promise<void> {
   try {
     if (isMobileApp() && window.plugins?.OneSignal) {
-      const OneSignal = window.plugins.OneSignal;
-      OneSignal.disablePush(true); // Disable
+      window.plugins.OneSignal.disablePush(true);
       logger.debug('OneSignal Native', 'Push disabled');
     }
   } catch (error) {
@@ -258,8 +262,7 @@ export function clearExternalUserId(): void {
 
   try {
     if (isMobileApp() && window.plugins?.OneSignal) {
-      const OneSignal = window.plugins.OneSignal;
-      OneSignal.removeExternalUserId?.();
+      window.plugins.OneSignal.removeExternalUserId?.();
       logger.debug('OneSignal Native', 'External user ID cleared');
     } else if (window.OneSignal) {
       window.OneSignal.logout();
@@ -272,16 +275,14 @@ export function clearExternalUserId(): void {
 }
 
 export function getDeviceState(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (!isInitialized || !(window as any).plugins?.OneSignal) {
-      // Se não estiver inicializado, tenta retornar null ou um estado padrão em vez de erro
+  return new Promise((resolve) => {
+    if (!isInitialized || !window.plugins?.OneSignal) {
       resolve(null);
       return;
     }
 
     try {
-      const OneSignal = (window as any).plugins.OneSignal;
-      OneSignal.getDeviceState((state: any) => {
+      window.plugins.OneSignal.getDeviceState((state: any) => {
         logger.debug('OneSignal Native', 'Device state', state);
         resolve(state);
       });
@@ -292,25 +293,19 @@ export function getDeviceState(): Promise<any> {
   });
 }
 
-// Verificar permissão de notificação do sistema operacional
 export async function checkNotificationPermission(): Promise<'granted' | 'denied' | 'default'> {
   try {
-    // Web
     if ('Notification' in window && !isMobileApp()) {
-      logger.debug('OneSignal Web', 'Notification permission', { permission: Notification.permission });
       return Notification.permission;
     }
 
-    // Mobile - verificar via OneSignal
-    if (isMobileApp() && (window as any).plugins?.OneSignal) {
+    if (isMobileApp() && window.plugins?.OneSignal) {
       const state = await getDeviceState();
       if (!state) return 'default';
 
-      const hasPermission = state.hasNotificationPermission || state.notificationPermissionStatus === 1 || state.notificationPermissionStatus === 2;
-      logger.debug('OneSignal Native', 'Notification permission', {
-        hasPermission,
-        state
-      });
+      const hasPermission = state.hasNotificationPermission || 
+                           state.notificationPermissionStatus === 1 || 
+                           state.notificationPermissionStatus === 2;
       return hasPermission ? 'granted' : 'denied';
     }
 
@@ -321,11 +316,9 @@ export async function checkNotificationPermission(): Promise<'granted' | 'denied
   }
 }
 
-// Atualizar Player ID no Supabase - Build 31: Validação de profile + detecção RLS
 async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRetries = 5) {
   logger.debug('OneSignal', 'Starting player ID update', { playerId, userId });
 
-  // ✅ NOVO: Verificar se profile existe primeiro
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, email')
@@ -337,12 +330,8 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
     return;
   }
 
-  logger.debug('OneSignal', 'Profile found', { email: profile.email });
-
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      logger.debug('OneSignal', `Attempt ${attempt}/${maxRetries}: Updating Supabase`);
-
       const { data, error } = await supabase
         .from('profiles')
         .update({ onesignal_player_id: playerId })
@@ -350,87 +339,53 @@ async function updatePlayerIdInSupabase(playerId: string, userId: string, maxRet
         .select();
 
       if (error) {
-        logger.error('OneSignal', `Error on attempt ${attempt}`, error);
-
-        // ✅ NOVO: Detectar erros de RLS (não vale retry)
         if (error.code === 'PGRST116' || error.code === '42501') {
-          logger.critical('OneSignal', 'RLS POLICY ERROR - Check profiles table policies');
-          return; // Não adianta tentar novamente
+          logger.critical('OneSignal', 'RLS POLICY ERROR');
+          return;
         }
 
-        if (attempt === maxRetries) {
-          logger.error('OneSignal', 'All retry attempts failed');
-          throw error;
-        }
+        if (attempt === maxRetries) throw error;
 
-        const waitTime = 1000 * attempt;
-        logger.debug('OneSignal', `Waiting ${waitTime}ms before retry`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         continue;
       }
 
-      logger.info('OneSignal', 'Player ID saved successfully', {
-        playerId,
-        rowsAffected: data?.length || 0
-      });
+      logger.info('OneSignal', 'Player ID saved successfully', { playerId });
 
-      // ✅ BUILD 32: Toast de confirmação para o usuário
       toast.success('🔔 Notificações ativadas!', {
         description: 'Você receberá lembretes de treinos e avisos importantes.',
         duration: 4000
       });
 
       return;
-
     } catch (error: any) {
-      logger.error('OneSignal', `Exception on attempt ${attempt}`, error);
-
       if (attempt < maxRetries) {
-        const waitTime = 1000 * attempt;
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
   }
 }
 
-// Handler para ações de notificação
 function handleNotificationAction(additionalData: any) {
   if (!additionalData) return;
 
   const { route, deep_link, type } = additionalData;
 
-  // Navegar baseado no tipo de notificação
   if (route) {
     window.location.href = route;
   } else if (deep_link) {
     window.location.href = deep_link;
   } else if (type) {
-    // Navegação baseada no tipo
     switch (type) {
-      case 'teacher_announcement':
-        window.location.href = '/';
-        break;
-      case 'new_lesson':
-        window.location.href = '/?tab=members';
-        break;
-      case 'workout_reminder':
-        window.location.href = '/?tab=workouts';
-        break;
-      case 'nutrition_reminder':
-        window.location.href = '/?tab=nutrition';
-        break;
-      case 'appointment_reminder':
-        window.location.href = '/agenda';
-        break;
-      case 'chat_message':
-        window.location.href = '/chat';
-        break;
-      default:
-        window.location.href = '/';
-        break;
+      case 'teacher_announcement': window.location.href = '/'; break;
+      case 'new_lesson': window.location.href = '/?tab=members'; break;
+      case 'workout_reminder': window.location.href = '/?tab=workouts'; break;
+      case 'nutrition_reminder': window.location.href = '/?tab=nutrition'; break;
+      case 'appointment_reminder': window.location.href = '/agenda'; break;
+      case 'chat_message': window.location.href = '/chat'; break;
+      default: window.location.href = '/'; break;
     }
   } else {
-    // Fallback para home
     window.location.href = '/';
   }
 }
