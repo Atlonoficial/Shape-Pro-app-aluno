@@ -1,13 +1,10 @@
 /**
  * HealthIntegrationCard - Card de integração de saúde para Dashboard
- * 
- * @module components/dashboard/HealthIntegrationCard
- * 
- * Mostra dados de passos e frequência cardíaca do Apple Health / Health Connect
+ * BUILD 82: UI profissional com dados expandidos
  */
 
 import { useState } from 'react';
-import { Heart, Footprints, Smartphone, Activity, RefreshCcw, AlertCircle } from 'lucide-react';
+import { Heart, Footprints, Smartphone, Activity, RefreshCcw, AlertCircle, Flame, Route, Dumbbell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,14 +26,14 @@ export const HealthIntegrationCard = () => {
 
     const [isRequesting, setIsRequesting] = useState(false);
 
-    // Em web, mostrar card informativo
+    // Web - mostrar card informativo
     if (!isNativePlatform) {
         return (
             <Card className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 border-rose-200 dark:border-rose-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <div className="p-2 bg-rose-100 dark:bg-rose-900/50 rounded-full">
-                            <Activity className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                        <div className="p-1.5 bg-rose-100 dark:bg-rose-900/50 rounded-full">
+                            <Activity className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                         </div>
                         Monitoramento
                     </CardTitle>
@@ -45,18 +42,16 @@ export const HealthIntegrationCard = () => {
                         App
                     </Badge>
                 </CardHeader>
-                <CardContent>
-                    <div className="text-center py-3">
-                        <div className="flex items-center justify-center gap-3 mb-2">
-                            <div className="p-2 bg-rose-100/50 dark:bg-rose-800/30 rounded-full">
-                                <Footprints className="h-5 w-5 text-rose-400" />
-                            </div>
-                            <div className="p-2 bg-rose-100/50 dark:bg-rose-800/30 rounded-full">
-                                <Heart className="h-5 w-5 text-rose-400" />
-                            </div>
+                <CardContent className="pb-3">
+                    <div className="text-center py-2">
+                        <div className="flex items-center justify-center gap-2 mb-1.5">
+                            <Footprints className="h-4 w-4 text-rose-400" />
+                            <Flame className="h-4 w-4 text-orange-400" />
+                            <Route className="h-4 w-4 text-blue-400" />
+                            <Dumbbell className="h-4 w-4 text-purple-400" />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Baixe o app para monitorar passos e frequência cardíaca
+                            Baixe o app para monitorar atividades
                         </p>
                     </div>
                 </CardContent>
@@ -70,8 +65,8 @@ export const HealthIntegrationCard = () => {
             <Card className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 border-rose-200 dark:border-rose-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <div className="p-2 bg-rose-100 dark:bg-rose-900/50 rounded-full">
-                            <Heart className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                        <div className="p-1.5 bg-rose-100 dark:bg-rose-900/50 rounded-full">
+                            <Heart className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                         </div>
                         {platformName}
                     </CardTitle>
@@ -80,34 +75,27 @@ export const HealthIntegrationCard = () => {
                         Em breve
                     </Badge>
                 </CardHeader>
-                <CardContent>
-                    <div className="text-center py-3">
-                        <p className="text-xs text-muted-foreground">
-                            Integração em desenvolvimento
-                        </p>
-                    </div>
+                <CardContent className="pb-3">
+                    <p className="text-xs text-muted-foreground text-center">
+                        Integração em desenvolvimento
+                    </p>
                 </CardContent>
             </Card>
         );
     }
 
-    // Plataforma nativa - mostrar botão para conectar ou dados se conectado
+    // Não conectado - mostrar botão
     if (!isConnected) {
         const handleConnect = async () => {
-            console.log('[HealthIntegrationCard] Botão Conectar clicado');
             setIsRequesting(true);
-
             try {
                 const success = await requestPermissions();
-                console.log('[HealthIntegrationCard] Resultado:', success);
-
                 if (success) {
                     toast.success('Conectado ao ' + platformName);
                 } else {
                     toast.error('Não foi possível conectar. Verifique as permissões.');
                 }
             } catch (err) {
-                console.error('[HealthIntegrationCard] Erro:', err);
                 toast.error('Erro ao conectar: ' + (err as Error).message);
             } finally {
                 setIsRequesting(false);
@@ -118,22 +106,22 @@ export const HealthIntegrationCard = () => {
             <Card className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 border-rose-200 dark:border-rose-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <div className="p-2 bg-rose-100 dark:bg-rose-900/50 rounded-full">
-                            <Heart className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                        <div className="p-1.5 bg-rose-100 dark:bg-rose-900/50 rounded-full">
+                            <Heart className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                         </div>
                         {platformName}
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="text-center py-2">
-                        <p className="text-xs text-muted-foreground mb-3">
-                            Conecte para monitorar passos e frequência cardíaca
+                <CardContent className="pb-3">
+                    <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-2">
+                            Conecte para monitorar atividades
                         </p>
                         <Button
                             size="sm"
                             onClick={handleConnect}
                             disabled={isRequesting || loading}
-                            className="bg-rose-500 hover:bg-rose-600 active:bg-rose-700"
+                            className="bg-rose-500 hover:bg-rose-600 active:bg-rose-700 h-7 text-xs px-3"
                         >
                             {isRequesting ? 'Conectando...' : 'Conectar'}
                         </Button>
@@ -143,59 +131,85 @@ export const HealthIntegrationCard = () => {
         );
     }
 
-    // Conectado - mostrar dados
+    // --- CONECTADO: MOSTRAR DADOS COMPLETOS ---
+    const formatNumber = (n: number | null | undefined) => {
+        if (n === null || n === undefined) return '0';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+        return n.toLocaleString();
+    };
+
+    const formatDistance = (meters: number | null | undefined) => {
+        if (!meters) return '0';
+        if (meters >= 1000) return (meters / 1000).toFixed(1) + 'km';
+        return meters + 'm';
+    };
+
     return (
         <Card className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 border-rose-200 dark:border-rose-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <div className="p-2 bg-rose-100 dark:bg-rose-900/50 rounded-full">
-                        <Heart className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                    <div className="p-1.5 bg-rose-100 dark:bg-rose-900/50 rounded-full">
+                        <Heart className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                     </div>
                     {platformName}
                 </CardTitle>
-                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    Conectado
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        ✓
+                    </Badge>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={refreshData}
+                        disabled={loading}
+                    >
+                        <RefreshCcw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                </div>
             </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+            <CardContent className="pb-3">
+                {/* Grid 2x2 compacto */}
+                <div className="grid grid-cols-4 gap-1">
                     {/* Passos */}
-                    <div className="text-center">
-                        <div className="flex items-center justify-center mb-1">
-                            <Footprints className="h-4 w-4 text-rose-500 mr-1" />
-                            <span className="text-lg font-bold text-foreground">
-                                {dailyStats?.totalSteps?.toLocaleString() || '0'}
-                            </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">passos hoje</p>
+                    <div className="text-center p-1.5 bg-white/50 dark:bg-black/20 rounded-lg">
+                        <Footprints className="h-3.5 w-3.5 text-rose-500 mx-auto mb-0.5" />
+                        <p className="text-sm font-bold text-foreground leading-none">
+                            {formatNumber(dailyStats?.totalSteps)}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">passos</p>
                     </div>
 
-                    {/* Frequência Cardíaca */}
-                    <div className="text-center">
-                        <div className="flex items-center justify-center mb-1">
-                            <Heart className="h-4 w-4 text-rose-500 mr-1" />
-                            <span className="text-lg font-bold text-foreground">
-                                {dailyStats?.avgHeartRate || '--'}
-                            </span>
-                            <span className="text-xs text-muted-foreground ml-1">bpm</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">média</p>
+                    {/* Calorias */}
+                    <div className="text-center p-1.5 bg-white/50 dark:bg-black/20 rounded-lg">
+                        <Flame className="h-3.5 w-3.5 text-orange-500 mx-auto mb-0.5" />
+                        <p className="text-sm font-bold text-foreground leading-none">
+                            {formatNumber(dailyStats?.activeCalories)}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">kcal</p>
+                    </div>
+
+                    {/* Distância */}
+                    <div className="text-center p-1.5 bg-white/50 dark:bg-black/20 rounded-lg">
+                        <Route className="h-3.5 w-3.5 text-blue-500 mx-auto mb-0.5" />
+                        <p className="text-sm font-bold text-foreground leading-none">
+                            {formatDistance(dailyStats?.distance)}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">dist.</p>
+                    </div>
+
+                    {/* Treinos */}
+                    <div className="text-center p-1.5 bg-white/50 dark:bg-black/20 rounded-lg">
+                        <Dumbbell className="h-3.5 w-3.5 text-purple-500 mx-auto mb-0.5" />
+                        <p className="text-sm font-bold text-foreground leading-none">
+                            {dailyStats?.workouts?.length || 0}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">treinos</p>
                     </div>
                 </div>
 
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-3"
-                    onClick={refreshData}
-                    disabled={loading}
-                >
-                    <RefreshCcw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    {loading ? 'Atualizando...' : 'Atualizar'}
-                </Button>
-
                 {error && (
-                    <p className="text-xs text-destructive text-center mt-2">{error}</p>
+                    <p className="text-[10px] text-destructive text-center mt-1.5">{error}</p>
                 )}
             </CardContent>
         </Card>
