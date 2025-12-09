@@ -15,7 +15,7 @@ interface PaywallModalProps {
 }
 
 // URL da Política de Privacidade - deve ser uma URL pública acessível
-const PRIVACY_POLICY_URL = "https://shapepro.app/politica-privacidade";
+const PRIVACY_POLICY_URL = "https://shapepro.site/politica-privacidade";
 const EULA_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 
 // Helper para obter informações de duração do pacote
