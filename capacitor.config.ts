@@ -21,16 +21,16 @@ const config: CapacitorConfig = {
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "4.0.11", // ✅ BUILD 84: Persistência de conexão HealthKit
+  version: "4.0.13", // ✅ BUILD 87: Revisão completa e correções finais
   ios: {
     scheme: "shapepro",
     contentInset: "automatic",
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 84: Persistência de conexão HealthKit
-    CFBundleVersion: '84',
-    CFBundleShortVersionString: "4.0.11",
+    // ✅ BUILD 87: Revisão completa e correções finais
+    CFBundleVersion: '87',
+    CFBundleShortVersionString: "4.0.13",
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
@@ -64,8 +64,8 @@ const config: CapacitorConfig = {
       // Launch screen baseado em storyboard (exigido pelo iPad multitasking)
       UILaunchStoryboardName: "LaunchScreen",
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "4.0.11",
-      CFBundleVersion: "84", // ✅ BUILD 84
+      CFBundleShortVersionString: "4.0.13",
+      CFBundleVersion: "87", // ✅ BUILD 87
       // ---- OneSignal App ID ----
       OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
     },
@@ -80,8 +80,8 @@ const config: CapacitorConfig = {
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 84, // ✅ BUILD 84
-    versionName: "4.0.11"
+    versionCode: 87, // ✅ BUILD 87
+    versionName: "4.0.13"
   },
 
   plugins: {

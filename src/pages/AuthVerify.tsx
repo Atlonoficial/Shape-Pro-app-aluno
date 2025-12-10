@@ -70,6 +70,7 @@ export const AuthVerify = () => {
   }, [toast, navigate]);
 
   // Verificar status de confirmação do email
+  // ✅ BUILD 85: Usar refreshSession() para forçar dados atualizados do servidor
   const checkEmailVerification = useCallback(async (silent = false) => {
     // Prevenir execuções simultâneas
     if (isProcessing && !silent) {
@@ -86,11 +87,23 @@ export const AuthVerify = () => {
         console.log('[AuthVerify] 🔍 Verificando status do email...', { autoCheckCount });
       }
 
-      const { data: { user }, error } = await supabase.auth.getUser();
+      // ✅ BUILD 85: CRÍTICO - Forçar refresh da sessão para obter dados atualizados
+      // getUser() retorna dados cacheados, não detecta confirmação feita externamente
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
 
-      if (error) {
-        console.error('[AuthVerify] ❌ Erro ao verificar usuário:', error);
-        return false;
+      if (refreshError) {
+        console.warn('[AuthVerify] ⚠️ Erro no refresh, tentando getUser:', refreshError.message);
+      }
+
+      // Usar dados da sessão refrescada ou tentar getUser como fallback
+      let user = session?.user;
+      if (!user) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error('[AuthVerify] ❌ Erro ao verificar usuário:', userError);
+          return false;
+        }
+        user = userData.user;
       }
 
       if (user?.email_confirmed_at) {
@@ -109,7 +122,7 @@ export const AuthVerify = () => {
       console.error('[AuthVerify] ❌ Erro na verificação:', error);
       return false;
     }
-  }, [autoCheckCount]);
+  }, [autoCheckCount, isProcessing]);
 
 
   // Polling automático
@@ -141,6 +154,7 @@ export const AuthVerify = () => {
       } else {
         // Iniciar polling se não confirmado
         console.log('[AuthVerify] ⏰ Iniciando polling automático (5s)...');
+        // ✅ BUILD 85: Polling mais frequente (3s) para detecção mais rápida
         pollingIntervalRef.current = setInterval(async () => {
           setAutoCheckCount(prev => {
             const newCount = prev + 1;
@@ -179,7 +193,7 @@ export const AuthVerify = () => {
               navigate(redirectPath, { replace: true });
             }, 1500);
           }
-        }, 5000);
+        }, 3000); // ✅ BUILD 85: Reduzido de 5s para 3s
       }
     };
 

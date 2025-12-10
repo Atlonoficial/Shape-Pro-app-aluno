@@ -32,22 +32,78 @@ interface StudentContextData {
   recentActivities: any[];
 }
 
-// Constantes de controle
-const DAILY_LIMIT = 3; // 3 perguntas por dia
+// ✅ BUILD 85: Constantes de controle - Limites por tipo de usuário
+const FREE_DAILY_LIMIT = 3;     // 3 perguntas por dia para usuários gratuitos
+const PREMIUM_DAILY_LIMIT = 20; // 20 perguntas por dia para assinantes
 const MAX_RESPONSE_TOKENS = 500; // ~350-400 caracteres
 
 /**
+ * ✅ BUILD 85: Verifica se usuário tem assinatura premium ativa
+ * Verifica tanto via metadata do usuário quanto via tabela de subscriptions
+ */
+async function checkPremiumStatus(supabase: any, userId: string): Promise<boolean> {
+  console.log('[checkPremiumStatus] Verificando status premium para:', userId);
+
+  try {
+    // 1. Verificar metadata do usuário (atualizado pelo RevenueCat webhook ou app)
+    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
+
+    if (!userError && user?.user_metadata?.premium === true) {
+      console.log('[checkPremiumStatus] ✅ Premium via metadata');
+      return true;
+    }
+
+    // 2. Verificar tabela plan_subscriptions (assinaturas via personal trainer)
+    const { data: planSub } = await supabase
+      .from('plan_subscriptions')
+      .select('status')
+      .eq('student_user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (planSub) {
+      console.log('[checkPremiumStatus] ✅ Premium via plan_subscriptions');
+      return true;
+    }
+
+    // 3. Verificar entitlements armazenados (se webhook RevenueCat atualizar)
+    const { data: entitlement } = await supabase
+      .from('user_entitlements')
+      .select('entitlement_id, is_active')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .in('entitlement_id', ['premium_ai', 'Atlon Tech Pro', 'premium_access'])
+      .maybeSingle();
+
+    if (entitlement) {
+      console.log('[checkPremiumStatus] ✅ Premium via user_entitlements:', entitlement.entitlement_id);
+      return true;
+    }
+
+    console.log('[checkPremiumStatus] ❌ Usuário não é premium');
+    return false;
+  } catch (error) {
+    console.error('[checkPremiumStatus] Erro ao verificar premium:', error);
+    // Em caso de erro, assume free por segurança
+    return false;
+  }
+}
+
+/**
  * Verifica limite diário e incrementa contador
+ * ✅ BUILD 85: Agora usa limite dinâmico baseado no status premium
  */
 async function checkAndUpdateDailyLimit(
-  supabase: any, 
-  userId: string
-): Promise<{ allowed: boolean; dailyCount: number; message?: string }> {
-  
+  supabase: any,
+  userId: string,
+  isPremium: boolean
+): Promise<{ allowed: boolean; dailyCount: number; dailyLimit: number; message?: string }> {
+
+  const DAILY_LIMIT = isPremium ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  
-  console.log('[checkDailyLimit] Checking for user:', userId, 'date:', today);
-  
+
+  console.log('[checkDailyLimit] Checking for user:', userId, 'date:', today, 'isPremium:', isPremium, 'limit:', DAILY_LIMIT);
+
   // Buscar registro de uso do dia
   const { data: usageData, error: fetchError } = await supabase
     .from('ai_usage_stats')
@@ -55,27 +111,31 @@ async function checkAndUpdateDailyLimit(
     .eq('user_id', userId)
     .eq('usage_date', today)
     .maybeSingle();
-  
+
   if (fetchError) {
     console.error('[checkDailyLimit] Error fetching usage:', fetchError);
     throw fetchError;
   }
-  
+
   if (usageData) {
     // Registro existe - verificar limite
     const currentCount = usageData.daily_count;
-    
+
     console.log('[checkDailyLimit] Current count:', currentCount, 'Limit:', DAILY_LIMIT);
-    
+
     if (currentCount >= DAILY_LIMIT) {
       console.warn('[checkDailyLimit] ⚠️ Daily limit reached');
+      const limitMessage = isPremium
+        ? `Você atingiu o limite de ${DAILY_LIMIT} perguntas premium por dia. Seu limite reseta à meia-noite. 🕐`
+        : `Você atingiu o limite de ${DAILY_LIMIT} perguntas gratuitas por dia. Assine o Coach IA para ter 20 perguntas diárias! 🚀`;
       return {
         allowed: false,
         dailyCount: currentCount,
-        message: `Você atingiu o limite de ${DAILY_LIMIT} perguntas por dia. Tente novamente amanhã! 🕐`
+        dailyLimit: DAILY_LIMIT,
+        message: limitMessage
       };
     }
-    
+
     // Incrementar contador
     const { error: updateError } = await supabase
       .from('ai_usage_stats')
@@ -84,19 +144,20 @@ async function checkAndUpdateDailyLimit(
         updated_at: new Date().toISOString()
       })
       .eq('id', usageData.id);
-    
+
     if (updateError) {
       console.error('[checkDailyLimit] Error updating usage:', updateError);
       throw updateError;
     }
-    
+
     console.log('[checkDailyLimit] ✅ Usage updated to:', currentCount + 1);
-    
+
     return {
       allowed: true,
-      dailyCount: currentCount + 1
+      dailyCount: currentCount + 1,
+      dailyLimit: DAILY_LIMIT
     };
-    
+
   } else {
     // Primeiro uso do dia - criar registro
     const { error: insertError } = await supabase
@@ -106,17 +167,18 @@ async function checkAndUpdateDailyLimit(
         usage_date: today,
         daily_count: 1
       });
-    
+
     if (insertError) {
       console.error('[checkDailyLimit] Error inserting usage:', insertError);
       throw insertError;
     }
-    
+
     console.log('[checkDailyLimit] ✅ New usage record created');
-    
+
     return {
       allowed: true,
-      dailyCount: 1
+      dailyCount: 1,
+      dailyLimit: DAILY_LIMIT
     };
   }
 }
@@ -133,9 +195,9 @@ serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     console.log('[ai-assistant] ✅ OPTIONS - Returning CORS headers');
-    return new Response(null, { 
+    return new Response(null, {
       headers: corsHeaders,
-      status: 200 
+      status: 200
     });
   }
 
@@ -167,48 +229,48 @@ serve(async (req) => {
   try {
     // Get client IP for rate limiting
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    
+
     // Rate limiting: 10 requests per minute per IP
     const now = Date.now();
     const windowStart = now - 60000; // 1 minute window
     const clientRequests = rateLimitMap.get(clientIP) || [];
     const validRequests = clientRequests.filter((time: number) => time > windowStart);
-    
+
     if (validRequests.length >= 10) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
         headers: securityHeaders,
       });
     }
-    
+
     validRequests.push(now);
     rateLimitMap.set(clientIP, validRequests);
 
     // Input validation
     const body = await req.json();
     const { message, conversationId } = body;
-    
+
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return new Response(JSON.stringify({ error: 'Invalid message' }), {
         status: 400,
         headers: securityHeaders,
       });
     }
-    
+
     if (message.length > 2000) {
       return new Response(JSON.stringify({ error: 'Message too long' }), {
         status: 400,
         headers: securityHeaders,
       });
     }
-    
+
     if (conversationId && (typeof conversationId !== 'string' || !/^[a-f0-9-]{36}$/.test(conversationId))) {
       return new Response(JSON.stringify({ error: 'Invalid conversation ID' }), {
         status: 400,
         headers: securityHeaders,
       });
     }
-    
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     const assistantId = Deno.env.get('OPENAI_ASSISTANT_ID');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -251,15 +313,20 @@ serve(async (req) => {
 
     console.log('Processing AI request for user:', user.id);
 
-    // VERIFICAR LIMITE DIÁRIO
-    const dailyCheck = await checkAndUpdateDailyLimit(supabase, user.id);
+    // ✅ BUILD 85: Verificar status premium ANTES de checar limite
+    const isPremium = await checkPremiumStatus(supabase, user.id);
+    console.log('[ai-assistant] Premium status:', isPremium);
+
+    // VERIFICAR LIMITE DIÁRIO (agora com limite dinâmico)
+    const dailyCheck = await checkAndUpdateDailyLimit(supabase, user.id, isPremium);
 
     if (!dailyCheck.allowed) {
       console.warn('[ai-assistant] ❌ Daily limit exceeded');
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: dailyCheck.message,
         dailyCount: dailyCheck.dailyCount,
-        dailyLimit: DAILY_LIMIT,
+        dailyLimit: dailyCheck.dailyLimit,
+        isPremium: isPremium,
         type: 'daily_limit_exceeded'
       }), {
         status: 429, // Too Many Requests
@@ -269,8 +336,9 @@ serve(async (req) => {
 
     console.log('[ai-assistant] ✅ Daily limit check passed:', {
       count: dailyCheck.dailyCount,
-      limit: DAILY_LIMIT,
-      remaining: DAILY_LIMIT - dailyCheck.dailyCount
+      limit: dailyCheck.dailyLimit,
+      remaining: dailyCheck.dailyLimit - dailyCheck.dailyCount,
+      isPremium: isPremium
     });
 
     // Get or create conversation
@@ -294,7 +362,7 @@ serve(async (req) => {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       conversation = data;
     }
@@ -303,7 +371,7 @@ serve(async (req) => {
     console.log('[ai-assistant] Collecting student context for user:', user.id);
     const studentContext = await collectStudentContext(supabase, user.id);
     console.log('[ai-assistant] Student context collected');
-    
+
     // Create OpenAI thread if not exists
     let threadId = conversation.thread_id;
     if (!threadId) {
@@ -392,14 +460,14 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
     let runStatus = run;
     while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const statusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${run.id}`, {
         headers: {
           'Authorization': `Bearer ${openaiApiKey}`,
           'OpenAI-Beta': 'assistants=v2'
         }
       });
-      
+
       runStatus = await statusResponse.json();
       console.log('Run status:', runStatus.status);
     }
@@ -418,7 +486,7 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
 
     const messages = await messagesResponse.json();
     const assistantMessage = messages.data.find((msg: any) => msg.role === 'assistant');
-    
+
     if (!assistantMessage) {
       throw new Error('No assistant response found');
     }
@@ -447,7 +515,8 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       responseLength: responseContent.length,
       userId: user.id,
       dailyUsage: dailyCheck.dailyCount,
-      dailyLimit: DAILY_LIMIT,
+      dailyLimit: dailyCheck.dailyLimit,
+      isPremium: isPremium,
       timestamp: new Date().toISOString()
     });
 
@@ -457,8 +526,9 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       threadId: threadId,
       usage: {
         dailyCount: dailyCheck.dailyCount,
-        dailyLimit: DAILY_LIMIT,
-        remainingToday: DAILY_LIMIT - dailyCheck.dailyCount
+        dailyLimit: dailyCheck.dailyLimit,
+        remainingToday: dailyCheck.dailyLimit - dailyCheck.dailyCount,
+        isPremium: isPremium
       }
     }), {
       headers: securityHeaders,
@@ -470,9 +540,9 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       stack: error?.stack,
       timestamp: new Date().toISOString()
     });
-    
-    return new Response(JSON.stringify({ 
-      error: error?.message || 'Internal server error' 
+
+    return new Response(JSON.stringify({
+      error: error?.message || 'Internal server error'
     }), {
       status: 500,
       headers: securityHeaders,
@@ -482,7 +552,7 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
 
 async function collectStudentContext(supabase: any, userId: string): Promise<StudentContextData> {
   console.log('Collecting context for user:', userId);
-  
+
   try {
     // Get profile
     const { data: profile } = await supabase
@@ -550,7 +620,7 @@ async function collectStudentContext(supabase: any, userId: string): Promise<Stu
     // Get recent meal logs (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const { data: mealLogs } = await supabase
       .from('meal_logs')
       .select('*')
