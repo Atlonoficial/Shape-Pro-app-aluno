@@ -155,7 +155,19 @@ export default function AIChat() {
                 </div>
               </div>
 
-              <div className="w-10" />
+              {!isPremium ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPaywall(true)}
+                  className="text-primary font-medium -mr-2"
+                >
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  PRO
+                </Button>
+              ) : (
+                <div className="w-10" />
+              )}
             </div>
           </div>
 
