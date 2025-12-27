@@ -92,6 +92,36 @@ export const RevenueCatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
             setCustomerInfo(customerInfo);
             checkEntitlements(customerInfo);
+
+            // ✅ BUILD 85: Resetar créditos IA após compra bem-sucedida
+            // Isso permite que o usuário use os 20 créditos premium imediatamente
+            const hasPremiumEntitlement = customerInfo.entitlements.active['Atlon Tech Pro'] ||
+                customerInfo.entitlements.active['premium_ai'] ||
+                customerInfo.entitlements.active['premium_access'];
+
+            if (hasPremiumEntitlement && user?.id) {
+                console.log('[RevenueCat] ✅ Premium purchase successful, resetting AI credits');
+                try {
+                    // Resetar contagem diária de uso da IA
+                    const today = new Date().toISOString().split('T')[0];
+                    const { createClient } = await import('@supabase/supabase-js');
+                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+                    if (supabaseUrl && supabaseKey) {
+                        const supabase = createClient(supabaseUrl, supabaseKey);
+                        await supabase
+                            .from('ai_usage_stats')
+                            .update({ daily_count: 0 })
+                            .eq('user_id', user.id)
+                            .eq('usage_date', today);
+                        console.log('[RevenueCat] ✅ AI credits reset successful');
+                    }
+                } catch (resetError) {
+                    console.warn('[RevenueCat] ⚠️ Could not reset AI credits:', resetError);
+                    // Não falha a compra por causa disso
+                }
+            }
         } catch (error: any) {
             if (!error.userCancelled) {
                 console.error("Error purchasing package:", error);

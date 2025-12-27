@@ -198,6 +198,23 @@ export const useHealthData = () => {
         }
     }, [permissions]);
 
+    // ✅ BUILD 85: Auto-refresh a cada 5 minutos quando conectado
+    useEffect(() => {
+        if (!permissions?.allGranted) return;
+
+        console.log('[useHealthData] ⏰ Iniciando auto-refresh (5 min)');
+
+        const interval = setInterval(() => {
+            console.log('[useHealthData] 🔄 Auto-refresh triggered');
+            fetchData();
+        }, 5 * 60 * 1000); // 5 minutos
+
+        return () => {
+            console.log('[useHealthData] 🧹 Limpando auto-refresh interval');
+            clearInterval(interval);
+        };
+    }, [permissions?.allGranted, fetchData]);
+
     // Desconectar
     const disconnect = useCallback(async () => {
         await Preferences.remove({ key: STORAGE_KEY });
