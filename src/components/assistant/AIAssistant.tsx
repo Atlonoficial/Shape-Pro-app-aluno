@@ -100,7 +100,7 @@ export const AIAssistant = () => {
 
   return (
     <div className="flex flex-col h-[100dvh] relative bg-gradient-dark overflow-hidden">
-      {/* Header com Logo Shape Pro */}
+      {/* Header com Logo Prass Trainer */}
       <div className="p-3 sm:p-4 pt-6 sm:pt-8 text-center bg-gradient-to-b from-card/90 to-transparent border-b border-border/20">
         {/* Data */}
         <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
@@ -114,7 +114,7 @@ export const AIAssistant = () => {
           </span>
         </div>
 
-        {/* Shape Pro Logo - Responsiva */}
+        {/* Prass Trainer Logo - Responsiva */}
         <div className="mb-4 sm:mb-6">
           <ShapeProLogo className="h-16 sm:h-24 md:h-32 w-auto mx-auto" />
         </div>
@@ -152,7 +152,7 @@ export const AIAssistant = () => {
           <div className="text-center py-8">
             <Bot className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">
-              Olá, {userName}! 👋 Sou seu Coach IA da Shape Pro. Estou aqui para te guiar com base nos seus dados reais. Como posso ajudar?
+              Olá, {userName}! 👋 Sou seu Coach IA da Prass Trainer. Estou aqui para te guiar com base nos seus dados reais. Como posso ajudar?
             </p>
           </div>
         )}
@@ -170,7 +170,7 @@ export const AIAssistant = () => {
                   <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
                     <Bot className="w-5 h-5 text-primary-foreground" />
                   </div>
-                  <span className="text-sm font-semibold text-primary">Coach Shape Pro</span>
+                  <span className="text-sm font-semibold text-primary">Coach Prass Trainer</span>
                 </div>
               )}
 
@@ -200,7 +200,7 @@ export const AIAssistant = () => {
                 <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
                   <Loader2 className="w-5 h-5 text-primary-foreground animate-spin" />
                 </div>
-                <span className="text-sm font-semibold text-primary">Coach Shape Pro</span>
+                <span className="text-sm font-semibold text-primary">Coach Prass Trainer</span>
               </div>
               <Card className="p-3 bg-card/50 border-border/50">
                 <p className="text-sm text-muted-foreground">

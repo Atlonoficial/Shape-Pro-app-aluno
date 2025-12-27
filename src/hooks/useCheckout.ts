@@ -7,7 +7,7 @@
  * O sistema de checkout externo (MercadoPago, Stripe, etc.) NÃO é permitido
  * pela Apple para bens/serviços digitais consumidos no app.
  * 
- * O modelo de negócio Shape Pro funciona assim:
+ * O modelo de negócio Prass Trainer funciona assim:
  * - Personal Trainers configuram pagamentos no Dashboard
  * - Pagamentos pelo serviço de coaching acontecem FORA do app (PIX, transferência, etc.)
  * - O aluno usa o app GRATUITAMENTE após ser vinculado pelo professor

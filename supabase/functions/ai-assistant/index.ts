@@ -40,14 +40,14 @@ const MAX_RESPONSE_TOKENS = 500; // ~350-400 caracteres
  * Verifica limite diário e incrementa contador
  */
 async function checkAndUpdateDailyLimit(
-  supabase: any, 
+  supabase: any,
   userId: string
 ): Promise<{ allowed: boolean; dailyCount: number; message?: string }> {
-  
+
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  
+
   console.log('[checkDailyLimit] Checking for user:', userId, 'date:', today);
-  
+
   // Buscar registro de uso do dia
   const { data: usageData, error: fetchError } = await supabase
     .from('ai_usage_stats')
@@ -55,18 +55,18 @@ async function checkAndUpdateDailyLimit(
     .eq('user_id', userId)
     .eq('usage_date', today)
     .maybeSingle();
-  
+
   if (fetchError) {
     console.error('[checkDailyLimit] Error fetching usage:', fetchError);
     throw fetchError;
   }
-  
+
   if (usageData) {
     // Registro existe - verificar limite
     const currentCount = usageData.daily_count;
-    
+
     console.log('[checkDailyLimit] Current count:', currentCount, 'Limit:', DAILY_LIMIT);
-    
+
     if (currentCount >= DAILY_LIMIT) {
       console.warn('[checkDailyLimit] ⚠️ Daily limit reached');
       return {
@@ -75,7 +75,7 @@ async function checkAndUpdateDailyLimit(
         message: `Você atingiu o limite de ${DAILY_LIMIT} perguntas por dia. Tente novamente amanhã! 🕐`
       };
     }
-    
+
     // Incrementar contador
     const { error: updateError } = await supabase
       .from('ai_usage_stats')
@@ -84,19 +84,19 @@ async function checkAndUpdateDailyLimit(
         updated_at: new Date().toISOString()
       })
       .eq('id', usageData.id);
-    
+
     if (updateError) {
       console.error('[checkDailyLimit] Error updating usage:', updateError);
       throw updateError;
     }
-    
+
     console.log('[checkDailyLimit] ✅ Usage updated to:', currentCount + 1);
-    
+
     return {
       allowed: true,
       dailyCount: currentCount + 1
     };
-    
+
   } else {
     // Primeiro uso do dia - criar registro
     const { error: insertError } = await supabase
@@ -106,14 +106,14 @@ async function checkAndUpdateDailyLimit(
         usage_date: today,
         daily_count: 1
       });
-    
+
     if (insertError) {
       console.error('[checkDailyLimit] Error inserting usage:', insertError);
       throw insertError;
     }
-    
+
     console.log('[checkDailyLimit] ✅ New usage record created');
-    
+
     return {
       allowed: true,
       dailyCount: 1
@@ -133,9 +133,9 @@ serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     console.log('[ai-assistant] ✅ OPTIONS - Returning CORS headers');
-    return new Response(null, { 
+    return new Response(null, {
       headers: corsHeaders,
-      status: 200 
+      status: 200
     });
   }
 
@@ -167,48 +167,48 @@ serve(async (req) => {
   try {
     // Get client IP for rate limiting
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    
+
     // Rate limiting: 10 requests per minute per IP
     const now = Date.now();
     const windowStart = now - 60000; // 1 minute window
     const clientRequests = rateLimitMap.get(clientIP) || [];
     const validRequests = clientRequests.filter((time: number) => time > windowStart);
-    
+
     if (validRequests.length >= 10) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
         headers: securityHeaders,
       });
     }
-    
+
     validRequests.push(now);
     rateLimitMap.set(clientIP, validRequests);
 
     // Input validation
     const body = await req.json();
     const { message, conversationId } = body;
-    
+
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return new Response(JSON.stringify({ error: 'Invalid message' }), {
         status: 400,
         headers: securityHeaders,
       });
     }
-    
+
     if (message.length > 2000) {
       return new Response(JSON.stringify({ error: 'Message too long' }), {
         status: 400,
         headers: securityHeaders,
       });
     }
-    
+
     if (conversationId && (typeof conversationId !== 'string' || !/^[a-f0-9-]{36}$/.test(conversationId))) {
       return new Response(JSON.stringify({ error: 'Invalid conversation ID' }), {
         status: 400,
         headers: securityHeaders,
       });
     }
-    
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     const assistantId = Deno.env.get('OPENAI_ASSISTANT_ID');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -256,7 +256,7 @@ serve(async (req) => {
 
     if (!dailyCheck.allowed) {
       console.warn('[ai-assistant] ❌ Daily limit exceeded');
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: dailyCheck.message,
         dailyCount: dailyCheck.dailyCount,
         dailyLimit: DAILY_LIMIT,
@@ -294,7 +294,7 @@ serve(async (req) => {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       conversation = data;
     }
@@ -303,7 +303,7 @@ serve(async (req) => {
     console.log('[ai-assistant] Collecting student context for user:', user.id);
     const studentContext = await collectStudentContext(supabase, user.id);
     console.log('[ai-assistant] Student context collected');
-    
+
     // Create OpenAI thread if not exists
     let threadId = conversation.thread_id;
     if (!threadId) {
@@ -392,14 +392,14 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
     let runStatus = run;
     while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const statusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${run.id}`, {
         headers: {
           'Authorization': `Bearer ${openaiApiKey}`,
           'OpenAI-Beta': 'assistants=v2'
         }
       });
-      
+
       runStatus = await statusResponse.json();
       console.log('Run status:', runStatus.status);
     }
@@ -418,12 +418,25 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
 
     const messages = await messagesResponse.json();
     const assistantMessage = messages.data.find((msg: any) => msg.role === 'assistant');
-    
+
     if (!assistantMessage) {
       throw new Error('No assistant response found');
     }
 
-    const responseContent = assistantMessage.content[0].text.value;
+    let responseContent = assistantMessage.content[0].text.value;
+
+    // Remove function call syntax that shouldn't be shown to users
+    // Pattern: [assistant to=functions.xxx] { ... }
+    responseContent = responseContent.replace(/\[assistant\s+to=functions\.[^\]]+\][\s\S]*?(?=\n\n|$)/gi, '');
+    responseContent = responseContent.replace(/\[assistant[\s\S]*?\]/gi, '');
+    responseContent = responseContent.replace(/\{\s*"aluno[Ii]d"[\s\S]*?\}/gi, '');
+    responseContent = responseContent.replace(/Vou buscar essas informações agora\./gi, '');
+    responseContent = responseContent.trim();
+
+    // If response becomes empty after filtering, provide a fallback
+    if (!responseContent || responseContent.length < 10) {
+      responseContent = 'Para te ajudar melhor, preciso que preencha sua anamnese ou converse diretamente com seu treinador! 💪';
+    }
 
     // Save assistant message
     await supabase
@@ -470,9 +483,9 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
       stack: error?.stack,
       timestamp: new Date().toISOString()
     });
-    
-    return new Response(JSON.stringify({ 
-      error: error?.message || 'Internal server error' 
+
+    return new Response(JSON.stringify({
+      error: error?.message || 'Internal server error'
     }), {
       status: 500,
       headers: securityHeaders,
@@ -482,7 +495,7 @@ IMPORTANTE: Use essas informações para dar respostas personalizadas e específ
 
 async function collectStudentContext(supabase: any, userId: string): Promise<StudentContextData> {
   console.log('Collecting context for user:', userId);
-  
+
   try {
     // Get profile
     const { data: profile } = await supabase
@@ -498,14 +511,18 @@ async function collectStudentContext(supabase: any, userId: string): Promise<Stu
       .eq('user_id', userId)
       .single();
 
-    // Get anamnese
-    const { data: anamnese } = await supabase
-      .from('anamneses')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    // Get anamnese (usando student_id, não user_id)
+    let anamnese = null;
+    if (student?.id) {
+      const { data: anamneseData } = await supabase
+        .from('anamneses')
+        .select('*')
+        .eq('student_id', student.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      anamnese = anamneseData;
+    }
 
     // Get workouts (last 5)
     const { data: workouts } = await supabase
@@ -550,7 +567,7 @@ async function collectStudentContext(supabase: any, userId: string): Promise<Stu
     // Get recent meal logs (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const { data: mealLogs } = await supabase
       .from('meal_logs')
       .select('*')

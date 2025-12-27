@@ -78,7 +78,7 @@ const PoliticaPrivacidade = () => {
             <h2 className="text-lg font-semibold text-primary">Sua Privacidade é Nossa Prioridade</h2>
           </div>
           <p className="text-primary/80 text-sm leading-relaxed">
-            No Shape Pro, levamos sua privacidade a sério. Esta política explica como coletamos,
+            No Prass Trainer, levamos sua privacidade a sério. Esta política explica como coletamos,
             usamos e protegemos suas informações pessoais quando você usa nosso aplicativo.
           </p>
           <p className="text-primary/80 text-sm mt-3">
@@ -131,7 +131,7 @@ const PoliticaPrivacidade = () => {
             </div>
             <p className="text-sm text-muted-foreground mt-4">
               Para exercer qualquer um desses direitos, entre em contato pelo suporte do aplicativo
-              ou envie um email para suporte@shapepro.site.
+              ou envie um email para suporte@seu-dominio.com.
             </p>
           </div>
         </Card>

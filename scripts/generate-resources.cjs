@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Shape Pro - Resource Generator
+ * PRAS Trainer - Resource Generator
  * 
  * Gera automaticamente splash screens e ícones para Android e iOS
  * usando cordova-res a partir das imagens fonte em public/
@@ -81,7 +81,7 @@ function createDirectories() {
 
 function copyImages() {
   const sourceImage = 'public/splash-source-black.png';
-  
+
   if (!fs.existsSync(sourceImage)) {
     logError(`Imagem fonte não encontrada: ${sourceImage}`);
     logInfo('Certifique-se de ter o arquivo splash-source-black.png em public/');
@@ -152,7 +152,7 @@ function printSummary() {
 // Main execution
 async function main() {
   console.log('\n' + '='.repeat(60));
-  log('🚀 Shape Pro - Resource Generator', colors.bright + colors.cyan);
+  log('🚀 PRAS Trainer - Resource Generator', colors.bright + colors.cyan);
   console.log('='.repeat(60) + '\n');
 
   // 1. Verificar cordova-res

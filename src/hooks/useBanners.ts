@@ -29,7 +29,7 @@ export const useBanners = (userId?: string) => {
 
     const fetchBanners = async () => {
       console.log('[useBanners] 🔍 Starting fetch with userId:', userId);
-      
+
       try {
         // ✅ BUILD 38: Buscar dados do estudante para encontrar o teacher_id
         const { data: studentData } = await supabase
@@ -40,47 +40,30 @@ export const useBanners = (userId?: string) => {
 
         console.log('[useBanners] 👨‍🏫 Student data:', studentData);
 
-        // Try teacher banners first if teacher_id exists
-        if (studentData?.teacher_id) {
-          const { data, error } = await supabase
-            .from('banners')
-            .select('*')
-            .eq('created_by', studentData.teacher_id)
-            .eq('is_active', true)
-            .lte('start_date', new Date().toISOString())
-            .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
-            .order('priority', { ascending: false })
-            .order('created_at', { ascending: false });
+        // ✅ BUILD 39: Buscar banners ativos - a tabela usa target_users[], não created_by
+        console.log('[useBanners] 🔍 Fetching active banners...');
 
-          console.log('[useBanners] 📢 Teacher banners:', { count: data?.length, error });
-
-          if (!error && data && data.length > 0) {
-            setBanners(data);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // ✅ BUILD 38: Fallback to global banners if no teacher or no teacher banners
-        console.log('[useBanners] 🌍 No teacher banners, trying global banners...');
-        
-        const { data: globalBanners, error: globalError } = await supabase
+        const { data: activeBanners, error: bannersError } = await supabase
           .from('banners')
           .select('*')
-          .is('created_by', null)
           .eq('is_active', true)
           .lte('start_date', new Date().toISOString())
           .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
           .order('priority', { ascending: false })
           .order('created_at', { ascending: false });
 
-        console.log('[useBanners] 🌍 Global banners:', { count: globalBanners?.length, error: globalError });
+        console.log('[useBanners] 📢 Active banners:', { count: activeBanners?.length, error: bannersError });
 
-        if (globalError) {
-          console.error('[useBanners] ❌ Error fetching global banners:', globalError);
+        if (bannersError) {
+          console.error('[useBanners] ❌ Error fetching banners:', bannersError);
           setBanners([]);
         } else {
-          setBanners(globalBanners || []);
+          // Filtrar banners: mostra se target_users está vazio (global) ou contém o usuário
+          const relevantBanners = (activeBanners || []).filter((banner: any) => {
+            const targets = banner.target_users || [];
+            return targets.length === 0 || targets.includes(userId);
+          });
+          setBanners(relevantBanners);
         }
       } catch (error) {
         console.error('Error fetching banners:', error);

@@ -114,12 +114,29 @@ const Configuracoes = () => {
 
   const handleSair = async () => {
     try {
+      // ✅ 1. Limpar OneSignal antes do logout
+      try {
+        const { clearExternalUserId } = await import("@/lib/push");
+        await clearExternalUserId();
+      } catch (pushError) {
+        console.warn("Erro ao limpar OneSignal:", pushError);
+      }
+
+      // ✅ 2. Executar logout
       await signOutUser();
+
       toast({
         title: "Desconectado",
         description: "Você foi desconectado com sucesso.",
       });
-      // A navegação será automática pela AuthProvider
+
+      // ✅ 3. Forçar redirecionamento após logout (fallback)
+      setTimeout(() => {
+        // Se AuthProvider não redirecionar automaticamente, forçar
+        if (window.location.pathname !== "/") {
+          window.location.href = "/";
+        }
+      }, 500);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast({
@@ -127,6 +144,11 @@ const Configuracoes = () => {
         description: "Erro ao desconectar. Tente novamente.",
         variant: "destructive"
       });
+
+      // ✅ 4. Mesmo em caso de erro, tentar forçar redirecionamento
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     }
   };
 

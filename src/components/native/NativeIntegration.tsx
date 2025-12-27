@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Shape Pro - Native Integration Component
+ * Prass Trainer - Native Integration Component
  * Gerencia todas as integrações nativas do Capacitor
  * ✅ BUILD 74: Corrigido initPush para passar userId corretamente
  */
@@ -44,7 +44,7 @@ export const NativeIntegration = () => {
 
   const configureStatusBar = async () => {
     try {
-      // Set dark status bar for Shape Pro dark theme
+      // Set dark status bar for Prass Trainer dark theme
       await StatusBar.setStyle({ style: Style.Dark });
       await StatusBar.setBackgroundColor({ color: '#000000' });
       await StatusBar.show();

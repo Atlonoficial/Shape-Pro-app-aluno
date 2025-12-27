@@ -72,7 +72,7 @@ const waitForCapacitor = async () => {
           await createCapacitorStorage();
 
           // ✅ Migrar sessão de localStorage → Capacitor Storage
-          const storageKey = 'sb-bqbopkqzkavhmenjlhab-auth-token';
+          const storageKey = 'sb-YOUR_PROJECT_ID-auth-token';
           const session = localStorage.getItem(storageKey);
           if (session) {
             logger.info('Boot', 'Migrating session to Capacitor Storage');

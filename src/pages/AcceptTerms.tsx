@@ -89,7 +89,7 @@ export const AcceptTerms = () => {
           </div>
           <CardTitle className="text-2xl">Aceite dos Termos de Uso</CardTitle>
           <CardDescription>
-            Para continuar usando o Shape Pro, é necessário aceitar nossos Termos de Uso e Política de Privacidade.
+            Para continuar usando o Prass Trainer, é necessário aceitar nossos Termos de Uso e Política de Privacidade.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -100,7 +100,7 @@ export const AcceptTerms = () => {
                 Os Termos de Uso definem as regras de utilização do aplicativo, suas responsabilidades e nossos compromissos.
               </p>
               <a
-                href="https://shapepro.site/app/terms"
+                href="https://seu-dominio.com/app/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline hover:text-primary/80 text-sm font-medium"
@@ -115,7 +115,7 @@ export const AcceptTerms = () => {
                 Nossa Política de Privacidade explica como coletamos, usamos e protegemos seus dados pessoais.
               </p>
               <a
-                href="https://shapepro.site/app/privacy"
+                href="https://seu-dominio.com/app/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline hover:text-primary/80 text-sm font-medium"
@@ -133,7 +133,7 @@ export const AcceptTerms = () => {
               className="mt-1"
             />
             <Label htmlFor="accept-terms" className="text-sm leading-relaxed cursor-pointer font-medium">
-              Li e concordo com os Termos de Uso e a Política de Privacidade do Shape Pro
+              Li e concordo com os Termos de Uso e a Política de Privacidade do Prass Trainer
             </Label>
           </div>
 

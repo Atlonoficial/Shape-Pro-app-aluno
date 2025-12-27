@@ -30,7 +30,7 @@ export const PremiumGuard = ({ children, fallback }: PremiumGuardProps) => {
                 </div>
                 <h3 className="text-xl font-semibold">Funcionalidade Premium</h3>
                 <p className="text-muted-foreground max-w-xs">
-                    Esta funcionalidade é exclusiva para assinantes do Shape Pro Premium.
+                    Esta funcionalidade é exclusiva para assinantes do Prass Trainer Premium.
                 </p>
                 <Button onClick={() => setShowPaywall(true)} className="w-full max-w-xs">
                     Desbloquear Agora

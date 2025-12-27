@@ -63,7 +63,7 @@ export const PasswordResetGuide = () => {
         <div className="flex gap-3">
           <Button asChild variant="outline" size="sm">
             <a 
-              href="https://supabase.com/dashboard/project/bqbopkqzkavhmenjlhab/auth/providers" 
+              href="https://supabase.com/dashboard/project/YOUR_PROJECT_ID/auth/providers" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-2"
@@ -74,7 +74,7 @@ export const PasswordResetGuide = () => {
           </Button>
           <Button asChild variant="outline" size="sm">
             <a 
-              href="https://supabase.com/dashboard/project/bqbopkqzkavhmenjlhab/settings/team" 
+              href="https://supabase.com/dashboard/project/YOUR_PROJECT_ID/settings/team" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-2"

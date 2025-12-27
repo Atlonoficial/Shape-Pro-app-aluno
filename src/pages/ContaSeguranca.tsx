@@ -87,8 +87,9 @@ const ContaSeguranca = () => {
 
       // 3. Deslogar usuário (Simula a "perda de acesso" imediata exigida pela Apple)
       setTimeout(async () => {
-        await supabase.auth.signOut();
-        navigate("/auth");
+        const { signOutUser } = await import("@/lib/supabase");
+        await signOutUser();
+        window.location.href = "/";
       }, 2000);
 
     } catch (error) {
@@ -97,7 +98,7 @@ const ContaSeguranca = () => {
       // Fallback seguro: Email
       const subject = encodeURIComponent("Solicitação de Exclusão de Conta");
       const body = encodeURIComponent(`Gostaria de solicitar a exclusão da minha conta associada ao email: ${user?.email}`);
-      window.open(`mailto:suporte@shapepro.site?subject=${subject}&body=${body}`, '_system');
+      window.open(`mailto:suporte@seu-dominio.com?subject=${subject}&body=${body}`, '_system');
 
       toast({
         title: "Atenção",

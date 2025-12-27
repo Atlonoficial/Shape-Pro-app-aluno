@@ -21,7 +21,7 @@ export const AuthVerify = () => {
   const email = useMemo(() => emailParam, [emailParam]);
 
   useEffect(() => {
-    document.title = "Verificar Email | Shape Pro";
+    document.title = "Verificar Email | Prass Trainer";
   }, []);
 
   // ✅ BUILD 37: Listener de autenticação em tempo real
@@ -50,7 +50,7 @@ export const AuthVerify = () => {
 
           toast({
             title: "✅ Email verificado!",
-            description: "Bem-vindo ao Shape Pro!",
+            description: "Bem-vindo ao Prass Trainer!",
           });
 
           // Redirecionar após 1.5s
@@ -130,7 +130,7 @@ export const AuthVerify = () => {
 
         toast({
           title: "✅ Email verificado!",
-          description: "Bem-vindo ao Shape Pro!",
+          description: "Bem-vindo ao Prass Trainer!",
         });
 
         setTimeout(async () => {
@@ -170,7 +170,7 @@ export const AuthVerify = () => {
 
             toast({
               title: "✅ Email verificado!",
-              description: "Bem-vindo ao Shape Pro!",
+              description: "Bem-vindo ao Prass Trainer!",
             });
 
             setTimeout(async () => {
@@ -230,7 +230,7 @@ export const AuthVerify = () => {
 
         toast({
           title: "✅ Email verificado!",
-          description: "Bem-vindo ao Shape Pro!",
+          description: "Bem-vindo ao Prass Trainer!",
         });
 
         setTimeout(async () => {

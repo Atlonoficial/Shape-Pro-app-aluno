@@ -27,7 +27,7 @@ const isMobileApp = () => {
 };
 
 export async function initPush(externalUserId?: string) {
-  const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82";
+  const APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "YOUR_ONESIGNAL_APP_ID";
 
   if (!APP_ID) {
     logger.error('OneSignal', 'APP_ID not configured');

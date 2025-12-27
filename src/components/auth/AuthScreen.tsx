@@ -87,7 +87,7 @@ export const AuthScreen = () => {
           // Sucesso!
           toast({
             title: "Login realizado com sucesso!",
-            description: "Bem-vindo de volta ao Shape Pro.",
+            description: "Bem-vindo de volta ao Prass Trainer.",
           });
 
           return; // Sair do loop
@@ -239,7 +239,7 @@ export const AuthScreen = () => {
       if (result?.session) {
         toast({
           title: "✅ Conta criada!",
-          description: "Bem-vindo ao Shape Pro!",
+          description: "Bem-vindo ao Prass Trainer!",
         });
         navigate('/', { replace: true });
       } else {
@@ -430,10 +430,11 @@ export const AuthScreen = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          {/* Logo PRASS TRAINER */}
           <img
-            src="/bispo-shape-pro.png"
-            alt="Bispo - Shape Pro Consultoria Online"
-            className="h-32 w-auto mx-auto mb-4"
+            src="/prass-trainer-logo.png"
+            alt="PRASS TRAINER - Transforme sua vida com musculação especializada"
+            className="h-40 w-auto mx-auto mb-4"
           />
           <p className="text-muted-foreground">Sua jornada fitness começa aqui</p>
 
@@ -638,14 +639,14 @@ export const AuthScreen = () => {
                     <Label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
                       Li e concordo com os{' '}
                       <span
-                        onClick={() => import('@capacitor/browser').then(({ Browser }) => Browser.open({ url: 'https://shapepro.site/app/terms' }))}
+                        onClick={() => import('@capacitor/browser').then(({ Browser }) => Browser.open({ url: 'https://seu-dominio.com/app/terms' }))}
                         className="text-primary underline hover:text-primary/80 font-medium cursor-pointer"
                       >
                         Termos de Uso
                       </span>
                       {' '}e a{' '}
                       <span
-                        onClick={() => import('@capacitor/browser').then(({ Browser }) => Browser.open({ url: 'https://shapepro.site/app/privacy' }))}
+                        onClick={() => import('@capacitor/browser').then(({ Browser }) => Browser.open({ url: 'https://seu-dominio.com/app/privacy' }))}
                         className="text-primary underline hover:text-primary/80 font-medium cursor-pointer"
                       >
                         Política de Privacidade

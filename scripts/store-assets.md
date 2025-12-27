@@ -1,4 +1,4 @@
-# Shape Pro - Assets para as Lojas
+# PRAS Trainer - Assets para as Lojas
 
 ## 📱 ÍCONES NECESSÁRIOS
 
@@ -42,8 +42,8 @@
 ## 📝 DESCRIÇÕES PARA AS LOJAS
 
 ### Nome do App
-- **Português:** Shape Pro - Fitness & Coach IA
-- **Inglês:** Shape Pro - Fitness & AI Coach
+- **Português:** PRAS Trainer - Fitness & Coach IA
+- **Inglês:** PRAS Trainer - Fitness & AI Coach
 
 ### Descrição Curta (80 caracteres)
 - **Português:** Fitness profissional com Coach IA e treinos personalizados

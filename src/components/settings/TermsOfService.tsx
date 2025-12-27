@@ -38,7 +38,7 @@ export const TermsOfService = ({ onBack }: TermsOfServiceProps) => {
             </div>
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>
-                Ao usar o Shape Pro, você concorda com os seguintes termos e condições:
+                Ao usar o Prass Trainer, você concorda com os seguintes termos e condições:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>O uso do aplicativo é destinado para fins de fitness e bem-estar</li>
@@ -58,7 +58,7 @@ export const TermsOfService = ({ onBack }: TermsOfServiceProps) => {
             </div>
             <div className="space-y-3 text-sm text-muted-foreground">
               <p className="font-medium text-warning">
-                ⚠️ IMPORTANTE: O Shape Pro não substitui orientação médica profissional.
+                ⚠️ IMPORTANTE: O Prass Trainer não substitui orientação médica profissional.
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>Consulte um médico antes de iniciar qualquer programa de exercícios</li>
@@ -121,7 +121,7 @@ export const TermsOfService = ({ onBack }: TermsOfServiceProps) => {
               <p>Dúvidas sobre nossos termos? Fale conosco:</p>
               <p>📧 contato@atlontech.com</p>
               <p>📱 +55 49 92000-6034</p>
-              <p>🌐 www.shapepro.site</p>
+              <p>🌐 www.seu-dominio.com</p>
             </div>
           </CardContent>
         </Card>

@@ -9,7 +9,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // URL do Dashboard do Professor (configurável via env ou hardcoded)
-export const ADMIN_DASHBOARD_URL = "https://dashboard.shapepro.site";
+export const ADMIN_DASHBOARD_URL = "https://dashboard.seu-dominio.com";
 
 // Narrow session shape we need
 type SessionTokens = {

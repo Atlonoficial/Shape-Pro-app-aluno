@@ -1,4 +1,4 @@
-# Shape Pro - Personal Training App 🏋️‍♂️
+# PRAS Trainer - Personal Training App 🏋️‍♂️
 
 > **Aplicativo completo de personal training com React + TypeScript + Supabase**
 
@@ -44,4 +44,4 @@ npx cap sync
 
 ---
 
-**Shape Pro - Ready for Android Studio & Xcode**
+**PRAS Trainer - Ready for Android Studio & Xcode**

@@ -16,21 +16,20 @@ const maybeServer =
     : {};
 
 const config: CapacitorConfig = {
-  appId: "com.atlontech.shapepro.aluno",
-  appName: "Shape Pro",
+  appId: "com.modelo.app",
+  appName: "App Modelo",
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#000000",
-  version: "4.0.11", // ✅ BUILD 84: Persistência de conexão HealthKit
+  version: "1.0.0",
   ios: {
-    scheme: "shapepro",
+    scheme: "appmodelo",
     contentInset: "automatic",
     backgroundColor: "#000000",
     allowsLinkPreview: false,
     handleApplicationNotifications: false,
-    // ✅ BUILD 84: Persistência de conexão HealthKit
-    CFBundleVersion: '84',
-    CFBundleShortVersionString: "4.0.11",
+    CFBundleVersion: '1',
+    CFBundleShortVersionString: "1.0.0",
     // Tudo aqui vira Info.plist do app (garantido a cada build)
     plist: {
       // ---- Privacidade (evita ITMS-90683) ----
@@ -51,7 +50,7 @@ const config: CapacitorConfig = {
       UIBackgroundModes: ["remote-notification"],
       // Criptografia
       ITSAppUsesNonExemptEncryption: false,
-      // FASE 4: Block landscape on iPhone, allow on iPad for multitasking
+      // Block landscape on iPhone, allow on iPad for multitasking
       UISupportedInterfaceOrientations: [
         "UIInterfaceOrientationPortrait",
       ],
@@ -64,10 +63,10 @@ const config: CapacitorConfig = {
       // Launch screen baseado em storyboard (exigido pelo iPad multitasking)
       UILaunchStoryboardName: "LaunchScreen",
       // *** Versões (garantem sincronização em todos os builds)
-      CFBundleShortVersionString: "4.0.11",
-      CFBundleVersion: "84", // ✅ BUILD 84
-      // ---- OneSignal App ID ----
-      OneSignal_app_id: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
+      CFBundleShortVersionString: "1.0.0",
+      CFBundleVersion: "1",
+      // ---- OneSignal App ID - Configure via variável de ambiente ----
+      // OneSignal_app_id deve ser configurado manualmente no Info.plist após criar o projeto
     },
   },
   android: {
@@ -75,34 +74,34 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: false,
-    appendUserAgent: "Shape Pro/1.0",
-    overrideUserAgent: "Shape Pro/1.0 Mobile App",
+    appendUserAgent: "App Modelo/1.0",
+    overrideUserAgent: "App Modelo/1.0 Mobile App",
     hideLogs: true,
     cleartext: true,
     networkSecurityConfig: true,
-    versionCode: 84, // ✅ BUILD 84
-    versionName: "4.0.11"
+    versionCode: 1,
+    versionName: "1.0.0"
   },
 
   plugins: {
-    OneSignal: {
-      appId: "be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82",
-    },
+    // OneSignal App ID deve ser configurado via variável de ambiente
+    // OneSignal: { appId: process.env.VITE_ONESIGNAL_APP_ID },
     PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
     SplashScreen: {
       launchAutoHide: true,
-      launchShowDuration: 0, // ✅ BUILD 24: 0ms = LoadingScreen assume imediatamente
+      launchShowDuration: 0,
       backgroundColor: "#000000",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
-      showSpinner: false, // ✅ Sem spinner nativo
+      showSpinner: false,
       iosSpinnerStyle: "small",
       spinnerColor: "#999999",
     },
-    Keyboard: { resize: "native", style: "dark", resizeOnFullScreen: true }, // ✅ BUILD 29: native evita resize do viewport
+    Keyboard: { resize: "native", style: "dark", resizeOnFullScreen: true },
     StatusBar: { style: "dark", backgroundColor: "#000000" },
     Camera: { permissions: ["camera", "photos"] },
   },
 };
 
 export default config;
+

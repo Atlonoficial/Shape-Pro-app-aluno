@@ -19,7 +19,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>pt_BR</string>
     <key>CFBundleDisplayName</key>
-    <string>Shape Pro</string>
+    <string>PRAS Trainer</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -96,7 +96,7 @@ npx cap open ios
 
 #### **A. Configurações de Projeto:**
 1. **General Tab:**
-   - **Display Name:** Shape Pro
+   - **Display Name:** PRAS Trainer
    - **Bundle Identifier:** app.lovable.d46ecb0f56a1441da5d5bac293c0288a
    - **Version:** 1.0.0
    - **Build:** 1
@@ -144,14 +144,14 @@ npx cap open ios
 - Acesse: https://appstoreconnect.apple.com
 - My Apps → + → New App
 - **Platform:** iOS
-- **Name:** Shape Pro
+- **Name:** PRAS Trainer
 - **Primary Language:** Portuguese (Brazil)
 - **Bundle ID:** app.lovable.d46ecb0f56a1441da5d5bac293c0288a
-- **SKU:** SHAPEPRO001
+- **SKU:** PRASTRAINER001
 
 #### **B. Informações do App:**
 ```
-App Name: Shape Pro - Treinos e Nutrição
+App Name: PRAS Trainer - Treinos e Nutrição
 Subtitle: Seu personal trainer digital completo
 Category: Health & Fitness
 Secondary Category: Sports

@@ -84,7 +84,7 @@ export const LoadingScreen = () => {
         <div className="mb-8">
           <img 
             src="/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png" 
-            alt="Shape Pro"
+            alt="App Modelo"
             className="h-20 w-auto mx-auto"
             onError={(e) => e.currentTarget.style.display = 'none'}
           />

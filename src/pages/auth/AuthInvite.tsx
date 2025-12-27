@@ -14,9 +14,9 @@ export const AuthInvite = () => {
     const processInvite = async () => {
       try {
         const actionData = parseAuthParams(searchParams);
-        
+
         await processAuthAction(actionData);
-        
+
         const path = await getRedirectPath();
         setRedirectPath(path);
         setStatus('success');
@@ -36,13 +36,13 @@ export const AuthInvite = () => {
   };
 
   return (
-    <AuthLayout 
+    <AuthLayout
       title="Convite Aceito"
       description={status === 'loading' ? 'Processando seu convite...' : undefined}
     >
       <AuthStatusHandler
         status={status}
-        successMessage="Convite aceito com sucesso! Bem-vindo à Shape Pro!"
+        successMessage="Convite aceito com sucesso! Bem-vindo à Prass Trainer!"
         errorMessage={errorMessage}
         redirectPath={redirectPath}
         onRetry={handleRetry}

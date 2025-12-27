@@ -50,11 +50,11 @@ android {
     // PRODUÇÃO: Configuração do keystore
     signingConfigs {
         release {
-            if (project.hasProperty('SHAPE_PRO_RELEASE_STORE_FILE')) {
-                storeFile file(SHAPE_PRO_RELEASE_STORE_FILE)
-                storePassword SHAPE_PRO_RELEASE_STORE_PASSWORD
-                keyAlias SHAPE_PRO_RELEASE_KEY_ALIAS
-                keyPassword SHAPE_PRO_RELEASE_KEY_PASSWORD
+            if (project.hasProperty('PRAS_TRAINER_RELEASE_STORE_FILE')) {
+                storeFile file(PRAS_TRAINER_RELEASE_STORE_FILE)
+                storePassword PRAS_TRAINER_RELEASE_STORE_PASSWORD
+                keyAlias PRAS_TRAINER_RELEASE_KEY_ALIAS
+                keyPassword PRAS_TRAINER_RELEASE_KEY_PASSWORD
             }
         }
     }
@@ -67,13 +67,13 @@ android {
 
 ### **1. Gerar Keystore:**
 ```bash
-keytool -genkey -v -keystore shapepro-release-key.keystore \
-    -name shapepro_key -keyalg RSA -keysize 2048 -validity 25000
+keytool -genkey -v -keystore pras-trainer-release-key.keystore \
+    -name pras_trainer_key -keyalg RSA -keysize 2048 -validity 25000
 ```
 
 ### **2. Informações para o Keystore:**
 ```
-Nome e sobrenome: Shape Pro
+Nome e sobrenome: PRAS Trainer
 Nome da unidade organizacional: Sua Empresa
 Nome da organização: Sua Empresa
 Nome da cidade: Sua Cidade  
@@ -84,10 +84,10 @@ Código do país (XX): BR
 ### **3. Arquivo gradle.properties (android/gradle.properties):**
 ```properties
 # PRODUÇÃO: Configurações do keystore
-SHAPE_PRO_RELEASE_STORE_FILE=shapepro-release-key.keystore
-SHAPE_PRO_RELEASE_KEY_ALIAS=shapepro_key
-SHAPE_PRO_RELEASE_STORE_PASSWORD=SUA_SENHA_KEYSTORE
-SHAPE_PRO_RELEASE_KEY_PASSWORD=SUA_SENHA_KEY
+PRAS_TRAINER_RELEASE_STORE_FILE=pras-trainer-release-key.keystore
+PRAS_TRAINER_RELEASE_KEY_ALIAS=pras_trainer_key
+PRAS_TRAINER_RELEASE_STORE_PASSWORD=SUA_SENHA_KEYSTORE
+PRAS_TRAINER_RELEASE_KEY_PASSWORD=SUA_SENHA_KEY
 
 # IMPORTANTE: Não commitar este arquivo no Git!
 # Adicionar ao .gitignore: android/gradle.properties
@@ -161,7 +161,7 @@ adb install android/app/release/app-release.apk
 - Preencher todas as informações obrigatórias
 
 ### **2. Informações Necessárias:**
-- **Título:** Shape Pro - Treinos e Nutrição  
+- **Título:** PRAS Trainer - Treinos e Nutrição  
 - **Descrição curta:** Seu personal trainer digital completo
 - **Descrição completa:** (Ver STORE-ASSETS-CHECKLIST.md)
 - **Screenshots:** Mínimo 2, máximo 8

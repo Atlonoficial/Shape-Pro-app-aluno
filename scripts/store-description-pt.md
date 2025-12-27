@@ -1,16 +1,16 @@
-# Shape Pro - Descrição para Lojas (Português)
+# PRAS Trainer - Descrição para Lojas (Português)
 
 ## 🎯 NOME DO APP
-**Shape Pro - Fitness & Coach IA**
+**PRAS Trainer - Fitness & Coach IA**
 
 ## 📝 DESCRIÇÃO CURTA (80 caracteres)
 Fitness profissional com Coach IA e treinos personalizados
 
 ## 📖 DESCRIÇÃO COMPLETA (4000 caracteres máx)
 
-**🏆 TRANSFORME SEU CORPO COM O SHAPE PRO**
+**🏆 TRANSFORME SEU CORPO COM O PRAS TRAINER**
 
-O Shape Pro é o app fitness mais completo do Brasil, desenvolvido para pessoas que buscam resultados reais. Com nosso Coach IA avançado, treinos personalizados e acompanhamento profissional, você terá tudo que precisa para alcançar sua melhor forma física.
+O PRAS Trainer é o app fitness mais completo do Brasil, desenvolvido para pessoas que buscam resultados reais. Com nosso Coach IA avançado, treinos personalizados e acompanhamento profissional, você terá tudo que precisa para alcançar sua melhor forma física.
 
 **🤖 COACH IA PERSONALIZADO**
 • Chat inteligente 24/7 com respostas personalizadas
@@ -66,7 +66,7 @@ O Shape Pro é o app fitness mais completo do Brasil, desenvolvido para pessoas 
 • Integração com wearables
 • Notificações inteligentes
 
-Baixe agora o Shape Pro e comece sua transformação hoje mesmo! Milhares de usuários já alcançaram seus objetivos conosco.
+Baixe agora o PRAS Trainer e comece sua transformação hoje mesmo! Milhares de usuários já alcançaram seus objetivos conosco.
 
 ---
 **KEYWORDS:** fitness, treino, academia, coach, inteligencia artificial, dieta, saude, exercicio, personal trainer, nutricao, musculacao, emagrecimento, bem estar
@@ -75,9 +75,9 @@ Baixe agora o Shape Pro e comece sua transformação hoje mesmo! Milhares de usu
 fitness,treino,academia,coach,ia,dieta,saude,exercicio,personal,nutricao
 
 ## 📞 INFORMAÇÕES DE CONTATO
-- **Email:** suporte@shapepro.app
-- **Site:** https://shapepro.app
-- **Suporte:** https://shapepro.app/suporte
+- **Email:** suporte@prastrainer.app
+- **Site:** https://prastrainer.app
+- **Suporte:** https://prastrainer.app/suporte
 
 ## 🎯 PÚBLICO-ALVO
 - Pessoas de 18-50 anos

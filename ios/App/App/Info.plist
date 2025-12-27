@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>pt_BR</string>
 	<key>CFBundleDisplayName</key>
-	<string>Shape Pro</string>
+	<string>App Modelo</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>4.0.11</string>
+	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>84</string>
+	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -65,8 +65,9 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- OneSignal App ID - CONFIGURAR COM SEU ID -->
 	<key>OneSignal_app_id</key>
-	<string>be1bd1f4-bd4f-4dc9-9c33-7b9f7fe5dc82</string>
+	<string>YOUR_ONESIGNAL_APP_ID_HERE</string>
 	<key>OneSignal_APNS_Environment</key>
 	<string>production</string>
 	<key>CFBundleURLTypes</key>
@@ -77,18 +78,20 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>capacitor</string>
-				<string>shapepro</string>
+				<string>appmodelo</string>
 			</array>
 		</dict>
 	</array>
+	<!-- Associated Domains - CONFIGURAR COM SEU DOMÍNIO -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:shapepro.site</string>
+		<string>applinks:seu-dominio.com</string>
 	</array>
 	<!-- HealthKit Permissions -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>O Shape Pro precisa acessar seus dados de saúde para monitorar seus passos diários e frequência cardíaca. Esses dados são usados para acompanhar seu progresso de atividade física e fornecer insights personalizados. Seus dados são armazenados de forma segura e nunca são compartilhados com terceiros.</string>
+	<string>O App Modelo precisa acessar seus dados de saúde para monitorar seus passos diários e frequência cardíaca. Esses dados são usados para acompanhar seu progresso de atividade física e fornecer insights personalizados. Seus dados são armazenados de forma segura e nunca são compartilhados com terceiros.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>O Shape Pro pode registrar seus treinos no Apple Health para manter um histórico completo das suas atividades físicas.</string>
+	<string>O App Modelo pode registrar seus treinos no Apple Health para manter um histórico completo das suas atividades físicas.</string>
 </dict>
 </plist>
+

@@ -25,7 +25,7 @@ export const parseAuthParams = (searchParams: URLSearchParams): AuthActionData =
   // If no type found in search params, check URL fragment (hash)
   if (!authData.type && window.location.hash) {
     const fragmentParams = new URLSearchParams(window.location.hash.substring(1));
-    
+
     authData = {
       type: fragmentParams.get('type') || 'recovery', // Default to recovery for fragment tokens
       token_hash: fragmentParams.get('access_token') || fragmentParams.get('token_hash') || undefined,
@@ -48,7 +48,7 @@ export const calculateIntelligentRedirect = (metadata: any, userType?: 'student'
   // Determinar user type final (prioriza o parâmetro, depois metadata)
   const metadataUserType = metadata?.user_type;
   const finalUserType = userType || metadataUserType;
-  
+
   console.log('👤 Tipo de usuário final:', finalUserType);
 
   // Prioridade 1: Professor → Dashboard
@@ -66,12 +66,12 @@ export const getRedirectPath = async (userType?: 'student' | 'teacher'): Promise
   try {
     const { data: { user } } = await supabase.auth.getUser();
     console.log('🔍 getRedirectPath: Buscando dados do usuário:', user?.id);
-    
+
     if (user) {
       // Buscar metadados de origem armazenados no signup
       const metadata = user.user_metadata;
       console.log('📦 getRedirectPath: Metadados do usuário:', metadata);
-      
+
       // Se não tiver userType passado, buscar do profile
       let finalUserType = userType;
       if (!finalUserType) {
@@ -80,11 +80,11 @@ export const getRedirectPath = async (userType?: 'student' | 'teacher'): Promise
           .select('user_type')
           .eq('id', user.id)
           .single();
-        
+
         finalUserType = profile?.user_type as 'student' | 'teacher';
         console.log('👤 getRedirectPath: Tipo de usuário do profile:', finalUserType);
       }
-      
+
       // Usar função de cálculo inteligente
       return calculateIntelligentRedirect(metadata, finalUserType);
     }
@@ -123,18 +123,18 @@ export const processAuthAction = async (actionData: AuthActionData) => {
 
       if (verifyError) {
         // ✅ BUILD 35: Detectar OTP expirado especificamente
-        if (verifyError.message?.includes('expired') || 
-            verifyError.message?.includes('otp_expired') ||
-            verifyError.message?.includes('invalid') ||
-            verifyError.status === 401) {
+        if (verifyError.message?.includes('expired') ||
+          verifyError.message?.includes('otp_expired') ||
+          verifyError.message?.includes('invalid') ||
+          verifyError.status === 401) {
           throw new Error('Link de confirmação expirado ou inválido. Solicite um novo email de confirmação.');
         }
-        
+
         console.error('❌ processAuthAction: Erro ao verificar OTP:', verifyError);
         throw verifyError;
       }
       console.log('✅ processAuthAction: Email confirmado com sucesso');
-      
+
       // 🔄 FASE 1: Esperar sessão ser estabelecida (até 5 segundos)
       console.log('⏳ processAuthAction: Aguardando sessão ser estabelecida...');
       let sessionFound = false;
@@ -151,7 +151,7 @@ export const processAuthAction = async (actionData: AuthActionData) => {
         console.log(`⏳ processAuthAction: Tentativa ${i + 1}/10 - aguardando sessão...`);
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
+
       if (!sessionFound) {
         console.warn('⚠️ processAuthAction: Sessão não estabelecida automaticamente após verifyOtp');
       }
@@ -220,7 +220,7 @@ export const getActionDescription = (type: string): string => {
     case 'email_change':
       return 'Seu email foi alterado com sucesso!';
     case 'invite':
-      return 'Convite aceito! Bem-vindo à Shape Pro!';
+      return 'Convite aceito! Bem-vindo à Prass Trainer!';
     case 'magiclink':
       return 'Login realizado com sucesso!';
     default:

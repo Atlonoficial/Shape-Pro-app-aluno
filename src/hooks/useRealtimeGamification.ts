@@ -43,8 +43,8 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
       });
 
       if (error) {
-        console.error('[Gamification] ❌ RPC Error:', error);
-        toast.error(`Erro de gamificação: ${error.message}`);
+        // ✅ BUILD 39: Não mostrar erro ao usuário - gamificação não é crítica
+        console.warn('[Gamification] ⚠️ RPC Error (non-critical):', error.message);
         return;
       }
 
@@ -81,8 +81,8 @@ export const useRealtimeGamification = (): RealtimeGamificationHook => {
         }
       }
     } catch (error) {
-      console.error('[Gamification] ❌ Exception:', error);
-      toast.error('Erro ao processar pontos de gamificação');
+      // ✅ BUILD 39: Não mostrar erro ao usuário - gamificação não é crítica
+      console.warn('[Gamification] ⚠️ Exception (non-critical):', error);
     }
   }, [user?.id, isDuplicateAction, generateActionKey]);
 

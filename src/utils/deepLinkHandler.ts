@@ -15,7 +15,7 @@ export async function initializeDeepLinkHandler() {
     try {
       const urlObj = new URL(url);
       
-      // shapepro://auth/confirm?token_hash=xxx&type=signup
+      // appmodelo://auth/confirm?token_hash=xxx&type=signup
       if (urlObj.pathname.includes('/auth/confirm')) {
         const params = urlObj.searchParams.toString();
         const targetUrl = `/auth/confirm?${params}`;
@@ -25,7 +25,7 @@ export async function initializeDeepLinkHandler() {
         return;
       }
 
-      // shapepro://auth/recovery?token_hash=xxx&type=recovery
+      // appmodelo://auth/recovery?token_hash=xxx&type=recovery
       if (urlObj.pathname.includes('/auth/recovery')) {
         const params = urlObj.searchParams.toString();
         const targetUrl = `/auth/recovery?${params}`;
@@ -35,7 +35,7 @@ export async function initializeDeepLinkHandler() {
         return;
       }
 
-      // shapepro://app/configuracoes (from Strava callback)
+      // appmodelo://app/configuracoes (from Strava callback)
       if (urlObj.pathname.includes('/app/configuracoes')) {
         console.log('[DeepLink] ✅ Redirecting to settings after Strava');
         window.location.href = '/configuracoes';

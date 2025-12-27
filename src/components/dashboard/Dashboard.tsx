@@ -156,7 +156,7 @@ export const Dashboard = ({ onCoachClick, onWorkoutClick }: DashboardProps) => {
       <div className="mb-4 text-center pt-2">
         <img
           src="/lovable-uploads/2133926f-121d-45ce-8cff-80c84a1a0856.png"
-          alt="Shape Pro Logo"
+          alt="Prass Trainer Logo"
           className="w-20 h-auto mx-auto opacity-60"
         />
       </div>

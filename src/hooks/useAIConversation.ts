@@ -179,7 +179,7 @@ export const useAIConversation = () => {
 
       console.log('[useAIConversation] Session verified, calling edge function');
       console.log('[useAIConversation] Edge function configuration:', {
-        functionUrl: 'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/ai-assistant',
+        functionUrl: 'https://vrzmfhwzoeutokzyypwv.supabase.co/functions/v1/ai-assistant',
         hasSession: !!sessionData.session,
         tokenPrefix: sessionData.session.access_token.substring(0, 20),
         messageLength: message.length,
@@ -205,7 +205,7 @@ export const useAIConversation = () => {
 
           // Use fetch directly to avoid SDK bugs
           const httpResponse = await fetch(
-            'https://bqbopkqzkavhmenjlhab.supabase.co/functions/v1/ai-assistant',
+            'https://vrzmfhwzoeutokzyypwv.supabase.co/functions/v1/ai-assistant',
             {
               method: 'POST',
               headers: {

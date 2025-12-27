@@ -3,10 +3,11 @@ import { Purchases, PurchasesPackage, PurchasesOffering, CustomerInfo, LOG_LEVEL
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/hooks/useAuth';
 
-// TODO: Replace with your actual RevenueCat API Keys
+// CONFIGURAR: Substitua com suas API Keys do RevenueCat
+// Obter em: https://app.revenuecat.com/apps > API Keys
 const API_KEYS = {
-    ios: "appl_ORVcWujsjYgvLjhuUeuROotWqiY",
-    android: "goog_jOJYicqzBXuYZnuGGhGgDkArFvk",
+    ios: import.meta.env.VITE_REVENUECAT_IOS_KEY || "appl_YOUR_IOS_KEY_HERE",
+    android: import.meta.env.VITE_REVENUECAT_ANDROID_KEY || "goog_YOUR_ANDROID_KEY_HERE",
 };
 
 interface RevenueCatContextType {
@@ -75,8 +76,9 @@ export const RevenueCatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const checkEntitlements = (info: CustomerInfo) => {
         console.log("👑 [RevenueCat] Checking Entitlements:", JSON.stringify(info.entitlements.active, null, 2));
 
-        // Check for 'Atlon Tech Pro' (RevenueCat Entitlement ID)
-        if (info.entitlements.active['Atlon Tech Pro'] || info.entitlements.active['premium_ai'] || info.entitlements.active['premium_access']) {
+        // CONFIGURAR: Substitua com seu Entitlement ID do RevenueCat
+        const entitlementId = import.meta.env.VITE_REVENUECAT_ENTITLEMENT_ID || 'premium_access';
+        if (info.entitlements.active[entitlementId] || info.entitlements.active['premium_ai'] || info.entitlements.active['premium_access']) {
             console.log("✅ [RevenueCat] Premium Access GRANTED");
             setIsPremium(true);
         } else {

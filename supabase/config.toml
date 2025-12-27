@@ -1,4 +1,4 @@
-project_id = "bqbopkqzkavhmenjlhab"
+project_id = "YOUR_PROJECT_ID"
 
 [api]
 enabled = true
@@ -11,7 +11,7 @@ max_rows = 1000
 enabled = true
 port = 54324
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://bqbopkqzkavhmenjlhab.supabase.co"]
+additional_redirect_urls = ["https://YOUR_PROJECT_ID.supabase.co"]
 jwt_expiry = 3600
 # Enhanced security improvements for authentication
 enable_signup = true

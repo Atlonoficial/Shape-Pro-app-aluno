@@ -165,7 +165,7 @@ export const signUpUser = async (
   // 🛡️ GUARD-RAIL: Forçar produção se detectar Lovable preview
   const previewRegex = /(lovable\.dev|lovableproject\.com|\.lovable\.app)/i;
   const finalRedirect = previewRegex.test(redirectUrl)
-    ? `https://shapepro.site/auth/confirm?src=${srcParam}`
+    ? `https://seu-dominio.com/auth/confirm?src=${srcParam}`
     : `${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}src=${srcParam}`;
 
   logger.debug('signUpUser', 'Smart Origin Detection', {
@@ -320,9 +320,62 @@ export const signInUser = async (email: string, password: string) => {
 };
 
 export const signOutUser = async () => {
-  const client = getClient();
-  const { error } = await client.auth.signOut();
-  if (error) throw error;
+  logger.info('signOutUser', '🚪 Starting logout process...');
+
+  try {
+    const client = getClient();
+
+    // ✅ 1. Remover todos os canais de realtime ativos
+    const channels = client.getChannels();
+    for (const channel of channels) {
+      await client.removeChannel(channel);
+    }
+    logger.info('signOutUser', `Removed ${channels.length} realtime channels`);
+
+    // ✅ 2. Limpar storage do Capacitor em plataformas nativas
+    if (typeof window !== 'undefined') {
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { Preferences } = await import('@capacitor/preferences');
+          // Remover apenas chaves relacionadas à autenticação
+          await Preferences.remove({ key: 'supabase-auth-token' });
+          await Preferences.remove({ key: 'sb-auth-token' });
+          logger.info('signOutUser', 'Cleared Capacitor Preferences auth keys');
+        } catch (prefError) {
+          logger.warn('signOutUser', 'Could not clear Preferences', prefError);
+        }
+      }
+    }
+
+    // ✅ 3. Limpar localStorage (Web)
+    if (typeof localStorage !== 'undefined') {
+      const keysToRemove = Object.keys(localStorage).filter(key =>
+        key.includes('supabase') || key.includes('sb-')
+      );
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      logger.info('signOutUser', `Cleared ${keysToRemove.length} localStorage keys`);
+    }
+
+    // ✅ 4. Executar signOut do Supabase
+    const { error } = await client.auth.signOut({ scope: 'global' });
+
+    if (error) {
+      logger.error('signOutUser', 'Supabase signOut error', error);
+      throw error;
+    }
+
+    logger.info('signOutUser', '✅ Logout completed successfully');
+  } catch (error) {
+    logger.error('signOutUser', '❌ Logout failed', error);
+
+    // ✅ Forçar limpeza mesmo em caso de erro
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
+
+    throw error;
+  }
 };
 
 export const resetPasswordForEmail = async (
@@ -344,7 +397,7 @@ export const resetPasswordForEmail = async (
   // ✅ GARANTIR deep link em plataforma nativa (Capacitor)
   let redirectUrl: string;
   if (originMetadata.signup_platform === 'mobile' || originMetadata.is_mobile) {
-    redirectUrl = 'shapepro://auth/recovery';
+    redirectUrl = 'appmodelo://auth/recovery';
   } else {
     redirectUrl = baseRedirectUrl.replace('/auth/confirm', '/auth/recovery');
   }

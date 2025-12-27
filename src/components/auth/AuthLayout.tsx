@@ -16,7 +16,7 @@ export const AuthLayout = ({ children, title, description }: AuthLayoutProps) =>
           <div className="mb-6">
             <img
               src="/lovable-uploads/11efc078-c8bc-4ac4-9d94-1e18b4e6a54d.png"
-              alt="Shape Pro - Consultoria Online"
+              alt="Prass Trainer"
               className="h-16 w-auto mx-auto"
             />
           </div>

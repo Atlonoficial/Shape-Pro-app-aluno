@@ -6,7 +6,7 @@
 
 export interface OriginMetadata {
   // Informações básicas de origem
-  origin_domain: string;        // e.g., "shapepro.site", "admin.shapepro.site", "academia-fit.com.br"
+  origin_domain: string;        // e.g., "seu-dominio.com", "admin.seu-dominio.com", "academia-fit.com.br"
   origin_url: string;           // URL completa de origem
   origin_protocol: string;      // "https", "http", "shapepro"
   origin_port: string | null;   // porta se houver
@@ -68,7 +68,7 @@ export const detectOrigin = (
     : '';
 
   // Domínio principal do sistema
-  const MAIN_DOMAIN = 'shapepro.site';
+  const MAIN_DOMAIN = 'seu-dominio.com';
   const LOVABLE_DOMAINS = ['lovable.dev', 'lovableproject.com', 'lovable.app'];
   const KNOWN_DOMAINS = [MAIN_DOMAIN, 'localhost', '127.0.0.1'];
 
@@ -96,7 +96,7 @@ export const detectOrigin = (
   
   if (isMobile) {
     // Mobile: usar deep link com src
-    redirectUrl = `shapepro://auth/confirm?src=${srcParam}`;
+    redirectUrl = `appmodelo://auth/confirm?src=${srcParam}`;
   } else if (isLovablePreview) {
     // 🔧 Lovable preview: FORÇAR produção
     redirectUrl = `https://${MAIN_DOMAIN}/auth/confirm?src=${srcParam}`;
